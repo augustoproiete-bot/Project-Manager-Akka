@@ -5,4 +5,12 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Akka.Serialization.Hyperion" Version="1.4.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Akka.Code.Configuration\Akka.Code.Configuration.csproj" />
+  </ItemGroup>
+
 </Project>

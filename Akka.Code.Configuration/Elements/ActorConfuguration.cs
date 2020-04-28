@@ -9,6 +9,10 @@ namespace Akka.Code.Configuration.Elements
 
         public DeploymentConfiguration Deployment => GetAddElement<DeploymentConfiguration>("deployment");
 
+        public SerializersConfiguration Serializers => GetAddElement<SerializersConfiguration>("serializers");
+
+        public SerializationBindingsConfiguration SerializationBindings => GetAddElement<SerializationBindingsConfiguration>("serialization-bindings");
+
         public AkkaType? Provider
         {
             get => Get<AkkaType>("provider");
