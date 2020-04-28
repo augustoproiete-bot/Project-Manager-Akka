@@ -16,6 +16,38 @@ namespace AkkaTest
         }
     }
 
+    public sealed class ErrorActor : UntypedActor
+    {
+        protected override void OnReceive(object message)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    public sealed class TestCommander : ReceiveActor
+    {
+        public TestCommander()
+        {
+            Receive<Terminated>(TerminatedHandler);
+            ReceiveAny(AnyHandler);
+        }
+
+        private void AnyHandler(object obj)
+        {
+            var op = Context.ActorOf<ErrorActor>(Guid.NewGuid().ToString());
+            Context.Watch(op);
+            op.Tell(obj);
+        }
+
+        private void TerminatedHandler(Terminated obj)
+        {
+            var test = obj.ActorRef.Path.Name;
+        }
+
+        protected override SupervisorStrategy SupervisorStrategy() 
+            => new OneForOneStrategy(exception => Directive.Stop);
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -36,6 +68,8 @@ namespace AkkaTest
             var config = configRoot.CreateConfig();
 
             using var system = ActorSystem.Create("Test", config);
+
+            system.ActorOf<TestCommander>().Tell("Hallo");
 
             var prop = Props.Create<TestActor>().WithMailbox("test-mailbox");
             var actor = system.ActorOf(prop, "TestActor");
