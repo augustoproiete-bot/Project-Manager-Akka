@@ -22,16 +22,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Akka.Code.Configuration\Akka.Code.Configuration.csproj" />
+    <ProjectReference Include="..\Tauron.Application.Akka.ServiceResolver\Tauron.Application.Akka.ServiceResolver.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Protobuf Include="Proto\Test.proto" GrpcServices="Client" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="akka.config.hocon">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
