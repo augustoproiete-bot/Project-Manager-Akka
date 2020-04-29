@@ -1,9 +1,8 @@
 ﻿using System;
-using System.IO;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using Akka.Actor;
-using Akka.Code.Configuration;
-using Akka.Code.Configuration.Elements;
-using Akka.Code.Configuration.Serialization;
 using Tauron.Application.Akka.ServiceResolver;
 
 namespace AkkaTest
@@ -67,6 +66,14 @@ namespace AkkaTest
             //configRoot = ser.Read(stream);
 
             //var config = configRoot.CreateConfig();
+
+            string localIP;
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            {
+                socket.Connect("127.0.0.1", 8090);
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                localIP = endPoint.Address.ToString();
+            }
 
             using var system = ActorSystem.Create("Test");
             var exz = system.AddServiceResolver();

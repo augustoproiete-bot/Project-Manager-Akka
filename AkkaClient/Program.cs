@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Remote;
 using AkkaShared;
 using AkkaShared.Test;
 
@@ -69,6 +71,8 @@ namespace AkkaClient
                         }
                     }
                 }"));
+
+            var test = ((RemoteActorRefProvider) ((ExtendedActorSystem) system).Provider).Transport.Addresses.First();
 
             var resolver = system.ActorOf(Props.Create(() => new ResolverActor()), "remoteresolver"); //deploy remotely via config
 

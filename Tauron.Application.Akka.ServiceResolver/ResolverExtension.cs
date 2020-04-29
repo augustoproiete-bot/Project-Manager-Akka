@@ -8,6 +8,6 @@ namespace Tauron.Application.Akka.ServiceResolver
         public static readonly ResolverExtension Id = new ResolverExtension();
 
         public override ResolverExt CreateExtension(ExtendedActorSystem system) 
-            => new ResolverExt();
+            => new ResolverExt(system);
     }
 }

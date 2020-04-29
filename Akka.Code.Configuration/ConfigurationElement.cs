@@ -205,9 +205,11 @@ namespace Akka.Code.Configuration
         private List<ConfigurationElement> _toMerge = new List<ConfigurationElement>();
         private Lazy<Dictionary<string, DataValue>> _data = new Lazy<Dictionary<string, DataValue>>();
 
-        protected IEnumerable<KeyValuePair<string, ConfigurationElement>> ToAddElements => _toAdd.Where(e => true);
+        public ElementAcessor ElementAcessor => new ElementAcessor(this);
 
-        protected TType Set<TType>(TType value, string name)
+        protected internal IEnumerable<KeyValuePair<string, ConfigurationElement>> ToAddElements => _toAdd.Where(e => true);
+
+        protected internal TType Set<TType>(TType value, string name)
         {
             var targetType = typeof(TType);
             var data = _data.Value;
@@ -218,20 +220,20 @@ namespace Akka.Code.Configuration
             return value;
         }
 
-        protected TType Get<TType>(string name)
+        protected internal TType Get<TType>(string name)
         {
             if (_data.IsValueCreated && _data.Value.TryGetValue(name, out var value) && value.Value is TType typedType)
                 return typedType;
             return default!;
         }
 
-        protected bool Contains(string name) 
+        protected internal bool ContainsProperty(string name) 
             => _data.IsValueCreated && _data.Value.ContainsKey(name);
 
-        protected TType GetOrAdd<TType>(string name, Func<TType> fac)
-            => Contains(name) ? Get<TType>(name) : Set(fac(), name);
+        protected internal TType GetOrAdd<TType>(string name, Func<TType> fac)
+            => ContainsProperty(name) ? Get<TType>(name) : Set(fac(), name);
 
-        protected TType GetAddElement<TType>(string name)
+        protected internal TType GetAddElement<TType>(string name)
             where TType : ConfigurationElement, new()
         {
             if (_toAdd.TryGetValue(name, out var ele))
@@ -243,11 +245,11 @@ namespace Akka.Code.Configuration
             return element;
         }
 
-        protected TType? TryGetMergeElement<TType>()
+        protected internal TType? TryGetMergeElement<TType>()
             where TType : ConfigurationElement =>
             _toMerge.OfType<TType>().FirstOrDefault();
 
-        protected TType GetMergeElement<TType>()
+        protected internal TType GetMergeElement<TType>()
             where TType : ConfigurationElement, new()
         {
             var element = _toMerge.OfType<TType>().FirstOrDefault();
@@ -259,7 +261,7 @@ namespace Akka.Code.Configuration
 
         }
 
-        protected void ReplaceMerge<TType>(TType? target)
+        protected internal void ReplaceMerge<TType>(TType? target)
             where TType : ConfigurationElement
         {
             var element = _toMerge.OfType<TType>().FirstOrDefault();
