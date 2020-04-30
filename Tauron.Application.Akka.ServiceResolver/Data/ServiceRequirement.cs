@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Tauron.Application.Akka.ServiceResolver.Data
 {
@@ -8,5 +9,8 @@ namespace Tauron.Application.Akka.ServiceResolver.Data
 
         public ServiceRequirement(IReadOnlyList<string> neededServices) 
             => NeededServices = neededServices;
+
+        public bool IsDefiend(IReadOnlyList<string> services) 
+            => NeededServices.All(services.Contains!);
     }
 }

@@ -2,8 +2,8 @@
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using Akka;
 using Akka.Actor;
-using Tauron.Application.Akka.ServiceResolver;
 
 namespace AkkaTest
 {
@@ -67,16 +67,12 @@ namespace AkkaTest
 
             //var config = configRoot.CreateConfig();
 
-            string localIP;
-            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
-            {
-                socket.Connect("127.0.0.1", 8090);
-                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
-                localIP = endPoint.Address.ToString();
-            }
+            object test = "Hallo";
+
+            test.Match().With<string>(s => Console.WriteLine(s)).Default(o => Console.WriteLine(o.ToString()));
 
             using var system = ActorSystem.Create("Test");
-            var exz = system.AddServiceResolver();
+            //var exz = system.AddServiceResolver();
 
             system.ActorOf<TestCommander>().Tell("Hallo");
 

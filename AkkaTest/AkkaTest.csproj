@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Akka.Code.Configuration\Akka.Code.Configuration.csproj" />
-    <ProjectReference Include="..\Tauron.Application.Akka.ServiceResolver\Tauron.Application.Akka.ServiceResolver.csproj" />
   </ItemGroup>
 
   <ItemGroup>
