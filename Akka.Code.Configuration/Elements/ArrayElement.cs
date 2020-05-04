@@ -12,12 +12,12 @@ namespace Akka.Code.Configuration.Elements
 
         public ArrayElement() => _converter = ConverterBase.Find(typeof(TType));
 
-        public override string ToString() 
-            => string.Join(", ", _elements.Select(e => _converter.ToElementValue(e)).Where(s => !string.IsNullOrEmpty(s)));
-
         public IEnumerator<TType> GetEnumerator() => _elements.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable) _elements).GetEnumerator();
+
+        public override string ToString()
+            => $"[{string.Join(", ", _elements.Select(e => _converter.ToElementValue(e)).Where(s => !string.IsNullOrEmpty(s)))}]";
 
         public void Add(TType item)
         {

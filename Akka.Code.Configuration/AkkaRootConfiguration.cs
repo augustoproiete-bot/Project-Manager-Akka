@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using Akka.Code.Configuration.Elements;
 using Akka.Configuration;
 using JetBrains.Annotations;
@@ -12,8 +13,10 @@ namespace Akka.Code.Configuration
 
         public Config CreateConfig()
         {
-            var config = Construct();
-            return config == null ? ConfigurationFactory.Empty : ConfigurationFactory.FromObject(config);
+            var builder = new StringBuilder();
+            Construct(builder);
+            var value = builder.ToString();
+            return string.IsNullOrWhiteSpace(value) ? Config.Empty : ConfigurationFactory.ParseString(value);
         }
     }
 }

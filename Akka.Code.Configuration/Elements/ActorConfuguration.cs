@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 
 namespace Akka.Code.Configuration.Elements
 {
@@ -17,6 +18,20 @@ namespace Akka.Code.Configuration.Elements
         {
             get => Get<AkkaType>("provider");
             set => Set(value, "provider");
+        }
+
+        public TimeSpan AskTimeout
+        {
+            get => Get<TimeSpan>("ask-timeout"); 
+            set => Set(value, "ask-timeout");
+        }
+
+        public TConfig DefaultDispatcher<TConfig>()
+            where TConfig : DispatcherConfiguration, new()
+        {
+            var c = new TConfig();
+            Add("default-dispatcher", c);
+            return c;
         }
     }
 }

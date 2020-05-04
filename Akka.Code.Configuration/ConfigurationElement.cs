@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Akka.Code.Configuration.Converter;
 using Akka.Code.Configuration.Elements;
 using Akka.Code.Configuration.Serialization;
@@ -277,32 +278,29 @@ namespace Akka.Code.Configuration
         public virtual void Merge(ConfigurationElement element) 
             => _toMerge.Add(element);
 
-        public virtual Dictionary<string, object>? Construct()
+        public virtual void Construct(StringBuilder target)
         {
             if (_toAdd.Count == 0 && _toMerge.Count == 0 && !_data.IsValueCreated)
-                return null;
-
-            var target = new Dictionary<string, object>();
-
+                return;
+            
             foreach (var (key, value) in _data.Value)
             {
                 var content = value.ConvertToString();
                 if(content == null) continue;
 
-                target[key] = content;
+                target.AppendLine($"{key} = {content}");
             }
 
-            foreach (var (key, value) in _toMerge.SelectMany(d => d.Construct())) 
-                target[key] = value;
+            foreach (var ele in _toMerge)
+                ele.Construct(target);
 
             foreach (var (key, value) in _toAdd)
             {
-                var content = value.Construct();
-                if(content == null) continue;
-                target[key] = content;
+                target.Append($"{key} = ");
+                target.AppendLine("{");
+                value.Construct(target);
+                target.AppendLine("}");
             }
-
-            return target;
         }
 
         void IBinarySerializable.Write(BinaryWriter writer)
@@ -361,5 +359,6 @@ namespace Akka.Code.Configuration
             for (var i = 0; i < count; i++)
                 data[reader.ReadString()] = new DataValue(reader);
         }
+
     }
 }

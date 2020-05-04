@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Akka.Actor;
 using Tauron.Application.Akka.ServiceResolver.Data;
+using Tauron.Application.Akka.ServiceResolver.Messages.Global;
 
 namespace Tauron.Application.Akka.ServiceResolver.Actor
 {
@@ -18,11 +19,6 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             public ServiceChangeMessages(IReadOnlyList<string> allServices) => AllServices = allServices;
         }
 
-        public sealed class ToggleSuspendedMessage
-        {
-
-        }
-
         private readonly IActorRef _targetEndpoint;
         private readonly ServiceRequirement _requirement;
         private bool _isSuspended;
@@ -35,16 +31,20 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
             Receive<Terminated>(Terminated);
             Receive<ServiceChangeMessages>(ServiceChangeMessagesHandler);
+            Receive<QueryServiceRequest>(QueryServiceRequest);
         }
+
+        private void QueryServiceRequest(QueryServiceRequest obj) 
+            => Context.Sender.Tell(new QueryServiceResponse(_targetEndpoint));
 
         private void ServiceChangeMessagesHandler(ServiceChangeMessages obj)
         {
-            var ok = _requirement.IsDefiend(obj.AllServices);
+            var ok = !_requirement.IsDefiend(obj.AllServices);
             if(_isSuspended == ok) return;
 
             _isSuspended = ok;
 
-            var sus = new ToggleSuspendedMessage();
+            var sus = new ToggleSuspendedMessage(_isSuspended);
             _targetEndpoint.Tell(sus);
             Context.Parent.Tell(sus);
         }

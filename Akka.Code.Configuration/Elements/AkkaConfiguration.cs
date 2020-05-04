@@ -6,7 +6,7 @@ namespace Akka.Code.Configuration.Elements
     [PublicAPI]
     public sealed class AkkaConfiguration : ConfigurationElement
     {
-        public ArrayElement<string> Loggers => GetOrAdd("loggers", () => new ArrayElement<string>());
+        public ArrayElement<AkkaType> Loggers => GetOrAdd("loggers", () => new ArrayElement<AkkaType>());
 
         public AkkaLogLevel StdoutLoglevel
         {

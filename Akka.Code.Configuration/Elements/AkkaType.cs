@@ -18,7 +18,7 @@ namespace Akka.Code.Configuration.Elements
 
         public override string ToString()
         {
-            return Type;
+            return $"\"{Type}\"";
         }
     }
 }

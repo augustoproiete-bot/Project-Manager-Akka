@@ -1,9 +1,0 @@
-﻿syntax = "proto3";
-
-option csharp_namespace = "AkkaTest";
-
-package Messages;
-
-message Test {
-	string msg = 1;
-}

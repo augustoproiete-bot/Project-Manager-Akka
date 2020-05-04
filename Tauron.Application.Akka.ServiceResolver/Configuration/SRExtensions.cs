@@ -7,6 +7,6 @@ namespace Tauron.Application.Akka.ServiceResolver.Configuration
     public static class SrExtensions
     {
         public static ServiceResolverConfiguration ServiceResolver(this AkkaRootConfiguration config)
-            => config.ElementAcessor.GetAddElement<ServiceResolverConfiguration>("ServiceResolver");
+            => config.Akka.ElementAcessor.GetAddElement<ServiceResolverConfiguration>("ServiceResolver");
     }
 }

@@ -1,89 +1,158 @@
 ﻿using System;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
-using Akka;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Code.Configuration;
+using Akka.Code.Configuration.Elements;
+using Akka.Configuration;
+using Akka.Dispatch;
+using Akka.Logger.Serilog;
+using Serilog;
+using Tauron.Application.Akka.ServiceResolver;
+using Tauron.Application.Akka.ServiceResolver.Actor;
+using Tauron.Application.Akka.ServiceResolver.Configuration;
+using Tauron.Application.Akka.ServiceResolver.Core;
+using Tauron.Application.Akka.ServiceResolver.Data;
 
 namespace AkkaTest
 {
-    public sealed class TestActor : ReceiveActor
+    [DebuggerNonUserCode]
+    public sealed class CallingThreadDispatcherInternalConfigurator : MessageDispatcherConfigurator
     {
-        public TestActor()
+        private CallingThreadDispatcherInternal _dispatcher;
+
+        public CallingThreadDispatcherInternalConfigurator(Config config, IDispatcherPrerequisites prerequisites) : base(config, prerequisites)
         {
-            Receive<string>(Console.WriteLine);
-            Receive<Test>(m => Context.Self.Tell(m.Msg));
+            _dispatcher = new CallingThreadDispatcherInternal(this);
+        }
+
+        public override MessageDispatcher Dispatcher()
+            => _dispatcher;
+    }
+
+    [DebuggerNonUserCode]
+    public sealed class CallingThreadDispatcherInternal : MessageDispatcher
+    {
+        public CallingThreadDispatcherInternal(MessageDispatcherConfigurator configurator)
+            : base(configurator)
+        {
+        }
+
+        protected override void ExecuteTask(IRunnable run)
+        {
+            run.Run();
+        }
+
+        protected override void Shutdown()
+        {
         }
     }
 
-    public sealed class ErrorActor : UntypedActor
+    public sealed class TestMessage
     {
-        protected override void OnReceive(object message)
-        {
-            throw new NotSupportedException();
-        }
+        public string Message { get; }
+
+        public TestMessage(string message) 
+            => Message = message;
     }
 
-    public sealed class TestCommander : ReceiveActor
+    public sealed class KillService
     {
-        public TestCommander()
+
+    }
+
+    public sealed class TestService : ReceiveActor
+    {
+        public TestService()
         {
-            Receive<Terminated>(TerminatedHandler);
-            ReceiveAny(AnyHandler);
+            Receive<TestMessage>(TestMessage);
+            Receive<KillService>(KillService);
         }
 
-        private void AnyHandler(object obj)
-        {
-            var op = Context.ActorOf<ErrorActor>(Guid.NewGuid().ToString());
-            Context.Watch(op);
-            op.Tell(obj);
-        }
+        private void KillService(KillService obj) 
+            => Context.Self.Tell(PoisonPill.Instance);
 
-        private void TerminatedHandler(Terminated obj)
+        private void TestMessage(TestMessage obj)
         {
-            var test = obj.ActorRef.Path.Name;
+            Console.WriteLine();
+            Console.WriteLine(obj.Message);
+            Console.WriteLine();
         }
-
-        protected override SupervisorStrategy SupervisorStrategy() 
-            => new OneForOneStrategy(exception => Directive.Stop);
     }
 
     class Program
     {
-        static void Main(string[] args)
+        [DebuggerNonUserCode]
+        private sealed class TestSync : SynchronizationContext
         {
+            public override void Post(SendOrPostCallback d, object? state) 
+                => d(state);
+
+            public override void Send(SendOrPostCallback d, object? state) 
+                => d(state);
+        }
+
+        private sealed class TestClient : ReceiveActor
+        {
+            public TestClient()
+            {
+                Receive<string>(SendTest);
+                Receive<KillService>(Kill);
+            }
+
+            private void Kill(KillService obj)
+            {
+                var service = Context.ResolveRemoteService(nameof(TestService));
+                service.Service.Tell(obj);
+            }
+
+            private void SendTest(string obj)
+            {
+                var service = Context.ResolveRemoteService(nameof(TestService));
+                service.Service.Tell(new TestMessage(obj));
+            }
+        }
+
+        static async Task Main(string[] args)
+        {
+            SynchronizationContext.SetSynchronizationContext(new TestSync());
+
             ////https://github.com/petabridge/akka-bootcamp/blob/master/src/Unit-3/lesson5/README.md
-            ////var config = ConfigurationFactory.ParseString(File.ReadAllText("akka.config.hocon"));
-            //var configRoot = new AkkaRootConfiguration();
-            //var mailbox = new BoundedMailbox(100, TimeSpan.FromSeconds(5));
-            //configRoot.Add("test-mailbox", mailbox);
+            //var config = ConfigurationFactory.ParseString(File.ReadAllText("akka.config.hocon"));
+            var configRoot = new AkkaRootConfiguration();
 
-            //var stream = new MemoryStream();
-            //var ser = new ConfigSerializer();
+            configRoot.Akka.Actor.DefaultDispatcher<DispatcherConfiguration>().Type = typeof(CallingThreadDispatcherInternalConfigurator);
 
-            //ser.Write(stream, configRoot);
-            //stream = new MemoryStream(stream.ToArray());
-            //configRoot = ser.Read(stream);
+            configRoot.Akka.Loggers.Add(typeof(SerilogLogger));
 
-            //var config = configRoot.CreateConfig();
+            var resolver = configRoot.ServiceResolver();
+            resolver.IsGlobal = false;
+            resolver.ResolverPath = "akka://Test/user/Global";
+            resolver.Name = "Client";
 
-            object test = "Hallo";
+            var config = configRoot.CreateConfig();
+            string configString = config.Root.ToString();
 
-            test.Match().With<string>(s => Console.WriteLine(s)).Default(o => Console.WriteLine(o.ToString()));
+            Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File("Log.Log").CreateLogger();
+            using var system = ActorSystem.Create("Test", config);
 
-            using var system = ActorSystem.Create("Test");
-            //var exz = system.AddServiceResolver();
+            var globalTemp = system.ActorOf<GlobalResolver>("Global");
+            globalTemp.Tell(new GlobalResolver.Initialize(new ResolverSettings(Config.Empty) { IsGlobal = true }));
 
-            system.ActorOf<TestCommander>().Tell("Hallo");
+            var exz = system.AddServiceResolver();
 
-            var prop = Props.Create<TestActor>();
-            var actor = system.ActorOf(prop, "TestActor");
+            exz.RegisterEndpoint(ServiceRequirement.Empty, (nameof(TestService), Props.Create<TestService>()));
+            var client = system.ActorOf<TestClient>();
 
-            actor.Tell(new Test("Hallo Welt"));
-            actor.Tell(actor.Path.ToString());
+            client.Tell("Hallo vom Resolver!");
+            client.Tell(new KillService());
 
+            Console.WriteLine("Zum Beenden Taste drücken...");
             Console.ReadKey();
-            system.Terminate();
+
+            globalTemp.Tell(PoisonPill.Instance);
+            await system.WhenTerminated;
         }
     }
 }

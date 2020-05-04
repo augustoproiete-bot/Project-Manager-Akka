@@ -4,6 +4,11 @@
     {
         public static readonly GenericConverter Converter = new GenericConverter();
 
-        public override string? ToElementValue(object? obj) => obj?.ToString();
+        public override string? ToElementValue(object? obj)
+        {
+            var temp = obj?.ToString();
+
+            return temp?.Contains('/') == true ? $"\"{temp}\"" : temp;
+        }
     }
 }
