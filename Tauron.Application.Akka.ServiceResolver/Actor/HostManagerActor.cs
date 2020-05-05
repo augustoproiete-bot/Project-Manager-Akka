@@ -17,8 +17,8 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void QueryServiceRequest(QueryServiceRequest request)
         {
-            var hostName = Context.Sender.Path.Address.Host ?? string.Empty + 
-                Context.Sender.Path.Address.System;
+            var hostName = Context.Sender.Path.Address.Host ?? "Unkowen" + "-" + 
+                Context.Sender.Path.Address.System + "-Manager";
 
             var service = Context.Child(hostName);
             if (service.Equals(ActorRefs.Nobody))

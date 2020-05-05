@@ -27,5 +27,7 @@ namespace Akka.Code.Configuration.Elements
         }
 
         public ActorConfuguration Actor => GetAddElement<ActorConfuguration>("actor");
+
+        public RemoteConfiguration Remote => GetAddElement<RemoteConfiguration>("remote");
     }
 }

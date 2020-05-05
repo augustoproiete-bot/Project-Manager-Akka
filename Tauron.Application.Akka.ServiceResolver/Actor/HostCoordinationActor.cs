@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Akka.Actor;
+using Akka.Event;
 using Tauron.Application.Akka.ServiceResolver.Messages.Global;
 
 namespace Tauron.Application.Akka.ServiceResolver.Actor
@@ -14,7 +15,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
                 => Services = services;
         }
 
-
+        private readonly ILoggingAdapter _log = Context.GetLogger();
         private readonly Dictionary<string, Props> _services = new Dictionary<string, Props>();
         
         public HostCoordinationActor()
@@ -22,12 +23,13 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             Receive<RegistrationRejectedMessage>(_ => Context.System.Terminate());
             Receive<ToggleSuspendedMessage>(ToggleSuspendedMessage);
             Receive<QueryServiceRequest>(QueryServiceRequest);
-            Receive<RegisterServices>(RegisterServicesHandler);
+            Receive<RegisterServices>(RegisterServicesHandler);dfg
         }
 
 
         private void RegisterServicesHandler(RegisterServices obj)
         {
+            
             foreach (var (name, props) in obj.Services) 
                 _services[name] = props;
         }

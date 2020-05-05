@@ -115,8 +115,8 @@ namespace AkkaTest
 
         static async Task Main(string[] args)
         {
-            ProxyTest.TestProxy();
-            SynchronizationContext.SetSynchronizationContext(new TestSync());
+            //ProxyTest.TestProxy();
+            //SynchronizationContext.SetSynchronizationContext(new TestSync());
 
             ////https://github.com/petabridge/akka-bootcamp/blob/master/src/Unit-3/lesson5/README.md
             //var config = ConfigurationFactory.ParseString(File.ReadAllText("akka.config.hocon"));

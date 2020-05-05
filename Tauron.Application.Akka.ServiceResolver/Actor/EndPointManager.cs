@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Akka.Actor;
+using Akka.Event;
 using Tauron.Application.Akka.ServiceResolver.Data;
 using Tauron.Application.Akka.ServiceResolver.Messages.Global;
 
@@ -19,12 +20,15 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             public ServiceChangeMessages(IReadOnlyList<string> allServices) => AllServices = allServices;
         }
 
+        private readonly ILoggingAdapter _log;
         private readonly IActorRef _targetEndpoint;
         private readonly ServiceRequirement _requirement;
         private bool _isSuspended;
 
         public EndPointManager(IActorRef targetEndpoint, ServiceRequirement requirement)
         {
+            _log = Context.GetLogger();
+
             _targetEndpoint = targetEndpoint;
             _requirement = requirement;
             Context.Watch(_targetEndpoint);
@@ -42,6 +46,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             var ok = !_requirement.IsDefiend(obj.AllServices);
             if(_isSuspended == ok) return;
 
+            _log.Info("Switch Service Suspension From {Current} To {New} On {Endpoint}", ok, !ok, _targetEndpoint.Path);
             _isSuspended = ok;
 
             var sus = new ToggleSuspendedMessage(_isSuspended);
@@ -51,6 +56,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void Terminated(Terminated obj)
         {
+            _log.Warning("Endpoint Conecction Lost {Endpoint}", _targetEndpoint.Path);
             Context.Parent.Tell(new EndpointLostMessage());
             Context.Self.Tell(PoisonPill.Instance);
         }

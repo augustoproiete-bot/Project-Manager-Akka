@@ -9,7 +9,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Messages.Global
     {
         public IActorRef? Service { get; }
 
-        public bool Ok => Service == null;
+        public bool Ok => Service != null;
 
         public QueryServiceResponse(IActorRef? service) => Service = service;
     }

@@ -40,10 +40,11 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private IActorRef GetService()
         {
-            const string name = "ServiceRoot";
+            const string name = "ActualService";
             var service = Context.Child(name);
             if (service.Equals(ActorRefs.Nobody))
-                service = Context.ActorOf(_serviceType);
+                service = Context.ActorOf(_serviceType, name);
+            
             return service;
         }
 
@@ -52,5 +53,8 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             Context.GetChildren().ForEach(c => c.Tell(PoisonPill.Instance));
             Context.Sender.Tell(new ServiceCallRejected(message, ServiceCallRejected.Error, reason));
         }
+
+        protected override SupervisorStrategy SupervisorStrategy()
+            => new OneForOneStrategy(e => Directive.Restart);
     }
 }

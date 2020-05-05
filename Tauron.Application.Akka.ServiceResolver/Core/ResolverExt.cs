@@ -27,7 +27,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
             _system = system;
             Settings = new ResolverSettings(system.Settings.Config);
             GlobalResolver = system.ActorOf(Props.Create(() => new GlobalResolver()), "GlobalResolver");
-            HostActor = system.ActorOf(Props.Create(() => new HostCoordinationActor()), "ServiceHost");
+            HostActor = system.ActorOf(Props.Create(() => new HostCoordinationActor()), "HostCoordination");
             RemoteServiceActor = system.ActorOf<RemoteServiceActor>("RemoteServices");
         }
 

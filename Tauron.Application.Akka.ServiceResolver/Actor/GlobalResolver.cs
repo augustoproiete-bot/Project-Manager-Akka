@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Event;
 using Tauron.Application.Akka.ServiceResolver.Core;
 using Tauron.Application.Akka.ServiceResolver.Data;
 using Tauron.Application.Akka.ServiceResolver.Messages.Global;
@@ -54,11 +55,14 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
                 }
             }
 
-            public void Init(ActorSelection selection, ICanWatch watch)
+            public void Init(ActorSelection selection, ICanWatch watch, ILoggingAdapter log)
             {
+                log.Info("Try Resolve GlobalResolver");
+
                 _resolver = selection.ResolveOne(TimeSpan.FromMinutes(1)).ContinueWith(t =>
                                                                                        {
                                                                                            var r = t.Result;
+                                                                                           log.Info("Global Resolver Found {Path}", r.Path);
                                                                                            watch.Watch(r);
                                                                                            return r;
                                                                                        });
@@ -80,35 +84,49 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             }
         }
 
+        private readonly ILoggingAdapter _log;
         private readonly Dictionary<string, ServiceEntry> _services = new Dictionary<string, ServiceEntry>();
-
         private readonly ResolverService _resolverService = new ResolverService();
-
         private ResolverSettings _resolverSettings = new ResolverSettings(Config.Empty);
 
         public IStash? Stash { get; set; }
 
         public GlobalResolver()
         {
+            _log = Context.GetLogger();
             Receive<Initialize>(InitializeHandle);
             ReceiveAny(_ => Stash!.Stash());
         }
 
         private void InitializeHandle(Initialize obj)
         {
-            if(obj.Settings.IsGlobal)
+            if (obj.Settings.IsGlobal)
+            {
+                _log.Info("Initialize as Global Resolver");
                 Become(BecomeGlobalResolver);
+            }
             else
             {
+                _log.Info("Initialize as Local Resolver");
                 _resolverSettings = obj.Settings;
                 if (!_resolverSettings.Verify(Context.System))
-                    return;
-                
-                _resolverService.Init(Context.ActorSelection(obj.Settings.ResolverPath), Context);
-                Become(BecomeGlobalProvider);
+                {
+                    _log.Error("Resolver Settings Invalid Become Faulted");
+                    Become(Faulted);
+                }
+                else
+                {
+                    _resolverService.Init(Context.ActorSelection(obj.Settings.ResolverPath), Context, _log);
+                    Become(BecomeGlobalProvider);
+                }
             }
             
             Stash!.UnstashAll();
+        }
+
+        private void Faulted()
+        {
+            ReceiveAny(_ => throw new InvalidResolverStateExcepion("Setting Verification Failed"));
         }
 
         #region Provider Implementation
@@ -120,8 +138,11 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             Receive<Terminated>(Terminated);
         }
 
-        private void Terminated(Terminated obj) 
-            => Context.System.Terminate();
+        private void Terminated(Terminated obj)
+        {
+            _log.Error("Conection to Global Resolver Lost. Terminate System. {Path}", obj.ActorRef.Path);
+            Context.System.Terminate();
+        }
 
         private void QueryServiceRequestProvider(QueryServiceRequest obj) 
             => _resolverService.Tell(obj, Context.Sender);
@@ -143,17 +164,22 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void QueryServiceRequest(QueryServiceRequest obj)
         {
+            _log.Info("Query Service Request income");
             var key = _services.FirstOrDefault(e => e.Value.Services.Contains(obj.Name)).Key;
 
             var child = string.IsNullOrWhiteSpace(key) ? ActorRefs.Nobody : Context.Child(key);
-            if(child.Equals(ActorRefs.Nobody))
+            if (child.Equals(ActorRefs.Nobody))
+            {
+                _log.Warning("No Service Found {Name}--{EndPoint}", obj.Name, key);
                 Context.Sender.Tell(new QueryServiceResponse(null));
+            }
 
             child.Forward(obj);
         }
 
         private void EndPointLost(EndPointManager.EndpointLostMessage obj)
         {
+            _log.Warning("Endpoint Connection Lost. Removing Services");
             _services.Remove(Context.Sender.Path.Name);
             TriggerChange();
         }
@@ -170,12 +196,15 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void RegisterEndpointMessage(RegisterEndpointMessage obj)
         {
+            _log.Info("Try Register Endpoint {Endpoint}");
             if (_services.ContainsKey(obj.EndPointName))
             {
+                _log.Info("Endpoint Already Registrated {Endpoint", obj.EndPointName);
                 Context.Sender.Tell(new RegistrationRejectedMessage());
                 return;
             }
 
+            _log.Info("Create Endpoint Manager");
             _services[obj.EndPointName] = new ServiceEntry(obj.ProvidedServices);
             Context.ActorOf(Props.Create<EndPointManager>(Context.Sender, obj.Requirement), obj.EndPointName);
 
@@ -184,6 +213,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void TriggerChange()
         {
+            _log.Info("Trigger Recheck of Sercive Requirement");
             foreach (var actorRef in Context.GetChildren())
             {
                 actorRef.Tell(new EndPointManager.ServiceChangeMessages(
