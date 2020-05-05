@@ -53,8 +53,5 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             Context.GetChildren().ForEach(c => c.Tell(PoisonPill.Instance));
             Context.Sender.Tell(new ServiceCallRejected(message, ServiceCallRejected.Error, reason));
         }
-
-        protected override SupervisorStrategy SupervisorStrategy()
-            => new OneForOneStrategy(e => Directive.Restart);
     }
 }

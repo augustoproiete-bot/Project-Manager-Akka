@@ -7,14 +7,17 @@ using AkkaShared;
 using Serilog;
 using Tauron.Application.Akka.ServiceResolver;
 using Tauron.Application.Akka.ServiceResolver.Configuration;
+using Tauron.Application.Akka.ServiceResolver.Core;
 using Tauron.Application.Akka.ServiceResolver.Data;
 
 namespace AkkaClientProvider
 {
-    class Program
+    public static class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
+            Console.Title = "Test Client Provider";
+
             var codeConfig = new AkkaRootConfiguration();
             codeConfig.Akka.Actor.Provider = typeof(RemoteActorRefProvider);
 
@@ -25,17 +28,21 @@ namespace AkkaClientProvider
             var serviceResolver = codeConfig.ServiceResolver();
             serviceResolver.IsGlobal = false;
             serviceResolver.ResolverPath = "akka.tcp://DeployTarget@localhost:8090/user/GlobalResolver";
+            serviceResolver.Name = "EchoServiceProvider";
 
             codeConfig.Akka.Loggers.Add(typeof(SerilogLogger));
             var config = codeConfig.CreateConfig();
 
             Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().CreateLogger();
 
+            Console.WriteLine("Service Bereitstellen");
+            Console.ReadKey();
+
             using var system = ActorSystem.Create("DeployTarget", config);
 
-            system.AddServiceResolver().RegisterEndpoint(ServiceRequirement.Empty, (EchoService.Name, Props.Create<EchoActor>()));
+            system.AddServiceResolver().RegisterEndpoint(EndpointConfig.New.WithServices((EchoService.Name, Props.Create<EchoActor>())));
 
-            Console.WriteLine("Press Key to close");
+            Console.WriteLine("Bereitstellen Erfolgreich");
             Console.ReadKey();
         }
     }

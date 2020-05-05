@@ -142,7 +142,7 @@ namespace AkkaTest
 
             var exz = system.AddServiceResolver();
 
-            exz.RegisterEndpoint(ServiceRequirement.Empty, (nameof(TestService), Props.Create<TestService>()));
+            exz.RegisterEndpoint(EndpointConfig.New.WithServices((nameof(TestService), Props.Create<TestService>())));
             var client = system.ActorOf<TestClient>();
 
             client.Tell("Hallo vom Resolver!");

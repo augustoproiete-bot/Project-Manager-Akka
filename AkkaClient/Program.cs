@@ -1,88 +1,92 @@
 ﻿using System;
-using System.Linq;
+using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Configuration;
+using Akka.Code.Configuration;
+using Akka.Logger.Serilog;
 using Akka.Remote;
 using AkkaShared;
-using AkkaShared.Test;
+using Serilog;
+using Tauron.Application.Akka.ServiceResolver;
+using Tauron.Application.Akka.ServiceResolver.Configuration;
+using Tauron.Application.Akka.ServiceResolver.Core;
+using Tauron.Application.Akka.ServiceResolver.Data;
 
 namespace AkkaClient
 {
     class Program
     {
-        class SayHello { }
-
-        class HelloActor : ReceiveActor
+        private class ConsoleActor : ReceiveActor
         {
-            private IActorRef _remoteActor;
-            private int _helloCounter;
-            private ICancelable _helloTask;
-
-            public HelloActor(IActorRef remoteActor)
+            public ConsoleActor()
             {
-                _remoteActor = remoteActor;
-                Context.Watch(_remoteActor);
-                Receive<Hello>(hello =>
-                {
-                    Console.WriteLine("Received {1} from {0}", Sender, hello.Message);
-                });
-
-                Receive<SayHello>(sayHello =>
-                {
-                    _remoteActor.Tell(new Hello("hello" + _helloCounter++));
-                });
-
-                Receive<Terminated>(terminated =>
-                {
-                    Console.WriteLine(terminated.ActorRef);
-                    Console.WriteLine("Was address terminated? {0}", terminated.AddressTerminated);
-                    _helloTask.Cancel();
-                });
+                Receive<StringMessage>(StringMessage);
+                Receive<string>(SendMsg);
             }
 
-            protected override void PreStart()
+            private void SendMsg(string obj)
             {
-                _helloTask = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(TimeSpan.FromSeconds(1),
-                    TimeSpan.FromSeconds(1), Context.Self, new SayHello(), ActorRefs.NoSender);
+                var remote = Context.ResolveRemoteService(EchoService.Name);
+                remote.Service.Tell(new StringMessage(obj));
             }
 
-            protected override void PostStop()
-            {
-                _helloTask.Cancel();
-            }
+            private void StringMessage(StringMessage obj) 
+                => Console.WriteLine(obj.Message);
         }
 
-        static void Main(string[] args)
+        private static bool _suspended;
+        
+        public static async Task Main(string[] args)
         {
-            using var system = ActorSystem.Create("Deployer", ConfigurationFactory.ParseString(@"
-                akka {  
-                    actor{
-                        provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
-                        deployment {
-                            /remoteresolver {
-                                remote = ""akka.tcp://DeployTarget@localhost:8090""
-                            }
-                        }
-                    }
-                    remote {
-                        dot-netty.tcp {
-		                    port = 0
-		                    hostname = localhost
-                        }
-                    }
-                }"));
+            Console.Title = "Test Client";
 
-            var test = ((RemoteActorRefProvider) ((ExtendedActorSystem) system).Provider).Transport.Addresses.First();
+            var codeConfig = new AkkaRootConfiguration();
+            codeConfig.Akka.Actor.Provider = typeof(RemoteActorRefProvider);
 
-            var resolver = system.ActorOf(Props.Create(() => new ResolverActor()), "remoteresolver"); //deploy remotely via config
+            var tcp = codeConfig.Akka.Remote.AddDotNettyTcp();
+            tcp.Port = 0;
+            tcp.HostName = "localhost";
 
-            var remoteEcho1 = resolver.Ask<ResolveResult>(new TryResolve(Services.TestService)).Result.Actor;
+            var serviceResolver = codeConfig.ServiceResolver();
+            serviceResolver.IsGlobal = false;
+            serviceResolver.ResolverPath = "akka.tcp://DeployTarget@localhost:8090/user/GlobalResolver";
+            serviceResolver.Name = "EchoServiceConsumer";
 
-            system.ActorOf(Props.Create(() => new HelloActor(remoteEcho1)));
-            remoteEcho1.Tell(new Hello("hi from selection!"));
+            codeConfig.Akka.Loggers.Add(typeof(SerilogLogger));
+            var config = codeConfig.CreateConfig();
 
-            Console.WriteLine("Press Key to close");
+            Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().CreateLogger();
+
+            Console.WriteLine("Service Testen");
             Console.ReadKey();
+
+            var system = ActorSystem.Create("DeployTarget", config);
+
+            system.AddServiceResolver().RegisterEndpoint(EndpointConfig.New
+               .WithServiceRequirement(ServiceRequirement.Create(EchoService.Name))
+               .WithSuspensionTracker(new ActionSuspensionTracker(m =>
+                                                                  {
+                                                                      _suspended = m.IsSuspended;
+                                                                      var state = _suspended ? "Angehaltem" : "Laufend";
+                                                                      Console.WriteLine($"Service Zusand Geändert: {state}");
+                                                                  })));
+
+            var consoleActor = await system.HostLocalService("ConsoleActor", Props.Create<ConsoleActor>());
+
+            while (true)
+            {
+                Console.WriteLine("Bitte Nachricht eingeben:");
+                var msg = Console.ReadLine();
+                if(msg == "exit") break;
+                if (_suspended)
+                {
+                    Console.WriteLine("Service Angehalten");
+                    continue;
+                }
+
+                consoleActor.Tell(msg);
+            }
+
+            await system.Terminate();
         }
     }
 }

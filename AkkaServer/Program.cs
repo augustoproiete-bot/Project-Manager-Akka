@@ -1,7 +1,6 @@
 ﻿using System;
 using Akka.Actor;
 using Akka.Code.Configuration;
-using Akka.Configuration;
 using Akka.Logger.Serilog;
 using Akka.Remote;
 using Serilog;
@@ -14,6 +13,8 @@ namespace AkkaServer
     {
         static void Main(string[] args)
         {
+            Console.Title = "Global Resolver";
+
             //var config = ConfigurationFactory.ParseString(@"
             //    akka {  
             //        actor.provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
