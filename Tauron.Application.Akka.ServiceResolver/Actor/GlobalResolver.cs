@@ -143,7 +143,9 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void QueryServiceRequest(QueryServiceRequest obj)
         {
-            var child = Context.Child(obj.Name);
+            var key = _services.FirstOrDefault(e => e.Value.Services.Contains(obj.Name)).Key;
+
+            var child = string.IsNullOrWhiteSpace(key) ? ActorRefs.Nobody : Context.Child(key);
             if(child.Equals(ActorRefs.Nobody))
                 Context.Sender.Tell(new QueryServiceResponse(null));
 

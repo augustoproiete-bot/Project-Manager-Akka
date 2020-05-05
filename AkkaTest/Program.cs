@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,16 +38,14 @@ namespace AkkaTest
         public CallingThreadDispatcherInternal(MessageDispatcherConfigurator configurator)
             : base(configurator)
         {
+
         }
 
-        protected override void ExecuteTask(IRunnable run)
-        {
-            run.Run();
-        }
+        protected override void ExecuteTask(IRunnable run) 
+            => run.Run();
 
         protected override void Shutdown()
-        {
-        }
+        { }
     }
 
     public sealed class TestMessage
@@ -116,6 +115,7 @@ namespace AkkaTest
 
         static async Task Main(string[] args)
         {
+            ProxyTest.TestProxy();
             SynchronizationContext.SetSynchronizationContext(new TestSync());
 
             ////https://github.com/petabridge/akka-bootcamp/blob/master/src/Unit-3/lesson5/README.md
