@@ -1,10 +1,12 @@
 ﻿using Akka.Actor;
+using Akka.Event;
 using Tauron.Application.Akka.ServiceResolver.Messages.Global;
 
 namespace Tauron.Application.Akka.ServiceResolver.Actor
 {
     public sealed class HostManagerActor : ReceiveActor
     {
+        private readonly ILoggingAdapter _log = Context.GetLogger();
         private readonly Props _service;
 
         public HostManagerActor(Props service)
@@ -20,10 +22,8 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             var hostName = Context.Sender.Path.Address.Host ?? "Unkowen" + "-" + 
                 Context.Sender.Path.Address.System + "-Manager";
 
-            var service = Context.Child(hostName);
-            if (service.Equals(ActorRefs.Nobody))
-                service = Context.ActorOf(Props.Create(() => new ServiceHostActor(_service)), hostName);
-
+            _log.Info("Create or Return {Service}", hostName);
+            var service = Context.GetOrCreate(hostName, Props.Create(() => new ServiceHostActor(_service)));
             Context.Sender.Tell(new QueryServiceResponse(service));
         }
 
@@ -32,7 +32,5 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             foreach (var actorRef in Context.GetChildren()) 
                 actorRef.Tell(suspended);
         }
-
-        protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(e => Directive.Restart);
     }
 }

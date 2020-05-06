@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using JetBrains.Annotations;
 using Tauron.Application.Akka.ServiceResolver.Actor;
-using Tauron.Application.Akka.ServiceResolver.Data;
 using Tauron.Application.Akka.ServiceResolver.Messages.Global;
 
 namespace Tauron.Application.Akka.ServiceResolver.Core
@@ -34,10 +33,10 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
         internal void Initialize() 
             => GlobalResolver.Tell(new GlobalResolver.Initialize(Settings));
 
-        public void RegisterEndpoint(ServiceRequirement requirement, params (string, Props)[] hostServices)
+        public void RegisterEndpoint(EndpointConfig config)
         {
-            GlobalResolver.Tell(new GlobalResolver.RegisterEndpoint(hostServices.Select(t => t.Item1).ToArray(), requirement, HostActor));
-            HostActor.Tell(new HostCoordinationActor.RegisterServices(hostServices));
+            GlobalResolver.Tell(new GlobalResolver.RegisterEndpoint(config.Services.Select(t => t.Key).ToArray(), config.ServiceRequirement, HostActor));
+            HostActor.Tell(new HostCoordinationActor.RegisterServices(config));
         }
 
         public Task<QueryServiceResponse> GetServiceEntry(string name)

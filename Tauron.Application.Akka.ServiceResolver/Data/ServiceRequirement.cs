@@ -13,6 +13,9 @@ namespace Tauron.Application.Akka.ServiceResolver.Data
         public ServiceRequirement(IReadOnlyList<string> neededServices) 
             => NeededServices = neededServices;
 
+        public static ServiceRequirement Create(params string[] neededServices)
+            => new ServiceRequirement(neededServices);
+
         public bool IsDefiend(IReadOnlyList<string> services) 
             => NeededServices.All(services.Contains!);
     }

@@ -196,7 +196,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void RegisterEndpointMessage(RegisterEndpointMessage obj)
         {
-            _log.Info("Try Register Endpoint {Endpoint}");
+            _log.Info("Try Register Endpoint {Endpoint}", obj.EndPointName);
             if (_services.ContainsKey(obj.EndPointName))
             {
                 _log.Info("Endpoint Already Registrated {Endpoint", obj.EndPointName);

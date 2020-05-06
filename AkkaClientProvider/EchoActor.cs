@@ -14,7 +14,7 @@ namespace AkkaClientProvider
         private void Handle(StringMessage obj)
         {
             Console.WriteLine(obj.Message);
-            Context.Sender.Tell(new StringMessage("Hello from Service"));
+            Context.Sender.Tell(new StringMessage($"{obj.Message} from Service"));
         }
     }
 }
