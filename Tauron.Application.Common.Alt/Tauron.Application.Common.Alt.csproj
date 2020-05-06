@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>Tauron</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Amadevus.RecordGenerator" Version="0.6.0" />
+    <PackageReference Include="FastExpressionCompiler" Version="2.0.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Neleus.DependencyInjection.Extensions\Neleus.DependencyInjection.Extensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Localization\Provider\" />
+    <Folder Include="TauronHost\">
+      <FolderName>TauronHost</FolderName>
+    </Folder>
+  </ItemGroup>
+
+</Project>

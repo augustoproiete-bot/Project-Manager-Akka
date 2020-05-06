@@ -1,5 +1,6 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Tauron;
 using Tauron.Application;
 
 // ReSharper disable once CheckNamespace
