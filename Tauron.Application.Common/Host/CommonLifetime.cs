@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Autofac;
@@ -15,6 +14,7 @@ namespace Tauron.Host
         private readonly string _appRoute;
 
         private IAppRoute? _route;
+        private Task _shutdownTask = Task.CompletedTask;
 
         public CommonLifetime(IConfiguration configuration, IComponentContext factory)
         {
@@ -38,7 +38,10 @@ namespace Tauron.Host
             }
 
             await _route.WaitForStartAsync(actorSystem);
+            _shutdownTask = _route.ShutdownTask;
         }
+
+        public Task ShutdownTask => _shutdownTask;
 
         private IAppRoute GetRoute(string name)
             => _factory.ResolveNamed<IAppRoute>(name);

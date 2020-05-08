@@ -12,8 +12,8 @@ namespace Tauron.Akka
         public ActorRefFactory(ActorSystem system) 
             => _system = system;
 
-        public IActorRef Create(bool sync) 
-            => _system.ActorOf(CreateProps(sync));
+        public IActorRef Create(bool sync, string? name = null) 
+            => _system.ActorOf(CreateProps(sync), name);
 
         public Props CreateProps(bool sync)
         {

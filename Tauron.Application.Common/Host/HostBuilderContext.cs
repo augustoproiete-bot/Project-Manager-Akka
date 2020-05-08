@@ -6,7 +6,7 @@ namespace Tauron.Host
 {
     public sealed class HostBuilderContext
     {
-        public IHostingEnvironment HostingEnvironment
+        public IHostEnvironment HostEnvironment
         {
             get;
             set;
@@ -23,9 +23,9 @@ namespace Tauron.Host
             get;
         }
 
-        public HostBuilderContext(IDictionary<object, object> properties, IConfiguration configuration, IHostingEnvironment hostingEnvironment)
+        public HostBuilderContext(IDictionary<object, object> properties, IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
-            HostingEnvironment = hostingEnvironment;
+            HostEnvironment = hostEnvironment;
             Configuration = configuration;
             Properties = (properties ?? throw new ArgumentNullException(nameof(properties)));
         }

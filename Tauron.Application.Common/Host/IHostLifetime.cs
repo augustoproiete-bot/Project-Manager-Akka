@@ -9,5 +9,7 @@ namespace Tauron.Host
     public interface IHostLifetime
     {
         Task WaitForStartAsync(ActorSystem actorSystem);
+
+        Task ShutdownTask { get; }
     }
 }

@@ -64,7 +64,7 @@ namespace Tauron.Host
                 config = BuildAppConfiguration(hostingEnwiroment, config, context);
                 context.Configuration = config;
                 var akkaConfig = CreateAkkaConfig(context);
-                var system = ActorSystem.Create(context.HostingEnvironment.ApplicationName, akkaConfig);
+                var system = ActorSystem.Create(context.HostEnvironment.ApplicationName, akkaConfig);
                 var continer = CreateServiceProvider(hostingEnwiroment, context, config, system);
 
                 system.AddDependencyResolver(new AutoFacDependencyResolver(continer, system));
@@ -91,9 +91,9 @@ namespace Tauron.Host
                 return builder.Build();
             }
 
-            private IHostingEnvironment CreateHostingEnvironment(IConfiguration hostConfiguration)
+            private IHostEnvironment CreateHostingEnvironment(IConfiguration hostConfiguration)
             {
-                var hostingEnvironment = new HostingEnviroment()
+                var hostingEnvironment = new HostEnviroment()
                                       {
                                           ApplicationName = hostConfiguration[HostDefaults.ApplicationKey],
                                           EnvironmentName = (hostConfiguration[HostDefaults.EnvironmentKey] ?? Environments.Production),
@@ -105,17 +105,17 @@ namespace Tauron.Host
                 return hostingEnvironment;
             }
 
-            private IConfiguration BuildAppConfiguration(IHostingEnvironment hostingEnvironment, IConfiguration hostConfiguration, HostBuilderContext hostBuilderContext)
+            private IConfiguration BuildAppConfiguration(IHostEnvironment hostEnvironment, IConfiguration hostConfiguration, HostBuilderContext hostBuilderContext)
             {
                 IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
-                   .SetBasePath(hostingEnvironment.ContentRootPath)
+                   .SetBasePath(hostEnvironment.ContentRootPath)
                    .AddConfiguration(hostConfiguration, true);
                 foreach (Action<HostBuilderContext, IConfigurationBuilder> configureAppConfigAction in _appConfigs) 
                     configureAppConfigAction(hostBuilderContext, configurationBuilder);
                 return configurationBuilder.Build();
             }
 
-            private HostBuilderContext CreateHostBuilderContext(IHostingEnvironment environment, IConfiguration configuration) 
+            private HostBuilderContext CreateHostBuilderContext(IHostEnvironment environment, IConfiguration configuration) 
                 => new HostBuilderContext(new Dictionary<object, object>(), configuration, environment);
 
             private Config CreateAkkaConfig(HostBuilderContext context)
@@ -128,12 +128,12 @@ namespace Tauron.Host
                 return config;
             }
 
-            private IContainer CreateServiceProvider(IHostingEnvironment hostingEnvironment, HostBuilderContext hostBuilderContext, IConfiguration appConfiguration, ActorSystem actorSystem)
+            private IContainer CreateServiceProvider(IHostEnvironment hostEnvironment, HostBuilderContext hostBuilderContext, IConfiguration appConfiguration, ActorSystem actorSystem)
             {
                 var containerBuilder = new ContainerBuilder();
 
                 containerBuilder.RegisterInstance(actorSystem);
-                containerBuilder.RegisterInstance(hostingEnvironment);
+                containerBuilder.RegisterInstance(hostEnvironment);
                 containerBuilder.RegisterInstance(hostBuilderContext);
                 containerBuilder.RegisterInstance(appConfiguration);
                 containerBuilder.RegisterType<ApplicationLifetime>().As<IHostApplicationLifetime, IApplicationLifetime>().SingleInstance();
@@ -169,9 +169,9 @@ namespace Tauron.Host
                               })
                .ConfigureAppConfiguration((hostingContext, config) =>
                                           {
-                                              IHostingEnvironment hostingEnvironment = hostingContext.HostingEnvironment;
+                                              IHostEnvironment hostEnvironment = hostingContext.HostEnvironment;
                                               var value = hostingContext.Configuration.GetValue("hostBuilder:reloadConfigOnChange", defaultValue: true);
-                                              config.AddJsonFile("appsettings.json", optional: true, value).AddJsonFile("appsettings." + hostingEnvironment.EnvironmentName + ".json", optional: true, value);
+                                              config.AddJsonFile("appsettings.json", optional: true, value).AddJsonFile("appsettings." + hostEnvironment.EnvironmentName + ".json", optional: true, value);
                                               config.AddEnvironmentVariables();
                                           });
 
@@ -197,7 +197,7 @@ namespace Tauron.Host
                 hostAppLifetime.NotifyStarted();
 
                 _system.RegisterOnTermination(hostAppLifetime.NotifyStopped);
-                await _system.WhenTerminated;
+                await Task.WhenAll(_system.WhenTerminated, lifeTime.ShutdownTask);
             }
         }
 

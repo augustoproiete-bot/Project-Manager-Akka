@@ -6,32 +6,32 @@ namespace Tauron.Host
     [PublicAPI]
     public static class HostEnvironmentEnvExtensions
     {
-        public static bool IsDevelopment(this IHostingEnvironment hostingEnvironment)
+        public static bool IsDevelopment(this IHostEnvironment hostEnvironment)
         {
-            if (hostingEnvironment == null)
-                throw new ArgumentNullException(nameof(hostingEnvironment));
-            return hostingEnvironment.IsEnvironment(Environments.Development);
+            if (hostEnvironment == null)
+                throw new ArgumentNullException(nameof(hostEnvironment));
+            return hostEnvironment.IsEnvironment(Environments.Development);
         }
 
-        public static bool IsStaging(this IHostingEnvironment hostingEnvironment)
+        public static bool IsStaging(this IHostEnvironment hostEnvironment)
         {
-            if (hostingEnvironment == null)
-                throw new ArgumentNullException(nameof(hostingEnvironment));
-            return hostingEnvironment.IsEnvironment(Environments.Staging);
+            if (hostEnvironment == null)
+                throw new ArgumentNullException(nameof(hostEnvironment));
+            return hostEnvironment.IsEnvironment(Environments.Staging);
         }
 
-        public static bool IsProduction(this IHostingEnvironment hostingEnvironment)
+        public static bool IsProduction(this IHostEnvironment hostEnvironment)
         {
-            if (hostingEnvironment == null)
-                throw new ArgumentNullException(nameof(hostingEnvironment));
-            return hostingEnvironment.IsEnvironment(Environments.Production);
+            if (hostEnvironment == null)
+                throw new ArgumentNullException(nameof(hostEnvironment));
+            return hostEnvironment.IsEnvironment(Environments.Production);
         }
 
-        public static bool IsEnvironment(this IHostingEnvironment hostingEnvironment, string environmentName)
+        public static bool IsEnvironment(this IHostEnvironment hostEnvironment, string environmentName)
         {
-            if (hostingEnvironment == null)
-                throw new ArgumentNullException(nameof(hostingEnvironment));
-            return string.Equals(hostingEnvironment.EnvironmentName, environmentName, StringComparison.OrdinalIgnoreCase);
+            if (hostEnvironment == null)
+                throw new ArgumentNullException(nameof(hostEnvironment));
+            return string.Equals(hostEnvironment.EnvironmentName, environmentName, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

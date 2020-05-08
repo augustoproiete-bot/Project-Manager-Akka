@@ -1,6 +1,6 @@
 ﻿namespace Tauron.Host
 {
-    public sealed class HostingEnviroment : IHostingEnvironment
+    public sealed class HostEnviroment : IHostEnvironment
     {
         public string EnvironmentName { get; set; }
         public string ApplicationName { get; set; }

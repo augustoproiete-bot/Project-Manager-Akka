@@ -29,17 +29,17 @@ namespace Tauron.Akka
 
         public ActorPath Path => _ref.Path;
 
-        public virtual void Init()
+        public virtual void Init(string? name = null)
         {
             CheckIsInit();
-            _ref = _builder.Create(IsSync);
+            _ref = _builder.Create(IsSync, name);
             _isInit = true;
         }
 
-        public virtual void Init(IActorRefFactory factory)
+        public virtual void Init(IActorRefFactory factory, string? name = null)
         {
             CheckIsInit();
-            _ref = factory.ActorOf(_builder.CreateProps(IsSync));
+            _ref = factory.ActorOf(_builder.CreateProps(IsSync), name);
             _isInit = true;
         }
 

@@ -26,6 +26,13 @@ namespace Tauron.Akka
         public static IEventActor Create(IActorRefFactory system, bool killOnFirstResponse = false) 
             => new HookEventActor(system.ActorOf(Props.Create(() => new EventActor(killOnFirstResponse))));
 
+        public static IEventActor Create<TPayload>(IActorRefFactory system, Action<TPayload> handler, bool killOnFirstResponse = false)
+        {
+            var temp = Create(system, killOnFirstResponse);
+            temp.Register(HookEvent.Create(handler));
+            return temp;
+        }
+
         private readonly Dictionary<Type, Delegate> _registrations = new Dictionary<Type, Delegate>();
         private readonly bool _killOnFirstRespond;
         private readonly ILoggingAdapter _log = Context.GetLogger();

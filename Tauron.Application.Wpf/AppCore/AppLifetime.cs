@@ -1,30 +1,28 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Catel.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Tauron.TauronHost;
+using Akka.Actor;
+using Autofac;
+using Tauron.Host;
 
 namespace Tauron.Application.Wpf.AppCore
 {
     public sealed class AppLifetime : IAppRoute
     {
-        private readonly IServiceScopeFactory _factory;
+        private readonly ILifetimeScope _factory;
         private readonly IHostEnvironment _hostEnvironment;
         private readonly IHostApplicationLifetime _applicationLifetime;
         private System.Windows.Application? _internalApplication;
         private readonly TaskCompletionSource<int> _shutdownWaiter = new TaskCompletionSource<int>();
 
-        public AppLifetime(IServiceScopeFactory factory, IHostEnvironment hostEnvironment, IHostApplicationLifetime applicationLifetime)
+        public AppLifetime(ILifetimeScope factory, IHostEnvironment hostEnvironment, IHostApplicationLifetime applicationLifetime)
         {
             _factory = factory;
             _hostEnvironment = hostEnvironment;
             _applicationLifetime = applicationLifetime;
         }
 
-        public Task WaitForStartAsync(CancellationToken cancellationToken)
+        public Task WaitForStartAsync(ActorSystem system)
         {
             void ShutdownApp()
             {
@@ -34,7 +32,7 @@ namespace Tauron.Application.Wpf.AppCore
 
             void Runner()
             {
-                using var scope = _factory.CreateScope();
+                using var scope = _factory.BeginLifetimeScope();
 
                 LogManager.AddListener(new CatelListner(scope.ServiceProvider.GetRequiredService<ILogger<CatelListner>>()));
                 IocReplacer.SetServiceProvider(scope.ServiceProvider);
@@ -75,10 +73,6 @@ namespace Tauron.Application.Wpf.AppCore
             return Task.CompletedTask;
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            var result = await _shutdownWaiter.Task;
-            Environment.ExitCode = result;
-        }
+        public Task ShutdownTask => _shutdownWaiter.Task;
     }
 }

@@ -7,5 +7,7 @@ namespace Tauron.Host
     public interface IAppRoute
     {
         Task WaitForStartAsync(ActorSystem actorSystem);
+
+        Task ShutdownTask { get; }
     }
 }

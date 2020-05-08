@@ -1,6 +1,6 @@
 ﻿namespace Tauron.Host
 {
-    public interface IHostingEnvironment
+    public interface IHostEnvironment
     {
         string EnvironmentName
         {

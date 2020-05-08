@@ -6,8 +6,8 @@ namespace Tauron.Akka
     [PublicAPI]
     public interface IDefaultActorRef<TActor> : IActorRef
     {
-        void Init();
+        void Init(string? name = null);
 
-        void Init(IActorRefFactory factory);
+        void Init(IActorRefFactory factory, string? name = null);
     }
 }
