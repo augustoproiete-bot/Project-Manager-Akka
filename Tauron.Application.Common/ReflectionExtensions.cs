@@ -48,7 +48,7 @@ namespace Tauron
                 // Yes, does this constructor take some parameters?
                 var paramsInfo = constructor.GetParameters();
 
-                // Create a single param of type object[].
+                // CreateEventActor a single param of type object[].
                 var param = Expression.Parameter(typeof(object[]), "args");
 
                 if (paramsInfo.Length > 0)
@@ -56,7 +56,7 @@ namespace Tauron
                     // Make a NewExpression that calls the constructor with the args we just created.
                     var newExpression = Expression.New(constructor, CreateArgumentExpressions(paramsInfo, param));
 
-                    // Create a lambda with the NewExpression as body and our param object[] as arg.
+                    // CreateEventActor a lambda with the NewExpression as body and our param object[] as arg.
                     var lambda = Expression.Lambda(typeof(Func<object[], object>), newExpression, param);
 
                     // Compile it
@@ -72,7 +72,7 @@ namespace Tauron
                     // Make a NewExpression that calls the constructor with the args we just created.
                     var newExpression = Expression.New(constructor);
 
-                    // Create a lambda with the NewExpression as body and our param object[] as arg.
+                    // CreateEventActor a lambda with the NewExpression as body and our param object[] as arg.
                     var lambda = Expression.Lambda(typeof(Func<object[], object>), newExpression, param);
 
                     // Compile it

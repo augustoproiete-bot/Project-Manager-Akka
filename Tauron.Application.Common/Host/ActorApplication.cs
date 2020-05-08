@@ -178,30 +178,35 @@ namespace Tauron.Host
             return builder;
         }
 
-        private readonly IContainer _continer;
-        private readonly ActorSystem _system;
+        private static ActorApplication? _actorApplication;
+
+        public static ActorApplication Application => Argument.NotNull(_actorApplication, nameof(Application));
+
+        public IContainer Continer { get; }
+        public ActorSystem ActorSystem { get; }
 
         internal ActorApplication(IContainer continer, ActorSystem actorSystem)
         {
-            _continer = continer;
-            _system = actorSystem;
+            _actorApplication = this;
+            Continer = continer;
+            ActorSystem = actorSystem;
         }
 
         public async Task Run()
         {
-            var lifeTime = _continer.Resolve<IHostLifetime>();
-            var hostAppLifetime = (ApplicationLifetime)_continer.Resolve<IHostApplicationLifetime>();
-            await using (hostAppLifetime.ApplicationStopping.Register(() => _system.Terminate()))
+            var lifeTime = Continer.Resolve<IHostLifetime>();
+            var hostAppLifetime = (ApplicationLifetime)Continer.Resolve<IHostApplicationLifetime>();
+            await using (hostAppLifetime.ApplicationStopping.Register(() => ActorSystem.Terminate()))
             {
-                await lifeTime.WaitForStartAsync(_system);
+                await lifeTime.WaitForStartAsync(ActorSystem);
                 hostAppLifetime.NotifyStarted();
 
-                _system.RegisterOnTermination(hostAppLifetime.NotifyStopped);
-                await Task.WhenAll(_system.WhenTerminated, lifeTime.ShutdownTask);
+                ActorSystem.RegisterOnTermination(hostAppLifetime.NotifyStopped);
+                await Task.WhenAll(ActorSystem.WhenTerminated, lifeTime.ShutdownTask);
             }
         }
 
         public void Dispose() 
-            => _continer.Dispose();
+            => Continer.Dispose();
     }
 }

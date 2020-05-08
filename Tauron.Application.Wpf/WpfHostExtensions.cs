@@ -7,7 +7,7 @@ using Tauron.Application.Wpf.AppCore;
 using Tauron.Host;
 
 // ReSharper disable once CheckNamespace
-namespace Microsoft.Extensions.Hosting
+namespace Tauron.Host
 {
     [PublicAPI]
     public static class WpfHostExtensions

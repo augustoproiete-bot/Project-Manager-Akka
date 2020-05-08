@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using System.Windows.Data;
-using Catel.MVVM;
 using JetBrains.Annotations;
 using Tauron.Application.Wpf.Converter;
 
@@ -16,7 +15,7 @@ namespace Tauron.Application.Wpf.UI
     {
         public object Convert(object value, [NotNull] Type targetType, object parameter, [NotNull] CultureInfo culture)
         {
-            if (!(value is ViewModelBase model)) return value;
+            if (!(value is IViewModel model)) return value;
 
             var manager = AutoViewLocation.Manager;
 

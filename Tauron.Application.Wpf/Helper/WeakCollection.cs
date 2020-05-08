@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using Catel.Collections;
+using Akka.Util.Internal;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.Helper

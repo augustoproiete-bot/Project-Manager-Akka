@@ -1,4 +1,9 @@
 using System.Windows;
+using System.Windows.Markup;
+
+[assembly: XmlnsDefinition("http://schemas.TauronWpf.com", "Tauron.Application.Wpf")]
+[assembly: XmlnsDefinition("http://schemas.TauronWpf.com", "Tauron.Application.Wpf.Converter")]
+[assembly: XmlnsDefinition("http://schemas.TauronWpf.com", "Tauron.Application.Wpf.Model")]
 
 [assembly: ThemeInfo(
     ResourceDictionaryLocation.None, //where theme specific resource dictionaries are located

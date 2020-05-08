@@ -1,6 +1,8 @@
-﻿namespace Tauron.Akka
+﻿using Akka.Actor;
+
+namespace Tauron.Akka
 {
-    public sealed class DefaultActorRef<TActor> : BaseActorRef<TActor>, IDefaultActorRef<TActor>
+    public class DefaultActorRef<TActor> : BaseActorRef<TActor>, IDefaultActorRef<TActor> where TActor : ActorBase
     {
         public DefaultActorRef(ActorRefFactory<TActor> actorBuilder) 
             : base(actorBuilder)

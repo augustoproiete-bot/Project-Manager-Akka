@@ -34,30 +34,24 @@ namespace Tauron.Application.Wpf.AppCore
             {
                 using var scope = _factory.BeginLifetimeScope();
 
-                LogManager.AddListener(new CatelListner(scope.ServiceProvider.GetRequiredService<ILogger<CatelListner>>()));
-                IocReplacer.SetServiceProvider(scope.ServiceProvider);
-
-                _internalApplication = scope.ServiceProvider.GetService<IAppFactory>()?.Create() ?? new System.Windows.Application();
+                _internalApplication = scope.Resolve<IAppFactory>()?.Create() ?? new System.Windows.Application();
 
                 _internalApplication.Startup += (sender, args) =>
                 {
                     // ReSharper disable AccessToDisposedClosure
-                    var splash = scope.ServiceProvider.GetService<ISplashScreen>()?.Window;
+                    var splash = scope.ResolveOptional<ISplashScreen>()?.Window;
                     splash?.Show();
 
-                    scope.ServiceProvider.GetService<WpfStartup>()?.Configure(_internalApplication, _hostEnvironment);
-
-                    var mainWindow = scope.ServiceProvider.GetRequiredService<IMainWindow>();
+                    var mainWindow = scope.Resolve<IMainWindow>();
                     mainWindow.Window.Show();
                     mainWindow.Shutdown += (o, eventArgs) 
-                        => ShutdownApp();
-
-                    scope.ServiceProvider.GetRequiredService<IWpfLifetime>().ShutdownEvent += (o, eventArgs) 
                         => ShutdownApp();
 
                     splash?.Hide();
                     // ReSharper restore AccessToDisposedClosure
                 };
+
+                system.RegisterOnTermination(() => _internalApplication.Shutdown(0));
 
                 _shutdownWaiter.SetResult(_internalApplication.Run());
             }

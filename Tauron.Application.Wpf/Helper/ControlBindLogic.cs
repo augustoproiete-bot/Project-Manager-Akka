@@ -4,14 +4,14 @@ using System.Windows;
 
 namespace Tauron.Application.Wpf.Helper
 {
-    public sealed class ControlLogic
+    public sealed class ControlBindLogic
     {
         private readonly Dictionary<string, (IDisposable Disposer, IControlBindable Binder)> _binderList = new Dictionary<string, (IDisposable Disposer, IControlBindable Binder)>();
         private readonly object _dataContext;
 
         private readonly DependencyObject _target;
 
-        public ControlLogic(DependencyObject target, object dataContext)
+        public ControlBindLogic(DependencyObject target, object dataContext)
         {
             _target = target;
             _dataContext = dataContext;
