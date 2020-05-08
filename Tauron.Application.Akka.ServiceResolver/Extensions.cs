@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Remote;
 using JetBrains.Annotations;
 using Tauron.Application.Akka.ServiceResolver.Core;
 using Tauron.Application.Akka.ServiceResolver.Messages;

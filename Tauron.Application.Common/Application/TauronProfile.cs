@@ -4,19 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Tauron.Application
 {
     [PublicAPI]
     public abstract class TauronProfile : ObservableObject, IEnumerable<string>
     {
-        private readonly ILogger<TauronProfile> _logger;
+        private readonly ILogger _logger = Log.ForContext<TauronProfile>();
         private static readonly char[] ContentSplitter = {'='};
         
-        protected TauronProfile(string application, string defaultPath, ILogger<TauronProfile> logger)
+        protected TauronProfile(string application, string defaultPath)
         {
-            _logger = logger;
             Application = Argument.NotNull(application, nameof(application));
             _defaultPath = Argument.NotNull(defaultPath, nameof(defaultPath));
         }
@@ -54,7 +53,7 @@ namespace Tauron.Application
         {
             _settings.Clear();
 
-            _logger.LogInformation($"{Application} -- Delete Profile infos... {Dictionary?.PathShorten(20)}");
+            _logger.Information($"{Application} -- Delete Profile infos... {Dictionary?.PathShorten(20)}");
 
             Dictionary?.DeleteDirectory();
         }
@@ -69,7 +68,7 @@ namespace Tauron.Application
             Dictionary.CreateDirectoryIfNotExis();
             FilePath = Dictionary.CombinePath("Settings.db");
 
-            _logger.LogInformation($"{Application} -- Begin Load Profile infos... {FilePath.PathShorten(20)}");
+            _logger.Information($"{Application} -- Begin Load Profile infos... {FilePath.PathShorten(20)}");
 
             _settings.Clear();
             foreach (var vals in
@@ -77,7 +76,7 @@ namespace Tauron.Application
                     .Select(line => line.Split(ContentSplitter, 2))
                     .Where(vals => vals.Length == 2))
             {
-                _logger.LogInformation("key: {0} | Value {1}", vals[0], vals[1]);
+                _logger.Information("key: {0} | Value {1}", vals[0], vals[1]);
 
                 _settings[vals[0]] = vals[1];
             }
@@ -85,7 +84,7 @@ namespace Tauron.Application
         
         public virtual void Save()
         {
-            _logger.LogInformation($"{Application} -- Begin Save Profile infos...");
+            _logger.Information($"{Application} -- Begin Save Profile infos...");
 
             try
             {
@@ -97,12 +96,12 @@ namespace Tauron.Application
                 {
                     writer.WriteLine("{0}={1}", key, value);
 
-                    _logger.LogInformation("key: {0} | Value {1}", key, value);
+                    _logger.Information("key: {0} | Value {1}", key, value);
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Error on Profile Save");
+                _logger.Error(e, "Error on Profile Save");
             }
         }
         

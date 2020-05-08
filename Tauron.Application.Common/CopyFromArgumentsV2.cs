@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Amadevus.RecordGenerator;
+using JetBrains.Annotations;
 
 namespace Tauron
 {
@@ -8,7 +9,8 @@ namespace Tauron
     /// The arguments for StreamHelper.CopyFrom(Stream, Stream, CopyFromArguments)
     /// </summary>
     [Record]
-    public sealed partial class CopyFromArgumentsV2
+    [PublicAPI]
+    public sealed partial class CopyFromArguments
     {
         public long TotalLength { get; } = -1;
 

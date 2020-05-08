@@ -9,6 +9,8 @@ using Akka.Code.Configuration.Elements;
 using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Logger.Serilog;
+using Akka.Streams;
+using Akka.Streams.Dsl;
 using Serilog;
 using Tauron.Application.Akka.ServiceResolver;
 using Tauron.Application.Akka.ServiceResolver.Actor;
@@ -117,6 +119,7 @@ namespace AkkaTest
         {
             //ProxyTest.TestProxy();
             //SynchronizationContext.SetSynchronizationContext(new TestSync());
+            //AutoFacTest.TestAutofac();
 
             ////https://github.com/petabridge/akka-bootcamp/blob/master/src/Unit-3/lesson5/README.md
             //var config = ConfigurationFactory.ParseString(File.ReadAllText("akka.config.hocon"));

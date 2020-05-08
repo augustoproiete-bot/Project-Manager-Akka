@@ -24,7 +24,7 @@ namespace Tauron
         /// <returns>The number of bytes actually copied.</returns>
         /// <exception cref="ArgumentNullException">Thrown if either target, source of arguments is null</exception>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if arguments.BufferSize is less than 128 or arguments.ProgressChangeCallbackInterval is less than 0</exception>
-        public static long CopyFrom(this Stream target, Stream source, CopyFromArgumentsV2 arguments)
+        public static long CopyFrom(this Stream target, Stream source, CopyFromArguments arguments)
         {
             Argument.NotNull(target, nameof(target));
             Argument.NotNull(source, nameof(source));
@@ -60,10 +60,10 @@ namespace Tauron
 
             IAsyncResult asyncResult = copyMemory.BeginInvoke(target, source, arguments.BufferSize, null, null);
 
-            long totalLength = arguments.TotalLength;
+            var totalLength = arguments.TotalLength;
             if (totalLength == -1 && source.CanSeek) totalLength = source.Length;
 
-            DateTime lastCallback = DateTime.Now;
+            var lastCallback = DateTime.Now;
             long lastLength = 0;
 
             while (!asyncResult.IsCompleted)
