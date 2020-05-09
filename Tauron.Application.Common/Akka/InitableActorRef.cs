@@ -1,10 +1,8 @@
 ﻿using Akka.Actor;
-using JetBrains.Annotations;
 
 namespace Tauron.Akka
 {
-    [PublicAPI]
-    public interface ISyncActorRef<TActor> : IActorRef, IInitableActorRef
+    public interface IInitableActorRef
     {
         void Init(string? name = null);
 

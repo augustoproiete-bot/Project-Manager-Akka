@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
+using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.Helper
 {
+    [PublicAPI]
     public sealed class ControlBindLogic
     {
         private readonly Dictionary<string, (IDisposable Disposer, IControlBindable Binder)> _binderList = new Dictionary<string, (IDisposable Disposer, IControlBindable Binder)>();
@@ -63,6 +65,19 @@ namespace Tauron.Application.Wpf.Helper
                 if (affected is IBinderControllable binder)
                     return binder;
                 affected = LogicalTreeHelper.GetParent(affected);
+            } while (affected != null);
+
+            return null;
+        }
+
+        public static IViewModel? FindParentDatacontext(DependencyObject? affected)
+        {
+            do
+            {
+                affected = LogicalTreeHelper.GetParent(affected);
+                if (affected is FrameworkElement element && element.DataContext is IViewModel model)
+                    return model;
+
             } while (affected != null);
 
             return null;

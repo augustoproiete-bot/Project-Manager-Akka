@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 namespace Tauron.Akka
 {
     [PublicAPI]
-    public interface IDispoActorRef<TActor> : IActorRef, IDisposable
+    public interface IDispoActorRef<TActor> : IActorRef, IDisposable, IInitableActorRef
     {
         void Init(string? name = null);
 

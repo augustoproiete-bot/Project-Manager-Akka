@@ -1,19 +1,21 @@
-﻿using System;
-using System.Windows;
-using Catel.MVVM;
+﻿using System.Windows;
 using Tauron.Application.Wpf.Helper;
 using CommandManager = System.Windows.Input.CommandManager;
 
 namespace Tauron.Application.Wpf
 {
-    public class UserControl : Catel.Windows.Controls.UserControl, IBinderControllable
+    public class UserControl : System.Windows.Controls.UserControl, IBinderControllable
     {
-        private readonly ControlLogic _controlLogic;
+        private sealed class UserControlLogic
+        {
+            
+        }
+
+        private readonly ControlBindLogic _controlLogic;
 
         protected UserControl(IViewModel viewModel)
-            : base(viewModel)
         {
-            _controlLogic = new ControlLogic(this, viewModel);
+            _controlLogic = new ControlBindLogic(this, viewModel);
             DataContextChanged += (sender, args) =>
                                   {
                                       if (args.NewValue != viewModel)
@@ -29,8 +31,5 @@ namespace Tauron.Application.Wpf
 
         public void CleanUp(string key) 
             => _controlLogic.CleanUp(key);
-
-        protected override void OnUnloaded(EventArgs e) 
-            => _controlLogic.CleanUp();
     }
 }

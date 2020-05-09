@@ -4,7 +4,6 @@ using Autofac.Builder;
 using JetBrains.Annotations;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.AppCore;
-using Tauron.Host;
 
 // ReSharper disable once CheckNamespace
 namespace Tauron.Host

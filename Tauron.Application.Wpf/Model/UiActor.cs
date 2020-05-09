@@ -111,6 +111,7 @@ namespace Tauron.Application.Wpf.Model
             Receive<Terminated>(ActorTermination);
             Receive<PropertyTermination>(PropertyTerminationHandler);
             Receive<UnloadEvent>(ControlUnload);
+            Receive<InitParentViewModel>(InitParentViewModel);
         }
 
         protected virtual void ActorTermination(Terminated obj)
@@ -169,7 +170,11 @@ namespace Tauron.Application.Wpf.Model
             return Task.CompletedTask;
         }
 
-        protected virtual void ControlUnload(UnloadEvent obj) { }
+        protected virtual void ControlUnload(UnloadEvent obj) 
+            => Context.Self.Tell(PoisonPill.Instance);
+
+        private void InitParentViewModel(InitParentViewModel obj) 
+            => obj.Model.Init(Context);
 
         #endregion
 

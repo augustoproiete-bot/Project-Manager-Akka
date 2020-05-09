@@ -1,6 +1,5 @@
 ﻿using System;
 using Akka.Actor;
-using JetBrains.Annotations;
 using Tauron.Akka;
 
 namespace Tauron.Application.Wpf.Model
@@ -9,9 +8,7 @@ namespace Tauron.Application.Wpf.Model
         where TModel : ActorBase
     {
         public ViewModelActorRef(ActorRefFactory<TModel> actorBuilder) 
-            : base(actorBuilder)
-        {
-        }
+            : base(actorBuilder) { }
 
         public Type ModelType => typeof(TModel);
     }

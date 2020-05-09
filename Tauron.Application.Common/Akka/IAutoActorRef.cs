@@ -4,10 +4,7 @@ using JetBrains.Annotations;
 namespace Tauron.Akka
 {
     [PublicAPI]
-    public interface IAutoActorRef<TActor> : IActorRef
+    public interface IAutoActorRef<TActor> : IActorRef, IInitableActorRef
     {
-        void Init(string? name = null);
-
-        void Init(IActorRefFactory factory, string? name = null);
     }
 }
