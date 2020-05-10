@@ -8,5 +8,8 @@
   "uistatusstartet": "Application Started",
   "uistatusstopped": "Application Stopped",
   "genericunkowen": "Unowen",
-  "genericstart": "Launched"
+  "genericstart": "Launched",
+  "genericnotstart": "Not Launched",
+  "stoplabel": "Stop",
+  "restartlabel": "Restart"
 }

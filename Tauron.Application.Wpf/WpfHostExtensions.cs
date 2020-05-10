@@ -18,7 +18,7 @@ namespace Tauron.Host
             {
                 sc.RegisterModule<TauronWpfModule>();
 
-                sc.RegisterType<TMainWindow>().As<IMainWindow>();
+                sc.RegisterType<TMainWindow>().As<IMainWindow>().SingleInstance();
 
                 var wpf = new WpfConfiguration(sc);
                 config?.Invoke(wpf);

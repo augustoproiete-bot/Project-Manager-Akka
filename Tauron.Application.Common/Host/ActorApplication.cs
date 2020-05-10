@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -127,15 +128,8 @@ namespace Tauron.Host
             private HostBuilderContext CreateHostBuilderContext(IHostEnvironment environment, IConfiguration configuration) 
                 => new HostBuilderContext(new Dictionary<object, object>(), configuration, environment);
 
-            private Config CreateAkkaConfig(HostBuilderContext context)
-            {
-                var config = Config.Empty;
-
-                foreach (var func in _akkaConfig) 
-                    config.WithFallback(func(context));
-
-                return config;
-            }
+            private Config CreateAkkaConfig(HostBuilderContext context) 
+                => _akkaConfig.Aggregate(Config.Empty, (current, func) => current.WithFallback(func(context)));
 
             private IContainer CreateServiceProvider(IHostEnvironment hostEnvironment, HostBuilderContext hostBuilderContext, IConfiguration appConfiguration, ActorSystem actorSystem)
             {

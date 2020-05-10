@@ -17,18 +17,18 @@ namespace Akka.MGIHelper.UI.MgiStarter
     {
         private class LocalHelper
         {
-            public string Unkowen { get; private set; }
+            public string Unkowen { get; private set; } = string.Empty;
 
-            public string GenericStart { get; set; }
+            public string GenericStart { get; private set; } = string.Empty;
 
-            public string GenericNotStart { get; set; }
+            public string GenericNotStart { get; private set; } = string.Empty;
 
             public LocalHelper(IActorContext context)
             {
                 var loc = context.Loc();
 
                 loc.RequestString("genericunkowen", s => Unkowen = s);
-                loc.RequestString("genericstart", s => GenericNotStart = s);
+                loc.RequestString("genericstart", s => GenericStart = s);
                 loc.RequestString("genericnotstart", s => GenericNotStart = s);
             }
         }
@@ -93,6 +93,8 @@ namespace Akka.MGIHelper.UI.MgiStarter
                                            Client?.Kill(true);
                                            Kernel?.Kill(true);
                                        }, o => InternalStart == false && (Client != null || Kernel != null));
+
+            UpdateLabel();
         }
 
         private void StatusUpdate(MgiStartingActor.StartStatusUpdate obj) 
@@ -103,7 +105,9 @@ namespace Akka.MGIHelper.UI.MgiStarter
 
         private void ProcessStateChangeHandler(ProcessStateChange obj)
         {
-            var (processChange, name, _, process) = obj;
+            var processChange = obj.Change;
+            var name = obj.Name; 
+            var process = obj.Process;
             switch (processChange)
             {
                 case ProcessChange.Started:

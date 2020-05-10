@@ -1,4 +1,7 @@
 ﻿using System.Threading.Tasks;
+using Akka.Code.Configuration;
+using Akka.Code.Configuration.Elements;
+using Akka.MGIHelper.Core.Bus;
 using Autofac;
 using Tauron.Application.Logging;
 using Tauron.Application.Wpf.SerilogViewer;
@@ -14,7 +17,14 @@ namespace Akka.MGIHelper
             var builder = ActorApplication.Create(args);
 
             builder
-               .ConfigureLogging(((context, configuration) => configuration.ConfigDefaultLogging("MGI_Helper", true).WriteTo.Sink<SeriLogViewerSink>()))
+               .ConfigureAkka(context =>
+                              {
+                                  var config = new AkkaRootConfiguration();
+                                  config.Akka.ElementAcessor.GetAddElement<DispatcherConfiguration>("CallingThread").Type = typeof(CallingThreadDispatcherInternalConfigurator);
+
+                                  return config.CreateConfig();
+                              })
+               .ConfigureLogging(((context, configuration) => configuration.ConfigDefaultLogging("MGI_Helper").WriteTo.Sink<SeriLogViewerSink>()))
                .ConfigureAutoFac(cb => cb.RegisterModule<MainModule>())
                .ConfigurateAkkSystem(((context, system) => system.RegisterLocalization()))
                .UseWpf<MainWindow>(c => c.WithAppFactory(() => new App()));

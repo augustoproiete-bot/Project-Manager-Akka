@@ -16,11 +16,15 @@ namespace Tauron.Application.Wpf.UI
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (!(value is IViewModel model)) return value;
+            return System.Windows.Application.Current.Dispatcher
+               .Invoke(() =>
+                       {
+                           if (!(value is IViewModel model)) return value;
 
-            var manager = AutoViewLocation.Manager;
+                           var manager = AutoViewLocation.Manager;
 
-            return manager.ResolveView(model) ?? value;
+                           return manager.ResolveView(model) ?? value;
+                       });
         }
 
         public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => new FrameworkObject(value).DataContext;

@@ -2,9 +2,10 @@
 
 namespace Akka.MGIHelper.Core.ProcessManager
 {
-    [Record]
     public sealed partial class RegisterProcessFile
     {
         public string FileName { get; }
+
+        public RegisterProcessFile(string fileName) => FileName = fileName;
     }
 }

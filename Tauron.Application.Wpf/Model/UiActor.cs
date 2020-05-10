@@ -88,6 +88,8 @@ namespace Tauron.Application.Wpf.Model
 
             public Func<object?, string?>? Validator { get; set; }
 
+            public string? Error { get; set; }
+
             public List<IActorRef> Subscriptors { get; } = new List<IActorRef>();
         }
 
@@ -244,17 +246,22 @@ namespace Tauron.Application.Wpf.Model
                 actorRef.Tell(new PropertyChangedEvent(name, propertyData.Value));
 
 
-            var valResult = propertyData.Validator?.Invoke(propertyData.Value);
+            propertyData.Error = propertyData.Validator?.Invoke(propertyData.Value);
 
             foreach (var actorRef in propertyData.Subscriptors)
-                actorRef.Tell(new ValidatingEvent(valResult, name));
+                actorRef.Tell(new ValidatingEvent(propertyData.Error, name));
         }
 
         private void TrckProperty(TrackPropertyEvent obj)
         {
             var prop = GetOrAdd(obj.Name);
-            prop.Subscriptors.Add(Context.Sender);
-            Context.WatchWith(Context.Sender, new PropertyTermination(Context.Sender, obj.Name));
+            prop.Subscriptors.Add(Sender);
+            Context.WatchWith(Sender, new PropertyTermination(Context.Sender, obj.Name));
+
+            if(prop.Value == null) return;
+
+            Sender.Tell(new PropertyChangedEvent(obj.Name, prop.Value));
+            Sender.Tell(new ValidatingEvent(prop.Error, obj.Name));
         }
 
         private void PropertyTerminationHandler(PropertyTermination obj) 

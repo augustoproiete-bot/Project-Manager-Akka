@@ -4,11 +4,17 @@ using Amadevus.RecordGenerator;
 
 namespace Akka.MGIHelper.Core.ProcessManager
 {
-    [Record]
     public sealed partial class RegisterProcessList
     {
         public IActorRef Intrest { get; }
 
         public ImmutableArray<string> Files { get; }
+
+
+        public RegisterProcessList(IActorRef intrest, ImmutableArray<string> files)
+        {
+            Intrest = intrest;
+            Files = files;
+        }
     }
 }

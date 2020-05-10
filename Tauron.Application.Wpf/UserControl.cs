@@ -52,6 +52,7 @@ namespace Tauron.Application.Wpf
 
         protected UserControl(IViewModel viewModel)
         {
+            DataContext = viewModel;
             _controlLogic = new UserControlLogic(this, viewModel);
             _controlBindLogic = new ControlBindLogic(this, viewModel);
             DataContextChanged += (sender, args) =>

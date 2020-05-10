@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Akka;
+using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
 
 namespace Tauron.Application.Wpf.UI
@@ -14,7 +15,7 @@ namespace Tauron.Application.Wpf.UI
     public sealed class DeferredSource : INotifyPropertyChanged, INotifyDataErrorInfo
     {
         private readonly string _name;
-        private readonly IViewModel _model;
+        private IViewModel _model = null!;
         private readonly ILogger _log = Log.ForContext<DeferredSource>();
 
         private object? _value;
@@ -23,23 +24,28 @@ namespace Tauron.Application.Wpf.UI
         private string? _error;
         private IEventActor? _eventActor;
 
-        public DeferredSource(string name, IViewModel model)
+        public DeferredSource(string name, DataContextPromise promise)
         {
             _name = name;
-            _model = model;
 
-            if(model.IsInitialized)
-                Task.Run(async () => await InitAsync());
-            else
-            {
-                void OnModelOnInitialized()
-                {
-                    Task.Run(async () => await InitAsync());
-                    _model.Initialized -= OnModelOnInitialized;
-                }
+            promise
+               .OnContext(model =>
+                          {
+                              _model = model;
 
-                model.Initialized += OnModelOnInitialized;
-            }
+                              if (model.IsInitialized)
+                                  Task.Run(async () => await InitAsync());
+                              else
+                              {
+                                  void OnModelOnInitialized()
+                                  {
+                                      Task.Run(async () => await InitAsync());
+                                      _model.Initialized -= OnModelOnInitialized;
+                                  }
+
+                                  model.Initialized += OnModelOnInitialized;
+                              }
+                          });
         }
 
         private async Task InitAsync()
@@ -50,7 +56,10 @@ namespace Tauron.Application.Wpf.UI
                 if (value != null)
                     Interlocked.Exchange(ref _value, value);
 
+                //_log.Information("Ask For {Property}", _name);
                 var eventActor = await _model.Ask<IEventActor>(new MakeEventHook(), TimeSpan.FromSeconds(5));
+                //_log.Information("Ask Compled For {Property}", _name);
+
                 eventActor.Register(HookEvent.Create<PropertyChangedEvent>(PropertyChangedHandler));
                 eventActor.Register(HookEvent.Create<ValidatingEvent>(ValidateCompled));
 
@@ -68,8 +77,11 @@ namespace Tauron.Application.Wpf.UI
             }
         }
 
-        private void PropertyChangedHandler(PropertyChangedEvent msg) 
-            => OnPropertyChanged(nameof(Value));
+        private void PropertyChangedHandler(PropertyChangedEvent msg)
+        {
+            _value = msg.Value;
+            OnPropertyChanged(nameof(Value));
+        }
 
         private void ValidateCompled(ValidatingEvent msg)
         {
@@ -99,7 +111,7 @@ namespace Tauron.Application.Wpf.UI
             set
             {
                 _value = value;
-                _model.Tell(new SetValue(_name, value));
+                _model?.Tell(new SetValue(_name, value));
             }
         }
 

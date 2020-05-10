@@ -11,7 +11,7 @@ namespace Akka.MGIHelper.Core.ProcessManager
     {
         private readonly ILoggingAdapter _log = Context.GetLogger();
         private readonly ICancelable _processUpdater;
-        private ImmutableArray<string> _tracked;
+        private ImmutableArray<string> _tracked = ImmutableArray<string>.Empty;
 
         public ProcessTrackerActor()
         {
@@ -61,7 +61,7 @@ namespace Akka.MGIHelper.Core.ProcessManager
 
         private void Track(RegisterProcessFile msg)
         {
-            var fileName = msg.FileName;
+            var fileName = msg.FileName.Trim();
             if(string.IsNullOrWhiteSpace(fileName)) return;
             _tracked = _tracked.Add(fileName);
         }

@@ -12,13 +12,13 @@ namespace Tauron.Application.Wpf
     [PublicAPI]
     public static class AutofacExtensions
     {
-        public static void RegisterView<TView, TModel>(this  ContainerBuilder builder)
-            where TView : IView, notnull where TModel : ActorBase
+        public static IRegistrationBuilder<ViewModelActorRef<TModel>, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterView<TView, TModel>(this  ContainerBuilder builder)
+            where TView : IView where TModel : ActorBase
         {
             AutoViewLocation.AddPair(typeof(TView), typeof(TModel));
 
             builder.RegisterType<TView>().As<TView>();
-            builder.RegisterType<ViewModelActorRef<TModel>>().As<IViewModel<TModel>>().Keyed<IViewModel>(typeof(TModel)).InstancePerLifetimeScope();
+            return builder.RegisterType<ViewModelActorRef<TModel>>().As<IViewModel<TModel>>().Keyed<IViewModel>(typeof(TModel)).InstancePerLifetimeScope();
         }
 
         public static IRegistrationBuilder<DefaultActorRef<TActor>, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterDefaultActor<TActor>(this ContainerBuilder builder) 

@@ -33,6 +33,6 @@ namespace Tauron.Localization.Extension
             => Request(name, info)?.ToString() ?? string.Empty;
 
         public void RequestString(string name, Action<string> valueResponse, CultureInfo? info = null)
-            => Request(name, o => valueResponse(o?.ToString() ?? string.Empty) info)?.ToString();
+            => Request(name, o => valueResponse(o?.ToString() ?? string.Empty), info);
     }
 }

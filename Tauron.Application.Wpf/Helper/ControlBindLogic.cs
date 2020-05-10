@@ -6,6 +6,33 @@ using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.Helper
 {
+    public sealed class DataContextPromise
+    {
+        private readonly FrameworkElement _element;
+
+        public DataContextPromise(FrameworkElement element) 
+            => _element = element;
+
+        public void OnContext(Action<IViewModel> modelAction)
+        {
+            if (_element.DataContext is IViewModel model)
+            {
+                modelAction(model);
+                return;
+            }
+
+            void OnElementOnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
+            {
+                if (!(args.NewValue is IViewModel localModel)) return;
+
+                modelAction(localModel);
+                _element.DataContextChanged -= OnElementOnDataContextChanged;
+            }
+
+            _element.DataContextChanged += OnElementOnDataContextChanged;
+        }
+    }
+
     [PublicAPI]
     public sealed class ControlBindLogic
     {
@@ -84,16 +111,14 @@ namespace Tauron.Application.Wpf.Helper
             return null;
         }
 
-        public static bool FindDatacontext(DependencyObject? affected, [NotNullWhen(true)]out IViewModel? viewModel)
+        public static bool FindDataContext(DependencyObject? affected, [NotNullWhen(true)]out DataContextPromise? promise)
         {
-            if (affected is FrameworkElement element && element.DataContext is IViewModel model)
-            {
-                viewModel = model;
-                return true;
-            }
-            
-            viewModel = FindParentDatacontext(affected);
-            return viewModel != null;
+            promise = null;
+            var root = FindRoot(affected);
+            if(root is FrameworkElement element)
+                promise = new DataContextPromise(element);
+
+            return promise != null;
         }
 
         public static void MakeLazy(FrameworkElement target, string? newValue, string? oldValue, Action<string?, string?, IBinderControllable, DependencyObject> runner)
