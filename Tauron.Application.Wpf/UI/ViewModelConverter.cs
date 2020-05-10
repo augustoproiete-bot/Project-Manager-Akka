@@ -6,6 +6,7 @@ using Tauron.Application.Wpf.Converter;
 
 namespace Tauron.Application.Wpf.UI
 {
+    [PublicAPI]
     public sealed class ViewModelConverterExtension : ValueConverterFactoryBase
     {
         protected override IValueConverter Create() => new ViewModelConverter();
@@ -13,7 +14,7 @@ namespace Tauron.Application.Wpf.UI
 
     public class ViewModelConverter : IValueConverter
     {
-        public object Convert(object value, [NotNull] Type targetType, object parameter, [NotNull] CultureInfo culture)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (!(value is IViewModel model)) return value;
 

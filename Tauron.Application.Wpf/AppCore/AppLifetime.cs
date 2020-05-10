@@ -1,6 +1,6 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using Akka.Actor;
 using Autofac;
 using Tauron.Host;
@@ -10,31 +10,23 @@ namespace Tauron.Application.Wpf.AppCore
     public sealed class AppLifetime : IAppRoute
     {
         private readonly ILifetimeScope _factory;
-        private readonly IHostEnvironment _hostEnvironment;
-        private readonly IHostApplicationLifetime _applicationLifetime;
         private System.Windows.Application? _internalApplication;
         private readonly TaskCompletionSource<int> _shutdownWaiter = new TaskCompletionSource<int>();
 
-        public AppLifetime(ILifetimeScope factory, IHostEnvironment hostEnvironment, IHostApplicationLifetime applicationLifetime)
-        {
-            _factory = factory;
-            _hostEnvironment = hostEnvironment;
-            _applicationLifetime = applicationLifetime;
-        }
+        public AppLifetime(ILifetimeScope factory) 
+            => _factory = factory;
 
         public Task WaitForStartAsync(ActorSystem system)
         {
-            void ShutdownApp()
-            {
-                _internalApplication?.Dispatcher.Invoke(_internalApplication.Shutdown);
-                _applicationLifetime.StopApplication();
-            }
+            void ShutdownApp() 
+                => system.Terminate();
 
             void Runner()
             {
                 using var scope = _factory.BeginLifetimeScope();
 
-                _internalApplication = scope.Resolve<IAppFactory>()?.Create() ?? new System.Windows.Application();
+                _internalApplication = scope.ResolveOptional<IAppFactory>()?.Create() ?? new System.Windows.Application();
+                _internalApplication.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
                 _internalApplication.Startup += (sender, args) =>
                 {
@@ -51,7 +43,7 @@ namespace Tauron.Application.Wpf.AppCore
                     // ReSharper restore AccessToDisposedClosure
                 };
 
-                system.RegisterOnTermination(() => _internalApplication.Shutdown(0));
+                system.RegisterOnTermination(() => _internalApplication.Dispatcher.Invoke(() => _internalApplication.Shutdown(0)));
 
                 _shutdownWaiter.SetResult(_internalApplication.Run());
             }

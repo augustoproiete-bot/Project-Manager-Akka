@@ -1,0 +1,41 @@
+﻿using System.Collections.Immutable;
+using System.Linq;
+using Akka.Actor;
+using Akka.Event;
+
+namespace Akka.MGIHelper.Core.ProcessManager
+{
+    public sealed class ProcessManagerActor : ReceiveActor
+    {
+        private ImmutableDictionary<string, IActorRef> _targetProcesses = ImmutableDictionary<string, IActorRef>.Empty;
+
+        private readonly IActorRef _processTracker;
+        private readonly ILoggingAdapter _log = Context.GetLogger();
+
+        public ProcessManagerActor()
+        {
+            _processTracker = Context.ActorOf<ProcessTrackerActor>();
+            
+            Receive<RegisterProcessList>(Register);
+            Receive<ProcessStateChange>(ProcessStateChange);
+        }
+
+        private void ProcessStateChange(ProcessStateChange obj)
+        {
+            if(_targetProcesses.TryGetValue(obj.Name, out var target))
+                target.Tell(obj);
+        }
+
+        private void Register(RegisterProcessList script)
+        {
+            foreach (var fileName in script.Files.Where(fileName => !string.IsNullOrWhiteSpace(fileName)))
+            {
+                if(_targetProcesses.ContainsKey(fileName))
+                    _log.Error("Only One Scrip per File Suporrtet: {Script}", script.Intrest.Path.ToString());
+
+                _targetProcesses = _targetProcesses.SetItem(fileName, script.Intrest);
+                _processTracker.Tell(new RegisterProcessFile(fileName));
+            }
+        }
+    }
+}

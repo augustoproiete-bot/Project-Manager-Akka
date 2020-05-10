@@ -14,12 +14,11 @@ namespace Tauron.Host
         private readonly string _appRoute;
 
         private IAppRoute? _route;
-        private Task _shutdownTask = Task.CompletedTask;
 
         public CommonLifetime(IConfiguration configuration, IComponentContext factory)
         {
             _factory = factory;
-            _appRoute = configuration.GetValue("route", string.Empty);
+            _appRoute = configuration.GetValue("route", "default");
         }
         public async Task WaitForStartAsync(ActorSystem actorSystem)
         {
@@ -38,10 +37,10 @@ namespace Tauron.Host
             }
 
             await _route.WaitForStartAsync(actorSystem);
-            _shutdownTask = _route.ShutdownTask;
+            ShutdownTask = _route.ShutdownTask;
         }
 
-        public Task ShutdownTask => _shutdownTask;
+        public Task ShutdownTask { get; private set; } = Task.CompletedTask;
 
         private IAppRoute GetRoute(string name)
             => _factory.ResolveNamed<IAppRoute>(name);

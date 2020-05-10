@@ -35,7 +35,7 @@ namespace Tauron.Application.Wpf.UI
         ///     Object that can provide services for the markup
         ///     extension.
         /// </param>
-        public override object ProvideValue(IServiceProvider provider) => Binding.ProvideValue(provider);
+        public override object? ProvideValue(IServiceProvider provider) => Binding.ProvideValue(provider);
 
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Tauron.Application.Wpf.UI
         /// <param name="target">The binding target of the binding.</param>
         /// <param name="dp">The target property of the binding.</param>
         /// <returns>True if the provider supports all that's needed.</returns>
-        protected virtual bool TryGetTargetItems([CanBeNull] IServiceProvider provider, out DependencyObject? target, out DependencyProperty? dp)
+        protected virtual bool TryGetTargetItems(IServiceProvider? provider, out DependencyObject? target, out DependencyProperty? dp)
         {
             target = null;
             dp = null;
@@ -73,14 +73,11 @@ namespace Tauron.Application.Wpf.UI
         /// <summary>
         ///     The decorated binding class.
         /// </summary>
-        [NotNull]
         [Browsable(false)]
         public Binding Binding { get; set; } = new Binding();
 
-
-        [CanBeNull]
         [DefaultValue(null)]
-        public object AsyncState
+        public object? AsyncState
         {
             get => Binding.AsyncState;
             set => Binding.AsyncState = value;
@@ -93,50 +90,44 @@ namespace Tauron.Application.Wpf.UI
             set => Binding.BindsDirectlyToSource = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public IValueConverter Converter
+        public IValueConverter? Converter
         {
             get => Binding.Converter;
             set => Binding.Converter = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public object TargetNullValue
+        public object? TargetNullValue
         {
             get => Binding.TargetNullValue;
             set => Binding.TargetNullValue = value;
         }
 
-        [CanBeNull]
         [TypeConverter(typeof(CultureInfoIetfLanguageTagConverter))]
         [DefaultValue(null)]
-        public CultureInfo ConverterCulture
+        public CultureInfo? ConverterCulture
         {
             get => Binding.ConverterCulture;
             set => Binding.ConverterCulture = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public object ConverterParameter
+        public object? ConverterParameter
         {
             get => Binding.ConverterParameter;
             set => Binding.ConverterParameter = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public string ElementName
+        public string? ElementName
         {
             get => Binding.ElementName;
             set => Binding.ElementName = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public object FallbackValue
+        public object? FallbackValue
         {
             get => Binding.FallbackValue;
             set => Binding.FallbackValue = value;
@@ -177,33 +168,29 @@ namespace Tauron.Application.Wpf.UI
             set => Binding.NotifyOnValidationError = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public PropertyPath Path
+        public PropertyPath? Path
         {
             get => Binding.Path;
             set => Binding.Path = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public RelativeSource RelativeSource
+        public RelativeSource? RelativeSource
         {
             get => Binding.RelativeSource;
             set => Binding.RelativeSource = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public object Source
+        public object? Source
         {
             get => Binding.Source;
             set => Binding.Source = value;
         }
 
-        [CanBeNull]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public UpdateSourceExceptionFilterCallback UpdateSourceExceptionFilter
+        public UpdateSourceExceptionFilterCallback? UpdateSourceExceptionFilter
         {
             get => Binding.UpdateSourceExceptionFilter;
             set => Binding.UpdateSourceExceptionFilter = value;
@@ -230,29 +217,25 @@ namespace Tauron.Application.Wpf.UI
             set => Binding.ValidatesOnExceptions = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public string XPath
+        public string? XPath
         {
             get => Binding.XPath;
             set => Binding.XPath = value;
         }
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public Collection<ValidationRule> ValidationRules => Binding.ValidationRules;
+        public Collection<ValidationRule>? ValidationRules => Binding.ValidationRules;
 
-        [CanBeNull]
         [DefaultValue(null)]
-        public string StringFormat
+        public string? StringFormat
         {
             get => Binding.StringFormat;
             set => Binding.StringFormat = value;
         }
 
-        [NotNull]
         [DefaultValue("")]
-        public string BindingGroupName
+        public string? BindingGroupName
         {
             get => Binding.BindingGroupName;
             set => Binding.BindingGroupName = value;

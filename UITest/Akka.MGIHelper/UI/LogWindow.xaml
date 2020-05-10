@@ -1,19 +1,25 @@
-﻿<Window x:Class="Akka.MGIHelper.UI.LogWindow"
+﻿<tau:Window x:Class="Akka.MGIHelper.UI.LogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Akka.MGIHelper.UI"
+        xmlns:tau="http://schemas.TauronWpf.com"
+        xmlns:serilogViewer="clr-namespace:Tauron.Application.Wpf.SerilogViewer;assembly=Tauron.Application.Wpf.SerilogViewer"
         mc:Ignorable="d"
-        Title="LogWindow" Height="450" Width="800"        
+        Title="LogWindow" Height="650" Width="1300"        
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Medium"
-        TextElement.FontSize="14"
+        TextElement.FontSize="14" Icon="../Resources/gear-setting-appearance-process.png"
         TextOptions.TextFormattingMode="Ideal" 
         TextOptions.TextRenderingMode="Auto"        
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}">
-    <Grid>
-        
-    </Grid>
-</Window>
+    <TabControl Margin="5">
+        <TabItem Header="{tau:Loc logentries}">
+            <serilogViewer:SerilogViewer/>
+        </TabItem>
+        <TabItem Header="{tau:Loc deadletter}">
+            <ListBox ItemsSource="{tau:ActorBinding UnhandledMessages}"></ListBox>
+        </TabItem>
+    </TabControl>
+</tau:Window>

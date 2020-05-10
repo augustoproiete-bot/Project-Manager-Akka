@@ -1,4 +1,5 @@
 ﻿using System;
+using Akka.Actor;
 using Akka.Configuration;
 using Autofac;
 using JetBrains.Annotations;
@@ -19,6 +20,8 @@ namespace Tauron.Host
         IApplicationBuilder ConfigureAppConfiguration(Action<HostBuilderContext, IConfigurationBuilder> config);
 
         IApplicationBuilder ConfigureAkka(Func<HostBuilderContext, Config> config);
+
+        IApplicationBuilder ConfigurateAkkSystem(Action<HostBuilderContext, ActorSystem> system);
 
         ActorApplication Build();
     }

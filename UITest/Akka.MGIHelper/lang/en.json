@@ -1,0 +1,12 @@
+{
+  "showlogs": "Show Log",
+  "logentries": "Log Entries",
+  "deadletter": "Dead Letters",
+  "kernelstarterror": "Kernel could not be started",
+  "kernelstartstartlabel": "Starting",
+  "kernelstartcompledlabel": "Starting Compled",
+  "uistatusstartet": "Application Started",
+  "uistatusstopped": "Application Stopped",
+  "genericunkowen": "Unowen",
+  "genericstart": "Launched"
+}

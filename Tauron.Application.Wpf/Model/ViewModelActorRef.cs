@@ -11,5 +11,6 @@ namespace Tauron.Application.Wpf.Model
             : base(actorBuilder) { }
 
         public Type ModelType => typeof(TModel);
+        public void Reset() => base.ResetInternal();
     }
 }

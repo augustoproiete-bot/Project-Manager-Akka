@@ -4,12 +4,15 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using Akka.Actor;
 using Akka.Event;
+using Autofac;
 using JetBrains.Annotations;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Commands;
 using Tauron.Application.Wpf.ModelMessages;
+using Tauron.Host;
 
 namespace Tauron.Application.Wpf.Model
 {
@@ -93,9 +96,15 @@ namespace Tauron.Application.Wpf.Model
         private readonly Dictionary<string, PropertyData> _propertys = new Dictionary<string, PropertyData>();
 
         protected ILoggingAdapter Log { get; } = Context.GetLogger();
+        protected ILifetimeScope LifetimeScope { get; }
+        protected Dispatcher Dispatcher { get; }
 
-        protected UiActor() 
-            => InitHandler();
+        protected UiActor(ILifetimeScope lifetimeScope, Dispatcher dispatcher)
+        {
+            LifetimeScope = lifetimeScope;
+            Dispatcher = dispatcher;
+            InitHandler();
+        }
 
         protected void InitHandler()
         {
@@ -125,6 +134,10 @@ namespace Tauron.Application.Wpf.Model
             _eventRegistrations.Clear();
             _propertys.Clear();
         }
+
+        protected void ShowWindow<TWindow>()
+            where TWindow : Window =>
+            Dispatcher.Invoke(() =>  LifetimeScope.Resolve<TWindow>().Show());
 
         #region Commands
 
@@ -171,7 +184,7 @@ namespace Tauron.Application.Wpf.Model
         }
 
         protected virtual void ControlUnload(UnloadEvent obj) 
-            => Context.Self.Tell(PoisonPill.Instance);
+            => Context.Stop(Self);
 
         private void InitParentViewModel(InitParentViewModel obj) 
             => obj.Model.Init(Context);
@@ -224,17 +237,17 @@ namespace Tauron.Application.Wpf.Model
             var (name, value) = obj;
             var propertyData = GetOrAdd(name);
 
+            if (Equals(propertyData.Value, value)) return;
+
             propertyData.Value = value;
-            if (propertyData.Validator != null)
-            {
-                var valResult = propertyData.Validator(propertyData.Value);
-
-                foreach (var actorRef in propertyData.Subscriptors) 
-                    actorRef.Tell(new ValidatingEvent(valResult, name));
-            }
-
-            foreach (var actorRef in propertyData.Subscriptors) 
+            foreach (var actorRef in propertyData.Subscriptors)
                 actorRef.Tell(new PropertyChangedEvent(name, propertyData.Value));
+
+
+            var valResult = propertyData.Validator?.Invoke(propertyData.Value);
+
+            foreach (var actorRef in propertyData.Subscriptors)
+                actorRef.Tell(new ValidatingEvent(valResult, name));
         }
 
         private void TrckProperty(TrackPropertyEvent obj)
@@ -262,6 +275,13 @@ namespace Tauron.Application.Wpf.Model
         {
             if(string.IsNullOrWhiteSpace(name)) return;
             SetPropertyValue(new SetValue(name, value));
+        }
+
+        protected void Set<TValue>(TValue value, Action onChange, [CallerMemberName] string? name = null)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return;
+            SetPropertyValue(new SetValue(name, value));
+            onChange();
         }
 
         protected void RegisterValidator<TValue>(string name, Func<TValue, string> validator)

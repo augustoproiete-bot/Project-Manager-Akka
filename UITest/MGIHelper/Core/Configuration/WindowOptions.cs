@@ -29,7 +29,7 @@ namespace MGIHelper.Core.Configuration
         {
             try
             {
-                if (string.IsNullOrEmpty(name)) return default;
+                if (string.IsNullOrEmpty(name)) return default!;
 
                 return Dictionary.TryGetValue(name, out var value) ? converter(value) : defaultValue;
             }

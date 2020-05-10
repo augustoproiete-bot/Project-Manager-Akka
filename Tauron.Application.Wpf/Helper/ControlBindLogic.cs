@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using JetBrains.Annotations;
 
@@ -81,6 +82,18 @@ namespace Tauron.Application.Wpf.Helper
             } while (affected != null);
 
             return null;
+        }
+
+        public static bool FindDatacontext(DependencyObject? affected, [NotNullWhen(true)]out IViewModel? viewModel)
+        {
+            if (affected is FrameworkElement element && element.DataContext is IViewModel model)
+            {
+                viewModel = model;
+                return true;
+            }
+            
+            viewModel = FindParentDatacontext(affected);
+            return viewModel != null;
         }
 
         public static void MakeLazy(FrameworkElement target, string? newValue, string? oldValue, Action<string?, string?, IBinderControllable, DependencyObject> runner)

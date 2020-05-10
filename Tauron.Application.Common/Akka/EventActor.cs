@@ -11,16 +11,16 @@ namespace Tauron.Akka
     {
         private sealed class HookEventActor : IEventActor
         {
-            private readonly IActorRef _actorRef;
-
             public HookEventActor(IActorRef actorRef) 
-                => _actorRef = actorRef;
+                => OriginalRef = actorRef;
+
+            public IActorRef OriginalRef { get; }
 
             public void Register(HookEvent hookEvent) 
-                => _actorRef.Tell(hookEvent);
+                => OriginalRef.Tell(hookEvent);
 
             public void Send(IActorRef actor, object send) 
-                => actor.Tell(send, _actorRef);
+                => actor.Tell(send, OriginalRef);
         }
 
         public static IEventActor Create(IActorRefFactory system, bool killOnFirstResponse = false) 

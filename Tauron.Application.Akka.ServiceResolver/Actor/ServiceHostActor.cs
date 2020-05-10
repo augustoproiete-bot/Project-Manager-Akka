@@ -50,7 +50,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         protected override void PreRestart(Exception reason, object message)
         {
-            Context.GetChildren().ForEach(c => c.Tell(PoisonPill.Instance));
+            Context.GetChildren().ForEach(c => Context.Stop(c));
             Context.Sender.Tell(new ServiceCallRejected(message, ServiceCallRejected.Error, reason));
         }
     }

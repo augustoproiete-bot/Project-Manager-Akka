@@ -58,7 +58,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         {
             _log.Warning("Endpoint Conecction Lost {Endpoint}", _targetEndpoint.Path);
             Context.Parent.Tell(new EndpointLostMessage());
-            Context.Self.Tell(PoisonPill.Instance);
+            Context.Stop(Self);
         }
     }
 }

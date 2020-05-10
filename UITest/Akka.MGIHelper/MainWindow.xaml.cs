@@ -1,28 +1,49 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using Akka.MGIHelper.Core.Configuration;
+using Tauron.Application.Wpf;
+using Tauron.Application.Wpf.AppCore;
+using Window = System.Windows.Window;
 
 namespace Akka.MGIHelper
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : IMainWindow
     {
-        public MainWindow()
+        private readonly WindowOptions _windowOptions;
+        private readonly IDisposable _setBlocker;
+
+        public MainWindow(IViewModel<MainWindowViewModel> model, WindowOptions windowOptions)
+            : base(model)
         {
+            _setBlocker = windowOptions.BlockSet();
+
+            _windowOptions = windowOptions;
             InitializeComponent();
+
+            WindowStartupLocation = WindowStartupLocation.Manual;
+        }
+
+        public Window Window => this;
+
+        public event EventHandler? Shutdown;
+
+        private void MainWindow_OnClosed(object? sender, EventArgs e) 
+            => Shutdown?.Invoke(sender, e);
+
+        private void MainWindow_OnLocationChanged(object? sender, EventArgs e)
+        {
+            _windowOptions.PositionY = Top;
+            _windowOptions.PositionX = Left;
+        }
+
+        private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            Left = _windowOptions.PositionX;
+            Top = _windowOptions.PositionY;
+            _setBlocker.Dispose();
         }
     }
 }

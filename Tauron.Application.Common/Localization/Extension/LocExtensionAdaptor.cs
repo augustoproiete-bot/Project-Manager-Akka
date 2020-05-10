@@ -25,5 +25,14 @@ namespace Tauron.Localization.Extension
             hook.Register(HookEvent.Create<LocCoordinator.ResponseLocValue>(res => valueResponse(res.Result)));
             hook.Send(_extension.LocCoordinator, new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture));
         }
+
+        public object? Request(string name, CultureInfo? info = null) 
+            => _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture)).Result.Result;
+
+        public string RequestString(string name, CultureInfo? info = null) 
+            => Request(name, info)?.ToString() ?? string.Empty;
+
+        public void RequestString(string name, Action<string> valueResponse, CultureInfo? info = null)
+            => Request(name, o => valueResponse(o?.ToString() ?? string.Empty) info)?.ToString();
     }
 }

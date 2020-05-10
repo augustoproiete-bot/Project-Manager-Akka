@@ -7,6 +7,6 @@ namespace Tauron.Application.Wpf.ModelMessages
     {
         public string Name { get; }
 
-        public bool Parameter { get; }
+        public bool CanExecute { get; }
     }
 }

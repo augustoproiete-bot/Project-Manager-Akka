@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Input;
 using JetBrains.Annotations;
+using Tauron.Akka;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
 
 namespace Tauron.Application.Wpf
 {
     [PublicAPI]
-    public class Window : System.Windows.Window, IBinderControllable
+    public class Window : System.Windows.Window, IView
     {
         private sealed class WindowLogic : IDisposable
         {
@@ -26,12 +28,14 @@ namespace Tauron.Application.Wpf
                 if (!_model.IsInitialized)
                     _model.Init();
                 _model.Tell(new InitEvent());
+                CommandManager.InvalidateRequerySuggested();
             }
 
             public void Dispose()
             {
                 _model.Tell(new UnloadEvent());
                 _window.Loaded -= WindowOnLoaded;
+                _model.Reset();
             }
         }
 
@@ -40,6 +44,7 @@ namespace Tauron.Application.Wpf
 
         protected Window(IViewModel viewModel)
         {
+            DataContext = viewModel;
             _windowLogic = new WindowLogic(viewModel, this);
 
             SizeToContent = SizeToContent.Manual;
@@ -65,6 +70,7 @@ namespace Tauron.Application.Wpf
         {
             _windowLogic.Dispose();
             _controlLogic.CleanUp();
+            base.OnClosed(e);
         }
     }
 }

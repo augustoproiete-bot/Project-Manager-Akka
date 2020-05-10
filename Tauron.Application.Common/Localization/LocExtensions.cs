@@ -12,5 +12,8 @@ namespace Tauron.Localization
 
         public static LocExtensionAdaptor Loc(this ActorSystem system)
             => new LocExtensionAdaptor(system.GetExtension<LocExtension>(), system);
+
+        public static LocExtensionAdaptor Loc(this IActorContext context)
+            => new LocExtensionAdaptor(context.System.GetExtension<LocExtension>(), context.System);
     }
 }

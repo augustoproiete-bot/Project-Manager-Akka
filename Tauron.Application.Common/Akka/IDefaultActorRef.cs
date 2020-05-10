@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 namespace Tauron.Akka
 {
     [PublicAPI]
-    public interface IDefaultActorRef<TActor> : IActorRef, IInitableActorRef
+    public interface IDefaultActorRef<TActor> : IInitableActorRef
     {
 
     }

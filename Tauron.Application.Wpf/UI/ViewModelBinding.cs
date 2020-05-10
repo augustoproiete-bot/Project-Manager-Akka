@@ -4,17 +4,12 @@ using JetBrains.Annotations;
 namespace Tauron.Application.Wpf.UI
 {
     [PublicAPI]
-    public sealed class ViewModelBinding : BindingDecoratorBase
+    public sealed class ViewModelBinding : ActorBinding
     {
-        public ViewModelBinding([NotNull] string path)
+        public ViewModelBinding(string name) 
+            : base(name)
         {
             Converter = new ViewModelConverter();
-            Path = new PropertyPath(path);
-        }
-
-        public ViewModelBinding()
-            : this(string.Empty)
-        {
         }
     }
 }

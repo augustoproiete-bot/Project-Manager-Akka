@@ -24,6 +24,7 @@ namespace Tauron.Host
             private readonly List<Action<ContainerBuilder>> _containerBuilder = new List<Action<ContainerBuilder>>();
             private readonly List<Action<HostBuilderContext, IConfigurationBuilder>> _appConfigs = new List<Action<HostBuilderContext, IConfigurationBuilder>>();
             private readonly List<Func<HostBuilderContext, Config>> _akkaConfig = new List<Func<HostBuilderContext, Config>>();
+            private readonly List<Action<HostBuilderContext, ActorSystem>> _actorSystemConfig = new List<Action<HostBuilderContext, ActorSystem>>();
 
             public IApplicationBuilder ConfigureLogging(Action<HostBuilderContext, LoggerConfiguration> config)
             {
@@ -55,6 +56,12 @@ namespace Tauron.Host
                 return this;
             }
 
+            public IApplicationBuilder ConfigurateAkkSystem(Action<HostBuilderContext, ActorSystem> system)
+            {
+                _actorSystemConfig.Add(system);
+                return this;
+            }
+
             public ActorApplication Build()
             {
                 var config = CreateHostConfiguration();
@@ -64,10 +71,12 @@ namespace Tauron.Host
                 config = BuildAppConfiguration(hostingEnwiroment, config, context);
                 context.Configuration = config;
                 var akkaConfig = CreateAkkaConfig(context);
-                var system = ActorSystem.Create(context.HostEnvironment.ApplicationName, akkaConfig);
+                var system = ActorSystem.Create(context.HostEnvironment.ApplicationName.Replace('.', '-'), akkaConfig);
                 var continer = CreateServiceProvider(hostingEnwiroment, context, config, system);
 
                 system.AddDependencyResolver(new AutoFacDependencyResolver(continer, system));
+                foreach (var action in _actorSystemConfig) 
+                    action(context, system);
 
                 return new ActorApplication(continer, system);
             }
@@ -93,7 +102,7 @@ namespace Tauron.Host
 
             private IHostEnvironment CreateHostingEnvironment(IConfiguration hostConfiguration)
             {
-                var hostingEnvironment = new HostEnviroment()
+                var hostingEnvironment = new HostEnviroment
                                       {
                                           ApplicationName = hostConfiguration[HostDefaults.ApplicationKey],
                                           EnvironmentName = (hostConfiguration[HostDefaults.EnvironmentKey] ?? Environments.Production),

@@ -26,7 +26,7 @@ namespace Tauron.Application.Wpf.UI
                 return null;
 
             var type = model.ModelType;
-            return Views.TryGetValue(type, out var view) ? _provider.ResolveOptional(view, new TypedParameter(type, viewModel)) : null;
+            return Views.TryGetValue(type, out var view) ? _provider.ResolveOptional(view, new TypedParameter(typeof(IViewModel<>).MakeGenericType(type), viewModel)) : null;
         }
     }
 }
