@@ -258,10 +258,10 @@ namespace Tauron.Application.Wpf.Model
             prop.Subscriptors.Add(Sender);
             Context.WatchWith(Sender, new PropertyTermination(Context.Sender, obj.Name));
 
-            //TODO if(prop.Value == null) return;
+            if(prop.Value == null) return;
 
-            //Sender.Tell(new PropertyChangedEvent(obj.Name, prop.Value));
-            //Sender.Tell(new ValidatingEvent(prop.Error, obj.Name));
+            Sender.Tell(new PropertyChangedEvent(obj.Name, prop.Value));
+            Sender.Tell(new ValidatingEvent(prop.Error, obj.Name));
         }
 
         private void PropertyTerminationHandler(PropertyTermination obj) 
