@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Tauron.Host;
 
 namespace Akka.MGIHelper.Core.Bus
 {
@@ -32,13 +31,7 @@ namespace Akka.MGIHelper.Core.Bus
         public void Publish<TMsg>(TMsg msg)
         {
             foreach (var handler in _handlers[typeof(TMsg)])
-                try
-                {
-                    handler.Tell(msg);
-                }
-                catch (Exception)
-                {
-                }
+                handler.Tell(msg);
         }
 
         private sealed class SubscribeDispose : IAsyncDisposable

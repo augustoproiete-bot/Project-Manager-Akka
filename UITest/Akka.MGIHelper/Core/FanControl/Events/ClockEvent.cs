@@ -2,11 +2,11 @@
 {
     public class ClockEvent
     {
-        public ClockEvent(ClockState clockState)
+        public ClockEvent(ClockState? clockState)
         {
             ClockState = clockState;
         }
 
-        public ClockState ClockState { get; }
+        public ClockState? ClockState { get; }
     }
 }

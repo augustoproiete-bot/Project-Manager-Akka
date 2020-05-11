@@ -29,11 +29,11 @@ namespace Akka.MGIHelper.Core.FanControl
             messageBus.Subscribe<TrackingEvent>(Context.Parent);
             messageBus.Subscribe<FanStatusChange>(Context.Parent);
 
-            Receive<ClockEvent>(msg => System.Threading.Tasks.Task.Run(() => messageBus.Publish(msg)));
+            Receive<ClockEvent>(msg => messageBus.Publish(msg));
         }
 
         private void CreateComponent<TComp>(Expression<Func<TComp>> fac) 
             where TComp : ActorBase =>
-            Context.ActorOf(Props.Create(fac).WithDispatcher("akka.CallingThread"), typeof(TComp).Name);
+            Context.ActorOf(Props.Create(fac), typeof(TComp).Name); //.WithDispatcher("akka.CallingThread")
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using Akka.Actor;
 using Akka.Event;
 
@@ -10,12 +11,14 @@ namespace Akka.MGIHelper.Core.ProcessManager
     public sealed class ProcessTrackerActor : ReceiveActor
     {
         private readonly ILoggingAdapter _log = Context.GetLogger();
-        private readonly ICancelable _processUpdater;
+        private readonly Timer _processUpdater;
         private ImmutableArray<string> _tracked = ImmutableArray<string>.Empty;
 
         public ProcessTrackerActor()
         {
-            _processUpdater = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(5000, 5000, Self, new GatherProcess(), Self);
+            //_processUpdater = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(5000, 5000, Self, new GatherProcess(), ActorRefs.NoSender);
+            var self = Self;
+            _processUpdater = new Timer(o => self.Tell(new GatherProcess()), null, 5000, 5000);
 
             Receive<GatherProcess>(GetProcesses);
             Receive<ProcessExitMessage>(ProcessExit);
@@ -67,7 +70,7 @@ namespace Akka.MGIHelper.Core.ProcessManager
         }
 
         protected override void PostStop() 
-            => _processUpdater.Cancel();
+            => _processUpdater.Dispose();
 
         protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(5, 5000, exception => Directive.Stop);
     }

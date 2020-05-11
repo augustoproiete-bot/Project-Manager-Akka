@@ -16,7 +16,7 @@ namespace Akka.MGIHelper.Core.FanControl.Components
             private readonly FanControlOptions _options;
             private readonly Timer _timer;
 
-            private ClockState _clockState;
+            private ClockState _clockState = ClockState.Stop;
 
             public ActionTimer(Action target, FanControlOptions options)
             {
@@ -25,17 +25,13 @@ namespace Akka.MGIHelper.Core.FanControl.Components
                 _timer = new Timer(RunTimer);
             }
 
-            private void RunTimer(object? state)
-            {
-                _target();
+            private void RunTimer(object? state) 
+                => _target();
 
-                if (_clockState == ClockState.Start)
-                    _timer.Change(_options.ClockTimeMs, -1);
-            }
-
-            public void Change(ClockState state)
+            public void Change(ClockState? state)
             {
-                _clockState = state;
+                if(state != null)
+                    _clockState = state.Value;
                 if (state == ClockState.Start)
                     _timer.Change(_options.ClockTimeMs, -1);
             }

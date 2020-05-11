@@ -59,6 +59,8 @@ namespace Akka.MGIHelper.Core.FanControl.Components
             {
                 _messageBus.Publish(new TrackingEvent(true, e.Message));
             }
+
+            _messageBus.Publish(new ClockEvent(null));
         }
 
         protected override void PostStop() 
@@ -82,7 +84,7 @@ namespace Akka.MGIHelper.Core.FanControl.Components
             {
                 var w = base.GetWebRequest(uri);
                 if(w != null)
-                    w.Timeout = 1000;
+                    w.Timeout = 5000;
                 return w;
             }
         }
