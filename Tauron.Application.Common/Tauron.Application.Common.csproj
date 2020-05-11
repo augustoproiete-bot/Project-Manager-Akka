@@ -6,6 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702; 8669;</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Akka" Version="1.4.5" />
     <PackageReference Include="Akka.DI.AutoFac" Version="1.4.1" />

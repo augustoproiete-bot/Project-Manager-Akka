@@ -4,7 +4,7 @@
     {
         public bool Error { get; }
 
-        public string Reason { get; }
+        public string Reason { get; } = string.Empty;
 
         public int Power { get; }
 

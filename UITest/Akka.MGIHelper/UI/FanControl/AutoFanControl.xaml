@@ -61,7 +61,7 @@
                 <TextBlock Grid.Row="6" Grid.Column="2" Text="%" Margin="3"/>
 
                 <TextBlock Grid.Row="7" Grid.Column="0" Text="{tau:ActorBinding FanRunning, Converter={StaticResource FanStadeConverter}}" Margin="3"/>
-                <Rectangle Grid.Row="7" Grid.Column="1" Fill="{tau:ActorBinding FanRunning, Converter={StaticResource ColorConverter}}" Margin="3"/>
+                <Rectangle Grid.Row="7" Grid.Column="1" Fill="{tau:ActorBinding FanRunning, Converter={StaticResource ColorConverter}}" Margin="3" RadiusX="20" RadiusY="50" />
 
                 <TextBlock Grid.Row="9" Grid.ColumnSpan="3" Text="{tau:ActorBinding Reason}" Margin="3" FontSize="20" TextAlignment="Center" TextWrapping="WrapWithOverflow"/>
             </Grid>

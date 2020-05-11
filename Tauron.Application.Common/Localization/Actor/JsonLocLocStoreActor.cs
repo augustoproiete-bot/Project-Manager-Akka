@@ -12,7 +12,7 @@ namespace Tauron.Localization.Actor
     [UsedImplicitly]
     public sealed class JsonLocLocStoreActor : LocStoreActorBase
     {
-        private static readonly char[] _sep = {'.'};
+        private static readonly char[] Sep = {'.'};
 
         private readonly JsonConfiguration? _configuration;
         private readonly Dictionary<string, Dictionary<string, JToken>> _files = new Dictionary<string, Dictionary<string, JToken>>();
@@ -71,7 +71,7 @@ namespace Tauron.Localization.Actor
             _files.Clear();
 
             foreach (var file in Directory.EnumerateFiles(_configuration.RootDic, "*.json")) 
-                _files[Path.GetFileNameWithoutExtension(file).Split(_sep, StringSplitOptions.RemoveEmptyEntries)[0]] = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(File.ReadAllText(file));
+                _files[Path.GetFileNameWithoutExtension(file).Split(Sep, StringSplitOptions.RemoveEmptyEntries)[0]] = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(File.ReadAllText(file));
 
             _isInitialized = true;
         }

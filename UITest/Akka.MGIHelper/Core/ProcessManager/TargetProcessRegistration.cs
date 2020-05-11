@@ -9,9 +9,9 @@ namespace Akka.MGIHelper.Core.ProcessManager
     [Record]
     public sealed partial class TargetProcessRegistration
     {
-        public ImmutableArray<string> FileNames { get; }
+        public ImmutableArray<string> FileNames { get; } = ImmutableArray<string>.Empty;
 
-        public IActorRef Target { get; }
+        public IActorRef Target { get; } = ActorRefs.Nobody;
 
         //void Found(Process p);
 
