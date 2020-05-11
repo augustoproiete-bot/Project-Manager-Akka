@@ -1,10 +1,11 @@
-﻿<tau:Window x:Class="Tauron.Application.Localizer.MainWindow"
+﻿<ui:InternalMetroWindow x:Class="Tauron.Application.Localizer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Tauron.Application.Localizer"
         xmlns:tau="http://schemas.TauronWpf.com"
+        xmlns:ui="clr-namespace:Tauron.Application.Localizer.Core.UI"
         xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
         mc:Ignorable="d" WindowState="Maximized"
         Title="MainWindow" Height="450" Width="800"
@@ -20,5 +21,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
+        <Button Grid.Column="0" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">Test</Button>
     </Grid>
-</tau:Window>
+</ui:InternalMetroWindow>

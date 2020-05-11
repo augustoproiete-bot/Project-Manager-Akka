@@ -13,9 +13,7 @@ namespace Tauron.Application.Localizer
     /// </summary>
     public partial class App
     {
-        public App()
-        {
-            InitializeComponent();
-        }
+        public App() 
+            => InitializeComponent();
     }
 }
