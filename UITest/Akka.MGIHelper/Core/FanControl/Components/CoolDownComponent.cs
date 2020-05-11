@@ -1,26 +1,16 @@
-﻿using Akka.Actor;
-using Akka.MGIHelper.Core.Bus;
+﻿using System.Threading.Tasks;
+using Akka.MGIHelper.Core.FanControl.Bus;
 using Akka.MGIHelper.Core.FanControl.Events;
 
 namespace Akka.MGIHelper.Core.FanControl.Components
 {
-    public sealed class CoolDownComponent : ReceiveActor
+    public sealed class CoolDownComponent : IHandler<TrackingEvent>
     {
-        private readonly MessageBus _eventStream;
-
-        public CoolDownComponent(MessageBus eventStream)
-        {
-            _eventStream = eventStream;
-
-            _eventStream.Subscribe<TrackingEvent>(Self);
-            Receive<TrackingEvent>(Handle);
-        }
-
-        private void Handle(TrackingEvent msg)
+        public async Task Handle(TrackingEvent msg, MessageBus messageBus)
         {
             if(msg.Error) return;
             if (msg.State == State.Cooldown)
-                _eventStream.Publish(new FanStartEvent());
+                await messageBus.Publish(new FanStartEvent());
         }
     }
 }

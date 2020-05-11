@@ -1,25 +1,15 @@
-﻿using Akka.Actor;
-using Akka.MGIHelper.Core.Bus;
+﻿using System.Threading.Tasks;
+using Akka.MGIHelper.Core.FanControl.Bus;
 using Akka.MGIHelper.Core.FanControl.Events;
 
 namespace Akka.MGIHelper.Core.FanControl.Components
 {
-    public class PowerComponent : ReceiveActor
+    public class PowerComponent : IHandler<TrackingEvent>
     {
-        private readonly MessageBus _messageBus;
-
-        public PowerComponent(MessageBus messageBus)
-        {
-            _messageBus = messageBus;
-
-            _messageBus.Subscribe<TrackingEvent>(Self);
-            Receive<TrackingEvent>(Handle);
-        }
-
-        private void Handle(TrackingEvent msg)
+        public async Task Handle(TrackingEvent msg, MessageBus messageBus)
         {
             if (msg.State == State.Power)
-                _messageBus.Publish(new FanStartEvent());
+                await messageBus.Publish(new FanStartEvent());
         }
     }
 }

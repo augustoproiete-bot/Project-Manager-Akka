@@ -1,30 +1,22 @@
-﻿using Akka.Actor;
-using Akka.MGIHelper.Core.Bus;
+﻿using System.Threading.Tasks;
 using Akka.MGIHelper.Core.Configuration;
+using Akka.MGIHelper.Core.FanControl.Bus;
 using Akka.MGIHelper.Core.FanControl.Events;
 
 namespace Akka.MGIHelper.Core.FanControl.Components
 {
-    public class StartUpCoolingComponent : ReceiveActor
+    public class StartUpCoolingComponent : IHandler<TrackingEvent>
     {
         private readonly FanControlOptions _options;
-        private readonly MessageBus _eventStream;
 
-        public StartUpCoolingComponent(FanControlOptions options, MessageBus eventStream)
-        {
-            _options = options;
-            _eventStream = eventStream;
+        public StartUpCoolingComponent(FanControlOptions options) => _options = options;
 
-            eventStream.Subscribe<TrackingEvent>(Self);
-            Receive<TrackingEvent>(Handle);
-        }
-
-        private void Handle(TrackingEvent msg)
+        public async Task Handle(TrackingEvent msg, MessageBus messageBus)
         {
             if(msg.Error || msg.State != State.StartUp) return;
 
             if (msg.Pt1000 >= _options.MaxStartupTemp)
-                _eventStream.Publish(new FanStartEvent());
+                await messageBus.Publish(new FanStartEvent());
         }
     }
 }

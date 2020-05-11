@@ -1,4 +1,5 @@
-﻿using System.Windows.Threading;
+﻿using System.Diagnostics;
+using System.Windows.Threading;
 using Akka.Actor;
 using Akka.MGIHelper.Core.Configuration;
 using Akka.MGIHelper.Core.FanControl;

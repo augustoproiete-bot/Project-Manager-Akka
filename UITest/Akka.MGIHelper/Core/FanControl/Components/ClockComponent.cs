@@ -1,69 +1,65 @@
 ﻿using System;
 using System.Threading;
-using Akka.Actor;
-using Akka.Event;
-using Akka.MGIHelper.Core.Bus;
+using System.Threading.Tasks;
 using Akka.MGIHelper.Core.Configuration;
+using Akka.MGIHelper.Core.FanControl.Bus;
 using Akka.MGIHelper.Core.FanControl.Events;
 
 namespace Akka.MGIHelper.Core.FanControl.Components
 {
-    public sealed class ClockComponent : ReceiveActor
+    public sealed class ClockComponent : IHandler<ClockEvent>, IAsyncDisposable
     {
-        private sealed class ActionTimer : IDisposable
+        private readonly FanControlOptions _options;
+        private readonly Timer _timer;
+
+        private MessageBus _messageBus;
+        private ClockState _clockState;
+
+        public ClockComponent(FanControlOptions options)
         {
-            private readonly Action _target;
-            private readonly FanControlOptions _options;
-            private readonly Timer _timer;
+            _options = options;
+            _timer = new Timer(Invoke);
+        }
 
-            private ClockState _clockState = ClockState.Stop;
-
-            public ActionTimer(Action target, FanControlOptions options)
+        private async void Invoke(object state)
+        {
+            try
             {
-                _target = target;
-                _options = options;
-                _timer = new Timer(RunTimer);
+                await _messageBus.Publish(new TickEvent());
             }
-
-            private void RunTimer(object? state) 
-                => _target();
-
-            public void Change(ClockState? state)
+            catch
             {
-                if(state != null)
-                    _clockState = state.Value;
-                if (state == ClockState.Start)
+                // ignored
+            }
+            finally
+            {
+                if (_clockState == ClockState.Start)
+                {
                     _timer.Change(_options.ClockTimeMs, -1);
+                }
+            }
+        }
+
+        public Task Handle(ClockEvent msg, MessageBus messageBus)
+        {
+            _messageBus = messageBus;
+            _clockState = msg.ClockState;
+
+            switch (msg.ClockState)
+            {
+                case ClockState.Start:
+                    _timer.Change(_options.ClockTimeMs, -1);
+                    break;
+                case ClockState.Stop:
+                    _timer.Change(-1, -1);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
-            public void Dispose() 
-                => _timer.Dispose();
+            return Task.CompletedTask;
         }
 
-        private readonly ActionTimer _timer;
-        private readonly ILoggingAdapter _log = Context.GetLogger();
-
-        private readonly MessageBus _messageBus;
-
-        public ClockComponent(FanControlOptions options, MessageBus eventStream)
-        {
-            _messageBus = eventStream;
-
-            eventStream.Subscribe<ClockEvent>(Self);
-
-            Receive<ClockEvent>(Handle);
-
-            _timer = new ActionTimer(Invoke, options);
-        }
-
-
-        private void Invoke() => _messageBus.Publish(new TickEvent());
-
-        private void Handle(ClockEvent msg)
-        {
-            _log.Info("Change Clock State: {State}", msg.ClockState);
-
-            _timer.Change(msg.ClockState);
-        }
+        public async ValueTask DisposeAsync() => await _timer.DisposeAsync();
     }
 }

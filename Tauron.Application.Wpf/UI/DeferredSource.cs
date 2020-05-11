@@ -79,6 +79,7 @@ namespace Tauron.Application.Wpf.UI
 
         private void PropertyChangedHandler(PropertyChangedEvent msg)
         {
+            //TODO if(Equals(_value, msg.Value)) return;
             _value = msg.Value;
             OnPropertyChanged(nameof(Value));
         }

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.MGIHelper.Core.Bus;
 using Akka.MGIHelper.Core.Configuration;
+using Akka.MGIHelper.Core.FanControl.Bus;
 using Akka.MGIHelper.Core.FanControl.Components;
 using Akka.MGIHelper.Core.FanControl.Events;
 
@@ -12,24 +13,33 @@ namespace Akka.MGIHelper.Core.FanControl
     {
         public FanControl(FanControlOptions options)
         {
+            var parent = Context.Parent;
+
             var messageBus = new MessageBus();
-            
-            CreateComponent(() => new ClockComponent(options, messageBus));
 
-            CreateComponent(() => new DataFetchComponent(options, messageBus));
+            messageBus.Subscribe(new ClockComponent(options));
 
-            CreateComponent(() => new PowerComponent(messageBus));
-            CreateComponent(() => new CoolDownComponent(messageBus));
-            CreateComponent(() => new GoStandByComponent(options, messageBus));
-            CreateComponent(() => new StartUpCoolingComponent(options, messageBus));
-            CreateComponent(() => new StandByCoolingComponent(options, messageBus));
+            messageBus.Subscribe(new DataFetchComponent(options));
 
-            CreateComponent(() => new FanControlComponent(options, messageBus));
+            messageBus.Subscribe(new TrackingEventDeliveryComponent(e =>
+            {
+                parent.Tell(e);
+                return Task.CompletedTask;
+            }));
 
-            messageBus.Subscribe<TrackingEvent>(Context.Parent);
-            messageBus.Subscribe<FanStatusChange>(Context.Parent);
+            messageBus.Subscribe(new PowerComponent());
+            messageBus.Subscribe(new CoolDownComponent());
+            messageBus.Subscribe(new GoStandByComponent(options));
+            messageBus.Subscribe(new StartUpCoolingComponent(options));
+            messageBus.Subscribe(new StandByCoolingComponent(options));
 
-            Receive<ClockEvent>(msg => messageBus.Publish(msg));
+            messageBus.Subscribe(new FanControlComponent(options, e =>
+            { 
+                parent.Tell(new FanStatusChange(e));
+                return Task.CompletedTask;
+            }));
+
+            Receive<ClockEvent>(async msg => await messageBus.Publish(msg));
         }
 
         private void CreateComponent<TComp>(Expression<Func<TComp>> fac) 

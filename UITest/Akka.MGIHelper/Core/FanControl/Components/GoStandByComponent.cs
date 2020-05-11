@@ -1,28 +1,20 @@
 ﻿using System.Diagnostics;
-using Akka.Actor;
-using Akka.MGIHelper.Core.Bus;
+using System.Threading.Tasks;
 using Akka.MGIHelper.Core.Configuration;
+using Akka.MGIHelper.Core.FanControl.Bus;
 using Akka.MGIHelper.Core.FanControl.Events;
 
 namespace Akka.MGIHelper.Core.FanControl.Components
 {
-    public class GoStandByComponent : ReceiveActor
+    public class GoStandByComponent : IHandler<TrackingEvent>
     {
         private readonly FanControlOptions _options;
-        private readonly MessageBus _messageBus;
         private State _lastState = State.Idle;
         private readonly Stopwatch _stopwatch = new Stopwatch();
 
-        public GoStandByComponent(FanControlOptions options, MessageBus messageBus)
-        {
-            _options = options;
-            _messageBus = messageBus;
+        public GoStandByComponent(FanControlOptions options) => _options = options;
 
-            messageBus.Subscribe<TrackingEvent>(Self);
-            Receive<TrackingEvent>(Handle);
-        }
-
-        private void Handle(TrackingEvent msg)
+        public async Task Handle(TrackingEvent msg, MessageBus messageBus)
         {
             if(msg.Error) return;
 
@@ -33,14 +25,14 @@ namespace Akka.MGIHelper.Core.FanControl.Components
                 {
                     case State.StandBy when msg.State == State.StandBy:
                         if (_stopwatch.IsRunning && _stopwatch.Elapsed.Seconds < _options.GoStandbyTime)
-                            _messageBus.Publish(new FanStartEvent());
+                            await messageBus.Publish(new FanStartEvent());
                         else if (_stopwatch.IsRunning)
                             _stopwatch.Stop();
                         else
                             _stopwatch.Reset();
                         break;
                     case State.Power when msg.State == State.StandBy:
-                        _messageBus.Publish(new FanStartEvent());
+                        await messageBus.Publish(new FanStartEvent());
                         _stopwatch.Start();
                         break;
                 }

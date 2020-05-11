@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+﻿using System.Diagnostics;
 using Tauron.Application.Wpf;
 
 namespace Akka.MGIHelper.UI.FanControl
@@ -11,6 +11,8 @@ namespace Akka.MGIHelper.UI.FanControl
         public AutoFanControl(IViewModel<AutoFanControlModel> model)
             : base(model)
         {
+            var trace = new StackTrace().ToString();
+
             InitializeComponent();
         }
     }
