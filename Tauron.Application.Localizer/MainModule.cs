@@ -1,5 +1,5 @@
 ﻿using Autofac;
-using Tauron.Application.Localizer.ViewModels;
+using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Wpf;
 
 namespace Tauron.Application.Localizer

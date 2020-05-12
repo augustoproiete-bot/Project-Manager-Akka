@@ -1,9 +1,8 @@
 ﻿using System.Windows.Threading;
 using Autofac;
-using JetBrains.Annotations;
 using Tauron.Application.Wpf.Model;
 
-namespace Tauron.Application.Localizer.ViewModels
+namespace Tauron.Application.Localizer.UIModels
 {
     public sealed class MainWindowViewModel : UiActor
     {

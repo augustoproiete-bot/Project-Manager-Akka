@@ -87,7 +87,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
                                                                                                          Client?.Kill(true);
                                                                                                          Kernel?.Kill(true);
                                                                                                      }));
-                                        }, o => InternalStart == false && Client == null && Kernel == null);
+                                        }, o => InternalStart == false);
 
             RegisterCommand("TryStop", o =>
                                        {
@@ -112,12 +112,12 @@ namespace Akka.MGIHelper.UI.MgiStarter
             switch (processChange)
             {
                 case ProcessChange.Started:
-                    if (name == _config.Kernel)
+                    if (_config.Kernel.Contains(name))
                     {
                         ConfigProcess(process);
                         Kernel = process;
                     }
-                    if (name == _config.Client)
+                    if (_config.Client.Contains(name))
                     {
                         ConfigProcess(process);
                         Client = process;

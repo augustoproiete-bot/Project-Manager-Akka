@@ -72,6 +72,6 @@ namespace Akka.MGIHelper.Core.ProcessManager
         protected override void PostStop() 
             => _processUpdater.Dispose();
 
-        protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(5, 5000, exception => Directive.Stop);
+        protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(exception => Directive.Stop);
     }
 }

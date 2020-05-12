@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Threading;
 using Akka.Actor;
 using Akka.Event;
 
@@ -17,7 +18,7 @@ namespace Akka.MGIHelper.Core.ProcessManager
         }
 
         private readonly ILoggingAdapter _log = Context.GetLogger();
-        private readonly ICancelable _exitCheck;
+        private readonly Timer _exitCheck;
         private readonly int _id;
         private readonly string _processName;
         private readonly Process _target;
@@ -30,7 +31,8 @@ namespace Akka.MGIHelper.Core.ProcessManager
             _id = process.Id;
             _log.Info("Track Process {Name} Startet: {Id}", _processName, _id);
 
-            _exitCheck = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(1000, 1000, Self, new InternalCheckProcess(), Self);
+            var self = Self;
+            _exitCheck = new Timer(o => self.Tell(new InternalCheckProcess()), null, 1000, 1000);
 
             Receive<InternalProcessExit>(ProcessOnExited);
             Receive<InternalCheckProcess>(CheckProcess);
@@ -53,7 +55,7 @@ namespace Akka.MGIHelper.Core.ProcessManager
 
         protected override void PostStop()
         {
-            _exitCheck.Cancel();
+            _exitCheck.Dispose();
             _target.Dispose();
         }
     }

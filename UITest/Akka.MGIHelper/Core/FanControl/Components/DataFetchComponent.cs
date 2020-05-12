@@ -73,7 +73,7 @@ namespace Akka.MGIHelper.Core.FanControl.Components
             {
                 var request = base.GetWebRequest(address);
 
-                request.Timeout = 1000;
+                request.Timeout = 2000;
 
                 return request;
             }

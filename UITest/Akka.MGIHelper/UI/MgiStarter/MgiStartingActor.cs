@@ -75,7 +75,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
                 }
 
                 Thread.Sleep(500);
-                Directory.SetCurrentDirectory(Path.GetDirectoryName(config.Client));
+                Directory.SetCurrentDirectory(Path.GetDirectoryName(config.Client.Trim()));
                 Process.Start(config.Client);
 
                 Sender.Tell(new StartStatusUpdate(Context.Loc().RequestString("kernelstartcompledlabel")));
@@ -91,7 +91,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
 
         private bool CheckKernelRunning(ProcessConfig config, out Process kernel)
         {
-            var kernelPath = config.Kernel;
+            var kernelPath = config.Kernel.Trim();
             var statusPath = Path.Combine(Path.GetDirectoryName(kernelPath) ?? string.Empty, "Status.ini");
             const int iterationCount = 60;
             var parser = new IniParser.FileIniDataParser();

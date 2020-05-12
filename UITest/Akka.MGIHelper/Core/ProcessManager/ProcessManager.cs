@@ -22,8 +22,10 @@ namespace Akka.MGIHelper.Core.ProcessManager
 
         private void ProcessStateChange(ProcessStateChange obj)
         {
-            if(_targetProcesses.TryGetValue(obj.Name, out var target))
-                target.Tell(obj);
+            var (key, target) = _targetProcesses.FirstOrDefault(p => p.Key.Contains(obj.Name));
+            if(string.IsNullOrWhiteSpace(key)) return;
+            
+            target.Tell(obj);
         }
 
         private void Register(RegisterProcessList script)

@@ -1,82 +1,45 @@
 ﻿using System;
 using System.Windows;
-using System.Windows.Input;
 using MahApps.Metro.Controls;
-using Tauron.Akka;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Helper;
-using Tauron.Application.Wpf.ModelMessages;
 using Tauron.Application.Wpf.UI;
 
 namespace Tauron.Application.Localizer.Core.UI
 {
     public class InternalMetroWindow : MetroWindow, IView
     {
-        private sealed class WindowLogic : IDisposable
+        private sealed class MetroWindowLogic : ControlLogicBase<InternalMetroWindow>
         {
-            private readonly IViewModel _model;
-            private readonly InternalMetroWindow _window;
-
-            public WindowLogic(IViewModel model, InternalMetroWindow window)
+            public MetroWindowLogic(InternalMetroWindow userControl, IViewModel model) : base(userControl, model)
             {
-                _model = model;
-                _window = window;
-                window.Loaded += WindowOnLoaded;
             }
 
-            private void WindowOnLoaded(object sender, RoutedEventArgs e)
+            protected override void WireUpUnloaded()
             {
-                if (!_model.IsInitialized)
-                    _model.Init();
-                _model.Tell(new InitEvent(_window.Key));
-                CommandManager.InvalidateRequerySuggested();
-            }
-
-            public void Dispose()
-            {
-                _model.Tell(new UnloadEvent(_window.Key));
-                _window.Loaded -= WindowOnLoaded;
-                _model.Reset();
+                UserControl.Closed += (sender, args) => UserControlOnUnloaded();
             }
         }
 
-        private readonly ControlBindLogic _controlLogic;
-        private readonly WindowLogic _windowLogic;
+        private readonly MetroWindowLogic _windowLogic;
 
-        protected InternalMetroWindow(IViewModel viewModel)
+        protected InternalMetroWindow(IViewModel viewModel) 
+            => _windowLogic = new MetroWindowLogic(this, viewModel);
+
+        public void Register(string key, IControlBindable bindable, DependencyObject affectedPart) 
+            => _windowLogic.Register(key, bindable, affectedPart);
+
+        public void CleanUp(string key) 
+            => _windowLogic.CleanUp(key);
+
+        public string Key => _windowLogic.Key;
+
+        public ViewManager ViewManager => _windowLogic.ViewManager;
+
+        public event Action? ControlUnload
         {
-            DataContext = viewModel;
-            _windowLogic = new WindowLogic(viewModel, this);
-
-            SizeToContent = SizeToContent.Manual;
-            ShowInTaskbar = true;
-            ResizeMode = ResizeMode.CanResize;
-            WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
-            _controlLogic = new ControlBindLogic(this, viewModel);
-            DataContextChanged += (sender, args) =>
-            {
-                if (args.NewValue != viewModel)
-                    ((FrameworkElement)sender).DataContext = viewModel;
-            };
+            add => _windowLogic.ControlUnload += value;
+            remove => _windowLogic.ControlUnload -= value;
         }
-
-        void IBinderControllable.Register(string key, IControlBindable bindable, DependencyObject affectedPart)
-            => _controlLogic.Register(key, bindable, affectedPart);
-
-        public void CleanUp(string key)
-            => _controlLogic.CleanUp(key);
-
-        protected override void OnClosed(EventArgs e)
-        {
-            ControlUnload?.Invoke();
-            _windowLogic.Dispose();
-            _controlLogic.CleanUp();
-            base.OnClosed(e);
-        }
-
-        public string Key { get; } = Guid.NewGuid().ToString();
-        public ViewManager ViewManager => ViewManager.Manager;
-        public event Action? ControlUnload;
     }
 }

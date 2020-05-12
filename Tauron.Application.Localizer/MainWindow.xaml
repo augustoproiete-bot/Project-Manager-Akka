@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Tauron.Application.Localizer"
         xmlns:tau="http://schemas.TauronWpf.com"
         xmlns:ui="clr-namespace:Tauron.Application.Localizer.Core.UI"
         xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
@@ -16,7 +15,14 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}">
-    <!--WindowTitleBrush="{DynamicResource PrimaryHueMidBrush}"-->
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Expander Grid.Row="2" Header="Operations">
+            <Button>test</Button>
+        </Expander>
     </Grid>
 </ui:InternalMetroWindow>
