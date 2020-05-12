@@ -106,37 +106,44 @@ namespace Akka.MGIHelper.UI.MgiStarter
 
         private void ProcessStateChangeHandler(ProcessStateChange obj)
         {
-            var processChange = obj.Change;
-            var name = obj.Name; 
-            var process = obj.Process;
-            switch (processChange)
+            try
             {
-                case ProcessChange.Started:
-                    if (_config.Kernel.Contains(name))
-                    {
-                        ConfigProcess(process);
-                        Kernel = process;
-                    }
-                    if (_config.Client.Contains(name))
-                    {
-                        ConfigProcess(process);
-                        Client = process;
-                    }
-                    break;
-                case ProcessChange.Stopped:
-                    if (name == _config.Kernel)
-                        Kernel = null;
-                    if (name == _config.Client)
-                        Client = null;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                var processChange = obj.Change;
+                var name = obj.Name; 
+                var process = obj.Process;
+                switch (processChange)
+                {
+                    case ProcessChange.Started:
+                        if (_config.Kernel.Contains(name))
+                        {
+                            ConfigProcess(process);
+                            Kernel = process;
+                        }
+                        if (_config.Client.Contains(name))
+                        {
+                            ConfigProcess(process);
+                            Client = process;
+                        }
+                        break;
+                    case ProcessChange.Stopped:
+                        if (_config.Kernel.Contains(name))
+                            Kernel = null;
+                        if (_config.Client.Contains(name))
+                            Client = null;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
 
-            if(Kernel != null && Client != null)
-                Status = Context.Loc().RequestString("uistatusstartet");
-            if (Kernel == null && Client == null)
-                Status = Context.Loc().RequestString("uistatusstopped");
+                if(Kernel != null && Client != null)
+                    Status = Context.Loc().RequestString("uistatusstartet");
+                if (Kernel == null && Client == null)
+                    Status = Context.Loc().RequestString("uistatusstopped");
+            }
+            catch (Exception e)
+            {
+                Status = "Fehler: " + e.Message;
+            }
         }
 
         protected override void Initialize(InitEvent evt)
@@ -160,6 +167,12 @@ namespace Akka.MGIHelper.UI.MgiStarter
             var status = Status;
             var kernel = Kernel != null;
             var client = Client != null;
+            if (!string.IsNullOrWhiteSpace(status) && status.StartsWith("Fehler:"))
+            {
+                StatusLabel = status;
+                return;
+            }
+            
             builder.AppendLine(string.IsNullOrWhiteSpace(status) ? _localHelper.Unkowen : status);
 
             builder.Append("Kernel: ");

@@ -32,9 +32,12 @@ namespace Akka.MGIHelper.Core.ProcessManager
 
         private void GetProcesses(GatherProcess state)
         {
-            _log.Info("Update Processes");
             try
             {
+                if(Context.GetChildren().Count() == _tracked.Length)
+                    return;
+
+                _log.Info("Update Processes");
                 foreach (var process in Process.GetProcesses())
                 {
                     try

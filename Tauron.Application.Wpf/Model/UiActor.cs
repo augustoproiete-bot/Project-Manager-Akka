@@ -9,10 +9,10 @@ using Akka.Actor;
 using Akka.Event;
 using Autofac;
 using JetBrains.Annotations;
+using Serilog;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Commands;
 using Tauron.Application.Wpf.ModelMessages;
-using Tauron.Host;
 
 namespace Tauron.Application.Wpf.Model
 {

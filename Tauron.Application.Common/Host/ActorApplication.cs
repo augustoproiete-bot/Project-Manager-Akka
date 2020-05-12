@@ -73,6 +73,7 @@ namespace Tauron.Host
                 context.Configuration = config;
                 var akkaConfig = CreateAkkaConfig(context);
                 var system = ActorSystem.Create(context.HostEnvironment.ApplicationName.Replace('.', '-'), akkaConfig);
+                
                 var continer = CreateServiceProvider(hostingEnwiroment, context, config, system);
 
                 system.AddDependencyResolver(new AutoFacDependencyResolver(continer, system));
@@ -163,6 +164,7 @@ namespace Tauron.Host
             var builder = new Builder();
             builder.UseContentRoot(Directory.GetCurrentDirectory());
             builder
+                .ConfigureAkka(he => ConfigurationFactory.ParseString(" akka { loggers =[\"Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog\"] }"))
                .ConfigureAutoFac(cb => cb.RegisterModule<CommonModule>())
                .Configuration(cb =>
                               {
