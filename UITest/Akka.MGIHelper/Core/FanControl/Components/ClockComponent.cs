@@ -12,7 +12,7 @@ namespace Akka.MGIHelper.Core.FanControl.Components
         private readonly FanControlOptions _options;
         private readonly Timer _timer;
 
-        private MessageBus _messageBus;
+        private MessageBus? _messageBus;
         private ClockState _clockState;
 
         public ClockComponent(FanControlOptions options)
@@ -25,7 +25,7 @@ namespace Akka.MGIHelper.Core.FanControl.Components
         {
             try
             {
-                await _messageBus.Publish(new TickEvent());
+                await _messageBus!.Publish(new TickEvent());
             }
             catch
             {

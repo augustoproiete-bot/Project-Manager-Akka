@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
+using Tauron.Application.Wpf.UI;
 
 namespace Tauron.Application.Wpf
 {
@@ -27,15 +28,14 @@ namespace Tauron.Application.Wpf
             {
                 if (!_model.IsInitialized)
                     _model.Init();
-                _model.Tell(new InitEvent());
+                _model.Tell(new InitEvent(_window.Key));
                 CommandManager.InvalidateRequerySuggested();
             }
 
             public void Dispose()
             {
-                _model.Tell(new UnloadEvent());
+                _model.Tell(new UnloadEvent(_window.Key));
                 _window.Loaded -= WindowOnLoaded;
-                _model.Reset();
             }
         }
 
@@ -68,9 +68,15 @@ namespace Tauron.Application.Wpf
 
         protected override void OnClosed(EventArgs e)
         {
+            ControlUnload?.Invoke();
             _windowLogic.Dispose();
             _controlLogic.CleanUp();
             base.OnClosed(e);
         }
+
+        public string Key { get; } = Guid.NewGuid().ToString();
+        public ViewManager ViewManager => ViewManager.Manager;
+
+        public event Action? ControlUnload;
     }
 }

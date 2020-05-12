@@ -116,7 +116,7 @@ namespace Tauron.Application.Wpf.Model
             Receive<MakeEventHook>(msg => Context.Sender.Tell(Context.CreateEventActor()));
             Receive<ExecuteEventExent>(ExecuteEvent);
             Receive<GetValueRequest>(GetPropertyValue);
-            ReceiveAsync<InitEvent>(async _ => await InitializeAsync());
+            ReceiveAsync<InitEvent>(async evt => await InitializeAsync(evt));
             Receive<SetValue>(SetPropertyValue);
             Receive<TrackPropertyEvent>(TrckProperty);
             Receive<Terminated>(ActorTermination);
@@ -177,16 +177,18 @@ namespace Tauron.Application.Wpf.Model
 
         #region Lifecycle
 
-        protected virtual void Initialize() { }
+        protected virtual void Initialize(InitEvent evt) { }
 
-        protected virtual Task InitializeAsync()
+        protected virtual Task InitializeAsync(InitEvent evt)
         {
-            Initialize();
+            Initialize(evt);
             return Task.CompletedTask;
         }
 
-        protected virtual void ControlUnload(UnloadEvent obj) 
-            => Context.Stop(Self);
+        protected virtual void ControlUnload(UnloadEvent obj)
+        {
+            
+        }
 
         private void InitParentViewModel(InitParentViewModel obj) 
             => obj.Model.Init(Context);

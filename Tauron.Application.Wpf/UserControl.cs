@@ -1,8 +1,10 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using JetBrains.Annotations;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
+using Tauron.Application.Wpf.UI;
 using CommandManager = System.Windows.Input.CommandManager;
 
 namespace Tauron.Application.Wpf
@@ -24,14 +26,13 @@ namespace Tauron.Application.Wpf
                 userControl.Unloaded += UserControlOnUnloaded;
             }
 
-            private void UserControlOnUnloaded(object sender, RoutedEventArgs e)
-            {
-                _model.Tell(new UnloadEvent());
-                _model.Reset();
-            }
+            private void UserControlOnUnloaded(object sender, RoutedEventArgs e) 
+                => _model.Tell(new UnloadEvent(((IView)_userControl).Key));
 
             private void UserControlOnLoaded(object sender, RoutedEventArgs e)
             {
+                _userControl.OnControlUnload();
+
                 if (!_model.IsInitialized)
                 {
                     var parent = ControlBindLogic.FindParentDatacontext(_userControl);
@@ -41,7 +42,7 @@ namespace Tauron.Application.Wpf
                         _model.Init();
                 }
 
-                _model.Tell(new InitEvent());
+                _model.Tell(new InitEvent(((IView)_userControl).Key));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -70,5 +71,14 @@ namespace Tauron.Application.Wpf
 
         public void CleanUp(string key) 
             => _controlBindLogic.CleanUp(key);
+
+        public string Key { get; } = Guid.NewGuid().ToString();
+
+        public ViewManager ViewManager => ViewManager.Manager;
+
+        public event Action? ControlUnload;
+
+        protected virtual void OnControlUnload() 
+            => ControlUnload?.Invoke();
     }
 }

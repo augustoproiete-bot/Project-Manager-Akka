@@ -24,7 +24,7 @@ namespace Akka.MGIHelper.Core.FanControl.Components
             { "Error".ToLower(), State.Error }
         };
 
-        private readonly WebClient _webClient = new WebClient();
+        private readonly WebClient _webClient = new MyWebClient();
         private readonly FanControlOptions _options;
 
         public DataFetchComponent(FanControlOptions options) => _options = options;
@@ -64,6 +64,18 @@ namespace Akka.MGIHelper.Core.FanControl.Components
             public override string ToString()
             {
                 return $"{Name}={Value}";
+            }
+        }
+
+        private sealed class MyWebClient : WebClient
+        {
+            protected override WebRequest GetWebRequest(Uri address)
+            {
+                var request = base.GetWebRequest(address);
+
+                request.Timeout = 1000;
+
+                return request;
             }
         }
     }

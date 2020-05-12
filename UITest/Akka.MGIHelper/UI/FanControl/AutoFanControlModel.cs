@@ -6,6 +6,7 @@ using Akka.MGIHelper.Core.FanControl;
 using Akka.MGIHelper.Core.FanControl.Events;
 using Autofac;
 using Tauron.Application.Wpf.Model;
+using Tauron.Application.Wpf.ModelMessages;
 
 namespace Akka.MGIHelper.UI.FanControl
 {
@@ -77,7 +78,7 @@ namespace Akka.MGIHelper.UI.FanControl
             Receive<FanStatusChange>(evt => FanRunning = evt.Running);
         }
 
-        protected override void Initialize() 
+        protected override void Initialize(InitEvent evt) 
             => Context.Child("Fan-Control").Tell(new ClockEvent(ClockState.Start));
     }
 }

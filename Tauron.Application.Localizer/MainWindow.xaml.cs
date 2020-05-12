@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Windows;
+using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.ViewModels;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.AppCore;

@@ -10,8 +10,17 @@ namespace Tauron.Application.Wpf.Helper
     {
         private readonly FrameworkElement _element;
 
-        public DataContextPromise(FrameworkElement element) 
-            => _element = element;
+        public DataContextPromise(FrameworkElement element)
+        {
+            _element = element;
+
+        }
+
+        public void OnUnload(Action unload)
+        {
+            if (_element is IView view)
+                view.ControlUnload += unload;
+        }
 
         public void OnContext(Action<IViewModel> modelAction)
         {
@@ -93,6 +102,19 @@ namespace Tauron.Application.Wpf.Helper
                 if (affected is IBinderControllable binder)
                     return binder;
                 affected = LogicalTreeHelper.GetParent(affected);
+            } while (affected != null);
+
+            return null;
+        }
+
+        public static IView? FindParentView(DependencyObject? affected)
+        {
+            do
+            {
+                affected = LogicalTreeHelper.GetParent(affected);
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                if (affected is IView binder)
+                    return binder;
             } while (affected != null);
 
             return null;

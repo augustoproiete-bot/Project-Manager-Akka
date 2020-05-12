@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Threading.Tasks;
 using Akka.Actor;
 using JetBrains.Annotations;
 using Tauron.Akka;
@@ -28,6 +29,10 @@ namespace Tauron.Localization.Extension
 
         public object? Request(string name, CultureInfo? info = null) 
             => _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture)).Result.Result;
+
+        public Task<object?> RequestTask(string name, CultureInfo? info = null)
+            => _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture)).
+                ContinueWith(t => t.Result.Result);
 
         public string RequestString(string name, CultureInfo? info = null) 
             => Request(name, info)?.ToString() ?? string.Empty;

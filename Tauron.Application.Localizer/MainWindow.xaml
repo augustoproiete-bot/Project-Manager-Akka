@@ -8,19 +8,15 @@
         xmlns:ui="clr-namespace:Tauron.Application.Localizer.Core.UI"
         xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
         mc:Ignorable="d" WindowState="Maximized"
-        Title="MainWindow" Height="450" Width="800"
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Title="MainWindow" Height="450" Width="800" 
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}" 
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}">
+    <!--WindowTitleBrush="{DynamicResource PrimaryHueMidBrush}"-->
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-        <Button Grid.Column="0" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">Test</Button>
     </Grid>
 </ui:InternalMetroWindow>

@@ -6,6 +6,7 @@ using Tauron.Akka;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
+using Tauron.Application.Wpf.UI;
 
 namespace Tauron.Application.Localizer.Core.UI
 {
@@ -14,9 +15,9 @@ namespace Tauron.Application.Localizer.Core.UI
         private sealed class WindowLogic : IDisposable
         {
             private readonly IViewModel _model;
-            private readonly System.Windows.Window _window;
+            private readonly InternalMetroWindow _window;
 
-            public WindowLogic(IViewModel model, System.Windows.Window window)
+            public WindowLogic(IViewModel model, InternalMetroWindow window)
             {
                 _model = model;
                 _window = window;
@@ -27,13 +28,13 @@ namespace Tauron.Application.Localizer.Core.UI
             {
                 if (!_model.IsInitialized)
                     _model.Init();
-                _model.Tell(new InitEvent());
+                _model.Tell(new InitEvent(_window.Key));
                 CommandManager.InvalidateRequerySuggested();
             }
 
             public void Dispose()
             {
-                _model.Tell(new UnloadEvent());
+                _model.Tell(new UnloadEvent(_window.Key));
                 _window.Loaded -= WindowOnLoaded;
                 _model.Reset();
             }
@@ -68,9 +69,14 @@ namespace Tauron.Application.Localizer.Core.UI
 
         protected override void OnClosed(EventArgs e)
         {
+            ControlUnload?.Invoke();
             _windowLogic.Dispose();
             _controlLogic.CleanUp();
             base.OnClosed(e);
         }
+
+        public string Key { get; } = Guid.NewGuid().ToString();
+        public ViewManager ViewManager => ViewManager.Manager;
+        public event Action? ControlUnload;
     }
 }

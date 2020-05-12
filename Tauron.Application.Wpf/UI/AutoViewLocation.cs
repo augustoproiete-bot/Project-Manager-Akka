@@ -20,13 +20,13 @@ namespace Tauron.Application.Wpf.UI
         public static void AddPair(Type view, Type model) 
             => Views[model] = view;
 
-        public object? ResolveView(object viewModel)
+        public IView? ResolveView(object viewModel)
         {
             if (!(viewModel is IViewModel model))
                 return null;
 
             var type = model.ModelType;
-            return Views.TryGetValue(type, out var view) ? _provider.ResolveOptional(view, new TypedParameter(typeof(IViewModel<>).MakeGenericType(type), viewModel)) : null;
+            return Views.TryGetValue(type, out var view) ? _provider.ResolveOptional(view, new TypedParameter(typeof(IViewModel<>).MakeGenericType(type), viewModel)) as IView : null;
         }
     }
 }

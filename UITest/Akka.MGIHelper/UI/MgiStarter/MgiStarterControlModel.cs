@@ -9,6 +9,7 @@ using Akka.MGIHelper.Core.Configuration;
 using Akka.MGIHelper.Core.ProcessManager;
 using Autofac;
 using Tauron.Application.Wpf.Model;
+using Tauron.Application.Wpf.ModelMessages;
 using Tauron.Localization;
 
 namespace Akka.MGIHelper.UI.MgiStarter
@@ -17,19 +18,19 @@ namespace Akka.MGIHelper.UI.MgiStarter
     {
         private class LocalHelper
         {
-            public string Unkowen { get; private set; } = string.Empty;
+            public string Unkowen { get; }
 
-            public string GenericStart { get; private set; } = string.Empty;
+            public string GenericStart { get; }
 
-            public string GenericNotStart { get; private set; } = string.Empty;
+            public string GenericNotStart { get; }
 
             public LocalHelper(IActorContext context)
             {
                 var loc = context.Loc();
 
-                loc.RequestString("genericunkowen", s => Unkowen = s);
-                loc.RequestString("genericstart", s => GenericStart = s);
-                loc.RequestString("genericnotstart", s => GenericNotStart = s);
+                Unkowen = loc.RequestString("genericunkowen");
+                GenericStart = loc.RequestString("genericstart");
+                GenericNotStart = loc.RequestString("genericnotstart");
             }
         }
 
@@ -138,7 +139,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
                 Status = Context.Loc().RequestString("uistatusstopped");
         }
 
-        protected override void Initialize()
+        protected override void Initialize(InitEvent evt)
         {
             // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
             _processManager.Tell(new RegisterProcessList(Self, ImmutableArray<string>.Empty.Add(_config.Client).Add(_config.Kernel)));

@@ -1,5 +1,6 @@
 ﻿using System;
 using Tauron.Application.Wpf.Helper;
+using Tauron.Application.Wpf.UI;
 
 namespace Tauron.Application.Wpf
 {
@@ -7,6 +8,8 @@ namespace Tauron.Application.Wpf
     {
         string Key { get; }
 
-        event Action ControlUnload;
+        ViewManager ViewManager { get; }
+
+        event Action? ControlUnload;
     }
 }
