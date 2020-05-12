@@ -1,3 +1,25 @@
 {
+  "MainWindow_Title": "Lokalisierungs App",
 
+  "MainWindow_MainMenu_File": "Datei",
+  "MainWindow_MainMenu_File_Open": "Öffnen",
+
+  "MainWindow_Operations_Label": "Aufgaben",
+  "MainWindow_Operation_Tabs_Label_Logs": "Logs Einträge",
+  "MainWindow_Operation_Tabs_Label_Ops": "Aufgaben",
+  "MainWindow_Operation_Delete": "Löschen",
+  "MainWindow_Operation_Delete_All": "Alles Löschen",
+
+  "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
+
+  "OperationController_Success": "Erfolgreich",
+  "OperationController_Failed": "Unbekannter Fehler",
+  "OperationController_Running": "Laufend",
+
+  "OpenFileDialogView_Header": "Projekt Datei Wählen",
+  "OpenFileDialogView_Selector_Label": "Pfad:",
+  "OpenFileDialogView_SearchButton_Label": "Suchen",
+  "OpenFileDialogView_OkButton_Label": "Öffnen",
+  "OpenFileDialogView_Dialog_Filter": "Alles|*.*|Trans Prjekt|*.transp",
+  "OpenFileDialogView_Dialog_Title": "Projekt Wählen"
 }

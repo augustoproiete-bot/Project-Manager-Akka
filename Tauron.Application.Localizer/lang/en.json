@@ -1,3 +1,25 @@
 {
+  "MainWindow_Title": "Localizing App",
 
+  "MainWindow_MainMenu_File": "File",
+  "MainWindow_MainMenu_File_Open": "Open",
+
+  "MainWindow_Operations_Label": "Operations",
+  "MainWindow_Operation_Tabs_Label_Logs": "Logs",
+  "MainWindow_Operation_Tabs_Label_Ops": "Operations",
+  "MainWindow_Operation_Delete": "Delete",
+  "MainWindow_Operation_Delete_All": "Delete All",
+
+  "MainWindowModel_LoadProject_Operation": "Load Project {0}",
+
+  "OperationController_Success": "Success",
+  "OperationController_Failed": "Failed",
+  "OperationController_Running": "Running",
+
+  "OpenFileDialogView_Header": "Select Project File",
+  "OpenFileDialogView_Selector_Label": "Path:",
+  "OpenFileDialogView_SearchButton_Label": "Search",
+  "OpenFileDialogView_OkButton_Label": "Ok",
+  "OpenFileDialogView_Dialog_Filter": "All|*.*|Trans Project|*.transp",
+  "OpenFileDialogView_Dialog_Title": "Select project"
 }

@@ -39,7 +39,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Localize
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Localizer.DataModel", "Tauron.Application.Localizer.DataModel\Tauron.Application.Localizer.DataModel.csproj", "{A3C924E5-B909-46D9-9DBB-14D2E2F6A35C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tauron.Application.Localizer.UIModels", "Tauron.Application.Localizer.UIModels\Tauron.Application.Localizer.UIModels.csproj", "{88B9570B-77AB-4B26-976C-A1BAF369D43E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Localizer.UIModels", "Tauron.Application.Localizer.UIModels\Tauron.Application.Localizer.UIModels.csproj", "{88B9570B-77AB-4B26-976C-A1BAF369D43E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

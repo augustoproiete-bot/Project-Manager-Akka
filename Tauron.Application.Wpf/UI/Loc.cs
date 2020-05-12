@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows.Markup;
 using JetBrains.Annotations;
 using Tauron.Host;

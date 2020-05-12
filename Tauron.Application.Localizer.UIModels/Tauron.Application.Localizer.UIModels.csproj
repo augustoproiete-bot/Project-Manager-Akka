@@ -8,9 +8,11 @@
 
   <ItemGroup>
     <PackageReference Include="Amadevus.RecordGenerator" Version="0.6.0" />
+    <PackageReference Include="MaterialDesignThemes.MahApps" Version="0.1.2-ci1442" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Tauron.Application.Localizer.DataModel\Tauron.Application.Localizer.DataModel.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
   </ItemGroup>
 

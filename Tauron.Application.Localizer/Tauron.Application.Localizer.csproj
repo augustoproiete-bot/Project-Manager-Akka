@@ -13,17 +13,23 @@
     <ProjectReference Include="..\Tauron.Application.Localizer.DataModel\Tauron.Application.Localizer.DataModel.csproj" />
     <ProjectReference Include="..\Tauron.Application.Localizer.UIModels\Tauron.Application.Localizer.UIModels.csproj" />
     <ProjectReference Include="..\Tauron.Application.Logging\Tauron.Application.Logging.csproj" />
+    <ProjectReference Include="..\Tauron.Application.Wpf.SerilogViewer\Tauron.Application.Wpf.SerilogViewer.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Views\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="4.0.0" />
     <PackageReference Include="MaterialDesignThemes.MahApps" Version="0.1.2-ci1442" />
     <PackageReference Include="System.Management" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="lang\de.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="lang\en.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

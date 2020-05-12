@@ -170,8 +170,8 @@ namespace Tauron.Application.Wpf.Model
         public void RegisterCommand(string name, Action<object?> execute, Func<object?, bool>? canExecute = null) 
             => _commandRegistrations[name] = new CommandRegistration(execute, canExecute);
 
-        public void RegisterCommand(string name, Action execute, Func<bool> canExecute) 
-            => _commandRegistrations[name] = new CommandRegistration(_ => execute(), _ => canExecute());
+        public void RegisterCommand(string name, Action execute, Func<bool>? canExecute = null) 
+            => _commandRegistrations[name] = new CommandRegistration(_ => execute(), canExecute != null ? new Func<object?, bool>(_ => canExecute()) : null);
 
         #endregion
 

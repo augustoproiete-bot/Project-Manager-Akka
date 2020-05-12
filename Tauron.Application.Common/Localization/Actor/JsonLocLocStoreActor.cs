@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using Autofac;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -70,8 +71,17 @@ namespace Tauron.Localization.Actor
             if (_configuration == null) return;
             _files.Clear();
 
-            foreach (var file in Directory.EnumerateFiles(_configuration.RootDic, "*.json")) 
-                _files[Path.GetFileNameWithoutExtension(file).Split(Sep, StringSplitOptions.RemoveEmptyEntries)[0]] = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(File.ReadAllText(file));
+
+
+            foreach (var file in Directory.EnumerateFiles(_configuration.RootDic, "*.json"))
+            {
+                //var text = File.ReadAllText(file, Encoding.UTF8);
+                using var stream = new FileStream(file, FileMode.Open);
+                var text = new StreamReader(stream, Encoding.UTF8).ReadToEnd();
+
+                _files[Path.GetFileNameWithoutExtension(file).Split(Sep, StringSplitOptions.RemoveEmptyEntries)[0]] = 
+                    JsonConvert.DeserializeObject<Dictionary<string, JToken>>(text);
+            }
 
             _isInitialized = true;
         }

@@ -46,7 +46,7 @@ namespace Tauron.Application
             changed();
         }
         
-        // ReSharper disable once AssignNullToNotNullAttribute
+        [NotifyPropertyChangedInvocator]
         public virtual void OnPropertyChanged([CallerMemberName] string? eventArgs = null) => OnPropertyChanged(new PropertyChangedEventArgs(Argument.NotNull(eventArgs!, nameof(eventArgs))));
 
         public virtual void OnPropertyChanged(PropertyChangedEventArgs eventArgs) => OnPropertyChanged(this, Argument.NotNull(eventArgs, nameof(eventArgs)));
