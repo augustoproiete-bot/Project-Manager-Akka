@@ -5,7 +5,8 @@
 
   "MainWindow_MainMenu_File": "Datei",
   "MainWindow_MainMenu_File_Open": "Öffnen",
-  "MainWindow_MainMenu_File_New":  "Neu",
+  "MainWindow_MainMenu_File_New": "Neu",
+  "MainWindow_MainMenu_File_SaveAs": "Speichern Unter...",
   "MainWindow_MainMwnu_RenctFile": "Zuletzt Geöffnet",
 
   "MainWindow_Operations_Label": "Aufgaben",

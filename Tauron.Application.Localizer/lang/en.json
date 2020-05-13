@@ -6,6 +6,7 @@
   "MainWindow_MainMenu_File": "File",
   "MainWindow_MainMenu_File_Open": "Open",
   "MainWindow_MainMenu_File_New": "New",
+  "MainWindow_MainMenu_File_SaveAs": "Save As",
   "MainWindow_MainMwnu_RenctFile": "Renct Files",
 
   "MainWindow_Operations_Label": "Operations",

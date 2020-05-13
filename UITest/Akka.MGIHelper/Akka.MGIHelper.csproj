@@ -34,10 +34,10 @@
 
   <ItemGroup>
     <None Update="lang\de.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="lang\en.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="ProcessConfig.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

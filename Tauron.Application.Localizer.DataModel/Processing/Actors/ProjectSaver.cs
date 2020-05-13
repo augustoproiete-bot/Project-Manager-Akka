@@ -15,7 +15,8 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
         {
             try
             {
-                File.Copy(obj.ProjectFile.Source, obj.ProjectFile.Source + ".bak", true);
+                if(obj.ProjectFile.Source.ExisFile())
+                    File.Copy(obj.ProjectFile.Source, obj.ProjectFile.Source + ".bak", true);
                 using var stream = File.Open(obj.ProjectFile.Source, FileMode.Create);
                 using var writer = new BinaryWriter(stream);
                 obj.ProjectFile.Write(writer);

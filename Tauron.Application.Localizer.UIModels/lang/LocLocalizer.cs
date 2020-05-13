@@ -21,6 +21,7 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _commonError = ToString(loc.RequestTask("Common_Error"));
             _mainWindowModelLoadProjectSourceEmpty = ToString(loc.RequestTask("MainWindowModel_LoadProject_SourceEmpty"));
             _openFileDialogViewHeaderNewPrefix = ToString(loc.RequestTask("OpenFileDialogView_Header_NewPrefix"));
+            _mainWindowMainMenuFileSaveAs = ToString(loc.RequestTask("MainWindow_MainMenu_File_SaveAs"));
         }
 
         private Task<string> ToString(Task<object?> task) => task.ContinueWith(t => t.Result as string ?? string.Empty);
@@ -60,5 +61,9 @@ namespace Tauron.Application.Localizer.UIModels.lang
         private readonly Task<string> _openFileDialogViewHeaderNewPrefix;
 
         public string OpenFileDialogViewHeaderNewPrefix => _openFileDialogViewHeaderNewPrefix.Result;
+
+        private readonly Task<string> _mainWindowMainMenuFileSaveAs;
+
+        public string MainWindowMainMenuFileSaveAs => _mainWindowMainMenuFileSaveAs.Result;
     }
 }

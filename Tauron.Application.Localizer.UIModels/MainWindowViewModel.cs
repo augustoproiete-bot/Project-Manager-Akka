@@ -61,6 +61,7 @@ namespace Tauron.Application.Localizer.UIModels
                                                  OpentFileSource(file);
                                          }, _ => _loadingOperation == null);
             RegisterCommand("NewFile", NewFile, () => _loadingOperation == null);
+            RegisterCommand("SaveAs", SaveAsProject, () => _last != null);
 
             Receive<LoadedProjectFile>(ProjectLoaded);
             ReceiveAsync<SourceSelected>(async s =>
@@ -70,6 +71,16 @@ namespace Tauron.Application.Localizer.UIModels
                                         else
                                             await NewFileSource(s.Source);
                                     });
+        }
+
+        private void SaveAsProject()
+        {
+            var targetFile = _dialogFactory.ShowSaveFileDialog(null, true, true, true, "transp", true,
+                _localizer.OpenFileDialogViewDialogFilter, true, true, _localizer.MainWindowMainMenuFileSaveAs, Directory.GetCurrentDirectory(), out var result);
+
+            if(CheckSourceOk(targetFile)) return;
+
+            UpdateSource(targetFile!);
         }
 
         private void NewFile()

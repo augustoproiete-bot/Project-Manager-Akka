@@ -43,10 +43,17 @@ namespace Akka.MGIHelper.Core.ProcessManager
                     try
                     {
                         if (!Context.Child(FormatName(process.Id)).Equals(ActorRefs.Nobody))
+                        {
+                            process.Dispose();
                             continue;
-                        
+                        }
+
                         var processName = process.ProcessName;
-                        if (!_tracked.Any(s => s.Contains(processName))) continue;
+                        if (!_tracked.Any(s => s.Contains(processName)))
+                        {
+                            process.Dispose();
+                            continue;
+                        }
 
                         _log.Info("Process Found {Name}", process.ProcessName);
                         Context.ActorOf(Props.Create(() => new TrackedProcessActor(process)), FormatName(process.Id));
