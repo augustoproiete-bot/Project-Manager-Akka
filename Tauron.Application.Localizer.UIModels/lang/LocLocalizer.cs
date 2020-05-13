@@ -18,6 +18,9 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _mainWindowModelLoadProjectOperation = ToString(loc.RequestTask("MainWindowModel_LoadProject_Operation"));
             _openFileDialogViewDialogFilter = ToString(loc.RequestTask("OpenFileDialogView_Dialog_Filter"));
             _openFileDialogViewDialogTitle = ToString(loc.RequestTask("OpenFileDialogView_Dialog_Title"));
+            _commonError = ToString(loc.RequestTask("Common_Error"));
+            _mainWindowModelLoadProjectSourceEmpty = ToString(loc.RequestTask("MainWindowModel_LoadProject_SourceEmpty"));
+            _openFileDialogViewHeaderNewPrefix = ToString(loc.RequestTask("OpenFileDialogView_Header_NewPrefix"));
         }
 
         private Task<string> ToString(Task<object?> task) => task.ContinueWith(t => t.Result as string ?? string.Empty);
@@ -45,5 +48,17 @@ namespace Tauron.Application.Localizer.UIModels.lang
         private readonly Task<string> _openFileDialogViewDialogTitle;
 
         public string OpenFileDialogViewDialogTitle => _openFileDialogViewDialogTitle.Result;
+
+        private readonly Task<string> _commonError;
+
+        public string CommonError => _commonError.Result;
+
+        private readonly Task<string> _mainWindowModelLoadProjectSourceEmpty;
+
+        public string MainWindowModelLoadProjectSourceEmpty => _mainWindowModelLoadProjectSourceEmpty.Result;
+
+        private readonly Task<string> _openFileDialogViewHeaderNewPrefix;
+
+        public string OpenFileDialogViewHeaderNewPrefix => _openFileDialogViewHeaderNewPrefix.Result;
     }
 }

@@ -1,8 +1,12 @@
 {
+  "Common_Error": "Fehler",
+
   "MainWindow_Title": "Lokalisierungs App",
 
   "MainWindow_MainMenu_File": "Datei",
   "MainWindow_MainMenu_File_Open": "Öffnen",
+  "MainWindow_MainMenu_File_New":  "Neu",
+  "MainWindow_MainMwnu_RenctFile": "Zuletzt Geöffnet",
 
   "MainWindow_Operations_Label": "Aufgaben",
   "MainWindow_Operation_Tabs_Label_Logs": "Logs Einträge",
@@ -11,12 +15,14 @@
   "MainWindow_Operation_Delete_All": "Alles Löschen",
 
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
+  "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",
 
   "OperationController_Success": "Erfolgreich",
   "OperationController_Failed": "Unbekannter Fehler",
   "OperationController_Running": "Laufend",
 
   "OpenFileDialogView_Header": "Projekt Datei Wählen",
+  "OpenFileDialogView_Header_NewPrefix": " (Neu)",
   "OpenFileDialogView_Selector_Label": "Pfad:",
   "OpenFileDialogView_SearchButton_Label": "Suchen",
   "OpenFileDialogView_OkButton_Label": "Öffnen",

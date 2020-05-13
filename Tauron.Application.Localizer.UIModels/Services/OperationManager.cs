@@ -20,11 +20,13 @@ namespace Tauron.Application.Localizer.UIModels.Services
                 base.OnCollectionChanged(e);
                 OnPropertyChanged(new PropertyChangedEventArgs(nameof(RunningOperations)));
             }
+
+            public void OperationStatusCchanged() => OnPropertyChanged(new PropertyChangedEventArgs(nameof(RunningOperations)));
         }
 
         private readonly LocLocalizer _localizer;
         private readonly Dispatcher _dispatcher;
-        private readonly ObservableCollection<RunningOperation> _operations = new OperationList();
+        private readonly OperationList _operations = new OperationList();
 
         public IEnumerable<RunningOperation> RunningOperations => _operations;
 
@@ -34,14 +36,18 @@ namespace Tauron.Application.Localizer.UIModels.Services
             _dispatcher = dispatcher;
         }
 
+        private void OperationChanged() => _dispatcher.Invoke(_operations.OperationStatusCchanged);
+
         public OperationController StartOperation(string name)
         {
             return _dispatcher.Invoke(() =>
                                       {
                                           var op = new RunningOperation(Guid.NewGuid().ToString(), name) {Status = _localizer.OperationControllerRunning};
+                                          if(_operations.Count > 15)
+                                              Clear();
 
                                           _operations.Add(op);
-                                          return new OperationController(op, _localizer);
+                                          return new OperationController(op, _localizer, OperationChanged);
                                       });
         }
 
@@ -50,7 +56,7 @@ namespace Tauron.Application.Localizer.UIModels.Services
             return _dispatcher.Invoke(() =>
                                       {
                                           var op = _operations.FirstOrDefault(op => op.Key == id);
-                                          return op == null ? null : new OperationController(op, _localizer);
+                                          return op == null ? null : new OperationController(op, _localizer, OperationChanged);
                                       });
         }
 

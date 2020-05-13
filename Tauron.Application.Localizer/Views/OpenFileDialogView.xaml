@@ -4,13 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-             xmlns:ui="http://schemas.TauronWpf.com" 
+             xmlns:ui="http://schemas.TauronWpf.com" Loaded="OpenFileDialogView_OnLoaded"
              mc:Ignorable="d" Background="White" Title="{ui:Loc OpenFileDialogView_Header}"
-             d:DesignHeight="250" d:DesignWidth="800" MaxHeight="250" MaxWidth="800">
+             d:DesignHeight="250" d:DesignWidth="800" MaxHeight="250" MaxWidth="1000">
     <mah:CustomDialog.Resources>
         <ResourceDictionary Source="../Theme.xaml"/>
     </mah:CustomDialog.Resources>
-    <Grid VerticalAlignment="Center" FocusManager.FocusedElement="{Binding ElementName=PART_Path}">
+    <Grid VerticalAlignment="Center" FocusManager.IsFocusScope="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>

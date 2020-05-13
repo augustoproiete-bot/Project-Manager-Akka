@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Akka;
-using Tauron.Application.Wpf.Commands;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
 
@@ -30,20 +31,18 @@ namespace Tauron.Application.Wpf
         public static readonly DependencyProperty UseDirectProperty = DependencyProperty.RegisterAttached(
             "UseDirect", typeof(bool), typeof(CommandBinder), new UIPropertyMetadata(false, OnCommandStadeChanged));
 
-        //private static readonly List<RoutedCommand> Commands = new List<RoutedCommand>();
+        private static readonly List<RoutedCommand> Commands = new List<RoutedCommand>();
 
         private static bool _isIn;
 
-        //public static bool AutoRegister { get; set; } = true;
+        public static bool AutoRegister { get; set; } = true;
 
-        public static ICommand? Find(string name)
+        public static RoutedCommand? Find(string name)
         {
-            //var val = Commands.Find(com => com.Name == name);
-            //if (val == null && AutoRegister) val = Register(name, name);
+            var val = Commands.Find(com => com.Name == name);
+            if (val == null && AutoRegister) val = Register(name, name);
 
-            //return val;
-
-            return new EventCommand();
+            return val;
         }
 
         public static string GetCommand(DependencyObject obj) => (string) Argument.NotNull(obj, nameof(obj)).GetValue(CommandProperty);
@@ -55,19 +54,19 @@ namespace Tauron.Application.Wpf
 
         public static bool GetUseDirect(DependencyObject obj) => (bool) Argument.NotNull(obj, nameof(obj)).GetValue(UseDirectProperty);
 
-        //public static void Register(RoutedCommand command)
-        //{
-        //    if (Commands.Any(com => com.Name == command.Name)) return;
+        public static void Register(RoutedCommand command)
+        {
+            if (Commands.Any(com => com.Name == command.Name)) return;
 
-        //    Commands.Add(command);
-        //}
+            Commands.Add(command);
+        }
 
-        //public static RoutedUICommand Register(string text, string name)
-        //{
-        //    var command = new RoutedUICommand(text, name, typeof(CommandBinder));
-        //    Register(command);
-        //    return command;
-        //}
+        public static RoutedUICommand Register(string text, string name)
+        {
+            var command = new RoutedUICommand(text, name, typeof(CommandBinder));
+            Register(command);
+            return command;
+        }
 
         public static void SetCommand(DependencyObject obj, string value)
         {
@@ -116,7 +115,7 @@ namespace Tauron.Application.Wpf
             BindInternal(name, name, root, d);
         }
 
-        private static readonly Random Rnd = new Random();
+        private static readonly Random _rnd = new Random();
 
         private static void BindInternal(string? oldValue, string? newValue, IBinderControllable binder, DependencyObject affectedPart)
         {
@@ -126,7 +125,7 @@ namespace Tauron.Application.Wpf
                 binder.CleanUp(NamePrefix + oldValue);
             if (newValue == null) return;
 
-            var name = NamePrefix + newValue + "#" + Rnd.Next();
+            var name = NamePrefix + newValue + "#" + _rnd.Next();
             if (newValue != null && newValue.Contains(':'))
             {
                 var vals = newValue.Split(new[] {':'}, 2);
@@ -144,9 +143,9 @@ namespace Tauron.Application.Wpf
             {
                 var command = GetTargetCommand(affectedPart);
                 if (command is RoutedCommand routedCommand)
-                    name = NamePrefix + routedCommand.Name + "#" + Rnd.Next();
+                    name = NamePrefix + routedCommand.Name;
                 else
-                    name = NamePrefix + command + "#" + Rnd.Next();
+                    name = NamePrefix + command;
             }
 
             var newlinker = new CommandLinker {CommandTarget = newValue};
@@ -163,7 +162,7 @@ namespace Tauron.Application.Wpf
 
             protected override void CleanUp()
             {
-                _factory?.Free();
+                _factory?.Free(Root);
             }
 
             protected override void Bind(object dataContext)
@@ -177,7 +176,8 @@ namespace Tauron.Application.Wpf
 
                 var customProperty = GetCustomPropertyName(AffectedObject);
                 var useDirect = GetUseDirect(AffectedObject);
-                if (!(GetTargetCommand(AffectedObject) is EventCommand targetCommand))
+                var targetCommand = GetTargetCommand(AffectedObject);
+                if (targetCommand == null)
                 {
                     Log.Logger.Error("CommandBinder: No ICommand: {CommandTarget}", commandTarget);
                     return;
@@ -193,7 +193,7 @@ namespace Tauron.Application.Wpf
                 }
 
                 if (!useDirect)
-                    _factory.Connect(targetCommand, commandTarget);
+                    _factory.Connect(targetCommand, Root, commandTarget);
 
                 if (_searcher == null)
                 {
@@ -210,57 +210,83 @@ namespace Tauron.Application.Wpf
 
             private class CommandFactory
             {
-                private Func<object?, bool>? _canExecute;
+                private CanExecuteRoutedEventHandler? _canExecute;
 
-                private Action<object?>? _execute;
+                private ExecutedRoutedEventHandler? _execute;
 
                 public CommandFactory(IViewModel? dataContext) 
                     => DataContext = dataContext;
 
-                public EventCommand? LastCommand { get; private set; }
+                public ICommand? LastCommand { get; private set; }
 
                 public IViewModel? DataContext { private get; set; }
 
-                public void Free()
+                public void Free([NotNull] DependencyObject rootObject)
                 {
-                    if(LastCommand == null) return;
+                    Argument.NotNull(rootObject, nameof(rootObject));
 
-                    LastCommand.CanExecuteEvent += _canExecute;
-                    LastCommand.ExecuteEvent += _execute;
+                    if (!(rootObject is UIElement uiElement)) return;
 
-                    LastCommand = null;
+                    var commandBinding = uiElement.CommandBindings.OfType<CommandBinding>().FirstOrDefault(cb => cb.Command == LastCommand);
+                    if (commandBinding == null) return;
+
+                    if (_execute != null)
+                        commandBinding.Executed -= _execute;
+                    if (_canExecute != null)
+                        commandBinding.CanExecute -= _canExecute;
+
+                    _execute = null;
+                    _canExecute = null;
+
+                    uiElement.CommandBindings.Remove(commandBinding);
                 }
 
-                public void Connect(EventCommand command, string commandName)
+                public void Connect(ICommand command, DependencyObject rootObject, string commandName)
                 {
                     LastCommand = command;
 
-                    if (DataContext == null) return;
+                    var temp = command as RoutedCommand;
+                    var binding = SetCommandBinding(rootObject, temp);
+                    
+                    if (binding == null || DataContext == null) return;
 
-                    _execute = parm => DataContext.Tell(new CommandExecuteEvent(commandName, parm));
-                    _canExecute = parm =>
+                    _execute = (sender, args) => DataContext.Tell(new CommandExecuteEvent(commandName, args.Parameter));
+                    _canExecute = (sender, args) =>
                                {
                                    try
                                    {
-                                       if(!DataContext.IsInitialized) return false;
+                                       if(!DataContext.IsInitialized) return;
 
                                        var result = DataContext
-                                          .Ask<CanCommandExecuteRespond>(new CanCommandExecuteRequest(commandName, parm), TimeSpan.FromSeconds(1)).Result;
+                                          .Ask<CanCommandExecuteRespond>(new CanCommandExecuteRequest(commandName, args.Parameter), TimeSpan.FromSeconds(1)).Result;
 
-                                       return result.CanExecute;
+                                       args.CanExecute = result.CanExecute;
                                    }
                                    catch (AggregateException)
                                    {
-                                       return false;
+                                       args.CanExecute = false;
                                    }
                                    catch (TimeoutException)
                                    {
-                                       return false;
+                                       args.CanExecute = false;
                                    }
                                };
 
-                    LastCommand.CanExecuteEvent += _canExecute;
-                    LastCommand.ExecuteEvent += _execute;
+                    binding.CanExecute += _canExecute;
+                    binding.Executed += _execute;
+                }
+
+                private static CommandBinding? SetCommandBinding(DependencyObject? obj, ICommand? command)
+                {
+                    var commandBindings = (obj as UIElement)?.CommandBindings;
+                    if (commandBindings == null) return null;
+
+                    var binding = commandBindings.OfType<CommandBinding>().FirstOrDefault(cb => cb.Command == command);
+                    if (binding != null) return null;
+
+                    binding = new CommandBinding(command);
+                    commandBindings.Add(binding);
+                    return binding;
                 }
             }
 

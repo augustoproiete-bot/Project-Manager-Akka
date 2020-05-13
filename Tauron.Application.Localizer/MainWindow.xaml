@@ -30,6 +30,16 @@
         <Menu Margin="5">
             <MenuItem Header="{tau:Loc MainWindow_MainMenu_File}">
                 <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_Open}" tau:CommandBinder.Command="OpenFile"/>
+                <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_New}" tau:CommandBinder.Command="NewFile"/>
+                <Separator/>
+                <MenuItem Header="Speicher Unter"/>
+            </MenuItem>
+            <MenuItem Header="{tau:Loc MainWindow_MainMwnu_RenctFile}" ItemsSource="{tau:ActorBinding RenctFiles}">
+                <MenuItem.ItemTemplate>
+                    <DataTemplate>
+                        <MenuItem Header="{Binding}" tau:CommandBinder.Command="OpenRenct" CommandParameter="{Binding}"/>
+                    </DataTemplate>
+                </MenuItem.ItemTemplate>
             </MenuItem>
         </Menu>
         <Border BorderBrush="LightGray" BorderThickness="1" Margin="5" Grid.Row="1"></Border>

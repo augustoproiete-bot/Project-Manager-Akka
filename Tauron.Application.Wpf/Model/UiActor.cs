@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using Akka.Actor;
 using Akka.Event;
@@ -150,6 +151,8 @@ namespace Tauron.Application.Wpf.Model
                 registration.Command(parameter);
             else
                 Log.Error("Command not Found {Name}", name);
+
+            Dispatcher.Invoke(CommandManager.InvalidateRequerySuggested);
         }
 
         private void CanCommandExecute(CanCommandExecuteRequest obj)

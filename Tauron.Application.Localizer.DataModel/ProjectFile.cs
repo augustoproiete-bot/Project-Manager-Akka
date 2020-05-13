@@ -40,10 +40,16 @@ namespace Tauron.Application.Localizer.DataModel
                 project.Write(writer);
         }
 
-        public static void BeginLoad(IActorContext factory, string operationId, string source, string? name = null)
+        public static void BeginLoad(IActorContext factory, string operationId, string source, string actorName)
         {
-            var actor = factory.GetOrAdd<ProjectFileOperator>(name);
+            var actor = factory.GetOrAdd<ProjectFileOperator>(actorName);
             actor.Tell(new LoadProjectFile(operationId, source));
+        }
+
+        public static ProjectFile NewProjectFile(IActorContext factory, string source, string actorName)
+        {
+            var actor = factory.GetOrAdd<ProjectFileOperator>(actorName);
+            return new ProjectFile(ImmutableList<Project>.Empty, source, actor);
         }
     }
 }

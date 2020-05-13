@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using MahApps.Metro.Controls.Dialogs;
@@ -20,19 +19,25 @@ namespace Tauron.Application.Localizer.Views
         private readonly IDialogFactory _dialogFactory;
         private readonly LocLocalizer _localizer;
         private readonly Action<string?> _result;
+        private readonly OpenFileMode _filemode;
 
-        public OpenFileDialogView(IDialogCoordinator coordinator, IDialogFactory dialogFactory, LocLocalizer localizer, Action<string?> result)
+        public OpenFileDialogView(IDialogCoordinator coordinator, IDialogFactory dialogFactory, LocLocalizer localizer, Action<string?> result, OpenFileMode filemode)
         {
             _coordinator = coordinator;
             _dialogFactory = dialogFactory;
             _localizer = localizer;
             _result = result;
+            _filemode = filemode;
             InitializeComponent();
+
+            if (filemode == OpenFileMode.OpenNewFile)
+                Title += _localizer.OpenFileDialogViewHeaderNewPrefix;
         }
 
         private void Search_OnClick(object sender, RoutedEventArgs e)
         {
-            var result = _dialogFactory.ShowOpenFileDialog(null, true, "transp", true, _localizer.OpenFileDialogViewDialogFilter, false, _localizer.OpenFileDialogViewDialogTitle,
+            var result = _dialogFactory.ShowOpenFileDialog(null, _filemode == OpenFileMode.OpenExistingFile, "transp", true, _localizer.OpenFileDialogViewDialogFilter, false,
+                                                                            _localizer.OpenFileDialogViewDialogTitle,
                 true, true, out bool? ok);
 
             if(ok != true) return;
@@ -48,5 +53,11 @@ namespace Tauron.Application.Localizer.Views
         }
 
         public BaseMetroDialog Dialog => this;
+
+        private void OpenFileDialogView_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            FocusManager.SetFocusedElement(this, PART_Path);
+            Keyboard.Focus(PART_Path);
+        }
     }
 }

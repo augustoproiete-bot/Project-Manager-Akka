@@ -1,8 +1,12 @@
 {
+  "Common_Error": "Error",
+
   "MainWindow_Title": "Localizing App",
 
   "MainWindow_MainMenu_File": "File",
   "MainWindow_MainMenu_File_Open": "Open",
+  "MainWindow_MainMenu_File_New": "New",
+  "MainWindow_MainMwnu_RenctFile": "Renct Files",
 
   "MainWindow_Operations_Label": "Operations",
   "MainWindow_Operation_Tabs_Label_Logs": "Logs",
@@ -11,12 +15,14 @@
   "MainWindow_Operation_Delete_All": "Delete All",
 
   "MainWindowModel_LoadProject_Operation": "Load Project {0}",
+  "MainWindowModel_LoadProject_SourceEmpty": "No Project File Entered",
 
   "OperationController_Success": "Success",
   "OperationController_Failed": "Failed",
   "OperationController_Running": "Running",
 
   "OpenFileDialogView_Header": "Select Project File",
+  "OpenFileDialogView_Header_NewPrefix": " (New)",
   "OpenFileDialogView_Selector_Label": "Path:",
   "OpenFileDialogView_SearchButton_Label": "Search",
   "OpenFileDialogView_OkButton_Label": "Ok",

@@ -83,6 +83,18 @@ namespace Tauron.Application.Wpf.Helper
 
             var disposer = bindable.Bind(_target, affectedPart, _dataContext);
 
+            if (affectedPart is FrameworkElement element)
+            {
+                void OnElementOnUnloaded(object sender, RoutedEventArgs args)
+                {
+                    disposer.Dispose();
+                    _binderList.Remove(key);
+                    element.Unloaded -= OnElementOnUnloaded;
+                }
+
+                element.Unloaded += OnElementOnUnloaded;
+            }
+
             _binderList[key] = (disposer, bindable);
         }
 
