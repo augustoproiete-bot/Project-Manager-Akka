@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Markup;
 using JetBrains.Annotations;
@@ -10,34 +11,50 @@ namespace Tauron.Application.Wpf.UI
     [PublicAPI]
     public abstract class UpdatableMarkupExtension : MarkupExtension
     {
-        protected DependencyObject? TargetObject { get; private set; }
+        protected object? TargetObject { get; private set; }
 
-        protected DependencyProperty? TargetProperty { get; private set; }
+        protected object? TargetProperty { get; private set; }
 
         public sealed override object ProvideValue(IServiceProvider serviceProvider)
         {
-            if (TryGetTargetItems(serviceProvider, out var dependencyObject, out var dependencyProperty))
+            if (serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service)
             {
-                TargetObject = dependencyObject;
-                TargetProperty = dependencyProperty;
+                if (service.TargetObject.GetType().FullName == "System.Windows.SharedDp")
+                    return this;
+
+                TargetObject = service.TargetObject;
+                TargetProperty = service.TargetProperty;
             }
 
-            return DesignerProperties.GetIsInDesignMode(TargetObject) ? DesignTime() : ProvideValueInternal(serviceProvider);
+            var isDesign = TargetProperty is DependencyObject dependencyObject && DesignerProperties.GetIsInDesignMode(dependencyObject);
+
+            return isDesign ? DesignTime() : ProvideValueInternal(serviceProvider);
         }
 
         protected void UpdateValue(object? value)
         {
-            if (TargetObject == null || TargetProperty == null) return;
-            
-            void UpdateAction() => TargetObject.SetValue(TargetProperty, value);
+            if (TargetObject != null)
+            {
+                if (TargetProperty is DependencyProperty dependencyProperty)
+                {
+                    var obj = TargetObject as DependencyObject;
 
-            // Check whether the target object can be accessed from the
-            // current thread, and use Dispatcher.Invoke if it can't
+                    void UpdateAction() => obj.SetValue(dependencyProperty, value);
 
-            if (TargetObject.CheckAccess())
-                UpdateAction();
-            else
-                TargetObject.Dispatcher.Invoke(UpdateAction);
+                    // Check whether the target object can be accessed from the
+                    // current thread, and use Dispatcher.Invoke if it can't
+
+                    if (obj?.CheckAccess() == true)
+                        UpdateAction();
+                    else
+                        obj?.Dispatcher.Invoke(UpdateAction);
+                }
+                else // _targetProperty is PropertyInfo
+                {
+                    var prop = TargetProperty as PropertyInfo;
+                    prop?.SetValue(TargetObject, value, null);
+                }
+            }
         }
 
         protected virtual bool TryGetTargetItems(IServiceProvider? provider, [NotNullWhen(true)]out DependencyObject? target, [NotNullWhen(true)] out DependencyProperty? dp)

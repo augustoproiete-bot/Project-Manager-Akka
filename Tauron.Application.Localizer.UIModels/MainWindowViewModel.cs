@@ -8,6 +8,7 @@ using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
 using MahApps.Metro.Controls.Dialogs;
+using Tauron.Akka;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.UIModels.lang;
@@ -40,10 +41,19 @@ namespace Tauron.Application.Localizer.UIModels
             get => Get<RenctFilesCollection>()!;
         }
 
+        private IViewModel<CenterViewModel> CenterView
+        {
+            get => Get<IViewModel<CenterViewModel>>()!;
+            set => Set(value);
+        }
+
         public MainWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IOperationManager operationManager, LocLocalizer localizer, IDialogCoordinator dialogCoordinator,
-            AppConfig config, IDialogFactory dialogFactory) 
+            AppConfig config, IDialogFactory dialogFactory, IViewModel<CenterViewModel> model) 
             : base(lifetimeScope, dispatcher)
         {
+            model.Init(Context, "CenterView");
+            CenterView = model;
+
             _operationManager = operationManager;
             _localizer = localizer;
             _dialogCoordinator = dialogCoordinator;
@@ -157,13 +167,11 @@ namespace Tauron.Application.Localizer.UIModels
 
             _last = obj.ProjectFile;
 
-            //TODO Delegate To MainView
+            CenterView.Actor.Tell(new SupplyNewProjectFile(_last));
         }
 
-        private void UpdateSource(string source)
-        {
-
-        }
+        private void UpdateSource(string source) 
+            => CenterView.Actor.Tell(new UpdateSource(source));
 
         private sealed class RenctFilesCollection : UIObservableCollection<string>
         {
