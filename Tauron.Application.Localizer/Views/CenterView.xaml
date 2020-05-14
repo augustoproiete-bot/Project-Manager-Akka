@@ -6,7 +6,18 @@
              xmlns:tau="http://schemas.TauronWpf.com"
              mc:Ignorable="d" Background="White"
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
-    </Grid>
+    <DockPanel LastChildFill="True">
+        <ToolBar DockPanel.Dock="Top">
+            <Button Margin="3" Content="{tau:Loc CenterView_NewProject}" tau:CommandBinder.Command="AddNewProject"/>
+            <Button Margin="3">Project Entfernen</Button>
+        </ToolBar>
+        <TabControl ItemsSource="{tau:ActorBinding Views}">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                    <ContentControl Content="{Binding Model, Converter={tau:ViewModelConverter}}"/>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+        </TabControl>
+    </DockPanel>
 </tau:UserControl>

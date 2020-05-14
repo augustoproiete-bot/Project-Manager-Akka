@@ -16,8 +16,4 @@
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\Data\Mutating\" />
-  </ItemGroup>
-
 </Project>

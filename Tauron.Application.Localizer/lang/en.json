@@ -18,6 +18,9 @@
   "MainWindowModel_LoadProject_Operation": "Load Project {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "No Project File Entered",
 
+  "CenterView_SaveProject_Operation": "Save Project: {0}",
+  "CenterView_NewProject": "New Project",
+
   "OperationController_Success": "Success",
   "OperationController_Failed": "Failed",
   "OperationController_Running": "Running",

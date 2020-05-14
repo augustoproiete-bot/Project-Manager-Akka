@@ -1,25 +1,32 @@
-﻿using Akka.Actor;
+﻿using System.Threading;
+using Akka.Actor;
+using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel;
+using Tauron.Application.Localizer.UIModels.Services.Data.Mutating;
+using Tauron.Application.Localizer.UIModels.Services.Data.MutatingEngine;
 
 namespace Tauron.Application.Localizer.UIModels.Services.Data
 {
-    public sealed class ProjectFileWorkspace
+    [PublicAPI]
+    public sealed class ProjectFileWorkspace : IDataSource<MutatingContext>
     {
-        
+        private ProjectFile _projectFile;
+        private MutatingEngine<MutatingContext> _mutatingEngine;
 
-        public ProjectFile ProjectFile { get; }
+        public ProjectFile ProjectFile => _projectFile;
 
-        public ProjectFileWorkspace(ProjectFile projectFile) 
-            => ProjectFile = projectFile;
+        public SourceMutator Source { get; }
 
-        public void ChangeSource(string newSource)
+        public ProjectFileWorkspace(IActorRefFactory factory)
         {
+            _projectFile = new ProjectFile();
+            _mutatingEngine = new MutatingEngine<MutatingContext>(factory, this);
 
+            Source = new SourceMutator(_mutatingEngine, this);
         }
 
-        public void RevertSource()
-        {
+        MutatingContext IDataSource<MutatingContext>.GetData() => new MutatingContext(null, ProjectFile);
 
-        }
+        void IDataSource<MutatingContext>.SetData(MutatingContext data) => Interlocked.Exchange(ref _projectFile, data.File);
     }
 }

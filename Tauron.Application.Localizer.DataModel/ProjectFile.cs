@@ -19,6 +19,15 @@ namespace Tauron.Application.Localizer.DataModel
 
         public IActorRef Operator { get; }
 
+        public bool IsEmpty => Operator.Equals(ActorRefs.Nobody);
+
+        public ProjectFile()
+        {
+            Projects = ImmutableList<Project>.Empty;
+            Source = string.Empty;
+            Operator = ActorRefs.Nobody;
+        }
+
         public ProjectFile(BinaryReader reader, string source, IActorRef op)
         {
             Source = source;
