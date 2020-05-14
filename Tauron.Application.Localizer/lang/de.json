@@ -19,7 +19,12 @@
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",
 
   "CenterView_SaveProject_Operation": "Projekt Speicher: {0}",
-  "CenterView_NewProject": "Neues Projekt", 
+  "CenterView_NewProject": "Neues Projekt",
+
+  "NewProjectDialogView_Header": "Neues Projekt",
+  "NewProjectDialogView_Name_Lable": "Name: ",
+  "NewprojectDialogView_Create_Button": "Erstellen",
+  "NewProjectDialogView_Error_Duplicate": "Name Doppelt vorhanden",
 
   "OperationController_Success": "Erfolgreich",
   "OperationController_Failed": "Unbekannter Fehler",

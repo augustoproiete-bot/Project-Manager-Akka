@@ -13,7 +13,7 @@ namespace Tauron.Application.Localizer.Views
     /// <summary>
     /// Interaktionslogik für OpenFileDialogView.xaml
     /// </summary>
-    public partial class OpenFileDialogView : IOpenFileView
+    public partial class OpenFileDialogView : IOpenFileDialog
     {
         private readonly IDialogCoordinator _coordinator;
         private readonly IDialogFactory _dialogFactory;

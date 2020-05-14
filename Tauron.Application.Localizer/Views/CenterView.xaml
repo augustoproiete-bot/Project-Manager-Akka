@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:tau="http://schemas.TauronWpf.com"
+             xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
              mc:Ignorable="d" Background="White"
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel LastChildFill="True">
@@ -13,9 +14,10 @@
         </ToolBar>
         <TabControl ItemsSource="{tau:ActorBinding Views}">
             <TabControl.ItemTemplate>
-                <DataTemplate>
-                    <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
-                    <ContentControl Content="{Binding Model, Converter={tau:ViewModelConverter}}"/>
+                <DataTemplate DataType="uiModels:ProjectViewContainer">
+                    <TabItem Header="{Binding Project.ProjectName}">
+                        <ContentControl Content="{Binding Model, Converter={tau:ViewModelConverter}}"/>
+                    </TabItem>
                 </DataTemplate>
             </TabControl.ItemTemplate>
         </TabControl>

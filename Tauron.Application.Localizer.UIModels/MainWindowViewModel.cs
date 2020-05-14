@@ -100,7 +100,7 @@ namespace Tauron.Application.Localizer.UIModels
             var self = Self;
             Dispatcher.Invoke(async () =>
                               {
-                                  var dialog = LifetimeScope.Resolve<IOpenFileView>(TypedParameter.From(new Action<string?>(s => self.Tell(new SourceSelected(s, OpenFileMode.OpenNewFile)))),
+                                  var dialog = LifetimeScope.Resolve<IOpenFileDialog>(TypedParameter.From(new Action<string?>(s => self.Tell(new SourceSelected(s, OpenFileMode.OpenNewFile)))),
                                       TypedParameter.From(OpenFileMode.OpenNewFile)).Dialog;
                                   await _dialogCoordinator.ShowMetroDialogAsync(MainWindow, dialog);
                               });
@@ -114,7 +114,7 @@ namespace Tauron.Application.Localizer.UIModels
             var self = Self;
             Dispatcher.Invoke(async () =>
                               {
-                                  var dialog = LifetimeScope.Resolve<IOpenFileView>(TypedParameter.From(new Action<string?>(s => self.Tell(new SourceSelected(s, OpenFileMode.OpenExistingFile)))),
+                                  var dialog = LifetimeScope.Resolve<IOpenFileDialog>(TypedParameter.From(new Action<string?>(s => self.Tell(new SourceSelected(s, OpenFileMode.OpenExistingFile)))),
                                       TypedParameter.From(OpenFileMode.OpenExistingFile)).Dialog;
                                   await _dialogCoordinator.ShowMetroDialogAsync(MainWindow, dialog);
                               });
@@ -130,7 +130,7 @@ namespace Tauron.Application.Localizer.UIModels
 
         private async Task NewFileSource(string? source)
         {
-            if(CheckSourceOk(source)) return;
+            source ??= string.Empty;
 
             if (File.Exists(source))
             {
@@ -140,7 +140,7 @@ namespace Tauron.Application.Localizer.UIModels
                 if(result == MessageDialogResult.Negative) return;
             }
 
-            Self.Tell(new LoadedProjectFile(string.Empty, ProjectFile.NewProjectFile(Context, source!, "Project_Operator"), null, true));
+            Self.Tell(new LoadedProjectFile(string.Empty, ProjectFile.NewProjectFile(Context, source, "Project_Operator"), null, true));
         }
 
         private void OpentFileSource(string? source)

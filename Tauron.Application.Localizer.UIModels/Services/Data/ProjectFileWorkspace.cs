@@ -17,11 +17,14 @@ namespace Tauron.Application.Localizer.UIModels.Services.Data
 
         public SourceMutator Source { get; }
 
+        public ProjectMutator Projects { get; }
+
         public ProjectFileWorkspace(IActorRefFactory factory)
         {
             _projectFile = new ProjectFile();
             _mutatingEngine = new MutatingEngine<MutatingContext>(factory, this);
 
+            Projects = new ProjectMutator(_mutatingEngine, this);
             Source = new SourceMutator(_mutatingEngine, this);
         }
 

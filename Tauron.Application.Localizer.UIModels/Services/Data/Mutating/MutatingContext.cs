@@ -9,6 +9,10 @@ namespace Tauron.Application.Localizer.UIModels.Services.Data.Mutating
     {
         public MutatingChange? Change { get; }
 
+        public TType GetChange<TType>()
+            where TType : MutatingChange
+            => (TType) Change!;
+
         public ProjectFile File { get; }
     }
 }

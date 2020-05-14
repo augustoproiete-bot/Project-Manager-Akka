@@ -60,5 +60,8 @@ namespace Tauron.Application.Localizer.DataModel
             var actor = factory.GetOrAdd<ProjectFileOperator>(actorName);
             return new ProjectFile(ImmutableList<Project>.Empty, source, actor);
         }
+
+        public ProjectFile AddProject(Project project) 
+            => WithProjects(Projects.Add(project));
     }
 }

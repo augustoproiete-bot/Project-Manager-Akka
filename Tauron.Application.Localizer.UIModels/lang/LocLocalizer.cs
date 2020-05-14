@@ -23,6 +23,7 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _openFileDialogViewHeaderNewPrefix = ToString(loc.RequestTask("OpenFileDialogView_Header_NewPrefix"));
             _mainWindowMainMenuFileSaveAs = ToString(loc.RequestTask("MainWindow_MainMenu_File_SaveAs"));
             _centerViewSaveProjectOperation = ToString(loc.RequestTask("CenterView_SaveProject_Operation"));
+            _newProjectDialogViewErrorDuplicate = ToString(loc.RequestTask("NewProjectDialogView_Error_Duplicate"));
         }
 
         private Task<string> ToString(Task<object?> task) => task.ContinueWith(t => t.Result as string ?? string.Empty);
@@ -70,5 +71,9 @@ namespace Tauron.Application.Localizer.UIModels.lang
         private readonly Task<string> _centerViewSaveProjectOperation;
 
         public string CenterViewSaveProjectOperation => _centerViewSaveProjectOperation.Result;
+
+        private readonly Task<string> _newProjectDialogViewErrorDuplicate;
+
+        public string NewProjectDialogViewErrorDuplicate => _newProjectDialogViewErrorDuplicate.Result;
     }
 }
