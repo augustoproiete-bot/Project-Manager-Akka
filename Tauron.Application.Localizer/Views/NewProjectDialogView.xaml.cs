@@ -87,5 +87,11 @@ namespace Tauron.Application.Localizer.Views
 
         private async void ReturnAction() 
             => await _coordinator.HideMetroDialogAsync("MainWindow", this);
+
+        private void OpenFileDialogView_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            FocusManager.SetFocusedElement(this, NameBox);
+            Keyboard.Focus(NameBox);
+        }
     }
 }

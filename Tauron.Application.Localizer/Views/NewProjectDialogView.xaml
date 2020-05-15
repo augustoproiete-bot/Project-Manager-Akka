@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:Tauron.Application.Localizer.Views"
              xmlns:ui="http://schemas.TauronWpf.com"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-             mc:Ignorable="d" Title="{ui:Loc NewProjectDialogView_Header}" Background="White"
+             mc:Ignorable="d" Title="{ui:Loc NewProjectDialogView_Header}" Background="White" Loaded="OpenFileDialogView_OnLoaded"
              d:DesignHeight="250" d:DesignWidth="800" MaxHeight="250" MaxWidth="1000" d:DataContext="{d:DesignInstance local:NewProjectDialogViewModel}">
     <Grid VerticalAlignment="Center">
         <Grid.RowDefinitions>
@@ -20,8 +20,8 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <TextBlock Text="{ui:Loc NewProjectDialogView_Name_Lable}" Margin="5"/>
-        <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="5" Text="{Binding Content, Delay=1000, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBox Name="NameBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="5" Text="{Binding Content, Delay=50, UpdateSourceTrigger=PropertyChanged}"/>
         <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="5" Text="{Binding Error}"/>
-        <Button Grid.Row="2" Grid.Column="2" Content="{ui:Loc NewprojectDialogView_Create_Button}" Margin="5" Command="{Binding Return}"/>
+        <Button Grid.Row="2" Grid.Column="2" Content="{ui:Loc NewprojectDialogView_Create_Button}" Margin="5" Command="{Binding Return}" IsDefault="True"/>
     </Grid>
 </mah:CustomDialog>

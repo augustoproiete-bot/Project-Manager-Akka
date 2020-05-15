@@ -20,6 +20,9 @@
 
   "CenterView_SaveProject_Operation": "Save Project: {0}",
   "CenterView_NewProject": "New Project",
+  "CenterView_RemoveProject": "Remove Project",
+  "CenterView_RemoveProjectDialog_Title": "Remove project {0}",
+  "CenterView_RemoveProjectDialog_Message": null,
 
   "NewProjectDialogView_Header": "New Project",
   "NewProjectDialogView_Name_Lable": "Name: ",

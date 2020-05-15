@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Windows.Threading;
 using Autofac;
 using JetBrains.Annotations;
@@ -11,11 +10,12 @@ using Tauron.Application.Localizer.UIModels.Messages;
 using Tauron.Application.Localizer.UIModels.Services;
 using Tauron.Application.Localizer.UIModels.Services.Data;
 using Tauron.Application.Localizer.UIModels.Views;
+using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.Localizer.UIModels
 {
-    [PublicAPI]
+    [UsedImplicitly]
     public sealed class CenterViewModel : UiActor
     {
         private readonly IOperationManager _manager;
@@ -26,6 +26,12 @@ namespace Tauron.Application.Localizer.UIModels
         private ProjectViewCollection Views
         {
             get => Get<ProjectViewCollection>()!;
+            set => Set(value);
+        }
+
+        private int? CuurentProject
+        {
+            get => Get<int?>();
             set => Set(value);
         }
 
@@ -40,6 +46,7 @@ namespace Tauron.Application.Localizer.UIModels
             _workspace = new ProjectFileWorkspace(Context);
 
             RegisterCommand("AddNewProject", TryAddProject, () => !_workspace.ProjectFile.IsEmpty);
+            RegisterCommand("RemoveProject", TryRemoveProject, () => !_workspace.ProjectFile.IsEmpty && CuurentProject != null);
 
             _workspace.Source.SaveRequest.RespondOn(Self);
             _workspace.Source.ProjectReset.RespondOn(Self);
@@ -53,17 +60,43 @@ namespace Tauron.Application.Localizer.UIModels
             Receive<ProjectRest>(ProjectRest);
             Receive<NewProjectDialogResult>(NewProjectDialogResult);
             Receive<AddProject>(ap => AddProject(ap.Project));
+            Receive<InternlRemoveProject>(p => RemoveProject(p.Project));
+        }
+
+        private void TryRemoveProject()
+        {
+            var currentProject = CuurentProject;
+            if(currentProject == null) return;
+
+            var project = Views[currentProject.Value].Project;
+
+            var self = Self;
+            Dispatcher.Invoke(async () =>
+                              {
+                                  var result = await _dialogCoordinator.ShowMessageAsync("MainWindow", string.Format(_localizer.CenterViewRemoveProjectDialogTitle, project.ProjectName),
+                                      _localizer.CenterViewRemoveProjectDialogMessage, MessageDialogStyle.AffirmativeAndNegative);
+                                  if(result == MessageDialogResult.Negative) return;
+
+                                  self.Tell(new InternlRemoveProject(project), self);
+                              });
         }
 
         private void AddProject(Project project)
         {
-            //TODO Add Project
+            var view = LifetimeScope.Resolve<IViewModel<ProjectViewModel>>();
+            view.Init(Context, project.ProjectName + "-View");
+            view.Actor.Tell(new InitProjectViewModel(project, _workspace), Self);
+
+            Views.Add(new ProjectViewContainer(view, project));
+
+            CuurentProject = Views.Count - 1;
         }
 
 
         private void NewProjectDialogResult(NewProjectDialogResult obj)
         {
-            if(string.IsNullOrWhiteSpace(obj.Name))
+            if (string.IsNullOrWhiteSpace(obj.Name)) return;
+
             _workspace.Projects.AddProject(obj.Name);
         }
 
@@ -94,6 +127,7 @@ namespace Tauron.Application.Localizer.UIModels
             foreach (var project in obj.ProjectFile.Projects) 
                 AddProject(project);
 
+            CommandChanged();
         }
 
         private void ProjectSaved(SavedProject obj)
@@ -121,5 +155,11 @@ namespace Tauron.Application.Localizer.UIModels
         private void UpdateSourceHandler(UpdateSource obj) => _workspace.Source.UpdateSource(obj.Name);
 
 
+        private sealed class InternlRemoveProject
+        {
+            public Project Project { get; }
+
+            public InternlRemoveProject(Project project) => Project = project;
+        }
     }
 }

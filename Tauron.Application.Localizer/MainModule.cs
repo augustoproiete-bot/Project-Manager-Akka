@@ -13,6 +13,7 @@ namespace Tauron.Application.Localizer
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterView<CenterView, CenterViewModel>();
+            builder.RegisterView<ProjectView, ProjectViewModel>().InstancePerDependency();
             builder.RegisterView<MainWindow, MainWindowViewModel>().OnActivating(i => i.Instance.Init("Main-Window"));
 
             builder.RegisterType<OpenFileDialogView>().As<IOpenFileDialog>();

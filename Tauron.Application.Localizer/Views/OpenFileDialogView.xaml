@@ -7,9 +7,6 @@
              xmlns:ui="http://schemas.TauronWpf.com" Loaded="OpenFileDialogView_OnLoaded"
              mc:Ignorable="d" Background="White" Title="{ui:Loc OpenFileDialogView_Header}"
              d:DesignHeight="250" d:DesignWidth="800" MaxHeight="250" MaxWidth="1000">
-    <mah:CustomDialog.Resources>
-        <ResourceDictionary Source="../Theme.xaml"/>
-    </mah:CustomDialog.Resources>
     <Grid VerticalAlignment="Center" FocusManager.IsFocusScope="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

@@ -10,16 +10,27 @@
     <DockPanel LastChildFill="True">
         <ToolBar DockPanel.Dock="Top">
             <Button Margin="3" Content="{tau:Loc CenterView_NewProject}" tau:CommandBinder.Command="AddNewProject"/>
-            <Button Margin="3">Project Entfernen</Button>
+            <Button Margin="3" Content="{tau:Loc CenterView_RemoveProject}" tau:CommandBinder.Command="RemoveProject"/>
         </ToolBar>
-        <TabControl ItemsSource="{tau:ActorBinding Views}">
+        <TabControl ItemsSource="{tau:ActorBinding Views}" SelectedIndex="{tau:ActorBinding CuurentProject}">
             <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="Hallo"></TextBlock>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate></DataTemplate>
+            </TabControl.ContentTemplate>
+            <!--<TabControl.ItemTemplate>
                 <DataTemplate DataType="uiModels:ProjectViewContainer">
-                    <TabItem Header="{Binding Project.ProjectName}">
+                    <TabItem>
+                        <TabItem.Header>
+                            <TextBlock Text="{Binding Project.ProjectName}"/>
+                        </TabItem.Header>
                         <ContentControl Content="{Binding Model, Converter={tau:ViewModelConverter}}"/>
                     </TabItem>
                 </DataTemplate>
-            </TabControl.ItemTemplate>
+            </TabControl.ItemTemplate>-->
         </TabControl>
     </DockPanel>
 </tau:UserControl>

@@ -20,6 +20,9 @@
 
   "CenterView_SaveProject_Operation": "Projekt Speicher: {0}",
   "CenterView_NewProject": "Neues Projekt",
+  "CenterView_RemoveProject": "Projekt Entfernen",
+  "CenterView_RemoveProjectDialog_Title": "Projekt {0} Entfernen",
+  "CenterView_RemoveProjectDialog_Message": "Möchten sie das Projekt entfernen",
 
   "NewProjectDialogView_Header": "Neues Projekt",
   "NewProjectDialogView_Name_Lable": "Name: ",

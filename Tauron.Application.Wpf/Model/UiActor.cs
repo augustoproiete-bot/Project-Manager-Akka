@@ -176,6 +176,9 @@ namespace Tauron.Application.Wpf.Model
         public void RegisterCommand(string name, Action execute, Func<bool>? canExecute = null) 
             => _commandRegistrations[name] = new CommandRegistration(_ => execute(), canExecute != null ? new Func<object?, bool>(_ => canExecute()) : null);
 
+        public void CommandChanged() 
+            => Dispatcher.BeginInvoke(new Action(CommandManager.InvalidateRequerySuggested), DispatcherPriority.ApplicationIdle);
+
         #endregion
 
         #region Lifecycle
