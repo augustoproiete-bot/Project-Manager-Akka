@@ -1,7 +1,10 @@
 {
   "Common_Error": "Fehler",
+  "Common_Warnig": "Warnung",
+  "Common_Unkowen": "Unbekannt",
 
   "MainWindow_Title": "Lokalisierungs App",
+  "MainWindow_Close_Warning": "Projekt nicht gespeichert. Trotzdem beenden!",
 
   "MainWindow_MainMenu_File": "Datei",
   "MainWindow_MainMenu_File_Open": "Öffnen",
@@ -18,11 +21,12 @@
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",
 
-  "CenterView_SaveProject_Operation": "Projekt Speicher: {0}",
+  "CenterView_SaveProject_Operation": "Projekt Gespeichert: {0}",
   "CenterView_NewProject": "Neues Projekt",
   "CenterView_RemoveProject": "Projekt Entfernen",
   "CenterView_RemoveProjectDialog_Title": "Projekt {0} Entfernen",
   "CenterView_RemoveProjectDialog_Message": "Möchten sie das Projekt entfernen",
+  "CenterView_NewProject_InvalidName_Message": "Der Name des Projekt enthält falsche Zeichen.",
 
   "NewProjectDialogView_Header": "Neues Projekt",
   "NewProjectDialogView_Name_Lable": "Name: ",

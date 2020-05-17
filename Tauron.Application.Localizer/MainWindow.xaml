@@ -9,6 +9,7 @@
         xmlns:converter="clr-namespace:Tauron.Application.Localizer.Core.Converter"
         xmlns:ui="clr-namespace:Tauron.Application.Localizer.Core.UI"
         xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
         mc:Ignorable="d" WindowState="Maximized" mah:DialogParticipation.Register="MainWindow"
         Title="{tau:Loc MainWindow_Title}" Height="450" Width="800" Icon="icon.ico"      
         TextElement.Foreground="{DynamicResource MaterialDesignBody}" 
@@ -18,9 +19,9 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}">
-    <Window.Resources>
+    <!--<Window.Resources>
         <ResourceDictionary Source="Theme.xaml"/>
-    </Window.Resources>
+    </Window.Resources>-->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -36,8 +37,12 @@
             </MenuItem>
             <MenuItem Header="{tau:Loc MainWindow_MainMwnu_RenctFile}" ItemsSource="{tau:ActorBinding RenctFiles}">
                 <MenuItem.ItemTemplate>
-                    <DataTemplate>
-                        <MenuItem Header="{Binding}" tau:CommandBinder.Command="OpenRenct" CommandParameter="{Binding}"/>
+                    <DataTemplate DataType="uiModels:RenctFile">
+                        <MenuItem HorizontalContentAlignment="Left" Command="{Binding Runner}" ToolTip="{Binding File}">
+                            <MenuItem.Header>
+                                <TextBlock Text="{Binding Name}"/>
+                            </MenuItem.Header>
+                        </MenuItem>
                     </DataTemplate>
                 </MenuItem.ItemTemplate>
             </MenuItem>

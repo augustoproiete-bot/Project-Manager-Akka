@@ -12,7 +12,7 @@ namespace Tauron.Application.Localizer.UIModels
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<LocLocalizer>().AsSelf();
-            builder.RegisterType<OperationManager>().As<IOperationManager>();
+            builder.RegisterType<OperationManager>().As<IOperationManager>().SingleInstance();
             builder.RegisterType<AppConfig>().AsSelf().WithParameter("scope", SettingTypes.AppConfig).InstancePerLifetimeScope();
 
             builder.RegisterType<DefaultActorRef<SettingsManager>>().As<IDefaultActorRef<SettingsManager>>()

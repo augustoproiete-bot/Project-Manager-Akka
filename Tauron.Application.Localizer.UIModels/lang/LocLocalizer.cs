@@ -26,6 +26,11 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _newProjectDialogViewErrorDuplicate = ToString(loc.RequestTask("NewProjectDialogView_Error_Duplicate"));
             _centerViewRemoveProjectDialogTitle = ToString(loc.RequestTask("CenterView_RemoveProjectDialog_Title"));
             _centerViewRemoveProjectDialogMessage = ToString(loc.RequestTask("CenterView_RemoveProjectDialog_Message"));
+            _centerViewNewProjectInvalidNameMessage = ToString(loc.RequestTask("CenterView_NewProject_InvalidName_Message"));
+            _commonUnkowen = ToString(loc.RequestTask("Common_Unkowen"));
+            _mainWindowTitle = ToString(loc.RequestTask("MainWindow_Title"));
+            _commonWarnig = ToString(loc.RequestTask("Common_Warnig"));
+            _mainWindowCloseWarning = ToString(loc.RequestTask("MainWindow_Close_Warning"));
         }
 
         private Task<string> ToString(Task<object?> task) => task.ContinueWith(t => t.Result as string ?? string.Empty);
@@ -85,5 +90,25 @@ namespace Tauron.Application.Localizer.UIModels.lang
         private readonly Task<string> _centerViewRemoveProjectDialogMessage;
 
         public string CenterViewRemoveProjectDialogMessage => _centerViewRemoveProjectDialogMessage.Result;
+
+        private readonly Task<string> _centerViewNewProjectInvalidNameMessage;
+
+        public string CenterViewNewProjectInvalidNameMessage => _centerViewNewProjectInvalidNameMessage.Result;
+
+        private readonly Task<string> _commonUnkowen;
+
+        public string CommonUnkowen => _commonUnkowen.Result;
+
+        private readonly Task<string> _mainWindowTitle;
+
+        public string MainWindowTitle => _mainWindowTitle.Result;
+
+        private readonly Task<string> _commonWarnig;
+
+        public string CommonWarnig => _commonWarnig.Result;
+
+        private readonly Task<string> _mainWindowCloseWarning;
+
+        public string MainWindowCloseWarning => _mainWindowCloseWarning.Result;
     }
 }

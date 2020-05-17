@@ -14,12 +14,14 @@
         </ToolBar>
         <TabControl ItemsSource="{tau:ActorBinding Views}" SelectedIndex="{tau:ActorBinding CuurentProject}">
             <TabControl.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="Hallo"></TextBlock>
+                <DataTemplate DataType="uiModels:ProjectViewContainer">
+                    <TextBlock Text="{Binding Project.ProjectName}"/>
                 </DataTemplate>
             </TabControl.ItemTemplate>
             <TabControl.ContentTemplate>
-                <DataTemplate></DataTemplate>
+                <DataTemplate DataType="uiModels:ProjectViewContainer">
+                    <ContentControl Content="{Binding Model, Converter={tau:ViewModelConverter}}"/>
+                </DataTemplate>
             </TabControl.ContentTemplate>
             <!--<TabControl.ItemTemplate>
                 <DataTemplate DataType="uiModels:ProjectViewContainer">

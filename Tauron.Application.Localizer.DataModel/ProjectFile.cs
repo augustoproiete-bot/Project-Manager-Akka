@@ -63,5 +63,8 @@ namespace Tauron.Application.Localizer.DataModel
 
         public ProjectFile AddProject(Project project) 
             => WithProjects(Projects.Add(project));
+
+        public ProjectFile RemoveProject(Project project)
+            => WithProjects(Projects.Remove(project));
     }
 }

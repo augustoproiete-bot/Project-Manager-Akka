@@ -2,15 +2,13 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
-using System.Threading;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Autofac;
 using JetBrains.Annotations;
 using MahApps.Metro.Controls.Dialogs;
-using Tauron.Akka;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.UIModels.lang;
@@ -62,16 +60,12 @@ namespace Tauron.Application.Localizer.UIModels
             _dialogFactory = dialogFactory;
             RunningOperations = operationManager.RunningOperations;
 
-            RenctFiles = new RenctFilesCollection(config);
+            var self = Self;
+            RenctFiles = new RenctFilesCollection(config, s => self.Tell(new InternlRenctFile(s)));
 
             RegisterCommand("ClearOp", operationManager.Clear, operationManager.ShouldClear);
             RegisterCommand("ClearAllOp", operationManager.CompledClear, operationManager.ShouldCompledClear);
             RegisterCommand("OpenFile", OpenFile, () => _loadingOperation == null);
-            RegisterCommand("OpenRenct", o =>
-                                         {
-                                             if(o is string file)
-                                                 OpentFileSource(file);
-                                         }, _ => _loadingOperation == null);
             RegisterCommand("NewFile", NewFile, () => _loadingOperation == null);
             RegisterCommand("SaveAs", SaveAsProject, () => _last != null);
 
@@ -83,6 +77,8 @@ namespace Tauron.Application.Localizer.UIModels
                                         else
                                             await NewFileSource(s.Source);
                                     });
+
+            Receive<InternlRenctFile>(o => OpentFileSource(o.File));
         }
 
         private void SaveAsProject()
@@ -90,7 +86,7 @@ namespace Tauron.Application.Localizer.UIModels
             var targetFile = _dialogFactory.ShowSaveFileDialog(null, true, true, true, "transp", true,
                 _localizer.OpenFileDialogViewDialogFilter, true, true, _localizer.MainWindowMainMenuFileSaveAs, Directory.GetCurrentDirectory(), out var result);
 
-            if(CheckSourceOk(targetFile)) return;
+            if(result != true && CheckSourceOk(targetFile)) return;
 
             UpdateSource(targetFile!);
         }
@@ -164,8 +160,7 @@ namespace Tauron.Application.Localizer.UIModels
                 }
             }
 
-            if(obj.Ok)
-                RenctFiles.AddNewFile(obj.ProjectFile.Source);
+            if (obj.Ok) RenctFiles.AddNewFile(obj.ProjectFile.Source);
 
             _last = obj.ProjectFile;
 
@@ -175,22 +170,37 @@ namespace Tauron.Application.Localizer.UIModels
         private void UpdateSource(string source) 
             => CenterView.Actor.Tell(new UpdateSource(source));
 
-        private sealed class RenctFilesCollection : UIObservableCollection<string>
+        private sealed class RenctFilesCollection : UIObservableCollection<RenctFile>
         {
             private readonly AppConfig _config;
+            private readonly Action<string> _loader;
 
-            public RenctFilesCollection(AppConfig config)
-                : base(config.RenctFiles) 
-                => _config = config;
+            public RenctFilesCollection(AppConfig config, Action<string> loader)
+                : base(config.RenctFiles.Select(s => new RenctFile(s.Trim(), loader)))
+            {
+                _config = config;
+                _loader = loader;
+            }
 
             public void AddNewFile(string file)
             {
+                file = file.Trim();
+
+                if(this.Any(rf => rf.File == file)) return;
+
                 if(Count > 10)
                     RemoveAt(Count - 1);
                 
-                Add(file);
-                _config.RenctFiles = ImmutableList<string>.Empty.AddRange(this);
+                Add(new RenctFile(file, _loader));
+                _config.RenctFiles = ImmutableList<string>.Empty.AddRange(this.Select(rf => rf.File));
             }
+        }
+
+        private sealed class InternlRenctFile
+        {
+            public string File { get; }
+
+            public InternlRenctFile(string file) => File = file;
         }
     }
 }

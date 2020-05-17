@@ -1,5 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
+using ControlzEx.Standard;
+using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.UIModels;
+using Tauron.Application.Localizer.UIModels.lang;
+using Tauron.Application.Localizer.UIModels.Services;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.AppCore;
 using Window = System.Windows.Window;
@@ -11,13 +16,32 @@ namespace Tauron.Application.Localizer
     /// </summary>
     public partial class MainWindow : IMainWindow
     {
-        public MainWindow(IViewModel<MainWindowViewModel> model)
+        private readonly LocLocalizer _localizer;
+        private readonly IMainWindowCoordinator _mainWindowCoordinator;
+
+        public MainWindow(IViewModel<MainWindowViewModel> model, LocLocalizer localizer, IMainWindowCoordinator mainWindowCoordinator)
             : base(model)
         {
+            _localizer = localizer;
+            _mainWindowCoordinator = mainWindowCoordinator;
             InitializeComponent();
 
+            _mainWindowCoordinator.TitleChanged += () => Dispatcher.BeginInvoke(new Action(MainWindowCoordinatorOnTitleChanged));
+
+            Closing += OnClosing;
             Closed += (sender, args) => Shutdown?.Invoke(this, EventArgs.Empty);
         }
+
+        private void OnClosing(object sender, CancelEventArgs e)
+        {
+            if(_mainWindowCoordinator.Saved) return;
+
+            if (this.ShowModalMessageExternal(_localizer.CommonWarnig, _localizer.MainWindowCloseWarning, MessageDialogStyle.AffirmativeAndNegative) == MessageDialogResult.Negative)
+                e.Cancel = true;
+        }
+
+        private void MainWindowCoordinatorOnTitleChanged() 
+            => Title = _localizer.MainWindowTitle + " - " + _mainWindowCoordinator.TitlePostfix;
 
         public Window Window => this;
 

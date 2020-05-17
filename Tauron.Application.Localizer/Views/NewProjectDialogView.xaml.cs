@@ -57,8 +57,7 @@ namespace Tauron.Application.Localizer.Views
             {
                 if (value == _content) return;
                 _content = value;
-                if (_blocked.Contains(value))
-                    Error = _localizer.NewProjectDialogViewErrorDuplicate;
+                Error = _blocked.Contains(value) ? _localizer.NewProjectDialogViewErrorDuplicate : null;
                 OnPropertyChanged();
             }
         }

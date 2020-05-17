@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using System.Windows;
 using Autofac;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Logging;
@@ -26,6 +28,7 @@ namespace Tauron.Application.Localizer
         //    return Uri.UnescapeDataString(
         //        relativeUri.ToString().Replace('/', Path.DirectorySeparatorChar));
         //}
+        //"pack: //application:,,,/Tauron.Application.Localizer;component/Theme.xaml"
 
         public static async Task Main(string[] args)
         {
@@ -35,7 +38,19 @@ namespace Tauron.Application.Localizer
                .ConfigureLogging((context, configuration) => configuration.ConfigDefaultLogging("Localizer").WriteTo.Sink<SeriLogViewerSink>())
                .ConfigureAutoFac(cb => cb.RegisterModule<MainModule>().RegisterModule<UIModule>())
                .ConfigurateAkkSystem(((context, system) => system.RegisterLocalization()))
-               .UseWpf<MainWindow>();
+               .UseWpf<MainWindow>(c => c.WithAppFactory(() =>
+                                                         {
+                                                             var runapp = new System.Windows.Application
+                                                                       {
+                                                                           Resources = new ResourceDictionary
+                                                                                       {
+                                                                                           Source = new Uri("/Theme.xaml", UriKind.Relative)
+                                                                                       }
+                                                                       };
+
+
+                                                             return runapp;
+                                                         }));
 
             using var app = builder.Build();
             await app.Run();
