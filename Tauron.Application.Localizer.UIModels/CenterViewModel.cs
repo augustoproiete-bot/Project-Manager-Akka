@@ -159,6 +159,7 @@ namespace Tauron.Application.Localizer.UIModels
                 AddProject(project);
 
             CommandChanged();
+            _mainWindow.IsBusy = false;
         }
 
         private void ProjectSaved(SavedProject obj)

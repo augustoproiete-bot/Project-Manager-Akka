@@ -34,7 +34,7 @@ namespace Tauron.Application.Localizer.UIModels.Services.Data.Mutating
             _engine.Mutate(nameof(AddProject), 
                 context =>
                 {
-                    var project = new Project(ImmutableList<LocEntry>.Empty, name);
+                    var project = new Project(ImmutableList<LocEntry>.Empty, name, ImmutableList<ActiveLanguage>.Empty);
                     var newFile = context.File.AddProject(project);
                     return context.Update(new NewProjectChange(project), newFile);
                 });

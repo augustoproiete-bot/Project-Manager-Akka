@@ -10,6 +10,7 @@
         xmlns:ui="clr-namespace:Tauron.Application.Localizer.Core.UI"
         xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
+        xmlns:li="http://github.com/zeluisping/loadingIndicators/xaml/controls"
         mc:Ignorable="d" WindowState="Maximized" mah:DialogParticipation.Register="MainWindow"
         Title="{tau:Loc MainWindow_Title}" Height="450" Width="800" Icon="icon.ico"      
         TextElement.Foreground="{DynamicResource MaterialDesignBody}" 
@@ -19,69 +20,82 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}">
-    <!--<Window.Resources>
-        <ResourceDictionary Source="Theme.xaml"/>
-    </Window.Resources>-->
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Menu Margin="5">
-            <MenuItem Header="{tau:Loc MainWindow_MainMenu_File}">
-                <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_Open}" tau:CommandBinder.Command="OpenFile"/>
-                <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_New}" tau:CommandBinder.Command="NewFile"/>
-                <Separator/>
-                <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_SaveAs}" tau:CommandBinder.Command="SaveAs"/>
-            </MenuItem>
-            <MenuItem Header="{tau:Loc MainWindow_MainMwnu_RenctFile}" ItemsSource="{tau:ActorBinding RenctFiles}">
-                <MenuItem.ItemTemplate>
-                    <DataTemplate DataType="uiModels:RenctFile">
-                        <MenuItem HorizontalContentAlignment="Left" Command="{Binding Runner}" ToolTip="{Binding File}">
-                            <MenuItem.Header>
-                                <TextBlock Text="{Binding Name}"/>
-                            </MenuItem.Header>
-                        </MenuItem>
-                    </DataTemplate>
-                </MenuItem.ItemTemplate>
-            </MenuItem>
-        </Menu>
-        <Border BorderBrush="LightGray" BorderThickness="1" Margin="5" Grid.Row="1">
-            <ContentControl Content="{tau:ViewModelBinding CenterView}"/>
-        </Border>
-        <Expander Grid.Row="2" Margin="5">
-            <Expander.Header>
-                <mah:Badged Badge="{tau:ActorBinding RunningOperations, Path=RunningOperations, Converter={converter:OperationBadgetConverter}}" HorizontalAlignment="Left" Margin="-1,0,0,0">
-                    <TextBlock Text="{tau:Loc MainWindow_Operations_Label}"/>
-                </mah:Badged>
-            </Expander.Header>
-            <TabControl MinHeight="400">
-                <TabItem Header="{tau:Loc MainWindow_Operation_Tabs_Label_Ops}">
-                    <StackPanel>
-                        <ToolBar>
-                            <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete}" tau:CommandBinder.Command="ClearOp" />
-                            <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete_All}" tau:CommandBinder.Command="ClearAllOp" />
-                        </ToolBar>
-                        <ListBox ItemsSource="{tau:ActorBinding RunningOperations}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate DataType="services:RunningOperation">
-                                    <StackPanel Margin="3" Orientation="Horizontal">
-                                        <Border MinWidth="20" Margin="3,0,15,0"
-                                                Background="{Binding Operation, Converter={converter:OperationStateConverter}}"
-                                                CornerRadius="15" />
-                                        <TextBlock MinWidth="250" Text="{Binding Name}" />
-                                        <TextBlock Text="{Binding Status}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </StackPanel>
-                </TabItem>
-                <TabItem Header="{tau:Loc MainWindow_Operation_Tabs_Label_Logs}">
-                    <serilogViewer:SerilogViewer/>
-                </TabItem>
-            </TabControl>
-        </Expander>
-    </Grid>
+    <ui:AdornedControl x:Name="_AdornedControl">
+        <ui:AdornedControl.AdornerContent>
+            <Border Background="#7F778899">
+                <li:LoadingIndicator Name="_LoadingIndicator" Mode="Arcs" Foreground="DarkSlateBlue">
+                    <li:LoadingIndicator.RenderTransform>
+                        <ScaleTransform ScaleX="2" ScaleY="2"/>
+                    </li:LoadingIndicator.RenderTransform>
+                </li:LoadingIndicator>
+            </Border>
+        </ui:AdornedControl.AdornerContent>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Menu Margin="5">
+                <MenuItem Header="{tau:Loc MainWindow_MainMenu_File}">
+                    <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_Open}" tau:CommandBinder.Command="OpenFile" />
+                    <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_New}" tau:CommandBinder.Command="NewFile" />
+                    <Separator />
+                    <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_SaveAs}" tau:CommandBinder.Command="SaveAs" />
+                </MenuItem>
+                <MenuItem Header="{tau:Loc MainWindow_MainMwnu_RenctFile}" ItemsSource="{tau:ActorBinding RenctFiles}">
+                    <MenuItem.ItemTemplate>
+                        <DataTemplate DataType="uiModels:RenctFile">
+                            <MenuItem HorizontalContentAlignment="Left" Command="{Binding Runner}"
+                                      ToolTip="{Binding File}">
+                                <MenuItem.Header>
+                                    <TextBlock Text="{Binding Name}" />
+                                </MenuItem.Header>
+                            </MenuItem>
+                        </DataTemplate>
+                    </MenuItem.ItemTemplate>
+                </MenuItem>
+            </Menu>
+            <Border BorderBrush="LightGray" BorderThickness="1" Margin="5" Grid.Row="1">
+                <ContentControl Content="{tau:ViewModelBinding CenterView}" />
+            </Border>
+            <Expander Grid.Row="2" Margin="5">
+                <Expander.Header>
+                    <mah:Badged
+                        Badge="{tau:ActorBinding RunningOperations, Path=RunningOperations, Converter={converter:OperationBadgetConverter}}"
+                        HorizontalAlignment="Left" Margin="-1,0,0,0">
+                        <TextBlock Text="{tau:Loc MainWindow_Operations_Label}" />
+                    </mah:Badged>
+                </Expander.Header>
+                <TabControl MinHeight="400">
+                    <TabItem Header="{tau:Loc MainWindow_Operation_Tabs_Label_Ops}">
+                        <StackPanel>
+                            <ToolBar>
+                                <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete}"
+                                        tau:CommandBinder.Command="ClearOp" />
+                                <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete_All}"
+                                        tau:CommandBinder.Command="ClearAllOp" />
+                            </ToolBar>
+                            <ListBox ItemsSource="{tau:ActorBinding RunningOperations}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="services:RunningOperation">
+                                        <StackPanel Margin="3" Orientation="Horizontal">
+                                            <Border MinWidth="20" Margin="3,0,15,0"
+                                                    Background="{Binding Operation, Converter={converter:OperationStateConverter}}"
+                                                    CornerRadius="15" />
+                                            <TextBlock MinWidth="250" Text="{Binding Name}" />
+                                            <TextBlock Text="{Binding Status}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </TabItem>
+                    <TabItem Header="{tau:Loc MainWindow_Operation_Tabs_Label_Logs}">
+                        <serilogViewer:SerilogViewer />
+                    </TabItem>
+                </TabControl>
+            </Expander>
+        </Grid>
+    </ui:AdornedControl>
 </ui:InternalMetroWindow>

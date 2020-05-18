@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using ControlzEx.Standard;
 using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.lang;
@@ -27,9 +26,19 @@ namespace Tauron.Application.Localizer
             InitializeComponent();
 
             _mainWindowCoordinator.TitleChanged += () => Dispatcher.BeginInvoke(new Action(MainWindowCoordinatorOnTitleChanged));
+            _mainWindowCoordinator.IsBusyChanged += IsBusyChanged;
 
             Closing += OnClosing;
             Closed += (sender, args) => Shutdown?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void IsBusyChanged()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _LoadingIndicator.IsActive = _mainWindowCoordinator.IsBusy;
+                _AdornedControl.IsAdornerVisible = _mainWindowCoordinator.IsBusy;
+            });
         }
 
         private void OnClosing(object sender, CancelEventArgs e)

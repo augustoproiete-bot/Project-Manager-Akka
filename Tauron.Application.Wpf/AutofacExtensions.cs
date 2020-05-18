@@ -18,7 +18,12 @@ namespace Tauron.Application.Wpf
             AutoViewLocation.AddPair(typeof(TView), typeof(TModel));
 
             builder.RegisterType<TView>().As<TView>();
-            return builder.RegisterType<ViewModelActorRef<TModel>>().As<IViewModel<TModel>>().Keyed<IViewModel>(typeof(TModel)).InstancePerLifetimeScope();
+            return builder.RegisterType<ViewModelActorRef<TModel>>().As<IViewModel<TModel>>().Keyed<IViewModel>(typeof(TModel)).InstancePerLifetimeScope()
+                .OnRelease(vm =>
+                {
+                    if(vm.IsInitialized)
+                        vm.Actor.Tell(PoisonPill.Instance);
+                });
         }
 
         public static IRegistrationBuilder<DefaultActorRef<TActor>, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterDefaultActor<TActor>(this ContainerBuilder builder) 

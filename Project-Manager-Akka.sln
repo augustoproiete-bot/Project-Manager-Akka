@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Localize
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Localizer.UIModels", "Tauron.Application.Localizer.UIModels\Tauron.Application.Localizer.UIModels.csproj", "{88B9570B-77AB-4B26-976C-A1BAF369D43E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoadingIndicators.WPF", "LoadingIndicators.WPF\LoadingIndicators.WPF.csproj", "{C106FE59-63E2-4D72-B55B-7B14E6EF79FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,6 +93,10 @@ Global
 		{88B9570B-77AB-4B26-976C-A1BAF369D43E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{88B9570B-77AB-4B26-976C-A1BAF369D43E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{88B9570B-77AB-4B26-976C-A1BAF369D43E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C106FE59-63E2-4D72-B55B-7B14E6EF79FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C106FE59-63E2-4D72-B55B-7B14E6EF79FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C106FE59-63E2-4D72-B55B-7B14E6EF79FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C106FE59-63E2-4D72-B55B-7B14E6EF79FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,6 +118,7 @@ Global
 		{08498998-CB01-4B1D-8181-DB7C25E12387} = {FF793DD2-60AE-4BCB-9146-D164EE1D2829}
 		{A3C924E5-B909-46D9-9DBB-14D2E2F6A35C} = {FF793DD2-60AE-4BCB-9146-D164EE1D2829}
 		{88B9570B-77AB-4B26-976C-A1BAF369D43E} = {FF793DD2-60AE-4BCB-9146-D164EE1D2829}
+		{C106FE59-63E2-4D72-B55B-7B14E6EF79FC} = {5273DC22-6984-42F8-820D-EE59DD1487E3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F63AD2ED-4320-43AB-8761-A3FEBC507539}

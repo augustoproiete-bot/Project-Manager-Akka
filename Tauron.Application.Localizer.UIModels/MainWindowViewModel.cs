@@ -29,6 +29,7 @@ namespace Tauron.Application.Localizer.UIModels
         private readonly LocLocalizer _localizer;
         private readonly IDialogCoordinator _dialogCoordinator;
         private readonly IDialogFactory _dialogFactory;
+        private readonly IMainWindowCoordinator _mainWindowCoordinator;
 
         private IEnumerable<RunningOperation> RunningOperations
         {
@@ -48,7 +49,7 @@ namespace Tauron.Application.Localizer.UIModels
         }
 
         public MainWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IOperationManager operationManager, LocLocalizer localizer, IDialogCoordinator dialogCoordinator,
-            AppConfig config, IDialogFactory dialogFactory, IViewModel<CenterViewModel> model) 
+            AppConfig config, IDialogFactory dialogFactory, IViewModel<CenterViewModel> model, IMainWindowCoordinator mainWindowCoordinator) 
             : base(lifetimeScope, dispatcher)
         {
             model.Init(Context, "CenterView");
@@ -58,6 +59,7 @@ namespace Tauron.Application.Localizer.UIModels
             _localizer = localizer;
             _dialogCoordinator = dialogCoordinator;
             _dialogFactory = dialogFactory;
+            _mainWindowCoordinator = mainWindowCoordinator;
             RunningOperations = operationManager.RunningOperations;
 
             var self = Self;
@@ -136,6 +138,7 @@ namespace Tauron.Application.Localizer.UIModels
                 if(result == MessageDialogResult.Negative) return;
             }
 
+            _mainWindowCoordinator.IsBusy = true;
             Self.Tell(new LoadedProjectFile(string.Empty, ProjectFile.NewProjectFile(Context, source, "Project_Operator"), null, true));
         }
 
@@ -143,6 +146,7 @@ namespace Tauron.Application.Localizer.UIModels
         {
             if(CheckSourceOk(source)) return;
 
+            _mainWindowCoordinator.IsBusy = true;
             _loadingOperation = _operationManager.StartOperation(string.Format(_localizer.MainWindowModelLoadProjectOperation, Path.GetFileName(source) ?? source));
             ProjectFile.BeginLoad(Context, _loadingOperation.Id, source!, "Project_Operator");
         }
@@ -155,6 +159,7 @@ namespace Tauron.Application.Localizer.UIModels
                     _loadingOperation.Compled();
                 else
                 {
+                    _mainWindowCoordinator.IsBusy = false;
                     _loadingOperation.Failed(obj.ErrorReason?.Message ?? _localizer.CommonError);
                     return;
                 }

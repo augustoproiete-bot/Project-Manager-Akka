@@ -26,7 +26,7 @@ namespace Tauron.Application.Wpf.UI
                 TargetProperty = service.TargetProperty;
             }
 
-            var isDesign = TargetProperty is DependencyObject dependencyObject && DesignerProperties.GetIsInDesignMode(dependencyObject);
+            var isDesign = TargetObject is DependencyObject dependencyObject && DesignerProperties.GetIsInDesignMode(dependencyObject);
 
             return isDesign ? DesignTime() : ProvideValueInternal(serviceProvider);
         }
