@@ -21,7 +21,7 @@ namespace Tauron.Application.Localizer.DataModel
         }
 
         public static ActiveLanguage FromCulture(CultureInfo info)
-            => new ActiveLanguage(info.Name, info.DisplayName);
+            => new ActiveLanguage(info.Name, info.EnglishName);
 
         public CultureInfo ToCulture() => CultureInfo.GetCultureInfo(Shortcut);
 

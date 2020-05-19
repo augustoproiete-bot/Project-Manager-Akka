@@ -2,6 +2,7 @@
   "Common_Error": "Error",
   "Common_Warnig": "Warning",
   "Common_Unkowen": "Unkowen",
+  "Common_Cancel": "Cancel",
 
   "MainWindow_Title": "Localizing App",
   "MainWindow_Close_Warning": "Project not saved. Quit anyway!",
@@ -43,5 +44,8 @@
   "OpenFileDialogView_SearchButton_Label": "Search",
   "OpenFileDialogView_OkButton_Label": "Ok",
   "OpenFileDialogView_Dialog_Filter": "All|*.*|Trans Project|*.transp",
-  "OpenFileDialogView_Dialog_Title": "Select project"
+  "OpenFileDialogView_Dialog_Title": "Select project",
+
+  "LanguageSelectorDialogView_Title": "Select Language",
+  "LanguageSelectorDialogView_Select_Button": "Select"
 }

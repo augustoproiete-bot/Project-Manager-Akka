@@ -40,12 +40,12 @@ namespace Tauron.Application.Localizer.DataModel
             writer.Write(ProjectName);
             writer.Write(Entries.Count);
 
-            foreach (var locEntry in Entries)
-                locEntry.Write(writer);
-
             writer.Write(ActiveLanguages.Count);
             foreach (var activeLanguage in ActiveLanguages)
                 activeLanguage.Write(writer);
+
+            foreach (var locEntry in Entries)
+                locEntry.Write(writer);
         }
 
         public ActiveLanguage GetActiveLanguage(string shortcut)

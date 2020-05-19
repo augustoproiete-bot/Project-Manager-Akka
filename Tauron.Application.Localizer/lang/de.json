@@ -2,6 +2,7 @@
   "Common_Error": "Fehler",
   "Common_Warnig": "Warnung",
   "Common_Unkowen": "Unbekannt",
+  "Common_Cancel": "Abbrechen",
 
   "MainWindow_Title": "Lokalisierungs App",
   "MainWindow_Close_Warning": "Projekt nicht gespeichert. Trotzdem beenden!",
@@ -43,5 +44,8 @@
   "OpenFileDialogView_SearchButton_Label": "Suchen",
   "OpenFileDialogView_OkButton_Label": "Öffnen",
   "OpenFileDialogView_Dialog_Filter": "Alles|*.*|Trans Prjekt|*.transp",
-  "OpenFileDialogView_Dialog_Title": "Projekt Wählen"
+  "OpenFileDialogView_Dialog_Title": "Projekt Wählen",
+
+  "LanguageSelectorDialogView_Title": "Sprache Wählen",
+  "LanguageSelectorDialogView_Select_Button": "Auswählen"
 }

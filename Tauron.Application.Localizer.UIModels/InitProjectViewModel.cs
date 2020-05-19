@@ -1,5 +1,5 @@
 ﻿using Tauron.Application.Localizer.DataModel;
-using Tauron.Application.Localizer.UIModels.Services.Data;
+using Tauron.Application.Localizer.DataModel.Workspace;
 
 namespace Tauron.Application.Localizer.UIModels
 {

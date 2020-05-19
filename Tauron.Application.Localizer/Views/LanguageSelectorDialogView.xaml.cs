@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Windows.Threading;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Xaml.Behaviors.Core;
 using Tauron.Application.Localizer.UIModels;
@@ -25,18 +19,29 @@ namespace Tauron.Application.Localizer.Views
     /// </summary>
     public partial class LanguageSelectorDialogView : ILanguageSelectorDialogView
     {
-        public LanguageSelectorDialogView(Action<CultureInfo?> selector, IDialogCoordinator dialogCoordinator)
-        {
-            InitializeComponent();
+        private readonly IDialogCoordinator _dialogCoordinator;
 
-            DataContext = new LanguageSelectorDialogViewModel(async c =>
-                                                              {
-                                                                  await dialogCoordinator.HideMetroDialogAsync(MainWindowViewModel.MainWindow, this);
-                                                                  selector(c);
-                                                              });
+        public LanguageSelectorDialogView(IDialogCoordinator dialogCoordinator)
+        {
+            _dialogCoordinator = dialogCoordinator;
+            InitializeComponent();
+        }
+
+        protected override void OnLoaded()
+        {
+            base.OnLoaded();
+            ((LanguageSelectorDialogViewModel)DataContext).OnLoad();
         }
 
         public BaseMetroDialog Dialog => this;
+        public void Init(Action<CultureInfo?> selector, Predicate<CultureInfo> filter)
+        {
+            DataContext = new LanguageSelectorDialogViewModel(async c =>
+            {
+                await _dialogCoordinator.HideMetroDialogAsync(MainWindowViewModel.MainWindow, this);
+                selector(c);
+            }, filter, Dispatcher);
+        }
     }
 
     public abstract class LanguageSelectable : ObservableObject
@@ -76,6 +81,10 @@ namespace Tauron.Application.Localizer.Views
     {
         public override  CultureInfo Info { get; }
 
+        public bool IsFiltered { get; set; }
+
+        public bool IsNotFiltered => !IsFiltered;
+
         public List<SubLanguage> List { get; }
 
         public LanguageGroup(Action<LanguageSelectable> isSelected, CultureInfo baseInfo)
@@ -88,40 +97,77 @@ namespace Tauron.Application.Localizer.Views
 
     public sealed class LanguageSelectorDialogViewModel : ObservableObject
     {
-        private readonly Action<CultureInfo?> _selector;
-        public List<LanguageGroup> LanguageGroups { get; } = new List<LanguageGroup>();
+        private bool _isLoading = true;
+        private readonly Predicate<CultureInfo> _filter;
+        private readonly Dispatcher _dispatcher;
+        private readonly GroupDictionary<CultureInfo, CultureInfo> _cultures;
+
+        public ObservableCollection<LanguageGroup> LanguageGroups { get; } = new ObservableCollection<LanguageGroup>();
 
         private LanguageSelectable? _current;
 
         public bool IsSomethingSelected => _current != null;
 
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                if (value == _isLoading) return;
+                _isLoading = value;
+                OnPropertyChanged();
+            }
+        }
+
         public ICommand AddCommand { get; }
 
         public ICommand RejectCommand { get; }
 
-        public LanguageSelectorDialogViewModel(Action<CultureInfo?> selector)
+        public LanguageSelectorDialogViewModel(Action<CultureInfo?> selector, Predicate<CultureInfo> filter, Dispatcher dispatcher)
         {
-            _selector = selector;
-            GroupDictionary<CultureInfo, CultureInfo> cultures = new GroupDictionary<CultureInfo, CultureInfo>();
+            _filter = filter;
+            _dispatcher = dispatcher;
+            _cultures = new GroupDictionary<CultureInfo, CultureInfo>();
 
             foreach (var info in CultureInfo.GetCultures(CultureTypes.AllCultures).OrderBy(c => c.EnglishName))
             {
                 if(Equals(info, CultureInfo.InvariantCulture) || info.IsNeutralCulture) continue;
 
-                cultures.Add(info.Parent, info);
-            }
-
-            foreach (var (key, value) in cultures)
-            {
-                var group = new LanguageGroup(SelectionChanged, key);
-
-                foreach (var info in value) group.List.Add(new SubLanguage(info, SelectionChanged));
-
-                LanguageGroups.Add(group);
+                _cultures.Add(info.Parent, info);
             }
 
             RejectCommand = new ActionCommand(() => selector(null));
             AddCommand = new SimpleCommand(o => IsSomethingSelected, o => selector(_current?.Info));
+        }
+
+        private int _position;
+
+        public void OnLoad()
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                if (_position == _cultures.Count)
+                {
+                    IsLoading = false;
+                    return;
+                }
+
+                var (key, value) = _cultures.ElementAt(_position);
+                {
+                    var group = new LanguageGroup(SelectionChanged, key);
+                    group.IsFiltered = _filter(key);
+
+                    foreach (var info in value.Where(c => !_filter(c))) group.List.Add(new SubLanguage(info, SelectionChanged));
+
+                    if(group.IsFiltered && group.List.Count == 0) continue;
+                    LanguageGroups.Add(group);
+                }
+
+                _position++;
+            }
+
+
+            _dispatcher.BeginInvoke(new Action(OnLoad), DispatcherPriority.ApplicationIdle);
         }
 
         private void SelectionChanged(LanguageSelectable selectable)
