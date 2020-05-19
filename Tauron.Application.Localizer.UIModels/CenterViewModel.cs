@@ -42,7 +42,7 @@ namespace Tauron.Application.Localizer.UIModels
                             IMainWindowCoordinator mainWindow) 
             : base(lifetimeScope, dispatcher)
         {
-            Views = new ProjectViewCollection();
+            Views = Dispatcher.Invoke(() =>  new ProjectViewCollection());
 
             _manager = manager;
             _localizer = localizer;

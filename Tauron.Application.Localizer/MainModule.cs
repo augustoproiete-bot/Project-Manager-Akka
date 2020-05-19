@@ -20,6 +20,7 @@ namespace Tauron.Application.Localizer
 
             builder.RegisterType<OpenFileDialogView>().As<IOpenFileDialog>();
             builder.RegisterType<NewProjectDialogView>().As<IProjectNameDialog>();
+            builder.RegisterType<LanguageSelectorDialogView>().As<ILanguageSelectorDialogView>();
             builder.RegisterType<MainWindowCoordinator>().As<IMainWindowCoordinator>().SingleInstance();
 
             builder.RegisterType<LocLocalizer>().AsSelf();

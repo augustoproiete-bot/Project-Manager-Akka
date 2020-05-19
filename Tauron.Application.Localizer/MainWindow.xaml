@@ -13,7 +13,7 @@
         xmlns:li="http://github.com/zeluisping/loadingIndicators/xaml/controls"
         mc:Ignorable="d" WindowState="Maximized" mah:DialogParticipation.Register="MainWindow"
         Title="{tau:Loc MainWindow_Title}" Height="450" Width="800" Icon="icon.ico"      
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}" 
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
         TextOptions.TextFormattingMode="Ideal"

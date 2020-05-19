@@ -1,9 +1,11 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Windows;
 using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Services;
+using Tauron.Application.Localizer.Views;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.AppCore;
 using Window = System.Windows.Window;

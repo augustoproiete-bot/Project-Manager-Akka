@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Input;
 using JetBrains.Annotations;
+using Serilog;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
@@ -15,6 +16,8 @@ namespace Tauron.Application.Wpf.UI
         protected readonly TControl UserControl;
         protected readonly IViewModel Model;
         protected readonly ControlBindLogic BindLogic;
+
+        protected readonly ILogger Logger = Log.ForContext<TControl>();
 
         protected ControlLogicBase(TControl userControl, IViewModel model)
         {
@@ -48,8 +51,15 @@ namespace Tauron.Application.Wpf.UI
 
         protected virtual void UserControlOnUnloaded()
         {
-            BindLogic.CleanUp();
-            Model.Tell(new UnloadEvent(UserControl.Key));
+            try
+            {
+                BindLogic.CleanUp();
+                Model.Tell(new UnloadEvent(UserControl.Key));
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, "Error On Unload User Control");
+            }
         }
 
         protected virtual void UserControlOnLoaded()
