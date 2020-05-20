@@ -47,5 +47,8 @@
   "OpenFileDialogView_Dialog_Title": "Projekt Wählen",
 
   "LanguageSelectorDialogView_Title": "Sprache Wählen",
-  "LanguageSelectorDialogView_Select_Button": "Auswählen"
+  "LanguageSelectorDialogView_Select_Button": "Auswählen",
+
+  "ProjectView_LanguageBox_FirstLabel": "Sprachen",
+  "ProjectView_Button_AddLanguage_Label": "Neue Sprache"
 }

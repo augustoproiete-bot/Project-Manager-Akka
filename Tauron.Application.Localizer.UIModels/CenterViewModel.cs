@@ -90,7 +90,6 @@ namespace Tauron.Application.Localizer.UIModels
 
         private void AddProject(Project project)
         {
-            var view = LifetimeScope.Resolve<IViewModel<ProjectViewModel>>();
             string name = GetActorName(project.ProjectName);
             if (!ActorPath.IsValidPathElement(name))
             {
@@ -98,6 +97,7 @@ namespace Tauron.Application.Localizer.UIModels
                 return;
             }
 
+            var view = LifetimeScope.Resolve<IViewModel<ProjectViewModel>>();
             view.Init(Context, name);
             view.Actor.Tell(new InitProjectViewModel(project, _workspace), Self);
 

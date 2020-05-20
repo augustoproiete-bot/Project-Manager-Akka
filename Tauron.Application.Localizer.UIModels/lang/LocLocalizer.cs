@@ -31,6 +31,7 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _mainWindowTitle = ToString(loc.RequestTask("MainWindow_Title"));
             _commonWarnig = ToString(loc.RequestTask("Common_Warnig"));
             _mainWindowCloseWarning = ToString(loc.RequestTask("MainWindow_Close_Warning"));
+            _projectViewLanguageBoxFirstLabel = ToString(loc.RequestTask("ProjectView_LanguageBox_FirstLabel"));
         }
 
         private Task<string> ToString(Task<object?> task) => task.ContinueWith(t => t.Result as string ?? string.Empty);
@@ -110,5 +111,9 @@ namespace Tauron.Application.Localizer.UIModels.lang
         private readonly Task<string> _mainWindowCloseWarning;
 
         public string MainWindowCloseWarning => _mainWindowCloseWarning.Result;
+
+        private readonly Task<string> _projectViewLanguageBoxFirstLabel;
+
+        public string ProjectViewLanguageBoxFirstLabel => _projectViewLanguageBoxFirstLabel.Result;
     }
 }

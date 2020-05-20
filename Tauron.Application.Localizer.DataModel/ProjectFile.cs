@@ -61,6 +61,12 @@ namespace Tauron.Application.Localizer.DataModel
             return new ProjectFile(ImmutableList<Project>.Empty, source, actor);
         }
 
+        public ProjectFile AddLanguage(Project project, ActiveLanguage language)
+        {
+            var temp = project.WithActiveLanguages(project.ActiveLanguages.Add(language));
+            return WithProjects(Projects.Remove(project).Add(temp));
+        }
+
         public ProjectFile AddProject(Project project) 
             => WithProjects(Projects.Add(project));
 
