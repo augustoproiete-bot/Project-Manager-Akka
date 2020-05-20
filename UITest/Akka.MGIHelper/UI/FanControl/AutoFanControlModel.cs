@@ -12,70 +12,50 @@ namespace Akka.MGIHelper.UI.FanControl
 {
     public class AutoFanControlModel : UiActor
     {
-        private bool Error
-        {
-            set => Set(value);
-        }
+        private UIProperty<bool> Error { get; set; }
 
-        private string Reason
-        {
-            set => Set(value);
-        }
+        private UIProperty<string> Reason { get; set; }
 
-        private int Power
-        {
-            set => Set(value);
-        }
+        private UIProperty<int> Power { get; set; }
 
-        private State State
-        {
-            set => Set(value);
-        }
+        private UIProperty<State> State { get; set; }
 
-        private double Pidout
-        {
-            set => Set(value);
-        }
+        private UIProperty<double> Pidout { get; set; }
 
-        private int PidSetValue
-        {
-            set => Set(value);
-        }
+        private UIProperty<int> PidSetValue { get; set; }
 
-        private int Pt1000
-        {
-            set => Set(value);
-        }
+        private UIProperty<int> Pt1000 { get; set; }
 
-        private bool FanRunning
-        {
-            set => Set(value);
-        }
+        private UIProperty<bool> FanRunning { get; set; }
 
-        private FanControlOptions Options
-        {
-            set => Set(value);
-        }
+        private UIProperty<FanControlOptions> Options { get; }
 
         public AutoFanControlModel(ILifetimeScope scope, Dispatcher dispatcher, FanControlOptions options)
             : base(scope, dispatcher)
         {
-            Options = options;
-            Context.ActorOf(Props.Create(() => new Core.FanControl.FanControl(options)), "Fan-Control");
+            Options = RegisterProperty<FanControlOptions>(nameof(Options)).WithDefaultValue(options);
+            Error = RegisterProperty<bool>(nameof(Error));
+            Reason = RegisterProperty<string>(nameof(Reason));
+            Power = RegisterProperty<int>(nameof(Power));
+            State = RegisterProperty<State>(nameof(State));
+            Pidout = RegisterProperty<double>(nameof(Pidout));
+            PidSetValue = RegisterProperty<int>(nameof(PidSetValue));
+            Pt1000 = RegisterProperty<int>(nameof(Pt1000));
+            FanRunning = RegisterProperty<bool>(nameof(FanRunning)).WithDefaultValue(false);
 
-            FanRunning = false;
+            Context.ActorOf(Props.Create(() => new Core.FanControl.FanControl(options)), "Fan-Control");
 
             Receive<TrackingEvent>(evt =>
                                    {
-                                       Error = evt.Error;
-                                       Reason = evt.Reason;
-                                       Power = evt.Power;
-                                       State = evt.State;
-                                       Pidout = evt.Pidout;
-                                       PidSetValue = evt.PidSetValue;
-                                       Pt1000 = evt.Pt1000;
+                                       Error += evt.Error;
+                                       Reason += evt.Reason;
+                                       Power += evt.Power;
+                                       State += evt.State;
+                                       Pidout += evt.Pidout;
+                                       PidSetValue += evt.PidSetValue;
+                                       Pt1000 += evt.Pt1000;
                                    });
-            Receive<FanStatusChange>(evt => FanRunning = evt.Running);
+            Receive<FanStatusChange>(evt => FanRunning += evt.Running);
         }
 
         protected override void Initialize(InitEvent evt) 

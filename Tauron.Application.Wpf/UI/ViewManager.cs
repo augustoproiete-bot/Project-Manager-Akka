@@ -25,7 +25,7 @@ namespace Tauron.Application.Wpf.UI
         public void UnregisterConnector(string key)
             => ImmutableInterlocked.TryRemove(ref _models, key, out _);
 
-        //public void Register(IViewModel model, IView view, IView root)
+        //public void ThenRegister(IViewModel model, IView view, IView root)
         //{
         //    lock (_views)
         //    {

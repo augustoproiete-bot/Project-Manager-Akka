@@ -38,38 +38,25 @@ namespace Akka.MGIHelper.UI.MgiStarter
         private readonly IActorRef _processManager;
         private readonly LocalHelper _localHelper;
 
-        private Process? Client
-        {
-            get => Get<Process>();
-            set => Set(value, UpdateLabel);
-        }
+        private UIProperty<Process?> Client { get; set; }
 
-        private Process? Kernel
-        {
-            get => Get<Process>();
-            set => Set(value, UpdateLabel);
-        }
+        private UIProperty<Process?> Kernel { get; set; }
 
-        private string? Status
-        {
-            get => Get<string>();
-            set => Set(value, UpdateLabel);
-        }
+        private UIProperty<string?> Status { get; set; }
 
-        private bool? InternalStart
-        {
-            get => Get<bool>();
-            set => Set(value, UpdateLabel);
-        }
+        private UIProperty<bool?> InternalStart { get; set; }
 
-        private string? StatusLabel
-        {
-            set => Set(value);
-        }
+        private UIProperty<string?> StatusLabel { get; set; }
 
         public MgiStarterControlModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, ProcessConfig config) 
             : base(lifetimeScope, dispatcher)
         {
+            Client = RegisterProperty<Process?>(nameof(Client));
+            Kernel = RegisterProperty<Process?>(nameof(Kernel));
+            Status = RegisterProperty<string?>(nameof(Status));
+            InternalStart = RegisterProperty<bool?>(nameof(InternalStart));
+            StatusLabel = RegisterProperty<string?>(nameof(StatusLabel));
+
             _localHelper = new LocalHelper(Context);
             _config = config;
             _processManager = Context.ActorOf<ProcessManagerActor>("Process-Manager");
@@ -79,30 +66,34 @@ namespace Akka.MGIHelper.UI.MgiStarter
             Receive<MgiStartingActor.TryStartResponse>(TryStartResponseHandler);
             Receive<MgiStartingActor.StartStatusUpdate>(StatusUpdate);
 
-            RegisterCommand("TryStart", o =>
-                                        {
-                                            InternalStart = true;
-                                            mgiStarting.Tell(new MgiStartingActor.TryStart(_config, () =>
-                                                                                                     {
-                                                                                                         Client?.Kill(true);
-                                                                                                         Kernel?.Kill(true);
-                                                                                                     }));
-                                        }, o => InternalStart == false);
+            NewCommad()
+                .WithCanExecute(() => InternalStart == false)
+                .WithExecute(() =>
+                {
+                    InternalStart += true;
+                    mgiStarting.Tell(new MgiStartingActor.TryStart(_config, () =>
+                    {
+                        Client.Value?.Kill(true);
+                        Kernel.Value?.Kill(true);
+                    }));
+                }).ThenRegister("TryStart");
 
-            RegisterCommand("TryStop", o =>
-                                       {
-                                           Client?.Kill(true);
-                                           Kernel?.Kill(true);
-                                       }, o => InternalStart == false && (Client != null || Kernel != null));
+            NewCommad()
+                .WithCanExecute(() => InternalStart == false && (Client != null || Kernel != null))
+                .WithExecute(() =>
+                {
+                    Client.Value?.Kill(true);
+                    Kernel.Value?.Kill(true);
+                }).ThenRegister("TryStop");
 
             UpdateLabel();
         }
 
         private void StatusUpdate(MgiStartingActor.StartStatusUpdate obj) 
-            => Status = obj.Status;
+            => Status += obj.Status;
 
         private void TryStartResponseHandler(MgiStartingActor.TryStartResponse obj) 
-            => InternalStart = false;
+            => InternalStart += false;
 
         private void ProcessStateChangeHandler(ProcessStateChange obj)
         {
@@ -117,32 +108,32 @@ namespace Akka.MGIHelper.UI.MgiStarter
                         if (_config.Kernel.Contains(name))
                         {
                             ConfigProcess(process);
-                            Kernel = process;
+                            Kernel += process;
                         }
                         if (_config.Client.Contains(name))
                         {
                             ConfigProcess(process);
-                            Client = process;
+                            Client += process;
                         }
                         break;
                     case ProcessChange.Stopped:
                         if (_config.Kernel.Contains(name))
-                            Kernel = null;
+                            Kernel += null!;
                         if (_config.Client.Contains(name))
-                            Client = null;
+                            Client += null!;
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
 
                 if(Kernel != null && Client != null)
-                    Status = Context.Loc().RequestString("uistatusstartet");
+                    Status += Context.Loc().RequestString("uistatusstartet");
                 if (Kernel == null && Client == null)
-                    Status = Context.Loc().RequestString("uistatusstopped");
+                    Status += Context.Loc().RequestString("uistatusstopped");
             }
             catch (Exception e)
             {
-                Status = "Fehler: " + e.Message;
+                Status += "Fehler: " + e.Message;
             }
         }
 
@@ -165,9 +156,9 @@ namespace Akka.MGIHelper.UI.MgiStarter
             var builder = new StringBuilder();
 
             var status = Status;
-            var kernel = Kernel != null;
-            var client = Client != null;
-            if (!string.IsNullOrWhiteSpace(status) && status.StartsWith("Fehler:"))
+            var kernel = Kernel.Value != null;
+            var client = Client.Value != null;
+            if (!string.IsNullOrWhiteSpace(status) && status.Value?.StartsWith("Fehler:") == true)
             {
                 StatusLabel = status;
                 return;
@@ -180,7 +171,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
             builder.Append("Client: ");
             builder.AppendLine(client ? _localHelper.GenericStart : _localHelper.GenericNotStart);
 
-            StatusLabel = builder.ToString();
+            StatusLabel += builder.ToString();
         }
     }
 }

@@ -39,7 +39,7 @@ namespace Tauron.Application.Wpf
         public static ICommand? Find(string name)
         {
             //var val = Commands.Find(com => com.Name == name);
-            //if (val == null && AutoRegister) val = Register(name, name);
+            //if (val == null && AutoRegister) val = ThenRegister(name, name);
 
             //return val;
 
@@ -55,17 +55,17 @@ namespace Tauron.Application.Wpf
 
         public static bool GetUseDirect(DependencyObject obj) => (bool) Argument.NotNull(obj, nameof(obj)).GetValue(UseDirectProperty);
 
-        //public static void Register(RoutedCommand command)
+        //public static void ThenRegister(RoutedCommand command)
         //{
         //    if (Commands.Any(com => com.Name == command.Name)) return;
 
         //    Commands.Add(command);
         //}
 
-        //public static RoutedUICommand Register(string text, string name)
+        //public static RoutedUICommand ThenRegister(string text, string name)
         //{
         //    var command = new RoutedUICommand(text, name, typeof(CommandBinder));
-        //    Register(command);
+        //    ThenRegister(command);
         //    return command;
         //}
 

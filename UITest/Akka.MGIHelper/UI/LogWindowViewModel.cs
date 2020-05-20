@@ -3,23 +3,20 @@ using System.Text;
 using System.Windows.Threading;
 using Akka.Event;
 using Autofac;
-using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Model;
 
 namespace Akka.MGIHelper.UI
 {
     public sealed class LogWindowViewModel : UiActor
     {
-        private UIObservableCollection<string>? UnhandledMessages
-        {
-            get => Get<UIObservableCollection<string>>();
-            set => Set(value);
-        }
+        private UICollectionProperty<string> UnhandledMessages { get; }
 
         public LogWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher) 
             : base(lifetimeScope, dispatcher)
         {
-            UnhandledMessages = new UIObservableCollection<string> {"Start"};
+            UnhandledMessages = this.RegisterUiCollection<string>(nameof(UnhandledMessages)).Async();
+            UnhandledMessages.Add("Start");
+
             Receive<UnhandledMessage>(NewUnhandledMessage);
             Context.System.EventStream.Subscribe(Context.Self, typeof(UnhandledMessage));
         }
@@ -31,7 +28,7 @@ namespace Akka.MGIHelper.UI
             foreach (var propertyInfo in obj.Message.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) 
                 builder.Append($" - {propertyInfo.GetValue(obj.Message)}");
 
-            UnhandledMessages?.Add(builder.ToString());
+            UnhandledMessages.Add(builder.ToString());
         }
     }
 }

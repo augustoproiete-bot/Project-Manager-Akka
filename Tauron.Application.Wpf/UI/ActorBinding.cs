@@ -20,7 +20,7 @@ namespace Tauron.Application.Wpf.UI
             if (!TryGetTargetItems(provider, out var dependencyObject, out _) || !ControlBindLogic.FindDataContext(dependencyObject, out var model)) return null;
 
             if (DesignerProperties.GetIsInDesignMode(dependencyObject))
-                return base.ProvideValue(provider);
+                return null;
 
             Path = Path != null ? new PropertyPath("Value." + Path.Path, Path.PathParameters) : new PropertyPath("Value");
             Source = new DeferredSource(_name, model);

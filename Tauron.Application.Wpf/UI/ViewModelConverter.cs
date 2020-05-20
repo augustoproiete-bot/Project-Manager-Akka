@@ -27,7 +27,7 @@ namespace Tauron.Application.Wpf.UI
             var view = manager.ResolveView(model);
             return view ?? value;
 
-            //root.ViewManager.Register(model, view, root);
+            //root.ViewManager.ThenRegister(model, view, root);
         }
 
         public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => new FrameworkObject(value).DataContext;
