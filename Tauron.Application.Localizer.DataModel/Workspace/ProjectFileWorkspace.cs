@@ -51,5 +51,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace
         MutatingContext IDataSource<MutatingContext>.GetData() => new MutatingContext(null, ProjectFile);
 
         void IDataSource<MutatingContext>.SetData(MutatingContext data) => Interlocked.Exchange(ref _projectFile, data.File);
+
+        public Project Get(string name) => ProjectFile.Projects.Find(p => p.ProjectName == name);
     }
 }

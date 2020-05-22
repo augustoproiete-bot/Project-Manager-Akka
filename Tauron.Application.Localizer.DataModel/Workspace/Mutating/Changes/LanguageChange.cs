@@ -2,8 +2,16 @@
 {
     public sealed class LanguageChange : MutatingChange
     {
-        public ActiveLanguage Language { get; }
+        private ActiveLanguage Language { get; }
 
-        public LanguageChange(ActiveLanguage language) => Language = language;
+        private string Name { get; }
+
+        public LanguageChange(ActiveLanguage language, string name)
+        {
+            Language = language;
+            Name = name;
+        }
+
+        public AddActiveLanguage ToEventData() => new AddActiveLanguage(Language, Name);
     }
 }

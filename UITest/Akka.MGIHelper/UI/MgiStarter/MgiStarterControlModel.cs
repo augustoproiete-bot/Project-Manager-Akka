@@ -51,10 +51,10 @@ namespace Akka.MGIHelper.UI.MgiStarter
         public MgiStarterControlModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, ProcessConfig config) 
             : base(lifetimeScope, dispatcher)
         {
-            Client = RegisterProperty<Process?>(nameof(Client));
-            Kernel = RegisterProperty<Process?>(nameof(Kernel));
-            Status = RegisterProperty<string?>(nameof(Status));
-            InternalStart = RegisterProperty<bool>(nameof(InternalStart));
+            Client = RegisterProperty<Process?>(nameof(Client)).OnChange(UpdateLabel);
+            Kernel = RegisterProperty<Process?>(nameof(Kernel)).OnChange(UpdateLabel);
+            Status = RegisterProperty<string?>(nameof(Status)).OnChange(UpdateLabel);
+            InternalStart = RegisterProperty<bool>(nameof(InternalStart)).OnChange(UpdateLabel);
             StatusLabel = RegisterProperty<string?>(nameof(StatusLabel));
 
             _localHelper = new LocalHelper(Context);

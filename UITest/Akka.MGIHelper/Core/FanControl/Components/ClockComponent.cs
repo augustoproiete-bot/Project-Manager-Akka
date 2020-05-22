@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Akka.MGIHelper.Core.Configuration;
 using Akka.MGIHelper.Core.FanControl.Bus;
 using Akka.MGIHelper.Core.FanControl.Events;
+using Tauron.Host;
 
 namespace Akka.MGIHelper.Core.FanControl.Components
 {
@@ -18,6 +19,7 @@ namespace Akka.MGIHelper.Core.FanControl.Components
         public ClockComponent(FanControlOptions options)
         {
             _options = options;
+            ActorApplication.Application.ActorSystem.RegisterOnTermination(() => _timer.Change(-1, -1));
             _timer = new Timer(Invoke);
         }
 

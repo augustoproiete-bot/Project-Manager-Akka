@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
@@ -23,7 +22,8 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
 
             NewProject = engine.EventSource(mc => new AddProject(mc.GetChange<NewProjectChange>().Project), context => context.Change is NewProjectChange);
             RemovedProject = engine.EventSource(mc => new RemoveProject(mc.GetChange<RemoveProjectChange>().Project), context => context.Change is RemoveProjectChange);
-            NewLanguage = engine.EventSource(mc => new AddActiveLanguage(mc.GetChange<LanguageChange>().Language), context => context.Change is LanguageChange);
+            NewLanguage = engine.EventSource(mc => mc.GetChange<LanguageChange>().ToEventData(), context => context.Change is LanguageChange);
+            NewImport = engine.EventSource(mc => mc.GetChange<AddImportChange>().ToEventData(), context => context.Change is AddImportChange);
         }
 
         public IEventSource<AddProject> NewProject { get; }
@@ -31,6 +31,8 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
         public IEventSource<RemoveProject> RemovedProject { get; }
 
         public IEventSource<AddActiveLanguage> NewLanguage { get; }
+
+        public IEventSource<AddImport> NewImport { get; }
 
         public void AddProject(string name)
         {
@@ -60,8 +62,22 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
                                                 {
                                                     var project = context.File.Projects.First(p => p.ProjectName == proj);
                                                     var lang = ActiveLanguage.FromCulture(info);
-                                                    return context.Update(new LanguageChange(lang), context.File.AddLanguage(project, lang));
+                                                    return context.Update(new LanguageChange(lang, proj), context.File.AddLanguage(project, lang));
                                                 });
+        }
+
+        public void AddImport(string projectName, string toAdd)
+        {
+            if(projectName == toAdd)
+                return;
+
+            _engine.Mutate(nameof(AddImport), context =>
+            {
+                var project = context.File.Projects.First(p => p.ProjectName == projectName);
+                if (project.Imports.Contains(toAdd) || context.File.Projects.Any(p => toAdd == p.ProjectName)) return context;
+
+                return context.Update(new AddImportChange(toAdd, projectName), context.File.AddImport(project, toAdd));
+            });
         }
     }
 }

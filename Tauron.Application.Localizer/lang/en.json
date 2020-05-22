@@ -53,5 +53,9 @@
   "ProjectView_Button_AddLanguage_Label": "Add Language",
   "ProjectView_Button_AddImport_Label": "Add Project",
   "ProjectView_Button_RemoveImport_Label": "Remove Project",
-  "ProjectView_Import_Label": "Import Projects"
+  "ProjectView_Import_Label": "Import Projects",
+
+  "ImportProjectDialogView_Button_Add": "Add",
+  "ImportProjectDialogView_Title": "Import Project",
+  "ImportProjectDialogView_Button_Cancel": "Cancel"
 }

@@ -16,6 +16,8 @@ namespace Akka.MGIHelper.Core.ProcessManager
 
         public ProcessTrackerActor()
         {
+            Context.System.RegisterOnTermination(() => _processUpdater.Change(-1, -1));
+
             //_processUpdater = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(5000, 5000, Self, new GatherProcess(), ActorRefs.NoSender);
             var self = Self;
             _processUpdater = new Timer(o => self.Tell(new GatherProcess()), null, 5000, 5000);

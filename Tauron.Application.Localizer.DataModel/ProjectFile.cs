@@ -64,7 +64,7 @@ namespace Tauron.Application.Localizer.DataModel
         public ProjectFile AddLanguage(Project project, ActiveLanguage language)
         {
             var temp = project.WithActiveLanguages(project.ActiveLanguages.Add(language));
-            return WithProjects(Projects.Remove(project).Add(temp));
+            return WithProjects(Projects.Replace(project, temp));
         }
 
         public ProjectFile AddProject(Project project) 
@@ -72,5 +72,8 @@ namespace Tauron.Application.Localizer.DataModel
 
         public ProjectFile RemoveProject(Project project)
             => WithProjects(Projects.Remove(project));
+
+        public ProjectFile AddImport(Project project, string toAdd) 
+            => WithProjects(Projects.Replace(project, project.WithImports(project.Imports.Add(toAdd))));
     }
 }

@@ -4,6 +4,12 @@
     {
         public ActiveLanguage ActiveLanguage { get; }
 
-        public AddActiveLanguage(ActiveLanguage activeLanguage) => ActiveLanguage = activeLanguage;
+        public string ProjectName { get; }
+
+        public AddActiveLanguage(ActiveLanguage activeLanguage, string projectName)
+        {
+            ActiveLanguage = activeLanguage;
+            ProjectName = projectName;
+        }
     }
 }

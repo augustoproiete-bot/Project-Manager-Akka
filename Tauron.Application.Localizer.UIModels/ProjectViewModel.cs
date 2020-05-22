@@ -1,13 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Linq;
 using System.Windows.Threading;
 using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
 using MahApps.Metro.Controls.Dialogs;
-using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Workspace;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
@@ -18,9 +15,16 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class ProjectViewModel : UiActor
     {
+        private sealed class TryImport
+        {
+            public string? Import { get; }
+
+            public TryImport(string? import) => Import = import;
+        }
+
         private readonly LocLocalizer _localizer;
         private readonly IDialogCoordinator _dialogCoordinator;
-        private Project _project = new Project();
+        private string _project = string.Empty;
         private ProjectFileWorkspace _workspace = ProjectFileWorkspace.Dummy;
 
         public UICollectionProperty<ProjectViewLanguageModel> Languages { get; }
@@ -44,8 +48,9 @@ namespace Tauron.Application.Localizer.UIModels
 
             ImportSelectInfex = RegisterProperty<int>(nameof(ImportSelectInfex)).WithDefaultValue(0);
             ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).Async();
+            Receive<AddImport>(AddImport);
 
-            NewCommad.WithExecute(AddImport).WithCanExecute(() => _workspace.ProjectFile.Projects.Count > 1).ThenRegister("AddImport");
+            NewCommad.WithExecute(AddImportCommand).WithCanExecute(() => _workspace.ProjectFile.Projects.Count > 1).ThenRegister("AddImportCommand");
 
             #endregion
 
@@ -55,22 +60,50 @@ namespace Tauron.Application.Localizer.UIModels
             NewCommad.WithExecute(AddLanguage).ThenRegister("AddLanguage");
 
             Receive<AddActiveLanguage>(AddActiveLanguage);
-            Receive<CultureInfo>(culture => _workspace.Projects.AddLanguage(_project.ProjectName, culture));
+            Receive<CultureInfo>(culture => _workspace.Projects.AddLanguage(_project, culture));
+            Receive<TryImport>(TryImportExc);
 
             #endregion
 
             Receive<InitProjectViewModel>(InitProjectViewModel);
         }
 
-        private void AddImport()
+        #region Imports
+
+        private void AddImport(AddImport obj)
         {
-            
+
         }
+
+        private void TryImportExc(TryImport obj)
+        {
+            if(string.IsNullOrWhiteSpace(obj.Import)) return;
+
+            _workspace.Projects.AddImport(_project, obj.Import);
+        }
+
+        private void AddImportCommand()
+        {
+            UICall(async c =>
+            {
+                var pro = _workspace.Get(_project);
+                var diag = LifetimeScope.Resolve<IImportProjectDialog>();
+                diag.Init(s => c.Self.Tell(new TryImport(s)), _workspace.ProjectFile.Projects
+                    .Select(p => p.ProjectName)
+                    .Where(s => s != _project && !pro.Imports.Contains(s)));
+
+                await _dialogCoordinator.ShowMetroDialogAsync("MainWindow", diag.Dialog);
+            });
+        }
+
+        #endregion
 
         #region AddLanguage
 
         private void AddActiveLanguage(AddActiveLanguage language)
         {
+            if(language.ProjectName != _project) return;
+
             Languages.Add(new ProjectViewLanguageModel(language.ActiveLanguage.Name, false));
 
             foreach (var model in ProjectEntrys) 
@@ -86,7 +119,7 @@ namespace Tauron.Application.Localizer.UIModels
                                  {
                                      if(ci != null)
                                          c.Self.Tell(ci, ActorRefs.NoSender);
-                                 }, c => _project.ActiveLanguages.Any(al => al.Shortcut == c.Name));
+                                 }, cultureInfo => _workspace.Get(_project).ActiveLanguages.Any(al => al.Shortcut == cultureInfo.Name));
 
                        await _dialogCoordinator.ShowMetroDialogAsync("MainWindow", diag.Dialog);
                    });
@@ -96,10 +129,12 @@ namespace Tauron.Application.Localizer.UIModels
 
         private void InitProjectViewModel(InitProjectViewModel obj)
         {
-            _project = obj.Project;
+            _project = obj.Project.ProjectName;
             _workspace = obj.Workspace;
 
             _workspace.Projects.NewLanguage.RespondOn(Self);
+            _workspace.Projects.NewImport.RespondOn(Self);
+
             Languages.Add(new ProjectViewLanguageModel(_localizer.ProjectViewLanguageBoxFirstLabel, true));
             Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));
             SelectedIndex += 0;
