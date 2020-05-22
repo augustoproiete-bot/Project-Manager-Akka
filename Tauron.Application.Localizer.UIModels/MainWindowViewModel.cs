@@ -9,6 +9,7 @@ using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
 using MahApps.Metro.Controls.Dialogs;
+using Tauron.Akka;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.UIModels.lang;
@@ -31,45 +32,33 @@ namespace Tauron.Application.Localizer.UIModels
         private readonly IDialogFactory _dialogFactory;
         private readonly IMainWindowCoordinator _mainWindowCoordinator;
 
-        private IEnumerable<RunningOperation> RunningOperations
-        {
-            set => Set(value);
-        }
+        private UIProperty<IEnumerable<RunningOperation>> RunningOperations { get; }
 
-        private RenctFilesCollection RenctFiles
-        {
-            set => Set(value);
-            get => Get<RenctFilesCollection>()!;
-        }
+        private UIProperty<RenctFilesCollection> RenctFiles { get; }
 
-        private IViewModel<CenterViewModel> CenterView
-        {
-            get => Get<IViewModel<CenterViewModel>>()!;
-            set => Set(value);
-        }
+        private UIModel<CenterViewModel> CenterView { get; }
 
         public MainWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IOperationManager operationManager, LocLocalizer localizer, IDialogCoordinator dialogCoordinator,
             AppConfig config, IDialogFactory dialogFactory, IViewModel<CenterViewModel> model, IMainWindowCoordinator mainWindowCoordinator) 
             : base(lifetimeScope, dispatcher)
         {
-            model.Init(Context, "CenterView");
-            CenterView = model;
+            var self = Self;
+
+            RunningOperations = RegisterProperty<IEnumerable<RunningOperation>>(nameof(RunningOperations)).WithDefaultValue(operationManager.RunningOperations);
+            RenctFiles = RegisterProperty<RenctFilesCollection>(nameof(RenctFiles)).WithDefaultValue(new RenctFilesCollection(config, s => self.Tell(new InternlRenctFile(s))));
+            CenterView = this.RegisterViewModel(nameof(CenterView), model);
 
             _operationManager = operationManager;
             _localizer = localizer;
             _dialogCoordinator = dialogCoordinator;
             _dialogFactory = dialogFactory;
             _mainWindowCoordinator = mainWindowCoordinator;
-            RunningOperations = operationManager.RunningOperations;
 
-            var self = Self;
-            RenctFiles = new RenctFilesCollection(config, s => self.Tell(new InternlRenctFile(s)));
-
-            RegisterCommand("ClearOp", operationManager.Clear, operationManager.ShouldClear);
-            RegisterCommand("ClearAllOp", operationManager.CompledClear, operationManager.ShouldCompledClear);
-            RegisterCommand("OpenFile", OpenFile, () => _loadingOperation == null);
-            RegisterCommand("NewFile", NewFile, () => _loadingOperation == null);
-            RegisterCommand("SaveAs", SaveAsProject, () => _last != null);
+            NewCommad.WithExecute(operationManager.Clear, operationManager.ShouldClear).ThenRegister("ClearOp");
+            NewCommad.WithExecute(operationManager.CompledClear, operationManager.ShouldCompledClear).ThenRegister("ClearAllOp");
+            NewCommad.WithExecute(OpenFile, () => _loadingOperation == null).ThenRegister("OpenFile");
+            NewCommad.WithExecute(NewFile, () => _loadingOperation == null).ThenRegister("NewFile");
+            NewCommad.WithExecute(SaveAsProject, () => _last != null).ThenRegister("SaveAs");
 
             Receive<LoadedProjectFile>(ProjectLoaded);
             ReceiveAsync<SourceSelected>(async s =>
@@ -95,13 +84,12 @@ namespace Tauron.Application.Localizer.UIModels
 
         private void NewFile()
         {
-            var self = Self;
-            Dispatcher.Invoke(async () =>
-                              {
-                                  var dialog = LifetimeScope.Resolve<IOpenFileDialog>(TypedParameter.From(new Action<string?>(s => self.Tell(new SourceSelected(s, OpenFileMode.OpenNewFile)))),
-                                      TypedParameter.From(OpenFileMode.OpenNewFile)).Dialog;
-                                  await _dialogCoordinator.ShowMetroDialogAsync(MainWindow, dialog);
-                              });
+            UICall(async (c) =>
+                   {
+                       var dialog = LifetimeScope.Resolve<IOpenFileDialog>(TypedParameter.From(new Action<string?>(s => c.Self.Tell(new SourceSelected(s, OpenFileMode.OpenNewFile)))),
+                           TypedParameter.From(OpenFileMode.OpenNewFile)).Dialog;
+                       await _dialogCoordinator.ShowMetroDialogAsync(MainWindow, dialog);
+                   });
         }
 
         private OperationController? _loadingOperation;
@@ -109,19 +97,18 @@ namespace Tauron.Application.Localizer.UIModels
 
         private void OpenFile()
         {
-            var self = Self;
-            Dispatcher.Invoke(async () =>
-                              {
-                                  var dialog = LifetimeScope.Resolve<IOpenFileDialog>(TypedParameter.From(new Action<string?>(s => self.Tell(new SourceSelected(s, OpenFileMode.OpenExistingFile)))),
-                                      TypedParameter.From(OpenFileMode.OpenExistingFile)).Dialog;
-                                  await _dialogCoordinator.ShowMetroDialogAsync(MainWindow, dialog);
-                              });
+            UICall(async c =>
+                   {
+                       var dialog = LifetimeScope.Resolve<IOpenFileDialog>(TypedParameter.From(new Action<string?>(s => c.Self.Tell(new SourceSelected(s, OpenFileMode.OpenExistingFile)))),
+                           TypedParameter.From(OpenFileMode.OpenExistingFile)).Dialog;
+                       await _dialogCoordinator.ShowMetroDialogAsync(MainWindow, dialog);
+                   });
         }
 
         private bool CheckSourceOk(string? source)
         {
             if (!string.IsNullOrWhiteSpace(source)) return false;
-            Dispatcher.Invoke(async () => await _dialogCoordinator.ShowMessageAsync(MainWindow, _localizer.CommonError, _localizer.MainWindowModelLoadProjectSourceEmpty));
+            UICall(async () => await _dialogCoordinator.ShowMessageAsync(MainWindow, _localizer.CommonError, _localizer.MainWindowModelLoadProjectSourceEmpty));
             return true;
 
         }
@@ -132,7 +119,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             if (File.Exists(source))
             {
-                var result = await Dispatcher.Invoke(async () => await _dialogCoordinator.ShowMessageAsync(MainWindow, _localizer.CommonError, "", 
+                var result = await UICall(async () => await _dialogCoordinator.ShowMessageAsync(MainWindow, _localizer.CommonError, "", 
                                                               MessageDialogStyle.AffirmativeAndNegative));
 
                 if(result == MessageDialogResult.Negative) return;
@@ -165,15 +152,15 @@ namespace Tauron.Application.Localizer.UIModels
                 }
             }
 
-            if (obj.Ok) RenctFiles.AddNewFile(obj.ProjectFile.Source);
+            if (obj.Ok) RenctFiles.Value.AddNewFile(obj.ProjectFile.Source);
 
             _last = obj.ProjectFile;
 
-            CenterView.Actor.Tell(new SupplyNewProjectFile(_last));
+            CenterView.Tell(new SupplyNewProjectFile(_last));
         }
 
         private void UpdateSource(string source) 
-            => CenterView.Actor.Tell(new UpdateSource(source));
+            => CenterView.Tell(new UpdateSource(source));
 
         private sealed class RenctFilesCollection : UIObservableCollection<RenctFile>
         {

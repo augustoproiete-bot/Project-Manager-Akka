@@ -16,7 +16,7 @@ using Tauron.Application.Wpf.ModelMessages;
 namespace Tauron.Application.Wpf.Model
 {
     [PublicAPI]
-    public abstract class UiActor : ReceiveActor
+    public abstract class UiActor : ExposedReceiveActor
     {
         private sealed class PropertyTermination
         {
@@ -141,6 +141,12 @@ namespace Tauron.Application.Wpf.Model
             Receive<InitParentViewModel>(InitParentViewModel);
         }
 
+        protected override void PreRestart(Exception reason, object message)
+        {
+            Context.System.Terminate();
+            base.PreRestart(reason, message);
+        }
+
         #region Dispatcher
 
         internal Dispatcher Dispatcher { get; }
@@ -149,6 +155,16 @@ namespace Tauron.Application.Wpf.Model
         {
             var context = Context;
             Dispatcher.Invoke(() => executor(context));
+        }
+
+        protected void UICall(Action executor) => Dispatcher.Invoke(executor);
+
+        protected Task<T> UICall<T>(Func<Task<T>> executor) => Dispatcher.Invoke(executor);
+
+        protected Task<T> UICall<T>(Func<IUntypedActorContext, Task<T>> executor)
+        {
+            var context = Context;
+            return Dispatcher.Invoke(() => executor(context));
         }
 
         #endregion
@@ -181,7 +197,7 @@ namespace Tauron.Application.Wpf.Model
             }
         }
 
-        protected CommandRegistrationBuilder NewCommad()
+        protected CommandRegistrationBuilder NewCommad
             => new CommandRegistrationBuilder((
                 key, command, canExecute) => _commandRegistrations.Add(key, new CommandRegistration(command, canExecute)));
 

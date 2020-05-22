@@ -44,7 +44,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
 
         private UIProperty<string?> Status { get; set; }
 
-        private UIProperty<bool?> InternalStart { get; set; }
+        private UIProperty<bool> InternalStart { get; set; }
 
         private UIProperty<string?> StatusLabel { get; set; }
 
@@ -54,7 +54,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
             Client = RegisterProperty<Process?>(nameof(Client));
             Kernel = RegisterProperty<Process?>(nameof(Kernel));
             Status = RegisterProperty<string?>(nameof(Status));
-            InternalStart = RegisterProperty<bool?>(nameof(InternalStart));
+            InternalStart = RegisterProperty<bool>(nameof(InternalStart));
             StatusLabel = RegisterProperty<string?>(nameof(StatusLabel));
 
             _localHelper = new LocalHelper(Context);
@@ -66,7 +66,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
             Receive<MgiStartingActor.TryStartResponse>(TryStartResponseHandler);
             Receive<MgiStartingActor.StartStatusUpdate>(StatusUpdate);
 
-            NewCommad()
+            NewCommad
                 .WithCanExecute(() => InternalStart == false)
                 .WithExecute(() =>
                 {
@@ -78,7 +78,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
                     }));
                 }).ThenRegister("TryStart");
 
-            NewCommad()
+            NewCommad
                 .WithCanExecute(() => InternalStart == false && (Client != null || Kernel != null))
                 .WithExecute(() =>
                 {
@@ -92,8 +92,11 @@ namespace Akka.MGIHelper.UI.MgiStarter
         private void StatusUpdate(MgiStartingActor.StartStatusUpdate obj) 
             => Status += obj.Status;
 
-        private void TryStartResponseHandler(MgiStartingActor.TryStartResponse obj) 
-            => InternalStart += false;
+        private void TryStartResponseHandler(MgiStartingActor.TryStartResponse obj)
+        {
+            InternalStart += false;
+            CommandChanged();
+        }
 
         private void ProcessStateChangeHandler(ProcessStateChange obj)
         {

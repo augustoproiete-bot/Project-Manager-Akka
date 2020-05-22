@@ -26,23 +26,16 @@ namespace Tauron.Application.Localizer.UIModels
         private readonly IMainWindowCoordinator _mainWindow;
         private readonly ProjectFileWorkspace _workspace;
 
-        private ProjectViewCollection Views
-        {
-            get => Get<ProjectViewCollection>()!;
-            set => Set(value);
-        }
+        private UICollectionProperty<ProjectViewContainer> Views { get; }
 
-        private int? CuurentProject
-        {
-            get => Get<int?>();
-            set => Set(value);
-        }
+        private UIProperty<int?> CurrentProject { get; set; }
 
         public CenterViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IOperationManager manager, LocLocalizer localizer, IDialogCoordinator dialogCoordinator,
                             IMainWindowCoordinator mainWindow) 
             : base(lifetimeScope, dispatcher)
         {
-            Views = Dispatcher.Invoke(() =>  new ProjectViewCollection());
+            Views = this.RegisterUiCollection<ProjectViewContainer>(nameof(Views)).Async();
+            CurrentProject = RegisterProperty<int?>(nameof(CurrentProject));
 
             _manager = manager;
             _localizer = localizer;
@@ -50,40 +43,40 @@ namespace Tauron.Application.Localizer.UIModels
             _mainWindow = mainWindow;
             _workspace = new ProjectFileWorkspace(Context);
 
-            RegisterCommand("AddNewProject", TryAddProject, () => !_workspace.ProjectFile.IsEmpty);
-            RegisterCommand("RemoveProject", TryRemoveProject, () => !_workspace.ProjectFile.IsEmpty && CuurentProject != null);
+            
+            NewCommad.WithExecute(TryAddProject, () => !_workspace.ProjectFile.IsEmpty).ThenRegister("AddNewProject");
+            NewCommad.WithExecute(TryRemoveProject, () => !_workspace.ProjectFile.IsEmpty && CurrentProject != null).ThenRegister("RemoveProject");
 
-            _workspace.Source.SaveRequest.RespondOn(Self);
-            _workspace.Source.ProjectReset.RespondOn(Self);
-            _workspace.Projects.NewProject.RespondOn(Self);
-            _workspace.Projects.RemovedProject.RespondOn(Self);
+            this.RespondOnEventSource(_workspace.Source.SaveRequest, SaveRequested);
+            Receive<SavedProject>(ProjectSaved);
 
-            Receive<UpdateSource>(UpdateSourceHandler);
+            this.RespondOnEventSource(_workspace.Source.ProjectReset, ProjectRest);
             Receive<SupplyNewProjectFile>(LoadNewProject);
 
-            Receive<SaveRequest>(SaveRequested);
-            Receive<SavedProject>(ProjectSaved);
-            Receive<ProjectRest>(ProjectRest);
+            this.RespondOnEventSource(_workspace.Projects.NewProject, ap => AddProject(ap.Project));
+            this.RespondOnEventSource(_workspace.Projects.RemovedProject, p => RemoveProject(p.Project));
+            this.RespondOnEventSource(_workspace.Source.SourceUpdate, updated => _mainWindow.TitlePostfix = Path.GetFileName(updated.Source));
+
+            Receive<UpdateSource>(UpdateSourceHandler);
             Receive<NewProjectDialogResult>(NewProjectDialogResult);
-            Receive<AddProject>(ap => AddProject(ap.Project));
-            Receive<RemoveProject>(p => RemoveProject(p.Project));
+
         }
 
         private void TryRemoveProject()
         {
-            var currentProject = CuurentProject;
-            if(currentProject == null) return;
+            var currentProject = CurrentProject.Value;
+            if (currentProject == null) return;
 
-            var project = Views[currentProject.Value].Project;
+            var (_, projectName, _, _) = Views[currentProject.Value].Project;
 
-            Dispatcher.Invoke(async () =>
-                              {
-                                  var result = await _dialogCoordinator.ShowMessageAsync("MainWindow", string.Format(_localizer.CenterViewRemoveProjectDialogTitle, project.ProjectName),
-                                      _localizer.CenterViewRemoveProjectDialogMessage, MessageDialogStyle.AffirmativeAndNegative);
-                                  if(result == MessageDialogResult.Negative) return;
-                                  
-                                  _workspace.Projects.RemoveProject(project.ProjectName);
-                              });
+            UICall(async c =>
+                   {
+                       var result = await _dialogCoordinator.ShowMessageAsync("MainWindow", string.Format(_localizer.CenterViewRemoveProjectDialogTitle, projectName),
+                           _localizer.CenterViewRemoveProjectDialogMessage, MessageDialogStyle.AffirmativeAndNegative);
+                       if (result == MessageDialogResult.Negative) return;
+
+                       _workspace.Projects.RemoveProject(projectName);
+                   });
         }
 
         private string GetActorName(string projectName) => projectName.Replace(' ', '_') + "-View";
@@ -93,7 +86,7 @@ namespace Tauron.Application.Localizer.UIModels
             string name = GetActorName(project.ProjectName);
             if (!ActorPath.IsValidPathElement(name))
             {
-                Dispatcher.Invoke(async () => await _dialogCoordinator.ShowMessageAsync("MainWindow", _localizer.CommonError, _localizer.CenterViewNewProjectInvalidNameMessage));
+                UICall(async c => await _dialogCoordinator.ShowMessageAsync("MainWindow", _localizer.CommonError, _localizer.CenterViewNewProjectInvalidNameMessage));
                 return;
             }
 
@@ -103,7 +96,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             Views.Add(new ProjectViewContainer(view, project));
 
-            CuurentProject = Views.Count - 1;
+            CurrentProject += Views.Count - 1;
         }
 
 
@@ -116,11 +109,10 @@ namespace Tauron.Application.Localizer.UIModels
 
         private void TryAddProject()
         {
-            var self = Self;
-            Dispatcher.Invoke(async () =>
+            UICall(async (c) =>
             {
                 var diag = LifetimeScope.Resolve<IProjectNameDialog>();
-                diag.Init(_workspace.ProjectFile.Projects.Select(p => p.ProjectName), self);
+                diag.Init(_workspace.ProjectFile.Projects.Select(p => p.ProjectName), c.Self);
 
                 await _dialogCoordinator.ShowMetroDialogAsync("MainWindow", diag.Dialog);
             });

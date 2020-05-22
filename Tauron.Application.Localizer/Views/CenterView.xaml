@@ -12,7 +12,7 @@
             <Button Margin="3" Content="{tau:Loc CenterView_NewProject}" tau:CommandBinder.Command="AddNewProject"/>
             <Button Margin="3" Content="{tau:Loc CenterView_RemoveProject}" tau:CommandBinder.Command="RemoveProject"/>
         </ToolBar>
-        <TabControl ItemsSource="{tau:ActorBinding Views}" SelectedIndex="{tau:ActorBinding CuurentProject}">
+        <TabControl ItemsSource="{tau:ActorBinding Views}" SelectedIndex="{tau:ActorBinding CurrentProject}">
             <TabControl.ItemTemplate>
                 <DataTemplate DataType="uiModels:ProjectViewContainer">
                     <TextBlock Text="{Binding Project.ProjectName}"/>

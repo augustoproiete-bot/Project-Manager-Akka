@@ -24,7 +24,7 @@ namespace Tauron.Application.Wpf.UI
 
             Path = Path != null ? new PropertyPath("Value." + Path.Path, Path.PathParameters) : new PropertyPath("Value");
             Source = new DeferredSource(_name, model);
-            Binding.Delay = 1000;
+            Binding.Delay = 500;
             UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
             Binding.ValidatesOnNotifyDataErrors = true;
 

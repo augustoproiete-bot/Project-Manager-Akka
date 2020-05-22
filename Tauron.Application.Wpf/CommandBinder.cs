@@ -55,39 +55,14 @@ namespace Tauron.Application.Wpf
 
         public static bool GetUseDirect(DependencyObject obj) => (bool) Argument.NotNull(obj, nameof(obj)).GetValue(UseDirectProperty);
 
-        //public static void ThenRegister(RoutedCommand command)
-        //{
-        //    if (Commands.Any(com => com.Name == command.Name)) return;
 
-        //    Commands.Add(command);
-        //}
+        public static void SetCommand(DependencyObject obj, string value) => Argument.NotNull(obj, nameof(obj)).SetValue(CommandProperty, value);
 
-        //public static RoutedUICommand ThenRegister(string text, string name)
-        //{
-        //    var command = new RoutedUICommand(text, name, typeof(CommandBinder));
-        //    ThenRegister(command);
-        //    return command;
-        //}
+        public static void SetCustomPropertyName(DependencyObject obj, string value) => Argument.NotNull(obj, nameof(obj)).SetValue(CustomPropertyNameProperty, value);
 
-        public static void SetCommand(DependencyObject obj, string value)
-        {
-            Argument.NotNull(obj, nameof(obj)).SetValue(CommandProperty, value);
-        }
+        public static void SetTargetCommand(DependencyObject obj, ICommand value) => Argument.NotNull(obj, nameof(obj)).SetValue(TargetCommandProperty, value);
 
-        public static void SetCustomPropertyName(DependencyObject obj, string value)
-        {
-            Argument.NotNull(obj, nameof(obj)).SetValue(CustomPropertyNameProperty, value);
-        }
-
-        public static void SetTargetCommand(DependencyObject obj, ICommand value)
-        {
-            Argument.NotNull(obj, nameof(obj)).SetValue(TargetCommandProperty, value);
-        }
-
-        public static void SetUseDirect(DependencyObject obj, bool value)
-        {
-            Argument.NotNull(obj, nameof(obj)).SetValue(UseDirectProperty, value);
-        }
+        public static void SetUseDirect(DependencyObject obj, bool value) => Argument.NotNull(obj, nameof(obj)).SetValue(UseDirectProperty, value);
 
         private static void OnCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {

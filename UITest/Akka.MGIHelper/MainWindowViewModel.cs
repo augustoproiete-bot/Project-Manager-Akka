@@ -16,7 +16,7 @@ namespace Akka.MGIHelper
             this.RegisterViewModel("MgiStarter", mgiStarter);
             this.RegisterViewModel("FanControl", autoFanControl);
 
-            NewCommad()
+            NewCommad
                 .WithExecute(ShowWindow<LogWindow>)
                 .ThenRegister("OpenLogs");
         }

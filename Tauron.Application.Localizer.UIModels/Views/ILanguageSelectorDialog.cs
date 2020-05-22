@@ -4,7 +4,7 @@ using MahApps.Metro.Controls.Dialogs;
 
 namespace Tauron.Application.Localizer.UIModels.Views
 {
-    public interface ILanguageSelectorDialogView
+    public interface ILanguageSelectorDialog
     {
         BaseMetroDialog Dialog { get; }
 

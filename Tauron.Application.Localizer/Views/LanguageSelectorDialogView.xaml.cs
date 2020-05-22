@@ -17,7 +17,7 @@ namespace Tauron.Application.Localizer.Views
     /// <summary>
     /// Interaktionslogik für LanguageSelectorDialogView.xaml
     /// </summary>
-    public partial class LanguageSelectorDialogView : ILanguageSelectorDialogView
+    public partial class LanguageSelectorDialogView : ILanguageSelectorDialog
     {
         private readonly IDialogCoordinator _dialogCoordinator;
 

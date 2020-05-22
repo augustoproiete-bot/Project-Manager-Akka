@@ -21,6 +21,8 @@ namespace Tauron.Application.Wpf.Model
             property.PropertyValueChanged += () => _collection = property.Value;
         }
 
+        public int Count => _collection?.Count ?? -1;
+
         public IEnumerator<TData> GetEnumerator() => _collection?.GetEnumerator() ?? (IEnumerator<TData>)Array.Empty<TData>().GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -56,5 +58,10 @@ namespace Tauron.Application.Wpf.Model
         }
 
         int IReadOnlyCollection<TData>.Count => _collection?.Count ?? -1;
+
+        public void AddRange(IEnumerable<TData> datas)
+        {
+            foreach (var data in datas) _collection?.Add(data);
+        }
     }
 }

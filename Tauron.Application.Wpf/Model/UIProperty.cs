@@ -29,6 +29,10 @@ namespace Tauron.Application.Wpf.Model
             return prop;
         }
 
+        public static bool operator ==(UIProperty<TData> prop, TData data) => Equals(prop.Value, data);
+
+        public static bool operator !=(UIProperty<TData> prop, TData data) => !Equals(prop.Value, data);
+
         public override string ToString() => Value?.ToString() ?? "null--" + typeof(TData);
     }
 }

@@ -50,5 +50,8 @@
   "LanguageSelectorDialogView_Select_Button": "Auswählen",
 
   "ProjectView_LanguageBox_FirstLabel": "Sprachen",
-  "ProjectView_Button_AddLanguage_Label": "Neue Sprache"
+  "ProjectView_Button_AddLanguage_Label": "Neue Sprache",
+  "ProjectView_Button_AddImport_Label": "Hinzufügen",
+  "ProjectView_Button_RemoveImport_Label": "Entfernen",
+  "ProjectView_Import_Label": "Importierte Projekte:"
 }

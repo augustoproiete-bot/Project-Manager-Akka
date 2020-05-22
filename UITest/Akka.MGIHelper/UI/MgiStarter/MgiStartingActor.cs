@@ -71,6 +71,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
                     {
                         _log.Error(e, "Error on Kill Kernel");
                     }
+
                     return;
                 }
 
@@ -85,8 +86,10 @@ namespace Akka.MGIHelper.UI.MgiStarter
                 _log.Warning(e, "Error on Start Mgi process");
                 _dialogFactory.FormatException(null, e);
             }
-
-            Sender.Tell(new TryStartResponse());
+            finally
+            {
+                Sender.Tell(new TryStartResponse());
+            }
         }
 
         private bool CheckKernelRunning(ProcessConfig config, out Process kernel)
