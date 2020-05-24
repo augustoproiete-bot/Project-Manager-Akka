@@ -239,7 +239,10 @@ namespace Tauron
             public EntryPoint(ExposedReceiveActor actor) => _actor = actor;
 
             public void Tell(TStart start)
-                => _actor.ExposedContext.Self.Tell(start, _actor.ExposedContext.Self);
+            {
+                if(start == null) return;
+                _actor.ExposedContext.Self.Tell(start, _actor.ExposedContext.Self);
+            }
         }
 
         private sealed class Delegator
@@ -249,7 +252,10 @@ namespace Tauron
             public Delegator(IActorRef delegator) => _delegator = delegator;
 
             public void Tell(TStart starter)
-                => _delegator.Tell(starter);
+            {
+                if(starter == null) return;
+                _delegator.Tell(starter);
+            }
         }
 
         private readonly List<Action<ExposedReceiveActor>> _recieves = new List<Action<ExposedReceiveActor>>();

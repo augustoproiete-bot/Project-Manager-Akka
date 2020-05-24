@@ -20,11 +20,16 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class CenterViewModel : UiActor
     {
+        private sealed class RemoveProjectName
+        {
+            public string Name { get; }
+
+            public RemoveProjectName(string name) => Name = name;
+        }
+
         private readonly IOperationManager _manager;
         private readonly LocLocalizer _localizer;
-        private readonly IDialogCoordinator _dialogCoordinator;
         private readonly IMainWindowCoordinator _mainWindow;
-        private readonly ProjectFileWorkspace _workspace;
 
         private UICollectionProperty<ProjectViewContainer> Views { get; }
 
@@ -39,20 +44,90 @@ namespace Tauron.Application.Localizer.UIModels
 
             _manager = manager;
             _localizer = localizer;
-            _dialogCoordinator = dialogCoordinator;
             _mainWindow = mainWindow;
-            _workspace = workspace;
+            
 
-            NewCommad.WithExecute(TryRemoveProject, () => !_workspace.ProjectFile.IsEmpty && CurrentProject != null).ThenRegister("RemoveProject");
-
-            this.RespondOnEventSource(_workspace.Source.SaveRequest, SaveRequested);
+            this.RespondOnEventSource(workspace.Source.SaveRequest, SaveRequested);
             Receive<SavedProject>(ProjectSaved);
 
-            this.RespondOnEventSource(_workspace.Projects.RemovedProject, p => RemoveProject(p.Project));
-            this.RespondOnEventSource(_workspace.Source.SourceUpdate, updated => _mainWindow.TitlePostfix = Path.GetFileName(updated.Source));
+            #region Project Save
 
-            Receive<UpdateSource>(UpdateSourceHandler);
-            Receive<NewProjectDialogResult>(NewProjectDialogResult);
+            void ProjectSaved(SavedProject obj)
+            {
+                var controller = _manager.Find(obj.OperationId);
+                if (controller == null) return;
+
+                if (obj.Ok)
+                {
+                    _mainWindow.Saved = true;
+                    controller.Compled();
+                }
+                else
+                {
+                    _mainWindow.Saved = false;
+                    controller.Failed(obj.Exception?.Message);
+                }
+            }
+
+            void SaveRequested(SaveRequest obj)
+            {
+                if (string.IsNullOrWhiteSpace(obj.ProjectFile.Source)) return;
+
+                var operation = _manager.StartOperation(string.Format(_localizer.CenterViewSaveProjectOperation, Path.GetFileName(obj.ProjectFile.Source)));
+                var file = obj.ProjectFile;
+                file.Operator.Tell(new SaveProject(operation.Id, file), Self);
+            }
+
+            this.Flow<SaveRequest>().To.
+
+            #endregion
+
+            #region Update Source
+
+            this.Flow<UpdateSource>().To.Mutate(workspace.Source).For(sm => sm.SourceUpdate, sm => us => sm.UpdateSource(us.Name)).ToSelf()
+               .Then.Action(su => _mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source));
+
+            #endregion
+
+            #region Remove Project
+
+            RemoveProjectName? TryGetRemoveProjectName()
+            {
+                var currentProject = CurrentProject.Value;
+                if (currentProject == null) return null;
+
+                var (_, projectName, _, _) = Views[currentProject.Value].Project;
+
+                return new RemoveProjectName(projectName);
+            }
+
+            void RemoveDialog(RemoveProjectName? project)
+            {
+                UICall(async c =>
+                       {
+                           var result = await dialogCoordinator.ShowMessageAsync("MainWindow", string.Format(_localizer.CenterViewRemoveProjectDialogTitle, project.Name),
+                               _localizer.CenterViewRemoveProjectDialogMessage, MessageDialogStyle.AffirmativeAndNegative);
+                           if (result == MessageDialogResult.Negative) return;
+
+                           workspace.Projects.RemoveProject(project.Name);
+                       });
+            }
+
+            void RemoveProject(Project project)
+            {
+                var proj = Views.FirstOrDefault(p => p.Project.ProjectName == project.ProjectName);
+                if (proj == null) return;
+
+                Context.Stop(Context.Child(GetActorName(proj.Project.ProjectName)));
+                Views.Remove(proj);
+            }
+
+            NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty && CurrentProject != null)
+               .ToFlow(TryGetRemoveProjectName()).To.Mutate(workspace.Projects).For(pm => pm.RemovedProject, pm => RemoveDialog).ToSelf()
+               .Then.Action(rp => RemoveProject(rp.Project))
+               .Return().ThenRegister("RemoveProject");
+
+            #endregion
 
             #region Project Reset
 
@@ -83,19 +158,19 @@ namespace Tauron.Application.Localizer.UIModels
                 _mainWindow.IsBusy = false;
             }
 
-            this.Flow<SupplyNewProjectFile>().To.Mutate(_workspace.Source).For(sm => sm.ProjectReset, sm => np => sm.Reset(np.File)).ToSelf()
+            this.Flow<SupplyNewProjectFile>().To.Mutate(workspace.Source).For(sm => sm.ProjectReset, sm => np => sm.Reset(np.File)).ToSelf()
                .Then.Action(ProjectRest);
 
             #endregion
 
-            #region Addproject
+            #region Add project
 
             void AddProject(Project project)
             {
                 string name = GetActorName(project.ProjectName);
                 if (!ActorPath.IsValidPathElement(name))
                 {
-                    UICall(async c => await _dialogCoordinator.ShowMessageAsync("MainWindow", _localizer.CommonError, _localizer.CenterViewNewProjectInvalidNameMessage));
+                    UICall(async c => await dialogCoordinator.ShowMessageAsync("MainWindow", _localizer.CommonError, _localizer.CenterViewNewProjectInvalidNameMessage));
                     return;
                 }
 
@@ -108,78 +183,16 @@ namespace Tauron.Application.Localizer.UIModels
                 CurrentProject += Views.Count - 1;
             }
 
-            NewCommad.WithCanExecute(() => !_workspace.ProjectFile.IsEmpty)
-               .ToFlow(this.ShowDialog<IProjectNameDialog, NewProjectDialogResult, string>(_workspace.ProjectFile.Projects.Select(p => p.ProjectName)))
-                    .To.Mutate(_workspace.Projects).For(pm => pm.NewProject, pm => result => pm.AddProject(result.Name)).ToSelf()
+            NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty)
+               .ToFlow(this.ShowDialog<IProjectNameDialog, NewProjectDialogResult, string>(workspace.ProjectFile.Projects.Select(p => p.ProjectName)))
+                    .To.Mutate(workspace.Projects).For(pm => pm.NewProject, pm => result => pm.AddProject(result.Name)).ToSelf()
                .Then.Action(p => AddProject(p.Project))
                .Return().ThenRegister("AddNewProject");
 
             #endregion
         }
 
-        private void TryRemoveProject()
-        {
-            var currentProject = CurrentProject.Value;
-            if (currentProject == null) return;
 
-            var (_, projectName, _, _) = Views[currentProject.Value].Project;
-
-            UICall(async c =>
-                   {
-                       var result = await _dialogCoordinator.ShowMessageAsync("MainWindow", string.Format(_localizer.CenterViewRemoveProjectDialogTitle, projectName),
-                           _localizer.CenterViewRemoveProjectDialogMessage, MessageDialogStyle.AffirmativeAndNegative);
-                       if (result == MessageDialogResult.Negative) return;
-
-                       _workspace.Projects.RemoveProject(projectName);
-                   });
-        }
-
-
-        private string GetActorName(string projectName) => projectName.Replace(' ', '_') + "-View";
-
-        private void NewProjectDialogResult(NewProjectDialogResult obj)
-        {
-            if (string.IsNullOrWhiteSpace(obj.Name)) return;
-
-            _workspace.Projects.AddProject(obj.Name);
-        }
-
-        private void RemoveProject(Project project)
-        {
-            var proj = Views.FirstOrDefault(p => p.Project.ProjectName == project.ProjectName);
-            if(proj == null) return;
-
-            Context.Stop(Context.Child(GetActorName(proj.Project.ProjectName)));
-            Views.Remove(proj);
-        }
-
-        private void ProjectSaved(SavedProject obj)
-        {
-            var controller = _manager.Find(obj.OperationId);
-            if(controller == null) return;
-
-            if (obj.Ok)
-            {
-                _mainWindow.Saved = true;
-                controller.Compled();
-            }
-            else
-            {
-                _mainWindow.Saved = false;
-                controller.Failed(obj.Exception?.Message);
-            }
-        }
-
-        private void SaveRequested(SaveRequest obj)
-        {
-            if(string.IsNullOrWhiteSpace(obj.ProjectFile.Source)) return;
-
-            var operation = _manager.StartOperation(string.Format(_localizer.CenterViewSaveProjectOperation, Path.GetFileName(obj.ProjectFile.Source)));
-            var file = obj.ProjectFile;
-            file.Operator.Tell(new SaveProject(operation.Id, file), Self);
-        }
-        
-        private void UpdateSourceHandler(UpdateSource obj) => _workspace.Source.UpdateSource(obj.Name);
-
+        private static string GetActorName(string projectName) => projectName.Replace(' ', '_') + "-View";
     }
 }

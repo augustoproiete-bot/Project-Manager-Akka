@@ -72,5 +72,7 @@ namespace Tauron.Application.Localizer.DataModel
         public static MutateClass<TRecieve, TStart, TParent, TMutator> Mutate<TRecieve, TStart, TParent, TMutator>(
             this RunSelector<TRecieve, TStart, TParent> selector, TMutator mutator) =>
             new MutateClass<TRecieve, TStart,TParent,TMutator>(mutator, selector);
+
+        public static void Test<TNext, TRecieve, TStart, TParent>(this RunSelector<TRecieve, TStart, TParent> selector, IEventSource<TNext> )
     }
 }
