@@ -1,10 +1,11 @@
-﻿using System.Diagnostics;
-using System.Windows.Threading;
+﻿using System.Windows.Threading;
 using Akka.Actor;
 using Akka.MGIHelper.Core.Configuration;
 using Akka.MGIHelper.Core.FanControl;
 using Akka.MGIHelper.Core.FanControl.Events;
 using Autofac;
+using Tauron;
+using Tauron.Akka;
 using Tauron.Application.Wpf.Model;
 using Tauron.Application.Wpf.ModelMessages;
 
@@ -43,7 +44,7 @@ namespace Akka.MGIHelper.UI.FanControl
             Pt1000 = RegisterProperty<int>(nameof(Pt1000));
             FanRunning = RegisterProperty<bool>(nameof(FanRunning)).WithDefaultValue(false);
 
-            Context.ActorOf(Props.Create(() => new Core.FanControl.FanControl(options)), "Fan-Control");
+            Context.ActorOf(() => new Core.FanControl.FanControl(options), "Fan-Control");
 
             Receive<TrackingEvent>(evt =>
                                    {

@@ -5,6 +5,7 @@ using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
 using MahApps.Metro.Controls.Dialogs;
+using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Workspace;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
@@ -25,7 +26,7 @@ namespace Tauron.Application.Localizer.UIModels
         private readonly LocLocalizer _localizer;
         private readonly IDialogCoordinator _dialogCoordinator;
         private string _project = string.Empty;
-        private ProjectFileWorkspace _workspace = ProjectFileWorkspace.Dummy;
+        private readonly ProjectFileWorkspace _workspace;
 
         public UICollectionProperty<ProjectViewLanguageModel> Languages { get; }
         public UIProperty<int> SelectedIndex { get; set; }
@@ -35,11 +36,12 @@ namespace Tauron.Application.Localizer.UIModels
 
         public UICollectionProperty<string> ImportetProjects { get; }
 
-        public ProjectViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, LocLocalizer localizer, IDialogCoordinator dialogCoordinator) 
+        public ProjectViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, LocLocalizer localizer, IDialogCoordinator dialogCoordinator, ProjectFileWorkspace workspace) 
             : base(lifetimeScope, dispatcher)
         {
             _localizer = localizer;
             _dialogCoordinator = dialogCoordinator;
+            _workspace = workspace;
 
             ProjectEntrys = this.RegisterUiCollection<ProjectEntryModel>(nameof(ProjectEntrys)).Async();
             SelectedIndex = RegisterProperty<int>(nameof(SelectedIndex));
@@ -48,7 +50,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             ImportSelectInfex = RegisterProperty<int>(nameof(ImportSelectInfex)).WithDefaultValue(0);
             ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).Async();
-            Receive<AddImport>(AddImport);
+            this.RespondOnEventSource(_workspace.Projects.NewImport, AddImport);
 
             NewCommad.WithExecute(AddImportCommand).WithCanExecute(() => _workspace.ProjectFile.Projects.Count > 1).ThenRegister("AddImportCommand");
 
@@ -59,7 +61,7 @@ namespace Tauron.Application.Localizer.UIModels
             Languages = this.RegisterUiCollection<ProjectViewLanguageModel>(nameof(Languages)).Async();
             NewCommad.WithExecute(AddLanguage).ThenRegister("AddLanguage");
 
-            Receive<AddActiveLanguage>(AddActiveLanguage);
+            this.RespondOnEventSource(_workspace.Projects.NewLanguage, AddActiveLanguage);
             Receive<CultureInfo>(culture => _workspace.Projects.AddLanguage(_project, culture));
             Receive<TryImport>(TryImportExc);
 
@@ -130,10 +132,6 @@ namespace Tauron.Application.Localizer.UIModels
         private void InitProjectViewModel(InitProjectViewModel obj)
         {
             _project = obj.Project.ProjectName;
-            _workspace = obj.Workspace;
-
-            _workspace.Projects.NewLanguage.RespondOn(Self);
-            _workspace.Projects.NewImport.RespondOn(Self);
 
             Languages.Add(new ProjectViewLanguageModel(_localizer.ProjectViewLanguageBoxFirstLabel, true));
             Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));

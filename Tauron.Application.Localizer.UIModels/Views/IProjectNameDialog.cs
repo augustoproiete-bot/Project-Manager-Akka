@@ -1,13 +1,6 @@
-﻿using System.Collections.Generic;
-using Akka.Actor;
-using MahApps.Metro.Controls.Dialogs;
-
-namespace Tauron.Application.Localizer.UIModels.Views
+﻿namespace Tauron.Application.Localizer.UIModels.Views
 {
-    public interface IProjectNameDialog
+    public interface IProjectNameDialog : IBaseDialog<NewProjectDialogResult, string>
     {
-        BaseMetroDialog Dialog { get; }
-
-        void Init(IEnumerable<string> projects, IActorRef resultResponder);
     }
 }

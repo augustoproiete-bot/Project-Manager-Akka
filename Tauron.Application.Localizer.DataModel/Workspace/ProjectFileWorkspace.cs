@@ -36,7 +36,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace
             _projectFile = new ProjectFile();
         }
 
-        public ProjectFileWorkspace(IUntypedActorContext factory)
+        public ProjectFileWorkspace(IActorRefFactory factory)
         {
             _projectFile = new ProjectFile();
             Analyzer = new Analyzer(this, factory);

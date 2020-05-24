@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Dsl;
+using Akka.Event;
 using JetBrains.Annotations;
 
 namespace Tauron.Akka
@@ -104,5 +106,7 @@ namespace Tauron.Akka
             get => _strategy;
             set => _strategy = value;
         }
+
+        protected internal ILoggingAdapter Log { get; } = Context.GetLogger();
     }
 }

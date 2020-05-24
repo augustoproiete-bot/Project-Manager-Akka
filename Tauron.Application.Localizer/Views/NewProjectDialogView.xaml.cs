@@ -1,19 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Akka.Actor;
 using MahApps.Metro.Controls.Dialogs;
-using Microsoft.Xaml.Behaviors.Core;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Wpf.Commands;
@@ -27,16 +18,12 @@ namespace Tauron.Application.Localizer.Views
         private string _content = string.Empty;
         private string? _error;
 
-        public NewProjectDialogViewModel(IEnumerable<string> blocked, Action returnAction, IActorRef target, LocLocalizer localizer)
+        public NewProjectDialogViewModel(IEnumerable<string> blocked, Action<NewProjectDialogResult> target, LocLocalizer localizer)
         {
             _localizer = localizer;
             _blocked = blocked.ToArray();
 
-            Return = new SimpleCommand(execute: o =>
-            {
-                returnAction();
-                target.Tell(new NewProjectDialogResult(Content));
-            }, canExecute:o => string.IsNullOrWhiteSpace(Error));
+            Return = new SimpleCommand(execute: o => target(new NewProjectDialogResult(Content)), canExecute:o => string.IsNullOrWhiteSpace(Error));
         }
 
         public string? Error
@@ -71,22 +58,22 @@ namespace Tauron.Application.Localizer.Views
     public partial class NewProjectDialogView : IProjectNameDialog
     {
         private readonly LocLocalizer _localizer;
-        private readonly IDialogCoordinator _coordinator;
 
-        public NewProjectDialogView(LocLocalizer localizer, IDialogCoordinator coordinator)
+        public NewProjectDialogView(LocLocalizer localizer)
         {
             _localizer = localizer;
-            _coordinator = coordinator;
             InitializeComponent();
         }
 
         public BaseMetroDialog Dialog => this;
-        public void Init(IEnumerable<string> projects, IActorRef resultResponder) 
-            => DataContext = new NewProjectDialogViewModel(projects, ReturnAction, resultResponder, _localizer);
 
-        private async void ReturnAction() 
-            => await _coordinator.HideMetroDialogAsync("MainWindow", this);
-
+        public Task<NewProjectDialogResult> Init(IEnumerable<string> initalData)
+        {
+            var task = new TaskCompletionSource<NewProjectDialogResult>();
+            DataContext = new NewProjectDialogViewModel(initalData, result => task.SetResult(result), _localizer);
+            return task.Task;
+        }
+        
         private void OpenFileDialogView_OnLoaded(object sender, RoutedEventArgs e)
         {
             FocusManager.SetFocusedElement(this, NameBox);

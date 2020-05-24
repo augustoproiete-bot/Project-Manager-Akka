@@ -2,8 +2,7 @@
 
 namespace Tauron.Application.Localizer.UIModels.Views
 {
-    public interface IOpenFileDialog
+    public interface IOpenFileDialog : IBaseDialog<string?, string?>
     {
-        BaseMetroDialog Dialog { get; }
     }
 }

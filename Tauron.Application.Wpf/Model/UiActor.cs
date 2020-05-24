@@ -100,10 +100,9 @@ namespace Tauron.Application.Wpf.Model
         private readonly Dictionary<string, PropertyData> _propertys = new Dictionary<string, PropertyData>();
         private bool _isSeald;
 
-        internal IUntypedActorContext UIActorContext => Context;
+        //internal IUntypedActorContext UIActorContext => Context;
 
-        protected ILoggingAdapter Log { get; } = Context.GetLogger();
-        protected internal ILifetimeScope LifetimeScope { get; }
+        public ILifetimeScope LifetimeScope { get; }
 
         protected UiActor(ILifetimeScope lifetimeScope, Dispatcher dispatcher)
         {
@@ -149,7 +148,7 @@ namespace Tauron.Application.Wpf.Model
 
         #region Dispatcher
 
-        internal Dispatcher Dispatcher { get; }
+        public Dispatcher Dispatcher { get; }
 
         protected void UICall(Action<IUntypedActorContext> executor)
         {
@@ -199,7 +198,7 @@ namespace Tauron.Application.Wpf.Model
 
         protected CommandRegistrationBuilder NewCommad
             => new CommandRegistrationBuilder((
-                key, command, canExecute) => _commandRegistrations.Add(key, new CommandRegistration(command, canExecute)));
+                key, command, canExecute) => _commandRegistrations.Add(key, new CommandRegistration(command, canExecute)), this);
 
         public void CommandChanged() 
             => Dispatcher.BeginInvoke(new Action(CommandManager.InvalidateRequerySuggested), DispatcherPriority.ApplicationIdle);

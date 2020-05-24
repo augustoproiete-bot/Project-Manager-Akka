@@ -1,4 +1,5 @@
-﻿using Tauron.Application.Localizer.UIModels.Views;
+﻿using System;
+using Tauron.Application.Localizer.UIModels.Views;
 
 namespace Tauron.Application.Localizer.UIModels.Messages
 {
@@ -12,5 +13,8 @@ namespace Tauron.Application.Localizer.UIModels.Messages
             Source = source;
             Mode = mode;
         }
+
+        public static Func<SourceSelected> From(Func<string?> data, OpenFileMode mode)
+            => () => new SourceSelected(data(), mode);
     }
 }

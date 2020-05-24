@@ -1,11 +1,13 @@
 ﻿using System;
 using JetBrains.Annotations;
+using Tauron.Akka;
 
 namespace Tauron.Application.Wpf.Model
 {
     [PublicAPI]
     public sealed class CommandRegistrationBuilder
     {
+        public ExposedReceiveActor Target { get; }
         private readonly Action<string, Action<object?>, Func<object?, bool>?> _register;
 
         private sealed class ActionMapper
@@ -34,7 +36,11 @@ namespace Tauron.Application.Wpf.Model
 
         private Delegate? _canExecute;
 
-        internal CommandRegistrationBuilder(Action<string, Action<object?>, Func<object?, bool>?> register) => _register = register;
+        internal CommandRegistrationBuilder(Action<string, Action<object?>, Func<object?, bool>?> register, ExposedReceiveActor target)
+        {
+            Target = target;
+            _register = register;
+        }
 
         public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<object?, bool>? canExecute)
         {

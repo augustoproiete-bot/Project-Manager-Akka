@@ -1,6 +1,8 @@
-﻿using Autofac;
+﻿using Akka.Actor;
+using Autofac;
 using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.Core.UI;
+using Tauron.Application.Localizer.DataModel.Workspace;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Services;
@@ -25,6 +27,7 @@ namespace Tauron.Application.Localizer
             builder.RegisterType<MainWindowCoordinator>().As<IMainWindowCoordinator>().SingleInstance();
 
             builder.RegisterType<LocLocalizer>().AsSelf();
+            builder.Register(cc => new ProjectFileWorkspace(cc.Resolve<ActorSystem>())).AsSelf().SingleInstance();
 
             builder.RegisterInstance(DialogCoordinator.Instance).As<IDialogCoordinator>();
         }

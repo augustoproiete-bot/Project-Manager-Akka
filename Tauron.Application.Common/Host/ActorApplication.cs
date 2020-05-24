@@ -164,7 +164,7 @@ namespace Tauron.Host
             var builder = new Builder();
             builder.UseContentRoot(Directory.GetCurrentDirectory());
             builder
-                .ConfigureAkka(he => ConfigurationFactory.ParseString(" akka { loggers =[\"Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog\"] }"))
+                .ConfigureAkka(he => ConfigurationFactory.ParseString(" akka { loggers =[\"Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog\"] \n  scheduler { implementation = \"Tauron.Akka.TimerScheduler, Tauron.Application.Common\" } }"))
                .ConfigureAutoFac(cb => cb.RegisterModule<CommonModule>())
                .Configuration(cb =>
                               {

@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Markup;
+using System.Windows.Threading;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.UI
@@ -47,7 +48,7 @@ namespace Tauron.Application.Wpf.UI
                     if (obj?.CheckAccess() == true)
                         UpdateAction();
                     else
-                        obj?.Dispatcher.Invoke(UpdateAction);
+                        obj?.Dispatcher.BeginInvoke(new Action(UpdateAction), DispatcherPriority.Background);
                 }
                 else // _targetProperty is PropertyInfo
                 {

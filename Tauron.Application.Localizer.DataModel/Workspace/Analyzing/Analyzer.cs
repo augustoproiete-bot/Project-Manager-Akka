@@ -13,7 +13,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Analyzing
 
         public IActorRef Actor { get; }
 
-        public Analyzer(ProjectFileWorkspace workspace, IUntypedActorContext factory) 
+        public Analyzer(ProjectFileWorkspace workspace, IActorRefFactory factory) 
             => Actor = factory.ActorOf(Props.Create(() => new AnalyzerActor(workspace)), nameof(AnalyzerActor));
 
         internal Analyzer() => Actor = ActorRefs.Nobody;

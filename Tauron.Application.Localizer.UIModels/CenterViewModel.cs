@@ -31,7 +31,7 @@ namespace Tauron.Application.Localizer.UIModels
         private UIProperty<int?> CurrentProject { get; set; }
 
         public CenterViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IOperationManager manager, LocLocalizer localizer, IDialogCoordinator dialogCoordinator,
-                            IMainWindowCoordinator mainWindow) 
+                            IMainWindowCoordinator mainWindow, ProjectFileWorkspace workspace) 
             : base(lifetimeScope, dispatcher)
         {
             Views = this.RegisterUiCollection<ProjectViewContainer>(nameof(Views)).Async();
@@ -41,25 +41,80 @@ namespace Tauron.Application.Localizer.UIModels
             _localizer = localizer;
             _dialogCoordinator = dialogCoordinator;
             _mainWindow = mainWindow;
-            _workspace = new ProjectFileWorkspace(Context);
+            _workspace = workspace;
 
-            
-            NewCommad.WithExecute(TryAddProject, () => !_workspace.ProjectFile.IsEmpty).ThenRegister("AddNewProject");
             NewCommad.WithExecute(TryRemoveProject, () => !_workspace.ProjectFile.IsEmpty && CurrentProject != null).ThenRegister("RemoveProject");
 
             this.RespondOnEventSource(_workspace.Source.SaveRequest, SaveRequested);
             Receive<SavedProject>(ProjectSaved);
 
-            this.RespondOnEventSource(_workspace.Source.ProjectReset, ProjectRest);
-            Receive<SupplyNewProjectFile>(LoadNewProject);
-
-            this.RespondOnEventSource(_workspace.Projects.NewProject, ap => AddProject(ap.Project));
             this.RespondOnEventSource(_workspace.Projects.RemovedProject, p => RemoveProject(p.Project));
             this.RespondOnEventSource(_workspace.Source.SourceUpdate, updated => _mainWindow.TitlePostfix = Path.GetFileName(updated.Source));
 
             Receive<UpdateSource>(UpdateSourceHandler);
             Receive<NewProjectDialogResult>(NewProjectDialogResult);
 
+            #region Project Reset
+
+            void ProjectRest(ProjectRest obj)
+            {
+                _mainWindow.Saved = File.Exists(obj.ProjectFile.Source);
+
+                foreach (var view in Views)
+                    Context.Stop(view.Model.Actor);
+                Views.Clear();
+
+                string titleName = obj.ProjectFile.Source;
+                if (string.IsNullOrWhiteSpace(titleName))
+                    titleName = _localizer.CommonUnkowen;
+                else
+                {
+                    titleName = Path.GetFileNameWithoutExtension(obj.ProjectFile.Source);
+                    if (string.IsNullOrWhiteSpace(titleName))
+                        titleName = _localizer.CommonUnkowen;
+                }
+
+                _mainWindow.TitlePostfix = titleName;
+
+                foreach (var project in obj.ProjectFile.Projects)
+                    AddProject(project);
+
+                CommandChanged();
+                _mainWindow.IsBusy = false;
+            }
+
+            this.Flow<SupplyNewProjectFile>().To.Mutate(_workspace.Source).For(sm => sm.ProjectReset, sm => np => sm.Reset(np.File)).ToSelf()
+               .Then.Action(ProjectRest);
+
+            #endregion
+
+            #region Addproject
+
+            void AddProject(Project project)
+            {
+                string name = GetActorName(project.ProjectName);
+                if (!ActorPath.IsValidPathElement(name))
+                {
+                    UICall(async c => await _dialogCoordinator.ShowMessageAsync("MainWindow", _localizer.CommonError, _localizer.CenterViewNewProjectInvalidNameMessage));
+                    return;
+                }
+
+                var view = LifetimeScope.Resolve<IViewModel<ProjectViewModel>>();
+                view.Init(Context, name);
+                view.Actor.Tell(new InitProjectViewModel(project), Self);
+
+                Views.Add(new ProjectViewContainer(view, project));
+
+                CurrentProject += Views.Count - 1;
+            }
+
+            NewCommad.WithCanExecute(() => !_workspace.ProjectFile.IsEmpty)
+               .ToFlow(this.ShowDialog<IProjectNameDialog, NewProjectDialogResult, string>(_workspace.ProjectFile.Projects.Select(p => p.ProjectName)))
+                    .To.Mutate(_workspace.Projects).For(pm => pm.NewProject, pm => result => pm.AddProject(result.Name)).ToSelf()
+               .Then.Action(p => AddProject(p.Project))
+               .Return().ThenRegister("AddNewProject");
+
+            #endregion
         }
 
         private void TryRemoveProject()
@@ -79,43 +134,14 @@ namespace Tauron.Application.Localizer.UIModels
                    });
         }
 
+
         private string GetActorName(string projectName) => projectName.Replace(' ', '_') + "-View";
-
-        private void AddProject(Project project)
-        {
-            string name = GetActorName(project.ProjectName);
-            if (!ActorPath.IsValidPathElement(name))
-            {
-                UICall(async c => await _dialogCoordinator.ShowMessageAsync("MainWindow", _localizer.CommonError, _localizer.CenterViewNewProjectInvalidNameMessage));
-                return;
-            }
-
-            var view = LifetimeScope.Resolve<IViewModel<ProjectViewModel>>();
-            view.Init(Context, name);
-            view.Actor.Tell(new InitProjectViewModel(project, _workspace), Self);
-
-            Views.Add(new ProjectViewContainer(view, project));
-
-            CurrentProject += Views.Count - 1;
-        }
-
 
         private void NewProjectDialogResult(NewProjectDialogResult obj)
         {
             if (string.IsNullOrWhiteSpace(obj.Name)) return;
 
             _workspace.Projects.AddProject(obj.Name);
-        }
-
-        private void TryAddProject()
-        {
-            UICall(async (c) =>
-            {
-                var diag = LifetimeScope.Resolve<IProjectNameDialog>();
-                diag.Init(_workspace.ProjectFile.Projects.Select(p => p.ProjectName), c.Self);
-
-                await _dialogCoordinator.ShowMetroDialogAsync("MainWindow", diag.Dialog);
-            });
         }
 
         private void RemoveProject(Project project)
@@ -125,33 +151,6 @@ namespace Tauron.Application.Localizer.UIModels
 
             Context.Stop(Context.Child(GetActorName(proj.Project.ProjectName)));
             Views.Remove(proj);
-        }
-
-        private void ProjectRest(ProjectRest obj)
-        {
-            _mainWindow.Saved = File.Exists(obj.ProjectFile.Source);
-
-            foreach (var view in Views) 
-                Context.Stop(view.Model.Actor);
-            Views.Clear();
-
-            string titleName = obj.ProjectFile.Source;
-            if (string.IsNullOrWhiteSpace(titleName))
-                titleName = _localizer.CommonUnkowen;
-            else
-            {
-                titleName = Path.GetFileNameWithoutExtension(obj.ProjectFile.Source);
-                if (string.IsNullOrWhiteSpace(titleName))
-                    titleName = _localizer.CommonUnkowen;
-            }
-
-            _mainWindow.TitlePostfix = titleName;
-
-            foreach (var project in obj.ProjectFile.Projects) 
-                AddProject(project);
-
-            CommandChanged();
-            _mainWindow.IsBusy = false;
         }
 
         private void ProjectSaved(SavedProject obj)
@@ -179,9 +178,7 @@ namespace Tauron.Application.Localizer.UIModels
             var file = obj.ProjectFile;
             file.Operator.Tell(new SaveProject(operation.Id, file), Self);
         }
-
-        private void LoadNewProject(SupplyNewProjectFile obj) => _workspace.Source.Reset(obj.File);
-
+        
         private void UpdateSourceHandler(UpdateSource obj) => _workspace.Source.UpdateSource(obj.Name);
 
     }

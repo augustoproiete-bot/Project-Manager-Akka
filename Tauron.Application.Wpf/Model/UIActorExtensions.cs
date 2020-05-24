@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using Akka.Actor;
+using Autofac;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.Model
@@ -10,9 +11,9 @@ namespace Tauron.Application.Wpf.Model
             where TModel : class
         {
             model ??= actor.LifetimeScope.Resolve<IViewModel<TModel>>();
-
+            
             if(!model.IsInitialized)
-                model.Init(actor.UIActorContext, name);
+                model.Init(actor.ExposedContext, name);
 
             return new UIModel<TModel>(actor.RegisterProperty<IViewModel<TModel>>(name).WithDefaultValue(model).Property);
         }

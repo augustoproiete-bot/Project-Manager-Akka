@@ -9,7 +9,6 @@ using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
 using MahApps.Metro.Controls.Dialogs;
-using Tauron.Akka;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.UIModels.lang;
@@ -26,12 +25,6 @@ namespace Tauron.Application.Localizer.UIModels
     {
         public static readonly string MainWindow = nameof(MainWindow);
 
-        private readonly IOperationManager _operationManager;
-        private readonly LocLocalizer _localizer;
-        private readonly IDialogCoordinator _dialogCoordinator;
-        private readonly IDialogFactory _dialogFactory;
-        private readonly IMainWindowCoordinator _mainWindowCoordinator;
-
         private UIProperty<IEnumerable<RunningOperation>> RunningOperations { get; }
 
         private UIProperty<RenctFilesCollection> RenctFiles { get; }
@@ -43,124 +36,119 @@ namespace Tauron.Application.Localizer.UIModels
             : base(lifetimeScope, dispatcher)
         {
             var self = Self;
+            CenterView = this.RegisterViewModel(nameof(CenterView), model);
+            
+            #region Operation Manager
 
             RunningOperations = RegisterProperty<IEnumerable<RunningOperation>>(nameof(RunningOperations)).WithDefaultValue(operationManager.RunningOperations);
             RenctFiles = RegisterProperty<RenctFilesCollection>(nameof(RenctFiles)).WithDefaultValue(new RenctFilesCollection(config, s => self.Tell(new InternlRenctFile(s))));
-            CenterView = this.RegisterViewModel(nameof(CenterView), model);
-
-            _operationManager = operationManager;
-            _localizer = localizer;
-            _dialogCoordinator = dialogCoordinator;
-            _dialogFactory = dialogFactory;
-            _mainWindowCoordinator = mainWindowCoordinator;
-
             NewCommad.WithExecute(operationManager.Clear, operationManager.ShouldClear).ThenRegister("ClearOp");
             NewCommad.WithExecute(operationManager.CompledClear, operationManager.ShouldCompledClear).ThenRegister("ClearAllOp");
-            NewCommad.WithExecute(OpenFile, () => _loadingOperation == null).ThenRegister("OpenFile");
-            NewCommad.WithExecute(NewFile, () => _loadingOperation == null).ThenRegister("NewFile");
-            NewCommad.WithExecute(SaveAsProject, () => _last != null).ThenRegister("SaveAs");
 
-            Receive<LoadedProjectFile>(ProjectLoaded);
-            ReceiveAsync<SourceSelected>(async s =>
-                                    {
-                                        if(s.Mode == OpenFileMode.OpenExistingFile)
-                                            OpentFileSource(s.Source);
-                                        else
-                                            await NewFileSource(s.Source);
-                                    });
+            #endregion
+
+            #region Save As
+
+            UpdateSource? SaveAsProject()
+            {
+                var targetFile = dialogFactory.ShowSaveFileDialog(null, true, true, true, "transp", true,
+                    localizer.OpenFileDialogViewDialogFilter, true, true, localizer.MainWindowMainMenuFileSaveAs, Directory.GetCurrentDirectory(), out var result);
+
+                if (result != true && CheckSourceOk(targetFile)) return null;
+
+                return new UpdateSource(targetFile!);
+            }
+
+            bool CheckSourceOk(string? source)
+            {
+                if (!string.IsNullOrWhiteSpace(source)) return false;
+                UICall(async () => await dialogCoordinator.ShowMessageAsync(MainWindow, localizer.CommonError, localizer.MainWindowModelLoadProjectSourceEmpty));
+                return true;
+
+            }
+
+            NewCommad.WithCanExecute(() => _last != null)
+               .ToFlow(SaveAsProject).Send.ToModel(CenterView);
+
+            #endregion
+
+            #region Open File
 
             Receive<InternlRenctFile>(o => OpentFileSource(o.File));
-        }
 
-        private void SaveAsProject()
-        {
-            var targetFile = _dialogFactory.ShowSaveFileDialog(null, true, true, true, "transp", true,
-                _localizer.OpenFileDialogViewDialogFilter, true, true, _localizer.MainWindowMainMenuFileSaveAs, Directory.GetCurrentDirectory(), out var result);
+            async Task<LoadedProjectFile?> SourceSelectedFunc(SourceSelected s)
+            {
+                if (s.Mode != OpenFileMode.OpenExistingFile) return await NewFileSource(s.Source);
+                OpentFileSource(s.Source);
+                return null;
+            }
 
-            if(result != true && CheckSourceOk(targetFile)) return;
+            void OpentFileSource(string? source)
+            {
+                if (CheckSourceOk(source)) return;
 
-            UpdateSource(targetFile!);
-        }
+                mainWindowCoordinator.IsBusy = true;
+                _loadingOperation = operationManager.StartOperation(string.Format(localizer.MainWindowModelLoadProjectOperation, Path.GetFileName(source) ?? source));
+                ProjectFile.BeginLoad(Context, _loadingOperation.Id, source!, "Project_Operator");
+            }
 
-        private void NewFile()
-        {
-            UICall(async (c) =>
-                   {
-                       var dialog = LifetimeScope.Resolve<IOpenFileDialog>(TypedParameter.From(new Action<string?>(s => c.Self.Tell(new SourceSelected(s, OpenFileMode.OpenNewFile)))),
-                           TypedParameter.From(OpenFileMode.OpenNewFile)).Dialog;
-                       await _dialogCoordinator.ShowMetroDialogAsync(MainWindow, dialog);
-                   });
+            SupplyNewProjectFile? ProjectLoaded(LoadedProjectFile obj)
+            {
+                if (_loadingOperation != null)
+                {
+                    if (obj.Ok)
+                        _loadingOperation.Compled();
+                    else
+                    {
+                        mainWindowCoordinator.IsBusy = false;
+                        _loadingOperation.Failed(obj.ErrorReason?.Message ?? localizer.CommonError);
+                        return null;
+                    }
+                }
+
+                if (obj.Ok) RenctFiles.Value.AddNewFile(obj.ProjectFile.Source);
+
+                _last = obj.ProjectFile;
+
+                return new SupplyNewProjectFile(_last);
+            }
+
+            NewCommad.WithCanExecute(() => _loadingOperation == null)
+               .ToFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenExistingFile)), OpenFileMode.OpenExistingFile))
+               .To.Func(SourceSelectedFunc).ToSelf()
+               .Then.Func(ProjectLoaded!).ToModel(CenterView)
+               .Then.Return().ThenRegister("OpenFile");
+
+            #endregion
+
+            #region New File
+
+            async Task<LoadedProjectFile?> NewFileSource(string? source)
+            {
+                source ??= string.Empty;
+
+                if (File.Exists(source))
+                {
+                    var result = await UICall(async () => await dialogCoordinator.ShowMessageAsync(MainWindow, localizer.CommonError, "",
+                                                  MessageDialogStyle.AffirmativeAndNegative));
+
+                    if (result == MessageDialogResult.Negative) return null;
+                }
+
+                mainWindowCoordinator.IsBusy = true;
+                return new LoadedProjectFile(string.Empty, ProjectFile.NewProjectFile(Context, source, "Project_Operator"), null, true);
+            }
+
+            NewCommad.WithCanExecute(() => _loadingOperation == null)
+               .ToFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenNewFile)), OpenFileMode.OpenNewFile))
+               .Return().ThenRegister("NewFile");
+
+            #endregion
         }
 
         private OperationController? _loadingOperation;
         private ProjectFile? _last;
 
-        private void OpenFile()
-        {
-            UICall(async c =>
-                   {
-                       var dialog = LifetimeScope.Resolve<IOpenFileDialog>(TypedParameter.From(new Action<string?>(s => c.Self.Tell(new SourceSelected(s, OpenFileMode.OpenExistingFile)))),
-                           TypedParameter.From(OpenFileMode.OpenExistingFile)).Dialog;
-                       await _dialogCoordinator.ShowMetroDialogAsync(MainWindow, dialog);
-                   });
-        }
-
-        private bool CheckSourceOk(string? source)
-        {
-            if (!string.IsNullOrWhiteSpace(source)) return false;
-            UICall(async () => await _dialogCoordinator.ShowMessageAsync(MainWindow, _localizer.CommonError, _localizer.MainWindowModelLoadProjectSourceEmpty));
-            return true;
-
-        }
-
-        private async Task NewFileSource(string? source)
-        {
-            source ??= string.Empty;
-
-            if (File.Exists(source))
-            {
-                var result = await UICall(async () => await _dialogCoordinator.ShowMessageAsync(MainWindow, _localizer.CommonError, "", 
-                                                              MessageDialogStyle.AffirmativeAndNegative));
-
-                if(result == MessageDialogResult.Negative) return;
-            }
-
-            _mainWindowCoordinator.IsBusy = true;
-            Self.Tell(new LoadedProjectFile(string.Empty, ProjectFile.NewProjectFile(Context, source, "Project_Operator"), null, true));
-        }
-
-        private void OpentFileSource(string? source)
-        {
-            if(CheckSourceOk(source)) return;
-
-            _mainWindowCoordinator.IsBusy = true;
-            _loadingOperation = _operationManager.StartOperation(string.Format(_localizer.MainWindowModelLoadProjectOperation, Path.GetFileName(source) ?? source));
-            ProjectFile.BeginLoad(Context, _loadingOperation.Id, source!, "Project_Operator");
-        }
-
-        private void ProjectLoaded(LoadedProjectFile obj)
-        {
-            if (_loadingOperation != null)
-            {
-                if(obj.Ok)
-                    _loadingOperation.Compled();
-                else
-                {
-                    _mainWindowCoordinator.IsBusy = false;
-                    _loadingOperation.Failed(obj.ErrorReason?.Message ?? _localizer.CommonError);
-                    return;
-                }
-            }
-
-            if (obj.Ok) RenctFiles.Value.AddNewFile(obj.ProjectFile.Source);
-
-            _last = obj.ProjectFile;
-
-            CenterView.Tell(new SupplyNewProjectFile(_last));
-        }
-
-        private void UpdateSource(string source) 
-            => CenterView.Tell(new UpdateSource(source));
 
         private sealed class RenctFilesCollection : UIObservableCollection<RenctFile>
         {
