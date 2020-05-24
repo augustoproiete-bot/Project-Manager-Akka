@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading;
 using JetBrains.Annotations;
+using Optional;
 
 namespace Tauron
 {
@@ -24,7 +25,7 @@ namespace Tauron
         /// <returns>The number of bytes actually copied.</returns>
         /// <exception cref="ArgumentNullException">Thrown if either target, source of arguments is null</exception>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if arguments.BufferSize is less than 128 or arguments.ProgressChangeCallbackInterval is less than 0</exception>
-        public static long CopyFrom(this Stream target, Stream source, CopyFromArguments arguments)
+        public static long CopyFrom(this Option<Stream> target, Stream source, CopyFromArguments arguments)
         {
             Argument.NotNull(target, nameof(target));
             Argument.NotNull(source, nameof(source));
