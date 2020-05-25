@@ -6,6 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
+using Optional;
+using Optional.Linq;
+using Optional.Unsafe;
 
 namespace Tauron
 {
@@ -84,35 +87,47 @@ namespace Tauron
         public static string CombinePath(this FileSystemInfo path, string path1) 
             => CombinePath(path.FullName, path1);
 
-        public static void CopyFileTo(this string source, string destination)
+        public static void CopyFileTo(this Option<string> source, Option<string> destination)
         {
-            if (!source.ExisFile()) return;
-
-            File.Copy(source, destination, true);
+            var result = from sourcePath in source
+                         from destPath in destination
+                         where source.ExisFile().ValueOr(false) || string.IsNullOrWhiteSpace(destPath)
+                         select (sourcePath, destPath);
+            result.MatchSome(t => File.Copy(t.sourcePath, t.destPath, true));
         }
 
-        public static bool CreateDirectoryIfNotExis(this string path)
+        public static Option<bool, Exception> CreateDirectoryIfNotExis(this Option<string> path)
         {
-            try
+            Option<bool, Exception> Mapping(string p)
             {
-                if (!Path.HasExtension(path)) return CreateDirectoryIfNotExis(new DirectoryInfo(path));
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(p)) return false.Some<bool, Exception>();
 
-                var temp = Path.GetDirectoryName(path);
+                    if (!Path.HasExtension(p)) return CreateDirectoryIfNotExis(new DirectoryInfo(p).Some()).WithException<Exception>(() => new InvalidOperationException($"Creation of {p} Failed"));
 
-                return CreateDirectoryIfNotExis(new DirectoryInfo(temp ?? throw new InvalidOperationException()));
+                    var name = Path.GetDirectoryName(p).Some().Where(s => !string.IsNullOrWhiteSpace(s));
+
+                    return CreateDirectoryIfNotExis(name.Map(s => new DirectoryInfo(s))).WithException<Exception>(() => new InvalidOperationException($"Creation of {p} Failed"));
+                }
+                catch (Exception e)
+                {
+                    return Option.None<bool, Exception>(e);
+                }
             }
-            catch (ArgumentException)
-            {
-                return false;
-            }
+
+            return Mapping(path.ValueOrDefault());
         }
 
-        public static bool CreateDirectoryIfNotExis(this DirectoryInfo dic)
+        public static Option<bool> CreateDirectoryIfNotExis(this Option<DirectoryInfo> dico)
         {
-            if (dic.Exists) return false;
-            dic.Create();
+            return dico.Map(dic =>
+                            {
+                                if (dic.Exists) return false;
+                                dic.Create();
 
-            return true;
+                                return true;
+                            });
         }
 
         public static void SafeDelete(this FileSystemInfo info)
@@ -153,12 +168,8 @@ namespace Tauron
             if (!Directory.EnumerateFileSystemEntries(path).Any()) Directory.Delete(path);
         }
 
-        public static void DeleteFile(this string path)
-        {
-            if (!path.ExisFile()) return;
-
-            File.Delete(path);
-        }
+        public static void DeleteFile(this Option<string> path) 
+            => path.SomeWhen(o => o.ExisFile().ValueOr(false)).Flatten().MatchSome(File.Delete);
 
         public static bool DirectoryConainsInvalidChars(this string path)
         {
@@ -213,8 +224,8 @@ namespace Tauron
             }
         }
 
-        public static bool ExisDirectory(this string path) 
-            => Directory.Exists(path);
+        public static Option<bool> ExisDirectory(this Option<string> path) 
+            => path.Map(Directory.Exists);
 
         public static bool ExisFile(this string workingDirectory, string file)
         {
@@ -228,8 +239,8 @@ namespace Tauron
             }
         }
 
-        public static bool ExisFile(this string? file)
-            => !string.IsNullOrWhiteSpace(file) && File.Exists(file);
+        public static Option<bool> ExisFile(this Option<string> file)
+            => file.Map(s => !string.IsNullOrWhiteSpace(s) && File.Exists(s));
 
         public static DateTime GetDirectoryCreationTime(this string path) 
             => Directory.GetCreationTime(path);
@@ -279,8 +290,8 @@ namespace Tauron
         public static string[] GetFiles(this string path, string pattern, SearchOption option) 
             => Directory.GetFiles(path, pattern, option);
 
-        public static string GetFullPath(this string path) 
-            => Path.GetFullPath(path);
+        public static Option<string> GetFullPath(this Option<string> path) 
+            => path.Map(Path.GetFullPath);
 
         public static bool HasExtension(this string path) 
             => Path.HasExtension(path);
@@ -306,42 +317,37 @@ namespace Tauron
             File.Move(realSource, realDest);
         }
 
-        public static Stream OpenRead(this string path, FileShare share)
-        {
-            path = path.GetFullPath();
-            path.CreateDirectoryIfNotExis();
-            return new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read, share);
-        }
+        public static Option<Stream> OpenRead(this Option<string> path, Option<FileShare> share)
+            => path.SimpleCheckIsValidCreation()
+               .Map<Stream>(p => new FileStream(p, FileMode.OpenOrCreate, FileAccess.Read, share.ValueOr(FileShare.Read)));
 
-        public static Stream OpenRead(this string path) 
-            => OpenRead(path, FileShare.None);
+        public static Option<Stream> OpenRead(this Option<string> path) 
+            => OpenRead(path, FileShare.None.Some());
 
-        public static StreamWriter OpenTextAppend(this string path)
-        {
-            path.CreateDirectoryIfNotExis();
-            return new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.None));
-        }
+        public static Option<StreamWriter> OpenTextAppend(this Option<string> path) 
+            => path.OpenRead()
+               .Map(s => new StreamWriter(s));
 
         public static StreamReader OpenTextRead(this string path) 
             => File.OpenText(path);
 
-        public static StreamWriter OpenTextWrite(this string path)
-        {
-            path.CreateDirectoryIfNotExis();
-            return new StreamWriter(path);
-        }
+        private static Option<string> SimpleCheckIsValidCreation(this Option<string> path) 
+            => path.GetFullPath()
+               .NoneWhen(p => p.CreateDirectoryIfNotExis().HasValue)
+               .Flatten();
 
-        public static Stream OpenWrite(this string path, bool delete = true) 
-            => OpenWrite(path, FileShare.None, delete);
+        public static Option<StreamWriter> OpenTextWrite(this Option<string> path) 
+            => path.OpenWrite().Map(s => new StreamWriter(s));
 
-        public static Stream OpenWrite(this string path, FileShare share, bool delete = true)
+        public static Option<Stream> OpenWrite(this Option<string> path, Option<bool> delete = default) 
+            => OpenWrite(path, FileShare.None.Some(), delete);
+
+        public static Option<Stream> OpenWrite(this Option<string> path, Option<FileShare> share, Option<bool> delete = default)
         {
-            if (delete)
+            if (delete.ValueOr(true))
                 path.DeleteFile();
 
-            path = path.GetFullPath();
-            path.CreateDirectoryIfNotExis();
-            return new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write, share);
+            return path.SimpleCheckIsValidCreation().Map<Stream>(p => new FileStream(p, FileMode.OpenOrCreate, FileAccess.Write, share.ValueOr(FileShare.Read)));
         }
 
         public static byte[] ReadAllBytesIfExis(this string path) 

@@ -33,5 +33,12 @@ namespace Tauron
         /// Gets or sets the time interval between to progress change callbacks. Default is 200 ms.
         /// </summary>
         public TimeSpan ProgressChangeCallbackInterval { get; } = TimeSpan.FromSeconds(0.2);
+
+        public static CopyFromArguments Default => new CopyFromArguments();
+
+        private CopyFromArguments()
+        {
+            
+        }
     }
 }

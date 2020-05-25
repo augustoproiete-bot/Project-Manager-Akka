@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using JetBrains.Annotations;
+using Optional;
 
 namespace Tauron
 {
@@ -32,16 +33,6 @@ namespace Tauron
                 if (resource is IDisposable d)
                     d.Dispose();
             }
-        }
-
-        public static T? As<T>(this object? value) where T : class => value as T;
-
-        [return:MaybeNull]
-        public static T SafeCast<T>(this object? value)
-        {
-            if (value == null) return default!;
-
-            return (T) value;
         }
 
         public static DateTime CutSecond(this DateTime source) 

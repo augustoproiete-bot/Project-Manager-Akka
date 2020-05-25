@@ -6,6 +6,9 @@ using System.Linq.Expressions;
 using System.Reflection;
 using FastExpressionCompiler;
 using JetBrains.Annotations;
+using Optional;
+using Optional.Collections;
+using Optional.Linq;
 
 namespace Tauron
 {
@@ -100,7 +103,7 @@ namespace Tauron
                 Expression acess;
                 var convert = info.GetGetMethod()?.IsStatic == true
                     ? null
-                    : Expression.Convert(instParam, Argument.CheckResult(info.DeclaringType, nameof(info.DeclaringType)));
+                    : Expression.Convert(instParam, info.DeclaringType);
 
                 if (!arg.Any())
                     acess = Expression.Property(convert, info);
@@ -128,7 +131,7 @@ namespace Tauron
                     Expression.Convert(Expression.Field(
                         field.IsStatic
                             ? null
-                            : Expression.Convert(param, Argument.CheckResult(field.DeclaringType, nameof(field.DeclaringType))), field), typeof(object)),
+                            : Expression.Convert(param, field.DeclaringType), field), typeof(object)),
                     param).CompileFast();
 
                 _fieldAccessorCache[field] = del;
@@ -149,7 +152,7 @@ namespace Tauron
 
                 var indexes = info.GetIndexParameters();
 
-                var convertInst = Expression.Convert(instParam, Argument.CheckResult(info.DeclaringType, nameof(info.DeclaringType)));
+                var convertInst = Expression.Convert(instParam, info.DeclaringType);
                 var convertValue = Expression.Convert(valueParm, info.PropertyType);
 
                 Expression exp = indexes.Length == 0
@@ -174,7 +177,7 @@ namespace Tauron
                 var valueParam = Expression.Parameter(typeof(object));
 
                 var exp = Expression.Assign(
-                    Expression.Field(Expression.Convert(instParam, Argument.CheckResult(info.DeclaringType, nameof(info.DeclaringType))), info),
+                    Expression.Field(Expression.Convert(instParam, info.DeclaringType), info),
                     Expression.Convert(valueParam, info.FieldType));
 
                 setter = Expression.Lambda<Action<object?, object?>>(exp, instParam, valueParam).CompileFast();
@@ -195,7 +198,7 @@ namespace Tauron
 
                 var instParam = Expression.Parameter(typeof(object));
                 var argsParam = Expression.Parameter(typeof(object[]));
-                var convert = info.IsStatic ? null : Expression.Convert(instParam, Argument.CheckResult(info.DeclaringType, nameof(info.DeclaringType)));
+                var convert = info.IsStatic ? null : Expression.Convert(instParam, info.DeclaringType);
 
                 Expression targetExpression = args.Length == 0
                     ? Expression.Call(convert, info)
@@ -231,116 +234,106 @@ namespace Tauron
             return constructor == null ? null : GetCreator(constructor);
         }
 
-        public static object? FastCreateInstance(this Type target, params object[] parm)
+        public static Option<object> FastCreateInstance(this Option<Type> target, params Option<object>[] parm)
         {
-            return GetCreator(target, parm.Select(o => o.GetType()).ToArray())?.Invoke(parm);
+            if (parm.Any(o => !o.HasValue)) return Option.None<object>();
+            var args = parm.Values().ToArray();
+            
+            return 
+                target.Map(t => GetCreator(t, args.Select(o => o.GetType()).ToArray()))
+               .Map(c => c?.Invoke(args)).NotNull()!;
         }
 
-        public static T ParseEnum<T>(this string value, bool ignoreCase)
+        public static Option<T> ParseEnum<T>(this Option<string> value, Option<bool> ignoreCase = default)
             where T : struct =>
-            Enum.TryParse(value, ignoreCase, out T evalue) ? evalue : default;
+            value.FlatMap(s => Enum.TryParse<T>(s, ignoreCase.ValueOr(true), out var evalue) ? evalue.Some() : Option.None<T>());
 
-        public static IEnumerable<Tuple<MemberInfo, TAttribute>> FindMemberAttributes<TAttribute>(
-            this Type type,
-            bool nonPublic,
-            BindingFlags bindingflags) where TAttribute : Attribute
+        public static Option<IEnumerable<Tuple<MemberInfo, TAttribute>>> FindMemberAttributes<TAttribute>(
+            this Option<Type> type, Option<bool> nonPublic, Option<BindingFlags> bindingflags)
+            where TAttribute : Attribute
         {
-            if (type == null) throw new ArgumentNullException(nameof(type));
-            bindingflags |= BindingFlags.Public;
-            if (nonPublic) bindingflags |= BindingFlags.NonPublic;
+            return type.Map(t =>
+                            {
+                                var flags = bindingflags.ValueOr(BindingFlags.Default) | BindingFlags.Public;
+                                if (nonPublic.ValueOr(false)) flags |= BindingFlags.NonPublic;
 
-            if (!Enum.IsDefined(typeof(BindingFlags), BindingFlags.FlattenHierarchy))
-            {
-                return from mem in type.GetMembers(bindingflags)
-                       let attr = CustomAttributeExtensions.GetCustomAttribute<TAttribute>(mem)
-                       where attr != null
-                       select Tuple.Create(mem, attr);
-            }
+                                if (!Enum.IsDefined(typeof(BindingFlags), BindingFlags.FlattenHierarchy))
+                                {
+                                    return from mem in t.GetMembers(flags)
+                                           let attr = mem.GetCustomAttribute<TAttribute>()
+                                           where attr != null
+                                           select Tuple.Create(mem, attr);
+                                }
 
-            return from mem in type.GetHieratichialMembers(bindingflags)
-                   let attr = mem.GetCustomAttribute<TAttribute>()
-                   where attr != null
-                   select Tuple.Create(mem, attr);
+                                return (from mem in type.GetHieratichialMembers(flags.Some()).ValueOr(Array.Empty<MemberInfo>())
+                                        let attr = mem.GetCustomAttribute<TAttribute>()
+                                        where attr != null
+                                        select Tuple.Create(mem, attr))!;
+                            });
         }
 
-        public static IEnumerable<MemberInfo> GetHieratichialMembers(this Type? type, BindingFlags flags)
+        public static Option<IEnumerable<MemberInfo>> GetHieratichialMembers(this Option<Type> type, Option<BindingFlags> flags)
         {
-            var targetType = type;
-            while (targetType != null)
+            IEnumerable<MemberInfo> Interator(Type t)
             {
-                foreach (var mem in targetType.GetMembers(flags)) yield return mem;
+                var targetType = t;
+                while (targetType != null)
+                {
+                    foreach (var mem in targetType.GetMembers(flags.ValueOr(BindingFlags.Public | BindingFlags.FlattenHierarchy))) 
+                        yield return mem;
 
-                targetType = targetType.BaseType;
+                    targetType = t.BaseType;
+                }
             }
+
+
+            return type.Map(Interator);
         }
 
         [SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
-        public static IEnumerable<Tuple<MemberInfo, TAttribute>> FindMemberAttributes<TAttribute>(this Type type,
-            bool nonPublic) where TAttribute : Attribute
+        public static Option<IEnumerable<Tuple<MemberInfo, TAttribute>>> FindMemberAttributes<TAttribute>(this Option<Type> type, Option<bool> nonPublic) 
+            where TAttribute : Attribute =>
+            FindMemberAttributes<TAttribute>(type, nonPublic, (BindingFlags.Instance | BindingFlags.FlattenHierarchy).Some());
+
+        public static Option<T[]> GetAllCustomAttributes<T>(this Option<ICustomAttributeProvider> member) 
+            where T : Attribute =>
+            member.Map(m => (T[]) m.GetCustomAttributes(typeof(T), true));
+
+
+        public static Option<object[]> GetAllCustomAttributes(this Option<ICustomAttributeProvider> member, Option<Type> type)
+            => from mem in member
+               from targetType in type
+               select mem.GetCustomAttributes(targetType, true);
+
+        public static Option<TAttribute> GetCustomAttribute<TAttribute>(this Option<ICustomAttributeProvider> provider)
+            where TAttribute : Attribute =>
+            GetCustomAttribute<TAttribute>(provider, true.Some());
+
+        public static Option<TAttribute> GetCustomAttribute<TAttribute>(this Option<ICustomAttributeProvider> provider, Option<bool> inherit)
+            where TAttribute : Attribute =>
+            provider.Map(p => p.GetCustomAttributes(typeof(TAttribute), inherit.ValueOr(false)).FirstOrDefault()).Map(o => o as TAttribute).NotNull()!;
+
+        public static Option<IEnumerable<object?>> GetCustomAttributes(this Option<ICustomAttributeProvider> provider, params Option<Type>[] attributeTypes) 
+            => provider.Map(cap => attributeTypes.Values().SelectMany(t => cap.GetCustomAttributes(t, false)));
+
+        public static Option<TType> GetInvokeMember<TType>(this Option<MemberInfo> info, Option<object> instance, params Option<object>[]? parameter)
         {
-            if (type == null) throw new ArgumentNullException(nameof(type));
-            return FindMemberAttributes<TAttribute>(
-                type,
-                nonPublic,
-                BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-        }
+            parameter ??= Array.Empty<Option<object>>();
 
-        public static T[] GetAllCustomAttributes<T>(this ICustomAttributeProvider member) where T : Attribute
-        {
-            if (member == null) throw new ArgumentNullException(nameof(member));
-            return (T[]) member.GetCustomAttributes(typeof(T), true);
-        }
-
-
-        public static object[] GetAllCustomAttributes(this ICustomAttributeProvider member, Type type)
-        {
-            if (member == null) throw new ArgumentNullException(nameof(member));
-            if (type   == null) throw new ArgumentNullException(nameof(type));
-            return member.GetCustomAttributes(type, true);
-        }
-
-        public static TAttribute? GetCustomAttribute<TAttribute>(this ICustomAttributeProvider provider)
-            where TAttribute : Attribute
-        {
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
-            return GetCustomAttribute<TAttribute>(provider, true);
-        }
-
-        public static TAttribute? GetCustomAttribute<TAttribute>(this ICustomAttributeProvider provider, bool inherit)
-            where TAttribute : Attribute
-        {
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
-
-            var temp = provider.GetCustomAttributes(typeof(TAttribute), inherit).FirstOrDefault();
-
-            return (TAttribute) temp;
-        }
-
-        public static IEnumerable<object?> GetCustomAttributes(this ICustomAttributeProvider provider, params Type[] attributeTypes)
-        {
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
-
-            return attributeTypes.SelectMany(attributeType => provider.GetCustomAttributes(attributeType, false));
-        }
-
-        [return: MaybeNull]
-        public static TType GetInvokeMember<TType>(this MemberInfo info, object instance, params object[]? parameter)
-        {
-            if (info == null) throw new ArgumentNullException(nameof(info));
-
-            if (parameter == null)
-                parameter = new object[0];
-
-            return info switch
+#pragma warning disable CS8603 // Mögliche Nullverweisrückgabe.
+            return info.Map(info => info switch
             {
-                PropertyInfo property => GetPropertyAccessor(property, () => property.GetIndexParameters().Select(pi => pi.ParameterType))(instance, parameter) is TType pType
+                PropertyInfo property => GetPropertyAccessor(property, () => property.GetIndexParameters().Select(pi => pi.ParameterType))(instance, parameter.Values().ToArray()) is TType pType
                     ? pType
                     : default,
-                FieldInfo field => GetFieldAccessor(field)(instance) is TType type ? type : default,
-                MethodInfo methodInfo => GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, parameter) is TType mType ? mType : default,
-                ConstructorInfo constructorInfo => GetCreator(constructorInfo)(parameter) is TType cType ? cType : default,
+                FieldInfo field => GetFieldAccessor(field)(instance) is TType type ? type : default!,
+                MethodInfo methodInfo => GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, parameter.Values().ToArray()) is TType mType ? mType : default!,
+                ConstructorInfo constructorInfo => GetCreator(constructorInfo)(parameter.Values().ToArray()) is TType cType ? cType : default!,
                 _ => default!
-            };
+#pragma warning disable CS8604 // Mögliches Nullverweisargument.
+            }).SomeWhen(o => o.ValueOr((TType)default) != null).Flatten();
+#pragma warning restore CS8604 // Mögliches Nullverweisargument.
+#pragma warning restore CS8603 // Mögliche Nullverweisrückgabe.
         }
 
         public static RuntimeMethodHandle GetMethodHandle(this MethodBase method)
@@ -437,12 +430,8 @@ namespace Tauron
             };
         }
 
-        public static void InvokeFast(this MethodInfo method, object? instance, params object?[] args)
-        {
-            Argument.NotNull(method, nameof(method));
-
-            GetMethodInvoker(method, method.GetParameterTypes)(instance, args);
-        }
+        public static void InvokeFast(this MethodInfo method, object? instance, params object?[] args) 
+            => GetMethodInvoker(method, method.GetParameterTypes)(instance, args);
 
         public static TEnum ParseEnum<TEnum>(this string value)
         {
@@ -504,23 +493,21 @@ namespace Tauron
             return Enum.TryParse(value, out eEnum);
         }
 
-        public static void SetFieldFast(this FieldInfo field, object target, object? value)
-        {
-            GetFieldSetter(Argument.NotNull(field, nameof(field)))(target, value);
-        }
+        public static void SetFieldFast(this FieldInfo field, object target, object? value) 
+            => GetFieldSetter(field)(target, value);
 
         public static void SetValueFast(this PropertyInfo info, object target, object? value, params object[] index)
         {
-            GetPropertySetter(Argument.NotNull(info, nameof(info)))(target, index, value);
+            GetPropertySetter(info)(target, index, value);
         }
 
-        public static object FastCreate(this ConstructorInfo info, params object[] parms) => GetCreator(Argument.NotNull(info, nameof(info)))(parms);
+        public static object FastCreate(this ConstructorInfo info, params object[] parms) => GetCreator(info)(parms);
 
         public static object? GetValueFast(this PropertyInfo info, object? instance, params object[] index)
         {
-            return GetPropertyAccessor(Argument.NotNull(info, nameof(info)), () => info.GetIndexParameters().Select(pi => pi.ParameterType))(instance, index);
+            return GetPropertyAccessor(info, () => info.GetIndexParameters().Select(pi => pi.ParameterType))(instance, index);
         }
 
-        public static object? GetValueFast(this FieldInfo info, object? instance) => GetFieldAccessor(Argument.NotNull(info, nameof(info)))(instance);
+        public static object? GetValueFast(this FieldInfo info, object? instance) => GetFieldAccessor(info)(instance);
     }
 }

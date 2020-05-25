@@ -19,101 +19,120 @@ namespace Tauron
         /// Nethertheless, the separate thread is synchronized with the calling thread.
         /// The callback in arguments is called from the calling thread.
         /// </summary>
-        /// <param name="target">The current stream</param>
-        /// <param name="source">The source stream</param>
-        /// <param name="arguments">The arguments for copying</param>
+        /// <param name="targetOption">The current stream</param>
+        /// <param name="sourceOption">The source stream</param>
+        /// <param name="argumentsOption">The arguments for copying</param>
         /// <returns>The number of bytes actually copied.</returns>
         /// <exception cref="ArgumentNullException">Thrown if either target, source of arguments is null</exception>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if arguments.BufferSize is less than 128 or arguments.ProgressChangeCallbackInterval is less than 0</exception>
-        public static long CopyFrom(this Option<Stream> target, Stream source, CopyFromArguments arguments)
+        public static Option<long> CopyFrom(this Option<Stream> targetOption, Option<Stream> sourceOption, Option<CopyFromArguments> argumentsOption = default)
         {
-            Argument.NotNull(target, nameof(target));
-            Argument.NotNull(source, nameof(source));
-            Argument.NotNull(arguments, nameof(arguments));
-            // ReSharper disable NotResolvedInText
-            Argument.Check(arguments.BufferSize < 128, () => throw new ArgumentOutOfRangeException("arguments.BufferSize",
-                arguments.BufferSize, "BufferSize has to be greater or equal than 128."));
-            Argument.Check(arguments.ProgressChangeCallbackInterval.TotalSeconds < 0, () => throw new ArgumentOutOfRangeException("arguments.ProgressChangeCallbackInterval",
-                arguments.ProgressChangeCallbackInterval,
-                "ProgressChangeCallbackInterval has to be greater or equal than 0."));
-            // ReSharper restore NotResolvedInText
+            return targetOption
+               .FlatMap(o => (o, sourceOption.ValueOr(Stream.Null), argumentsOption.ValueOr(CopyFromArguments.Default)).Some())
+               .FlatMap(o =>
+                        {
+                            (Stream source, Stream target, CopyFromArguments arguments) = o;
 
-            long length = 0;
+                            // ReSharper disable NotResolvedInText
+                            if(arguments.BufferSize < 128)
+                            {
+                                throw new ArgumentOutOfRangeException("arguments.BufferSize",
+                                    arguments.BufferSize, "BufferSize has to be greater or equal than 128.");
+                            }
+                            if(arguments.ProgressChangeCallbackInterval.TotalSeconds < 0)
+                            {
+                                throw new ArgumentOutOfRangeException("arguments.ProgressChangeCallbackInterval",
+                                    arguments.ProgressChangeCallbackInterval,
+                                    "ProgressChangeCallbackInterval has to be greater or equal than 0.");
+                            }
 
-            bool runningFlag = true;
+                            // ReSharper restore NotResolvedInText
 
-            Action<Stream, Stream, int> copyMemory = (targetParm, sourceParm, bufferSize) =>
-                //Raw copy-operation, "length" and "runningFlag" are enclosed as closure
-                {
-                    int count;
-                    byte[] buffer = new byte[bufferSize];
-                    
-                    // ReSharper disable AccessToModifiedClosure
-                    while ((count = sourceParm.Read(buffer, 0, bufferSize)) != 0 && runningFlag)
-                    {
-                        targetParm.Write(buffer, 0, count);
-                        long newLength = length + count;
-                        //"length" can be read as this is the only thread which writes to "length"
-                        Interlocked.Exchange(ref length, newLength);
-                    }
-                    // ReSharper restore AccessToModifiedClosure
-                };
+                            long length = 0;
+                            var bufferSize = arguments.BufferSize;
+                            byte[] buffer = new byte[bufferSize];
 
-            IAsyncResult asyncResult = copyMemory.BeginInvoke(target, source, arguments.BufferSize, null, null);
+                            var runningFlag = true;
 
-            var totalLength = arguments.TotalLength;
-            if (totalLength == -1 && source.CanSeek) totalLength = source.Length;
+                            Action<Stream, Stream> copyMemory = (targetParm, sourceParm) =>
+                                                                         //Raw copy-operation, "length" and "runningFlag" are enclosed as closure
+                                                                     {
+                                                                         int count;
 
-            var lastCallback = DateTime.Now;
-            long lastLength = 0;
+                                                                         // ReSharper disable AccessToModifiedClosure
+                                                                         while ((count = sourceParm.Read(buffer, 0, bufferSize)) != 0 && runningFlag)
+                                                                         {
+                                                                             targetParm.Write(buffer, 0, count);
+                                                                             var newLength = length + count;
+                                                                             //"length" can be read as this is the only thread which writes to "length"
+                                                                             Interlocked.Exchange(ref length, newLength);
+                                                                         }
+                                                                         // ReSharper restore AccessToModifiedClosure
+                                                                     };
 
-            while (!asyncResult.IsCompleted)
-            {
-                if (arguments.StopEvent != null && arguments.StopEvent.WaitOne(0))
-                    runningFlag = false; //to indicate that the copy-operation has to abort
+                            IAsyncResult asyncResult = copyMemory.BeginInvoke(target, source, null, null);
 
-                Thread.Sleep((int)(arguments.ProgressChangeCallbackInterval.TotalMilliseconds / 10));
+                            var totalLength = arguments.TotalLength;
+                            if (totalLength == -1 && source.CanSeek) totalLength = source.Length;
 
-                if (arguments.ProgressChangeCallback == null || DateTime.Now - lastCallback <= arguments.ProgressChangeCallbackInterval) continue;
+                            var lastCallback = DateTime.Now;
+                            long lastLength = 0;
 
-                long currentLength = Interlocked.Read(ref length); //Since length is 64 bit, reading is not an atomic operation.
+                            while (!asyncResult.IsCompleted)
+                            {
+                                if (arguments.StopEvent != null && arguments.StopEvent.WaitOne(0))
+                                    runningFlag = false; //to indicate that the copy-operation has to abort
 
-                if (currentLength == lastLength) continue;
+                                Thread.Sleep((int) (arguments.ProgressChangeCallbackInterval.TotalMilliseconds / 10));
 
-                lastLength = currentLength;
-                lastCallback = DateTime.Now;
-                arguments.ProgressChangeCallback(currentLength, totalLength);
-            }
+                                if (arguments.ProgressChangeCallback == null || DateTime.Now - lastCallback <= arguments.ProgressChangeCallbackInterval) continue;
 
-            if (arguments.ProgressChangeCallback != null && lastLength != length)
-                //to ensure that the callback is called once with maximum progress
-                arguments.ProgressChangeCallback(length, totalLength);
+                                var currentLength = Interlocked.Read(ref length); //Since length is 64 bit, reading is not an atomic operation.
 
-            copyMemory.EndInvoke(asyncResult);
+                                if (currentLength == lastLength) continue;
 
-            return length;
+                                lastLength = currentLength;
+                                lastCallback = DateTime.Now;
+                                arguments.ProgressChangeCallback(currentLength, totalLength);
+                            }
+
+                            if (arguments.ProgressChangeCallback != null && lastLength != length)
+                                //to ensure that the callback is called once with maximum progress
+                                arguments.ProgressChangeCallback(length, totalLength);
+
+                            copyMemory.EndInvoke(asyncResult);
+
+                            return length.Some();
+                        });
         }
 
         /// <summary>
         /// Copies the source stream into the current
         /// </summary>
-        /// <param name="stream">The current stream</param>
-        /// <param name="source">The source stream</param>
+        /// <param name="streamOption">The current stream</param>
+        /// <param name="sourceOption">The source stream</param>
         /// <param name="bufferSize">The size of buffer used for copying bytes</param>
         /// <returns>The number of bytes actually copied.</returns>
-        public static long CopyFrom(this Stream stream, Stream source, int bufferSize = 4096)
+        public static Option<long> CopyFrom(this Option<Stream> streamOption, Option<Stream> sourceOption, int bufferSize = 4096)
         {
-            int count;
-            byte[] buffer = new byte[bufferSize];
-            long length = 0;
+            return streamOption
+               .FlatMap(o => (o, sourceOption.ValueOr(Stream.Null)).Some())
+               .FlatMap(o =>
+                        {
+                            (Stream source, Stream stream) = o;
 
-            while ((count = source.Read(buffer, 0, bufferSize)) != 0)
-            {
-                length += count;
-                stream.Write(buffer, 0, count);
-            }
+                            int count;
+                            byte[] buffer = new byte[bufferSize];
+                            long length = 0;
 
-            return length;
+                            while ((count = source.Read(buffer, 0, bufferSize)) != 0)
+                            {
+                                length += count;
+                                stream.Write(buffer, 0, count);
+                            }
+
+                            return length.Some();
+                        });
         }
     }
 

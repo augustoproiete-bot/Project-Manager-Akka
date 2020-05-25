@@ -45,6 +45,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtoTyping", "ProtoTyping\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoadingIndicators.WPF", "External\LoadingIndicators.WPF\LoadingIndicators.WPF.csproj", "{43E41CDC-48C7-498D-9CA5-57DC85AAE4E2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Optional", "External\Optional\Optional.csproj", "{6B79FE8C-9841-40DB-872E-6153C0682182}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,10 @@ Global
 		{43E41CDC-48C7-498D-9CA5-57DC85AAE4E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43E41CDC-48C7-498D-9CA5-57DC85AAE4E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43E41CDC-48C7-498D-9CA5-57DC85AAE4E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B79FE8C-9841-40DB-872E-6153C0682182}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B79FE8C-9841-40DB-872E-6153C0682182}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B79FE8C-9841-40DB-872E-6153C0682182}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B79FE8C-9841-40DB-872E-6153C0682182}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -126,6 +132,7 @@ Global
 		{88B9570B-77AB-4B26-976C-A1BAF369D43E} = {FF793DD2-60AE-4BCB-9146-D164EE1D2829}
 		{7EA1345F-4BDD-4DFD-91FC-11BCE2465CE2} = {17C5E321-22C5-42AB-BD68-43EAC2011DB8}
 		{43E41CDC-48C7-498D-9CA5-57DC85AAE4E2} = {5273DC22-6984-42F8-820D-EE59DD1487E3}
+		{6B79FE8C-9841-40DB-872E-6153C0682182} = {5273DC22-6984-42F8-820D-EE59DD1487E3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F63AD2ED-4320-43AB-8761-A3FEBC507539}

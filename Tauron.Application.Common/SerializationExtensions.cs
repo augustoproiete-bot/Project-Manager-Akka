@@ -1,9 +1,10 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 using JetBrains.Annotations;
+using Optional;
+using Optional.Linq;
 
 namespace Tauron
 {
@@ -14,11 +15,7 @@ namespace Tauron
         {
             private readonly XmlSerializer _serializer;
 
-            public XmlSerilalizerDelegator([NotNull] XmlSerializer serializer)
-            {
-                Argument.NotNull(serializer, nameof(serializer));
-                _serializer = serializer;
-            }
+            public XmlSerilalizerDelegator(XmlSerializer serializer) => _serializer = serializer;
 
             public SerializationBinder? Binder
             {
@@ -46,77 +43,73 @@ namespace Tauron
             public void Serialize(Stream serializationStream, object graph) => _serializer.Serialize(serializationStream, graph);
         }
 
-        public static TValue Deserialize<TValue>(this string path, IFormatter formatter)
+        private static Option<IFormatter> _binaryFormatter = Option.Some<IFormatter>(new BinaryFormatter());
+
+        public static Option<TValue> Deserialize<TValue>(this Option<string> path, Option<IFormatter> formatter)
             where TValue : class
         {
-            Argument.NotNull(path, nameof(path));
-            Argument.NotNull(formatter, nameof(formatter));
-            using var stream = path.OpenRead();
-            return (TValue) InternalDeserialize(formatter, stream);
+            var stream = path.OpenRead();
+            var result = InternalDeserialize(formatter, stream);
+            stream.MatchSome(s => s.Dispose());
+
+            return from obj in result
+                   where obj is TValue
+                   select (TValue) obj;
         }
 
-        public static TValue Deserialize<TValue>(this string path)
+        public static Option<TValue> Deserialize<TValue>(this Option<string> path)
+            where TValue : class =>
+            Deserialize<TValue>(path, _binaryFormatter);
+
+        public static Option<bool> Serialize(this Option<object> graph, Option<IFormatter> formatter, Option<string> path)
+        {
+            var stream = path.OpenWrite();
+            var result = InternalSerialize(graph, formatter, stream);
+            stream.MatchSome(s => s.Dispose());
+            return result;
+        }
+
+        public static Option<bool> Serialize(this Option<object> graph, Option<string> path) 
+            => Serialize(graph, _binaryFormatter, path);
+
+        public static Option<TValue> XmlDeserialize<TValue>(this Option<string> path, Option<XmlSerializer> formatter)
             where TValue : class
         {
-            Argument.NotNull(path, nameof(path));
-            if (!path.ExisFile()) return Activator.CreateInstance<TValue>();
+            var stream = path.SomeWhen(o => o.ExisFile().ValueOr(false)).Flatten().OpenRead();
+            var result = InternalDeserialize(formatter.Map<IFormatter>(s => new XmlSerilalizerDelegator(s)), stream);
+            stream.MatchSome(s => s.Dispose());
 
-            using (var stream = path.OpenRead())
-                return (TValue) InternalDeserialize(new BinaryFormatter(), stream);
+            return from obj in result
+                   where obj is TValue
+                   select (TValue)obj;
         }
 
-        public static void Serialize([NotNull] this object graph, IFormatter formatter, string path)
+        public static Option<bool> XmlSerialize(this Option<object> graph, Option<XmlSerializer> formatter, Option<string> path)
         {
-            Argument.NotNull(graph, nameof(graph));
-            Argument.NotNull(formatter, nameof(formatter));
-            Argument.NotNull(path, path);
-
-            using var stream = path.OpenWrite();
-            InternalSerialize(graph, formatter, stream);
-        }
-
-        public static void Serialize(this object graph, string path)
-        {
-            Argument.NotNull(graph, nameof(path));
-            Argument.NotNull(path, nameof(path));
-            path.CreateDirectoryIfNotExis();
-
-            using var stream = path.OpenWrite();
-            InternalSerialize(graph, new BinaryFormatter(), stream);
-        }
-
-        public static TValue XmlDeserialize<TValue>(this string path, XmlSerializer formatter)
-            where TValue : class
-        {
-            Argument.NotNull(path, nameof(path));
-            Argument.NotNull(formatter, nameof(formatter));
-
-            using var stream = path.OpenRead();
-            return (TValue) InternalDeserialize(new XmlSerilalizerDelegator(formatter), stream);
-        }
-
-        public static TValue XmlDeserializeIfExis<TValue>(this string path, XmlSerializer formatter)
-            where TValue : class
-        {
-            Argument.NotNull(path, nameof(path));
-            Argument.NotNull(formatter, nameof(formatter));
-
-            return path.ExisFile() ? XmlDeserialize<TValue>(path, formatter) : Activator.CreateInstance<TValue>();
-        }
-
-        public static void XmlSerialize(this object graph, XmlSerializer formatter, string path)
-        {
-            Argument.NotNull(graph, nameof(graph));
-            Argument.NotNull(formatter, nameof(formatter));
-            Argument.NotNull(path, nameof(path));
-
-            using var stream = path.OpenWrite();
-            InternalSerialize(graph, new XmlSerilalizerDelegator(formatter), stream);
+            var stream = path.OpenWrite();
+            var result = InternalSerialize(graph, formatter.Map<IFormatter>(x => new XmlSerilalizerDelegator(x)), stream);
+            stream.MatchSome(s => s.Dispose());
+            return result;
         }
 
         
-        private static object InternalDeserialize(IFormatter formatter, Stream stream) => formatter.Deserialize(stream);
+        private static Option<object> InternalDeserialize(Option<IFormatter> formatter, Option<Stream> stream)
+            => from f in formatter
+               from s in stream
+               select f.Deserialize(s);
 
-        private static void InternalSerialize(object graph, IFormatter formatter, Stream stream) => formatter.Serialize(stream, graph);
+        private static Option<bool> InternalSerialize(Option<object> graph, Option<IFormatter> formatter, Option<Stream> stream)
+        {
+            var data = from obj in graph
+                         from form in formatter
+                         from str in stream
+                         select (form, str, obj);
+
+            return data.Map(r =>
+                            {
+                                r.form.Serialize(r.str, r.obj);
+                                return true;
+                            });
+        }
     }
 }

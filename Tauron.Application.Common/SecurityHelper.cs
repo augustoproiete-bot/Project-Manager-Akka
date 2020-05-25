@@ -1,21 +1,25 @@
 ﻿using System.Security;
 using JetBrains.Annotations;
+using Optional;
 
 namespace Tauron
 {
     [PublicAPI]
     public static class SecurityHelper
     {
-        public static bool IsGranted(this IPermission permission)
+        public static Option<bool> IsGranted(this Option<IPermission> permission)
         {
             try
             {
-                permission.Demand();
-                return true;
+                return permission.Map(p =>
+                                      {
+                                          p.Demand();
+                                          return true;
+                                      }).Or(false);
             }
             catch (SecurityException)
             {
-                return false;
+                return false.Some();
             }
         }
     }
