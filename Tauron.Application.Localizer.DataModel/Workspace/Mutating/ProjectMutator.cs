@@ -3,19 +3,20 @@ using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes;
-using Tauron.Application.Localizer.DataModel.Workspace.MutatingEngine;
+using Tauron.Application.Workshop.Mutating;
+using Tauron.Application.Workshop.MutatingEngine;
 
 namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
 {
     [PublicAPI]
     public sealed class ProjectMutator
     {
-        private readonly MutatingEngine<MutatingContext> _engine;
+        private readonly MutatingEngine<MutatingContext<ProjectFile>> _engine;
         private readonly ProjectFileWorkspace _workspace;
 
         public IEnumerable<Project> Projects => _workspace.ProjectFile.Projects;
 
-        public ProjectMutator(MutatingEngine<MutatingContext> engine, ProjectFileWorkspace workspace)
+        public ProjectMutator(MutatingEngine<MutatingContext<ProjectFile>> engine, ProjectFileWorkspace workspace)
         {
             _engine = engine;
             _workspace = workspace;
@@ -40,7 +41,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
                 context =>
                 {
                     var project = new Project(name);
-                    var newFile = context.File.AddProject(project);
+                    var newFile = context.Data.AddProject(project);
                     return context.Update(new NewProjectChange(project), newFile);
                 });
         }
@@ -50,8 +51,8 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
             _engine.Mutate(nameof(RemovedProject),
                 context =>
                 {
-                    var project = context.File.Projects.First(p => p.ProjectName == name);
-                    var newFile = context.File.RemoveProject(project);
+                    var project = context.Data.Projects.First(p => p.ProjectName == name);
+                    var newFile = context.Data.RemoveProject(project);
                     return context.Update(new RemoveProjectChange(project), newFile);
                 });
         }
@@ -60,9 +61,9 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
         {
             _engine.Mutate(nameof(AddLanguage), context =>
                                                 {
-                                                    var project = context.File.Projects.First(p => p.ProjectName == proj);
+                                                    var project = context.Data.Projects.First(p => p.ProjectName == proj);
                                                     var lang = ActiveLanguage.FromCulture(info);
-                                                    return context.Update(new LanguageChange(lang, proj), context.File.AddLanguage(project, lang));
+                                                    return context.Update(new LanguageChange(lang, proj), context.Data.AddLanguage(project, lang));
                                                 });
         }
 
@@ -73,10 +74,10 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
 
             _engine.Mutate(nameof(AddImport), context =>
             {
-                var project = context.File.Projects.First(p => p.ProjectName == projectName);
-                if (project.Imports.Contains(toAdd) || context.File.Projects.Any(p => toAdd == p.ProjectName)) return context;
+                var project = context.Data.Projects.First(p => p.ProjectName == projectName);
+                if (project.Imports.Contains(toAdd) || context.Data.Projects.Any(p => toAdd == p.ProjectName)) return context;
 
-                return context.Update(new AddImportChange(toAdd, projectName), context.File.AddImport(project, toAdd));
+                return context.Update(new AddImportChange(toAdd, projectName), context.Data.AddImport(project, toAdd));
             });
         }
     }

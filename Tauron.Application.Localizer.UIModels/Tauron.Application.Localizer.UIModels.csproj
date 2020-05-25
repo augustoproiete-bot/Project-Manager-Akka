@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tauron.Application.Localizer.DataModel\Tauron.Application.Localizer.DataModel.csproj" />
+    <ProjectReference Include="..\Tauron.Application.Settings\Tauron.Application.Settings.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
   </ItemGroup>
 

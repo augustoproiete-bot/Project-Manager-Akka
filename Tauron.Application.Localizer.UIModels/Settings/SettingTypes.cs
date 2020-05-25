@@ -1,4 +1,4 @@
-﻿namespace Tauron.Application.Localizer.UIModels.Settings
+﻿namespace Tauron.Application.Settings
 {
     public static class SettingTypes
     {

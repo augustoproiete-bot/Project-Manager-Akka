@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -55,7 +54,7 @@ namespace Tauron.Application.Localizer.Views
 
         public BaseMetroDialog Dialog => this;
 
-        public Task<string?> Init(IEnumerable<object> initalData) => _selector.Task;
+        public Task<string?> Init(IEnumerable<string?> initalData) => _selector.Task;
 
         private void OpenFileDialogView_OnLoaded(object sender, RoutedEventArgs e)
         {

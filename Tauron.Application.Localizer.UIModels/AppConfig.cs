@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 using Tauron.Akka;
-using Tauron.Application.Localizer.UIModels.Settings;
+using Tauron.Application.Settings;
 
 namespace Tauron.Application.Localizer.UIModels
 {

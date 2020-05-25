@@ -6,11 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
+    <None Remove="obj\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Amadevus.RecordGenerator" Version="0.6.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Tauron.Application.Workshop\Tauron.Application.Workshop.csproj" />
+    <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
   </ItemGroup>
 
 </Project>

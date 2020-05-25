@@ -12,6 +12,7 @@ using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Messages;
 using Tauron.Application.Localizer.UIModels.Services;
 using Tauron.Application.Localizer.UIModels.Views;
+using Tauron.Application.Workshop;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Model;
 
@@ -26,11 +27,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             public RemoveProjectName(string name) => Name = name;
         }
-
-        private readonly IOperationManager _manager;
-        private readonly LocLocalizer _localizer;
-        private readonly IMainWindowCoordinator _mainWindow;
-
+        
         private UICollectionProperty<ProjectViewContainer> Views { get; }
 
         private UIProperty<int?> CurrentProject { get; set; }
@@ -42,29 +39,24 @@ namespace Tauron.Application.Localizer.UIModels
             Views = this.RegisterUiCollection<ProjectViewContainer>(nameof(Views)).Async();
             CurrentProject = RegisterProperty<int?>(nameof(CurrentProject));
 
-            _manager = manager;
-            _localizer = localizer;
-            _mainWindow = mainWindow;
-            
 
-            this.RespondOnEventSource(workspace.Source.SaveRequest, SaveRequested);
-            Receive<SavedProject>(ProjectSaved);
+            static string GetActorName(string projectName) => projectName.Replace(' ', '_') + "-View";
 
             #region Project Save
 
             void ProjectSaved(SavedProject obj)
             {
-                var controller = _manager.Find(obj.OperationId);
+                var controller = manager.Find(obj.OperationId);
                 if (controller == null) return;
 
                 if (obj.Ok)
                 {
-                    _mainWindow.Saved = true;
+                    mainWindow.Saved = true;
                     controller.Compled();
                 }
                 else
                 {
-                    _mainWindow.Saved = false;
+                    mainWindow.Saved = false;
                     controller.Failed(obj.Exception?.Message);
                 }
             }
@@ -73,19 +65,21 @@ namespace Tauron.Application.Localizer.UIModels
             {
                 if (string.IsNullOrWhiteSpace(obj.ProjectFile.Source)) return;
 
-                var operation = _manager.StartOperation(string.Format(_localizer.CenterViewSaveProjectOperation, Path.GetFileName(obj.ProjectFile.Source)));
+                var operation = manager.StartOperation(string.Format(localizer.CenterViewSaveProjectOperation, Path.GetFileName(obj.ProjectFile.Source)));
                 var file = obj.ProjectFile;
                 file.Operator.Tell(new SaveProject(operation.Id, file), Self);
             }
 
-            this.Flow<SaveRequest>().To.
+            this.Flow<SaveRequest>().To.EventSource(workspace.Source.SaveRequest).ToSelf()
+               .Then.Action(SaveRequested)
+               .RespondTo<SavedProject>().Action(ProjectSaved).Receive();
 
             #endregion
 
             #region Update Source
 
             this.Flow<UpdateSource>().To.Mutate(workspace.Source).For(sm => sm.SourceUpdate, sm => us => sm.UpdateSource(us.Name)).ToSelf()
-               .Then.Action(su => _mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source));
+               .Then.Action(su => mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source));
 
             #endregion
 
@@ -105,11 +99,11 @@ namespace Tauron.Application.Localizer.UIModels
             {
                 UICall(async c =>
                        {
-                           var result = await dialogCoordinator.ShowMessageAsync("MainWindow", string.Format(_localizer.CenterViewRemoveProjectDialogTitle, project.Name),
-                               _localizer.CenterViewRemoveProjectDialogMessage, MessageDialogStyle.AffirmativeAndNegative);
+                           var result = await dialogCoordinator.ShowMessageAsync("MainWindow", string.Format(localizer.CenterViewRemoveProjectDialogTitle, project?.Name),
+                               localizer.CenterViewRemoveProjectDialogMessage, MessageDialogStyle.AffirmativeAndNegative);
                            if (result == MessageDialogResult.Negative) return;
 
-                           workspace.Projects.RemoveProject(project.Name);
+                           workspace.Projects.RemoveProject(project?.Name ?? string.Empty);
                        });
             }
 
@@ -133,7 +127,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             void ProjectRest(ProjectRest obj)
             {
-                _mainWindow.Saved = File.Exists(obj.ProjectFile.Source);
+                mainWindow.Saved = File.Exists(obj.ProjectFile.Source);
 
                 foreach (var view in Views)
                     Context.Stop(view.Model.Actor);
@@ -141,21 +135,21 @@ namespace Tauron.Application.Localizer.UIModels
 
                 string titleName = obj.ProjectFile.Source;
                 if (string.IsNullOrWhiteSpace(titleName))
-                    titleName = _localizer.CommonUnkowen;
+                    titleName = localizer.CommonUnkowen;
                 else
                 {
                     titleName = Path.GetFileNameWithoutExtension(obj.ProjectFile.Source);
                     if (string.IsNullOrWhiteSpace(titleName))
-                        titleName = _localizer.CommonUnkowen;
+                        titleName = localizer.CommonUnkowen;
                 }
 
-                _mainWindow.TitlePostfix = titleName;
+                mainWindow.TitlePostfix = titleName;
 
                 foreach (var project in obj.ProjectFile.Projects)
                     AddProject(project);
 
                 CommandChanged();
-                _mainWindow.IsBusy = false;
+                mainWindow.IsBusy = false;
             }
 
             this.Flow<SupplyNewProjectFile>().To.Mutate(workspace.Source).For(sm => sm.ProjectReset, sm => np => sm.Reset(np.File)).ToSelf()
@@ -170,7 +164,7 @@ namespace Tauron.Application.Localizer.UIModels
                 string name = GetActorName(project.ProjectName);
                 if (!ActorPath.IsValidPathElement(name))
                 {
-                    UICall(async c => await dialogCoordinator.ShowMessageAsync("MainWindow", _localizer.CommonError, _localizer.CenterViewNewProjectInvalidNameMessage));
+                    UICall(async c => await dialogCoordinator.ShowMessageAsync("MainWindow", localizer.CommonError, localizer.CenterViewNewProjectInvalidNameMessage));
                     return;
                 }
 
@@ -191,8 +185,5 @@ namespace Tauron.Application.Localizer.UIModels
 
             #endregion
         }
-
-
-        private static string GetActorName(string projectName) => projectName.Replace(' ', '_') + "-View";
     }
 }

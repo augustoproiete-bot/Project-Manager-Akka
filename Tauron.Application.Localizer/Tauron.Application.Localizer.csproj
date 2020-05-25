@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Akka.Code.Configuration\Akka.Code.Configuration.csproj" />
-    <ProjectReference Include="..\LoadingIndicators.WPF\LoadingIndicators.WPF.csproj" />
+    <ProjectReference Include="..\External\LoadingIndicators.WPF\LoadingIndicators.WPF.csproj" />
     <ProjectReference Include="..\Tauron.Application.Localizer.DataModel\Tauron.Application.Localizer.DataModel.csproj" />
     <ProjectReference Include="..\Tauron.Application.Localizer.UIModels\Tauron.Application.Localizer.UIModels.csproj" />
     <ProjectReference Include="..\Tauron.Application.Logging\Tauron.Application.Logging.csproj" />

@@ -113,6 +113,9 @@ namespace Tauron
             _flow.Register(a => a.Exposed.ReceiveAsync<TRecieve>(new AsyncActionRespond(runner).Run));
         }
 
+        public RunSelector<TNew, TStart, TParent> RespondTo<TNew>()
+            => new RunSelector<TNew, TStart, TParent>(_flow);
+
         public EnterFlow<TStart> Build()
             => _flow.Build();
 
