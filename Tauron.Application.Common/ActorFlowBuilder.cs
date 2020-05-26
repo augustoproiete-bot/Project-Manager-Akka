@@ -35,20 +35,47 @@ namespace Tauron
     [PublicAPI]
     public abstract class AbastractTargetSelector<TRespond, TStart, TParent>
     {
+        private enum RefFuncMode
+        {
+            Self,
+            Sender,
+            Parent
+        }
+
+        private class RefFunc
+        {
+            private readonly RefFuncMode _mode;
+
+            public RefFunc(RefFuncMode mode) => _mode = mode;
+
+            public IActorRef Send(IActorContext context)
+            {
+                return _mode switch
+                {
+                    RefFuncMode.Self => context.Self,
+                    RefFuncMode.Sender => context.Sender,
+                    RefFuncMode.Parent => context.Parent,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+            }
+        }
+
         public ActorFlowBuilder<TStart, TParent> Flow { get; }
 
         protected AbastractTargetSelector(ActorFlowBuilder<TStart, TParent> flow) => Flow = flow;
-
+        
         public TRespond ToSelf()
-            => ToRef(Flow.Actor.ExposedContext.Self);
+            => ToRef(new RefFunc(RefFuncMode.Self).Send);
 
         public TRespond ToParent()
-            => ToRef(Flow.Actor.ExposedContext.Parent);
+            => ToRef(new RefFunc(RefFuncMode.Parent).Send);
 
         public TRespond ToSender()
-            => ToRef(Flow.Actor.ExposedContext.Sender);
+            => ToRef(new RefFunc(RefFuncMode.Sender).Send);
 
-        public abstract TRespond ToRef(IActorRef actorRef);
+        public TRespond ToRef(IActorRef actorRef) => ToRef(c => actorRef);
+
+        public abstract TRespond ToRef(Func<IActorContext, IActorRef> actorRef);
     }
 
     [PublicAPI]
@@ -60,7 +87,7 @@ namespace Tauron
             : base(flow) =>
             _transformer = transformer;
 
-        public override ReceiveBuilder<TRecieve, TNext, TStart, TParent> ToRef(IActorRef actorRef)
+        public override ReceiveBuilder<TRecieve, TNext, TStart, TParent> ToRef(Func<IActorContext, IActorRef> actorRef)
             => new ReceiveBuilder<TRecieve, TNext, TStart, TParent>(Flow, actorRef, _transformer);
     }
 
@@ -73,7 +100,7 @@ namespace Tauron
             : base(flow) =>
             _transformer = transformer;
 
-        public override AyncReceiveBuilder<TRecieve, TNext, TStart, TParent> ToRef(IActorRef actorRef)
+        public override AyncReceiveBuilder<TRecieve, TNext, TStart, TParent> ToRef(Func<IActorContext, IActorRef> actorRef)
             => new AyncReceiveBuilder<TRecieve, TNext, TStart, TParent>(Flow, actorRef, _transformer);
     }
 
@@ -140,10 +167,10 @@ namespace Tauron
     {
         private sealed class Receive
         {
-            private readonly IActorRef _target;
+            private readonly Func<IActorContext, IActorRef> _target;
             private readonly Func<TReceive, TNext> _transformer;
 
-            public Receive(IActorRef target, Func<TReceive, TNext> transformer)
+            public Receive(Func<IActorContext, IActorRef> target, Func<TReceive, TNext> transformer)
             {
                 _target = target;
                 _transformer = transformer;
@@ -153,11 +180,11 @@ namespace Tauron
             {
                 var result = _transformer(rec);
                 if(result == null) return;
-                _target.Tell(result, context.Self);
+                _target(context).Tell(result, context.Self);
             }
         }
 
-        public ReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, IActorRef target, Func<TReceive, TNext> transformer)
+        public ReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target, Func<TReceive, TNext> transformer)
             : base(flow)
         {
             flow.Register(a => a.Exposed.Receive<TReceive>(new Receive(target, transformer).Run));
@@ -169,10 +196,10 @@ namespace Tauron
     {
         private sealed class Receive
         {
-            private readonly IActorRef _target;
+            private readonly Func<IActorContext, IActorRef> _target;
             private readonly Func<TReceive, Task<TNext>> _transformer;
 
-            public Receive(IActorRef target, Func<TReceive, Task<TNext>> transformer)
+            public Receive(Func<IActorContext, IActorRef> target, Func<TReceive, Task<TNext>> transformer)
             {
                 _target = target;
                 _transformer = transformer;
@@ -182,15 +209,13 @@ namespace Tauron
             {
                 var result = await _transformer(rec);
                 if(result == null) return;
-                _target.Tell(result, context.Self);
+                _target(context).Tell(result, context.Self);
             }
         }
 
-        public AyncReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, IActorRef target, Func<TReceive, Task<TNext>> transformer)
-            : base(flow)
-        {
+        public AyncReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target, Func<TReceive, Task<TNext>> transformer)
+            : base(flow) =>
             flow.Register(a => a.Exposed.ReceiveAsync<TReceive>(new Receive(target, transformer).Run));
-        }
     }
 
     public class ActorFlowBuilderTarget<TStart, TParent> : AbastractTargetSelector<ActorFlowBuilder<TStart, TParent>, TStart, TParent>
@@ -205,9 +230,9 @@ namespace Tauron
             _sendTo = sendTo;
         }
 
-        public override ActorFlowBuilder<TStart, TParent> ToRef(IActorRef actorRef)
+        public override ActorFlowBuilder<TStart, TParent> ToRef(Func<IActorContext, IActorRef> actorRef)
         {
-            _sendTo(actorRef);
+            _sendTo(actorRef(Flow.Actor.ExposedContext));
             return _flow;
         }
     }
@@ -268,7 +293,7 @@ namespace Tauron
 
         public RunSelector<TStart, TStart, TParent> To => new RunSelector<TStart, TStart, TParent>(this);
 
-        public ActorFlowBuilderTarget<TStart, TParent> Send 
+        public ActorFlowBuilderTarget<TStart, TParent> Send
             => new ActorFlowBuilderTarget<TStart, TParent>(this, reff => _delgators.Add(() => new Delegator(reff).Tell));
 
         public void Register(Action<ExposedReceiveActor> actorRegister)

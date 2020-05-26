@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Threading;
 using Akka.Actor;
@@ -17,13 +18,6 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class ProjectViewModel : UiActor
     {
-        private sealed class TryImport
-        {
-            public string? Import { get; }
-
-            public TryImport(string? import) => Import = import;
-        }
-
         private string _project = string.Empty;
 
         public UICollectionProperty<ProjectViewLanguageModel> Languages { get; }
@@ -44,34 +38,21 @@ namespace Tauron.Application.Localizer.UIModels
 
             }
 
-            void TryImportExc(TryImport obj)
+            IEnumerable<string> GetImportableProjects()
             {
-                if (string.IsNullOrWhiteSpace(obj.Import)) return;
-
-                workspace.Projects.AddImport(_project, obj.Import);
-            }
-
-            void AddImportCommand()
-            {
-                UICall(async c =>
-                       {
-                           var pro = workspace.Get(_project);
-                           var diag = LifetimeScope.Resolve<IImportProjectDialog>();
-                           diag.Init(s => c.Self.Tell(new TryImport(s)), workspace.ProjectFile.Projects
-                              .Select(p => p.ProjectName)
-                              .Where(s => s != _project && !pro.Imports.Contains(s)));
-
-                           await dialogCoordinator.ShowMetroDialogAsync("MainWindow", diag.Dialog);
-                       });
+                var pro = workspace.Get(_project);
+                return workspace.ProjectFile.Projects.Select(p => p.ProjectName).Where(p => p != _project && !pro.Imports.Contains(p));
             }
 
             ImportSelectInfex = RegisterProperty<int>(nameof(ImportSelectInfex)).WithDefaultValue(0);
             ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).Async();
-            this.RespondOnEventSource(workspace.Projects.NewImport, AddImport);
 
-            NewCommad.WithExecute(AddImportCommand).WithCanExecute(() => workspace.ProjectFile.Projects.Count > 1).ThenRegister("AddImportCommand");
-
-            Receive<TryImport>(TryImportExc);
+            NewCommad.WithCanExecute(() => GetImportableProjects().Any())
+                .ToFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, string>(GetImportableProjects()))
+                .To.Mutate(workspace.Projects).For(pm => pm.NewImport, pm => r => pm.AddImport(_project, r!.Project)).ToSelf()
+                .Then.Action(AddImport)
+                .Return().ThenRegister("AddImportCommand");
+            Context.Sender
 
             #endregion
 
@@ -116,11 +97,5 @@ namespace Tauron.Application.Localizer.UIModels
 
             #endregion
         }
-
-        #region Imports
-
-
-
-        #endregion
     }
 }

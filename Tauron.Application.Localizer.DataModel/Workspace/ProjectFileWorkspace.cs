@@ -31,7 +31,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace
         }
 
 
-        public Project Get(string name) => ProjectFile.Projects.Find(p => p.ProjectName == name);
+        public Project Get(string name) => ProjectFile.Projects.Find(p => p.ProjectName == name) ?? new Project();
         protected override MutatingContext<ProjectFile> GetDataInternal() => new MutatingContext<ProjectFile>(null, _projectFile);
 
         protected override void SetDataInternal(MutatingContext<ProjectFile> data) => Interlocked.Exchange(ref _projectFile, data.Data);

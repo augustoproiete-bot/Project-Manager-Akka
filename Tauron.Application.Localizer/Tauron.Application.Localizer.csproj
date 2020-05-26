@@ -24,9 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="4.1.0" />
-    <PackageReference Include="MaterialDesignThemes.MahApps" Version="0.1.2-ci1465" />
-    <PackageReference Include="System.Management" Version="4.7.0" />
+    <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="4.2.0" />
+    <PackageReference Include="MaterialDesignThemes.MahApps" Version="0.1.4" />
+    <PackageReference Include="System.Management" Version="5.0.0-preview.4.20251.6" />
   </ItemGroup>
 
   <ItemGroup>

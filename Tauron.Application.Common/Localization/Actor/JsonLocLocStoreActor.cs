@@ -78,12 +78,24 @@ namespace Tauron.Localization.Actor
                 //var text = File.ReadAllText(file, Encoding.UTF8);
                 using var stream = new FileStream(file, FileMode.Open);
                 var text = new StreamReader(stream, Encoding.UTF8).ReadToEnd();
+                var name = GetName(file);
+                if(string.IsNullOrWhiteSpace(name)) return;
 
-                _files[Path.GetFileNameWithoutExtension(file).Split(Sep, StringSplitOptions.RemoveEmptyEntries)[0]] = 
-                    JsonConvert.DeserializeObject<Dictionary<string, JToken>>(text);
+                _files[name] = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(text);
             }
 
             _isInitialized = true;
+        }
+
+        private string? GetName(string fileName)
+        {
+            var data = Path.GetFileNameWithoutExtension(fileName).Split(Sep, StringSplitOptions.RemoveEmptyEntries);
+            return data.Length switch
+            {
+                2 => data[1],
+                1 => data[0],
+                _ => null
+            };
         }
     }
 }

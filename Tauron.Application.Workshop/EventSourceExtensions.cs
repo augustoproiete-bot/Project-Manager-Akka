@@ -23,12 +23,12 @@ namespace Tauron.Application.Workshop
                     => _runner(recieve);
             }
 
-            public MutateReceiveBuilder([NotNull] ActorFlowBuilder<TStart, TParent> flow, IEventSource<TNext> eventSource, Action<TRecieve> runner, IActorRef target) 
+            public MutateReceiveBuilder([NotNull] ActorFlowBuilder<TStart, TParent> flow, IEventSource<TNext> eventSource, Action<TRecieve> runner, Func<IActorContext, IActorRef> target) 
                 : base(flow)
             {
                 flow.Register(e =>
                               {
-                                  eventSource.RespondOn(target);
+                                  eventSource.RespondOn(target(Flow.Actor.ExposedContext));
                                   e.Exposed.Receive<TRecieve>(new RecieveHelper(runner).Run);
                               });
             }
@@ -45,7 +45,7 @@ namespace Tauron.Application.Workshop
                 _runner = runner;
             }
 
-            public override MutateReceiveBuilder<TNext, TStart, TParent, TRecieve> ToRef(IActorRef actorRef) 
+            public override MutateReceiveBuilder<TNext, TStart, TParent, TRecieve> ToRef(Func<IActorContext, IActorRef> actorRef) 
                 => new MutateReceiveBuilder<TNext, TStart, TParent, TRecieve>(Flow, _eventSource, _runner, actorRef);
         }
 
@@ -71,9 +71,9 @@ namespace Tauron.Application.Workshop
 
         public sealed class EventSourceReceiveBuilder<TEvent, TStart, TParent> : ReceiveBuilderBase<TEvent, TStart, TParent>
         {
-            public EventSourceReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, IActorRef target, IEventSource<TEvent> evt) 
+            public EventSourceReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target, IEventSource<TEvent> evt) 
                 : base(flow) =>
-                flow.Register(e => evt.RespondOn(target));
+                flow.Register(e => evt.RespondOn(target(flow.Actor.ExposedContext)));
         }
 
         public sealed class EventSourceTargetSelector<TEvent, TStart, TParent> : AbastractTargetSelector<EventSourceReceiveBuilder<TEvent, TStart, TParent>, TStart, TParent>
@@ -84,7 +84,7 @@ namespace Tauron.Application.Workshop
                 : base(flow) =>
                 _source = source;
 
-            public override EventSourceReceiveBuilder<TEvent, TStart, TParent> ToRef(IActorRef actorRef) 
+            public override EventSourceReceiveBuilder<TEvent, TStart, TParent> ToRef(Func<IActorContext, IActorRef> actorRef) 
                 => new EventSourceReceiveBuilder<TEvent, TStart, TParent>(Flow, actorRef, _source);
         }
 

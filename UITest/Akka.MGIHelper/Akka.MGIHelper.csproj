@@ -18,7 +18,7 @@
     <PackageReference Include="Amadevus.RecordGenerator" Version="0.6.0" />
     <PackageReference Include="ini-parser-netstandard" Version="2.5.2" />
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
-    <PackageReference Include="MaterialDesignThemes" Version="3.1.2-ci1423" />
+    <PackageReference Include="MaterialDesignThemes" Version="3.2.0-ci1494" />
   </ItemGroup>
 
   <ItemGroup>

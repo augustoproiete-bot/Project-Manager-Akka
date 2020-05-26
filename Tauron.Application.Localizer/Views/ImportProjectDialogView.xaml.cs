@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Xaml.Behaviors.Core;
@@ -13,22 +14,17 @@ namespace Tauron.Application.Localizer.Views
     /// </summary>
     public partial class ImportProjectDialogView : IImportProjectDialog
     {
-        private readonly IDialogCoordinator _coordinator;
-
-        public ImportProjectDialogView(IDialogCoordinator coordinator)
-        {
-            _coordinator = coordinator;
-            InitializeComponent();
-        }
-
-        public void Init(Action<string?> selector, IEnumerable<string> projects) 
-            => DataContext = new ImportProjectViewModel(async s =>
-                                                        {
-                                                            await _coordinator.HideMetroDialogAsync("MainWindow", this);
-                                                            selector(s);
-                                                        }, projects);
+        public ImportProjectDialogView() => InitializeComponent();
 
         public BaseMetroDialog Dialog => this;
+        public Task<ImportProjectDialogResult?> Init(IEnumerable<string> initalData)
+        {
+            var result = new TaskCompletionSource<ImportProjectDialogResult?>();
+
+            DataContext = new ImportProjectViewModel(s => result.SetResult(s == null ? null : new ImportProjectDialogResult(s)), initalData);
+
+            return result.Task;
+        }
     }
 
     public sealed class ImportProjectViewModel : ObservableObject

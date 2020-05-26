@@ -4,9 +4,7 @@ using MahApps.Metro.Controls.Dialogs;
 
 namespace Tauron.Application.Localizer.UIModels.Views
 {
-    public interface IImportProjectDialog
+    public interface IImportProjectDialog : IBaseDialog<ImportProjectDialogResult?, string>
     {
-        void Init(Action<string?> selector, IEnumerable<string> projects);
-        BaseMetroDialog Dialog { get; }
     }
 }
