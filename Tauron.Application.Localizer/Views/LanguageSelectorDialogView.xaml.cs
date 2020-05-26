@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
-using System.Windows.Controls;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Threading;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Xaml.Behaviors.Core;
-using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Wpf.Commands;
 
@@ -19,13 +18,7 @@ namespace Tauron.Application.Localizer.Views
     /// </summary>
     public partial class LanguageSelectorDialogView : ILanguageSelectorDialog
     {
-        private readonly IDialogCoordinator _dialogCoordinator;
-
-        public LanguageSelectorDialogView(IDialogCoordinator dialogCoordinator)
-        {
-            _dialogCoordinator = dialogCoordinator;
-            InitializeComponent();
-        }
+        public LanguageSelectorDialogView() => InitializeComponent();
 
         protected override void OnLoaded()
         {
@@ -34,13 +27,14 @@ namespace Tauron.Application.Localizer.Views
         }
 
         public BaseMetroDialog Dialog => this;
-        public void Init(Action<CultureInfo?> selector, Predicate<CultureInfo> filter)
+
+        public Task<AddLanguageDialogResult?> Init(IEnumerable<CultureInfo> initalData)
         {
-            DataContext = new LanguageSelectorDialogViewModel(async c =>
-            {
-                await _dialogCoordinator.HideMetroDialogAsync(MainWindowViewModel.MainWindow, this);
-                selector(c);
-            }, filter, Dispatcher);
+            var result = new TaskCompletionSource<AddLanguageDialogResult?>();
+
+            DataContext = new LanguageSelectorDialogViewModel(c => result.SetResult(c == null ? null : new AddLanguageDialogResult(c)), info => !initalData.Contains(info), Dispatcher);
+
+            return result.Task;
         }
     }
 

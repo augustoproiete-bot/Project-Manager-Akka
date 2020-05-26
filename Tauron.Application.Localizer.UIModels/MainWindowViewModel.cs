@@ -122,7 +122,7 @@ namespace Tauron.Application.Localizer.UIModels
             #endregion
 
             #region New File
-
+            
             async Task<LoadedProjectFile?> NewFileSource(string? source)
             {
                 source ??= string.Empty;
