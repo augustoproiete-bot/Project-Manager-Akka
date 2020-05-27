@@ -6,6 +6,7 @@ using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
 using MahApps.Metro.Controls.Dialogs;
+using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Workspace;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
@@ -18,24 +19,92 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class ProjectViewModel : UiActor
     {
+        private sealed class UpdateRequest
+        {
+            public string EntryName { get; }
+
+            public ActiveLanguage Language { get; }
+
+            public string Content { get; }
+
+            public string ProjectName { get; }
+
+            public UpdateRequest(string entryName, ActiveLanguage language, string content, string projectName)
+            {
+                EntryName = entryName;
+                Language = language;
+                Content = content;
+                ProjectName = projectName;
+            }
+        }
+
+        private sealed class RemoveRequest
+        {
+            public string EntryName { get; }
+
+            public string ProjectName { get; }
+
+            public RemoveRequest(string entryName, string projectName)
+            {
+                EntryName = entryName;
+                ProjectName = projectName;
+            }
+        }
+
         private string _project = string.Empty;
 
         public UICollectionProperty<ProjectViewLanguageModel> Languages { get; }
         public UIProperty<int> SelectedIndex { get; set; }
         public UICollectionProperty<ProjectEntryModel> ProjectEntrys { get; }
 
-        public UIProperty<int> ImportSelectInfex { get; }
+        public UIProperty<int> ImportSelectIndex { get; }
 
         public UICollectionProperty<string> ImportetProjects { get; }
 
         public ProjectViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, LocLocalizer localizer, IDialogCoordinator dialogCoordinator, ProjectFileWorkspace workspace) 
             : base(lifetimeScope, dispatcher)
         {
+            #region Remove Request
+
+            void RemoveEntry(EntryRemove entry)
+            {
+                if(_project != entry.Entry.Project) return;
+
+                var index = ProjectEntrys.FindIndex(em => em.EntryName == entry.Entry.Key);
+                if(index == -1) return;
+
+                ProjectEntrys.RemoveAt(index);
+            }
+            
+            this.Flow<RemoveRequest>()
+               .To.Mutate(workspace.Entrys).For(em => em.EntryRemove, em => rr => em.RemoveEntry(rr.ProjectName, rr.EntryName)).ToSelf()
+               .Then.Action(RemoveEntry).Receive();
+
+            #endregion
+
+            #region Update Request
+
+            void UpdateEntry(EntryUpdate obj)
+            {
+                if(_project != obj.Entry.Project) return;
+
+                var model = ProjectEntrys.FirstOrDefault(m => m.EntryName == obj.Entry.Key);
+                model.Update(obj.Entry);
+            }
+
+            this.Flow<UpdateRequest>()
+               .To.Mutate(workspace.Entrys).For(em => em.EntryUpdate, em => ur => em.UpdateEntry(ur.ProjectName, ur.Language, ur.EntryName, ur.Content)).ToSelf()
+               .Then.Action(UpdateEntry).Receive();
+               
+
+            #endregion
+
             #region Imports
 
             void AddImport(AddImport obj)
             {
-
+                if(obj.ProjectName != _project) return;
+                ImportetProjects.Add(obj.Import);
             }
 
             IEnumerable<string> GetImportableProjects()
@@ -44,7 +113,7 @@ namespace Tauron.Application.Localizer.UIModels
                 return workspace.ProjectFile.Projects.Select(p => p.ProjectName).Where(p => p != _project && !pro.Imports.Contains(p));
             }
 
-            ImportSelectInfex = RegisterProperty<int>(nameof(ImportSelectInfex)).WithDefaultValue(0);
+            ImportSelectIndex = RegisterProperty<int>(nameof(ImportSelectIndex)).WithDefaultValue(0);
             ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).Async();
 
             NewCommad.WithCanExecute(() => GetImportableProjects().Any())
@@ -52,7 +121,6 @@ namespace Tauron.Application.Localizer.UIModels
                 .To.Mutate(workspace.Projects).For(pm => pm.NewImport, pm => r => pm.AddImport(_project, r!.Project)).ToSelf()
                 .Then.Action(AddImport)
                 .Return().ThenRegister("AddImportCommand");
-            Context.Sender
 
             #endregion
 
@@ -91,6 +159,22 @@ namespace Tauron.Application.Localizer.UIModels
                 Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));
                 SelectedIndex += 0;
 
+                var self = Context.Self;
+
+                foreach (var projectEntry in obj.Project.Entries)
+                {
+                    ProjectEntrys.Add(new ProjectEntryModel(obj.Project, projectEntry,
+                        data =>
+                        {
+                            var (projectName, entryName, lang, content) = data;
+                            self.Tell(new UpdateRequest(entryName, lang, content, projectName));
+                        },
+                        data =>
+                        {
+                            var (projectName, entryName) = data;
+                            self.Tell(new RemoveRequest(entryName, projectName));
+                        }));
+                }
             }
 
             Receive<InitProjectViewModel>(InitProjectViewModel);

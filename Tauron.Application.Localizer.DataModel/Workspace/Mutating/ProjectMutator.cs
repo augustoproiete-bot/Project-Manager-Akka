@@ -12,7 +12,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
     public sealed class ProjectMutator
     {
         private readonly MutatingEngine<MutatingContext<ProjectFile>> _engine;
-        private readonly ProjectFileWorkspace _workspace;
+       private readonly ProjectFileWorkspace _workspace;
 
         public IEnumerable<Project> Projects => _workspace.ProjectFile.Projects;
 

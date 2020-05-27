@@ -33,11 +33,11 @@
             <Button Content="{tau:Loc ProjectView_Button_AddImport_Label}" DockPanel.Dock="Right" Margin="3" tau:CommandBinder.Command="AddImport"/>
             <Button Content="{tau:Loc ProjectView_Button_RemoveImport_Label}" DockPanel.Dock="Right" Margin="3"/>
             <TextBlock Text="{tau:Loc ProjectView_Import_Label}" DockPanel.Dock="Left" Margin="3" VerticalAlignment="Center"/>
-            <ComboBox Margin="3" ItemsSource="{tau:ActorBinding ImportetProjects}" SelectedIndex="{tau:ActorBinding ImportSelectInfex}"/>
+            <ComboBox Margin="3" ItemsSource="{tau:ActorBinding ImportetProjects}" SelectedIndex="{tau:ActorBinding ImportSelectIndex}"/>
         </DockPanel>
-        <TabControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Margin="5" TabStripPlacement="Left">
-            <TabItem>
-                <TabItem.Header>
+        <TabControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Margin="5" TabStripPlacement="Left" SelectedIndex="{tau:ActorBinding SelectedIndex}" ItemsSource="{tau:ActorBinding ProjectEntrys}">
+            <TabControl.ItemTemplate>
+                <DataTemplate DataType="uiModels:ProjectEntryModel">
                     <StackPanel Orientation="Horizontal" Margin="5">
                         <Button Margin="1" MinWidth="20" MinHeight="20" MaxWidth="20" MaxHeight="20">
                             <Button.Content>
@@ -56,8 +56,10 @@
                         </Button>
                         <TextBlock Text="CenterView_NewProject_InvalidName_Message" VerticalAlignment="Center"/>
                     </StackPanel>
-                </TabItem.Header>
-                <TabItem.Content>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate DataType="uiModels:ProjectEntryModel">
                     <ScrollViewer>
                         <ItemsControl>
                             <GroupBox Header="Deutsch" Margin="5">
@@ -68,8 +70,8 @@
                             </GroupBox>
                         </ItemsControl>
                     </ScrollViewer>
-                </TabItem.Content>
-            </TabItem>
+                </DataTemplate>
+            </TabControl.ContentTemplate>
         </TabControl>
     </Grid>
 </tau:UserControl>

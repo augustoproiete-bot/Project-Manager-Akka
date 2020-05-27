@@ -27,5 +27,11 @@ namespace Tauron.Application.Localizer.UIModels
             _content = content;
             Language = language;
         }
+
+        public void UpdateContent(string content)
+        {
+            _content = content;
+            OnPropertyChangedExplicit(nameof(Content));
+        }
     }
 }

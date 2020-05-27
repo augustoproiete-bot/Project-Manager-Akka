@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows.Input;
 using Microsoft.Xaml.Behaviors.Core;
 using Tauron.Application.Localizer.DataModel;
@@ -39,5 +40,17 @@ namespace Tauron.Application.Localizer.UIModels
 
         public void AddLanguage(ActiveLanguage lang) 
             => Entries.Add(new ProjectLangEntry(EntryChanged, lang, string.Empty));
+
+        public void Update(LocEntry entry)
+        {
+            foreach (var (activeLanguage, content) in entry.Values)
+            {
+                var ent = Entries.FirstOrDefault(f => f.Language == activeLanguage);
+                if (ent == null)
+                    Entries.Add(new ProjectLangEntry(EntryChanged, activeLanguage, content));
+                else
+                    ent.UpdateContent(content);
+            }
+        }
     }
 }

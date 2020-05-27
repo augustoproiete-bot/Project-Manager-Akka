@@ -19,6 +19,8 @@ namespace Tauron.Application.Localizer.DataModel.Workspace
 
         public ProjectMutator Projects { get; }
 
+        public EntryMutator Entrys { get; }
+
         public ProjectFileWorkspace(IActorRefFactory factory)
             : base(factory)
         {
@@ -26,6 +28,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace
 
             Projects = new ProjectMutator(Engine, this);
             Source = new SourceMutator(Engine, this);
+            Entrys = new EntryMutator(Engine);
 
             Analyzer.RegisterRule(new SourceRule());
         }

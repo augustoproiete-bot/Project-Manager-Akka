@@ -126,6 +126,16 @@ namespace Tauron
             public async Task Run(TRecieve recieve, IActorContext context) => await _runner(recieve);
         }
 
+        private sealed class ReceiveHelper
+        {
+            private readonly EnterFlow<TStart> _invoker;
+
+            public ReceiveHelper(EnterFlow<TStart> invoker) => _invoker = invoker;
+
+            public void Send(TStart msg, IActorContext context)
+                => _invoker(msg);
+        }
+
         private readonly ActorFlowBuilder<TStart, TParent> _flow;
 
         public ActionFinisher(ActorFlowBuilder<TStart, TParent> flow, Action<TRecieve> runner)
@@ -146,8 +156,8 @@ namespace Tauron
         public EnterFlow<TStart> Build()
             => _flow.Build();
 
-        public void Receive()
-            => _flow.BuildReceive();
+        public void Receive() 
+            => _flow.Register(e => e.Exposed.Receive<TStart>(new ReceiveHelper(Build()).Send));
 
         public TParent Return() => _flow.Return();
     }
@@ -255,7 +265,7 @@ namespace Tauron
             if(_onReturn != null)
                 _onReturn(Build());
             else
-                BuildReceive();
+                throw new InvalidOperationException("No Return Provided");
 
             return _parent;
         }
