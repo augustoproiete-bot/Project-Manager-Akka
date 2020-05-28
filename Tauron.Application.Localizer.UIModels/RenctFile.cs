@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Windows.Input;
-using Microsoft.Xaml.Behaviors.Core;
+using Tauron.Application.Wpf.Commands;
 
 namespace Tauron.Application.Localizer.UIModels
 {
@@ -16,7 +16,7 @@ namespace Tauron.Application.Localizer.UIModels
         {
             File = file;
             Name = Path.GetFileName(file);
-            Runner = new ActionCommand(() => loadFileAction(file));
+            Runner = new SimpleCommand(() => loadFileAction(file));
         }
     }
 }

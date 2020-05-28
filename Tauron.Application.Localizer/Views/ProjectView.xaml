@@ -39,7 +39,7 @@
             <TabControl.ItemTemplate>
                 <DataTemplate DataType="uiModels:ProjectEntryModel">
                     <StackPanel Orientation="Horizontal" Margin="5">
-                        <Button Margin="1" MinWidth="20" MinHeight="20" MaxWidth="20" MaxHeight="20">
+                        <Button Margin="1" MinWidth="20" MinHeight="20" MaxWidth="20" MaxHeight="20" Command="{Binding RemoveCommand}">
                             <Button.Content>
                                 <Grid>
                                     <Line  X1="1" Y1="1" X2="12" Y2="12" Stroke="Black" StrokeThickness="2" />
@@ -54,20 +54,21 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-                        <TextBlock Text="CenterView_NewProject_InvalidName_Message" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding EntryName}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </DataTemplate>
             </TabControl.ItemTemplate>
             <TabControl.ContentTemplate>
                 <DataTemplate DataType="uiModels:ProjectEntryModel">
                     <ScrollViewer>
-                        <ItemsControl>
-                            <GroupBox Header="Deutsch" Margin="5">
-                                <TextBox MinHeight="50" Margin="5" AcceptsReturn="True" AcceptsTab="True"/>
-                            </GroupBox>
-                            <GroupBox Header="Englisch" Margin="5">
-                                <TextBox Height="1080" MinHeight="50" Margin="5" AcceptsTab="True" AcceptsReturn="True"/>
-                            </GroupBox>
+                        <ItemsControl ItemsSource="{Binding Entries}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="uiModels:ProjectLangEntry">
+                                    <GroupBox Header="{Binding Language.Name}" Margin="5">
+                                        <TextBox MinHeight="50" Margin="5" AcceptsReturn="True" AcceptsTab="True" Text="{Binding Content, Delay=1000, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </GroupBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
                 </DataTemplate>

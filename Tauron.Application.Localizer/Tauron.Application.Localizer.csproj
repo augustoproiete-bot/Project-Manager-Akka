@@ -14,19 +14,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Syncfusion.SfBusyIndicator.WPF" Version="18.1.0.54" />
+    <PackageReference Include="Syncfusion.SfInput.WPF" Version="18.1.0.54" />
+    <PackageReference Include="Syncfusion.SfSkinManager.WPF" Version="18.1.0.54" />
+    <PackageReference Include="Syncfusion.Shared.WPF" Version="18.1.0.54" />
+    <PackageReference Include="Syncfusion.Themes.MaterialLightBlue.WPF" Version="18.1.0.54" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Akka.Code.Configuration\Akka.Code.Configuration.csproj" />
-    <ProjectReference Include="..\External\LoadingIndicators.WPF\LoadingIndicators.WPF.csproj" />
     <ProjectReference Include="..\Tauron.Application.Localizer.DataModel\Tauron.Application.Localizer.DataModel.csproj" />
     <ProjectReference Include="..\Tauron.Application.Localizer.UIModels\Tauron.Application.Localizer.UIModels.csproj" />
     <ProjectReference Include="..\Tauron.Application.Logging\Tauron.Application.Logging.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf.SerilogViewer\Tauron.Application.Wpf.SerilogViewer.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="4.2.0" />
-    <PackageReference Include="MaterialDesignThemes.MahApps" Version="0.1.4" />
-    <PackageReference Include="System.Management" Version="5.0.0-preview.4.20251.6" />
   </ItemGroup>
 
   <ItemGroup>

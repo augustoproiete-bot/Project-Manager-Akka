@@ -27,6 +27,8 @@ namespace Tauron.Application.Localizer.DataModel
             {
                 builder.AddOrSet(project.GetActiveLanguage(reader.ReadString()), reader.ReadString());
             }
+
+            Values = builder.ToImmutable();
         }
 
         public void Write(BinaryWriter writer)

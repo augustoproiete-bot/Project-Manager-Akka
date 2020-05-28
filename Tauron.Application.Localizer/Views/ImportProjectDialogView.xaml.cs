@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using MahApps.Metro.Controls.Dialogs;
-using Microsoft.Xaml.Behaviors.Core;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Wpf.Commands;
 
@@ -16,7 +14,6 @@ namespace Tauron.Application.Localizer.Views
     {
         public ImportProjectDialogView() => InitializeComponent();
 
-        public BaseMetroDialog Dialog => this;
         public Task<ImportProjectDialogResult?> Init(IEnumerable<string> initalData)
         {
             var result = new TaskCompletionSource<ImportProjectDialogResult?>();
@@ -52,7 +49,7 @@ namespace Tauron.Application.Localizer.Views
         {
             Projects = projects;
 
-            CancelCommand = new ActionCommand(() => selector(null));
+            CancelCommand = new SimpleCommand(() => selector(null));
             SelectCommand = new SimpleCommand(o => !string.IsNullOrWhiteSpace(CurretElement), o => selector(CurretElement));
         }
     }

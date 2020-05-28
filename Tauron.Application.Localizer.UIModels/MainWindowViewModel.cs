@@ -8,7 +8,6 @@ using System.Windows.Threading;
 using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
-using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.UIModels.lang;
@@ -23,8 +22,6 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class MainWindowViewModel : UiActor
     {
-        public static readonly string MainWindow = nameof(MainWindow);
-
         private UIProperty<IEnumerable<RunningOperation>> RunningOperations { get; }
 
         private UIProperty<RenctFilesCollection> RenctFiles { get; }
@@ -62,7 +59,7 @@ namespace Tauron.Application.Localizer.UIModels
             bool CheckSourceOk(string? source)
             {
                 if (!string.IsNullOrWhiteSpace(source)) return false;
-                UICall(async () => await dialogCoordinator.ShowMessageAsync(MainWindow, localizer.CommonError, localizer.MainWindowModelLoadProjectSourceEmpty));
+                UICall(() => dialogCoordinator.ShowMessage(localizer.CommonError, localizer.MainWindowModelLoadProjectSourceEmpty));
                 return true;
 
             }
@@ -129,10 +126,10 @@ namespace Tauron.Application.Localizer.UIModels
 
                 if (File.Exists(source))
                 {
-                    var result = await UICall(async () => await dialogCoordinator.ShowMessageAsync(MainWindow, localizer.CommonError, "",
-                                                  MessageDialogStyle.AffirmativeAndNegative));
+                    //TODO NewFile Filog Message
+                    var result = await UICall(async () => await dialogCoordinator.ShowMessage(localizer.CommonError, "", null));
 
-                    if (result == MessageDialogResult.Negative) return null;
+                    if (result != true) return null;
                 }
 
                 mainWindowCoordinator.IsBusy = true;

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Wpf.Commands;
@@ -64,8 +63,6 @@ namespace Tauron.Application.Localizer.Views
             _localizer = localizer;
             InitializeComponent();
         }
-
-        public BaseMetroDialog Dialog => this;
 
         public Task<NewProjectDialogResult> Init(IEnumerable<string> initalData)
         {

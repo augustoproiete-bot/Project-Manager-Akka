@@ -19,6 +19,8 @@ namespace Tauron.Application.Wpf.Model
 
         protected internal void SetValue(object? value)
         {
+            if(_isSetLocked) return;
+
             InternalValue = value;
             OnPropertyValueChanged();
         }

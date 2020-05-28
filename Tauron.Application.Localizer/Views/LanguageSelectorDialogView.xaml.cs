@@ -6,8 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Threading;
-using MahApps.Metro.Controls.Dialogs;
-using Microsoft.Xaml.Behaviors.Core;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Wpf.Commands;
 
@@ -18,15 +16,13 @@ namespace Tauron.Application.Localizer.Views
     /// </summary>
     public partial class LanguageSelectorDialogView : ILanguageSelectorDialog
     {
-        public LanguageSelectorDialogView() => InitializeComponent();
-
-        protected override void OnLoaded()
+        public LanguageSelectorDialogView()
         {
-            base.OnLoaded();
-            ((LanguageSelectorDialogViewModel)DataContext).OnLoad();
+            InitializeComponent();
+
+            Loaded += (sender, args) =>  ((LanguageSelectorDialogViewModel)DataContext).OnLoad();
         }
 
-        public BaseMetroDialog Dialog => this;
 
         public Task<AddLanguageDialogResult?> Init(IEnumerable<CultureInfo> initalData)
         {
@@ -130,7 +126,7 @@ namespace Tauron.Application.Localizer.Views
                 _cultures.Add(info.Parent, info);
             }
 
-            RejectCommand = new ActionCommand(() => selector(null));
+            RejectCommand = new SimpleCommand(() => selector(null));
             AddCommand = new SimpleCommand(o => IsSomethingSelected, o => selector(_current?.Info));
         }
 

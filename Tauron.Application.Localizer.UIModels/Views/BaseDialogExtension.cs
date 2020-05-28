@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Autofac;
 using Autofac.Core;
 using JetBrains.Annotations;
-using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.Localizer.UIModels.Views
@@ -12,6 +11,8 @@ namespace Tauron.Application.Localizer.UIModels.Views
     [PublicAPI]
     public static class BaseDialogExtension
     {
+        private static IDialogCoordinator? _dialogCoordinator;
+
         public static Func<TData> ShowDialog<TDialog, TData>(this UiActor actor, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TData>
             => ShowDialog<TDialog, TData, TData>(actor, Array.Empty<TData>(), parameters);
@@ -19,23 +20,23 @@ namespace Tauron.Application.Localizer.UIModels.Views
         public static Func<TData> ShowDialog<TDialog, TData, TViewData>(this UiActor actor, IEnumerable<TViewData> initalData, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TViewData>
         {
+            _dialogCoordinator ??= actor.LifetimeScope.Resolve<IDialogCoordinator>();
+
             return () =>
                    {
                        Task<TData>? task = null;
-                       BaseMetroDialog? metroDialog = null;
 
-                       actor.Dispatcher.Invoke(async () =>
+                       actor.Dispatcher.Invoke(() =>
                                                {
                                                    var dialog = actor.LifetimeScope.Resolve<TDialog>(parameters);
                                                    task = dialog.Init(initalData);
-                                                   metroDialog = dialog.Dialog;
 
-                                                   await DialogCoordinator.Instance.ShowMetroDialogAsync("MainWindow", metroDialog);
+                                                   _dialogCoordinator.ShowDialog(dialog);
                                                });
 
                        var result = task!.Result;
 
-                       actor.Dispatcher.Invoke(async () => await DialogCoordinator.Instance.HideMetroDialogAsync("MainWindow", metroDialog!));
+                       actor.Dispatcher.Invoke(() => _dialogCoordinator.HideDialog());
 
                        return result;
                    };

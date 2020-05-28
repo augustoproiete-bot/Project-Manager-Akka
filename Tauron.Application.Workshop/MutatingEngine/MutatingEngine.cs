@@ -40,7 +40,7 @@ namespace Tauron.Application.Workshop.MutatingEngine
         public MutatingEngine(IActorRefFactory factory, IDataSource<TData> dataSource)
         {
             _dataSource = dataSource;
-            _mutator = factory.ActorOf<MutationActor<TData>>(typeof(TData).Name + "-Mutator");
+            _mutator = factory.ActorOf<MutationActor<TData>>("Mutator");
             _responder = new ResponderList(_dataSource.SetData);
         }
 

@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
@@ -45,14 +44,11 @@ namespace Tauron.Application.Localizer.Views
             PART_Path.Text = result.FirstOrDefault();
         }
 
-        private async void Ready_OnClick(object sender, RoutedEventArgs e)
+        private void Ready_OnClick(object sender, RoutedEventArgs e)
         {
             string text = PART_Path.Text;
-            await _coordinator.HideMetroDialogAsync(MainWindowViewModel.MainWindow, this);
             _selector.SetResult(text);
         }
-
-        public BaseMetroDialog Dialog => this;
 
         public Task<string?> Init(IEnumerable<string?> initalData) => _selector.Task;
 

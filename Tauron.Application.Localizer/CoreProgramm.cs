@@ -33,6 +33,8 @@ namespace Tauron.Application.Localizer
 
         public static async Task Main(string[] args)
         {
+            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MTc0Mjk2QDMxMzcyZTMzMmUzMElNUnVpcGhkMFhTMThkRzcvM2hSMENDc2c2YURtQS95bXhJSzVXaDduUEE9");
+
             var builder = ActorApplication.Create(args);
 
             builder

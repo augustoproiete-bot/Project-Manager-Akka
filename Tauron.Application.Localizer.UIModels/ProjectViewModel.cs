@@ -5,7 +5,6 @@ using System.Windows.Threading;
 using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
-using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Workspace;
 using Tauron.Application.Localizer.UIModels.lang;

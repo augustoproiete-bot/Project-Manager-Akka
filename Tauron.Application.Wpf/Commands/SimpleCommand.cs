@@ -23,10 +23,21 @@ namespace Tauron.Application.Wpf.Commands
         {
         }
 
+        public SimpleCommand(Func<bool>? canExecute, Action execute)
+        {
+            _execute = o => execute();
+            if (canExecute != null)
+                _canExecute = o => canExecute();
+        }
+
+        public SimpleCommand(Action execute)
+            : this(null, execute)
+        {
+        }
+
         public override bool CanExecute(object? parameter)
         {
-            if (parameter == null)
-                parameter = _parameter;
+            parameter ??= _parameter;
 
             return _canExecute == null || _canExecute(parameter);
         }

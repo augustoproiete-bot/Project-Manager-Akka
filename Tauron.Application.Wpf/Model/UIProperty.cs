@@ -4,7 +4,11 @@ using JetBrains.Annotations;
 namespace Tauron.Application.Wpf.Model
 {
     [PublicAPI]
+#pragma warning disable CS0660 // Typ definiert Operator == oder Operator !=, überschreibt jedoch nicht Object.Equals(Objekt o)
+#pragma warning disable CS0661 // Typ definiert Operator == oder Operator !=, überschreibt jedoch nicht Object.GetHashCode()
     public sealed class UIProperty<TData> : UIPropertyBase
+#pragma warning restore CS0661 // Typ definiert Operator == oder Operator !=, überschreibt jedoch nicht Object.GetHashCode()
+#pragma warning restore CS0660 // Typ definiert Operator == oder Operator !=, überschreibt jedoch nicht Object.Equals(Objekt o)
     {
         public TData Value
         {

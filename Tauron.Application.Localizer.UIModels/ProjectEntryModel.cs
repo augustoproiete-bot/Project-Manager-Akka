@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Windows.Input;
-using Microsoft.Xaml.Behaviors.Core;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Wpf;
+using Tauron.Application.Wpf.Commands;
 
 namespace Tauron.Application.Localizer.UIModels
 {
@@ -25,7 +25,7 @@ namespace Tauron.Application.Localizer.UIModels
             _projectName = project.ProjectName;
             EntryName = target.Key;
             Entries = new UIObservableCollection<ProjectLangEntry>();
-            RemoveCommand = new ActionCommand(() => remove((_projectName, EntryName)));
+            RemoveCommand = new SimpleCommand(() => remove((_projectName, EntryName)));
 
             foreach (var language in project.ActiveLanguages)
             {

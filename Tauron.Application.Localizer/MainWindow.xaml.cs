@@ -1,11 +1,9 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Windows;
-using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Services;
-using Tauron.Application.Localizer.Views;
+using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.AppCore;
 using Window = System.Windows.Window;
@@ -19,12 +17,14 @@ namespace Tauron.Application.Localizer
     {
         private readonly LocLocalizer _localizer;
         private readonly IMainWindowCoordinator _mainWindowCoordinator;
+        private readonly IDialogCoordinator _coordinator;
 
-        public MainWindow(IViewModel<MainWindowViewModel> model, LocLocalizer localizer, IMainWindowCoordinator mainWindowCoordinator)
+        public MainWindow(IViewModel<MainWindowViewModel> model, LocLocalizer localizer, IMainWindowCoordinator mainWindowCoordinator, IDialogCoordinator coordinator)
             : base(model)
         {
             _localizer = localizer;
             _mainWindowCoordinator = mainWindowCoordinator;
+            _coordinator = coordinator;
             InitializeComponent();
 
             _mainWindowCoordinator.TitleChanged += () => Dispatcher.BeginInvoke(new Action(MainWindowCoordinatorOnTitleChanged));
@@ -36,18 +36,14 @@ namespace Tauron.Application.Localizer
 
         private void IsBusyChanged()
         {
-            Dispatcher.Invoke(() =>
-            {
-                _LoadingIndicator.IsActive = _mainWindowCoordinator.IsBusy;
-                _AdornedControl.IsAdornerVisible = _mainWindowCoordinator.IsBusy;
-            });
+            Dispatcher.Invoke(() => SfBusyIndicator.IsBusy = _mainWindowCoordinator.IsBusy);
         }
 
         private void OnClosing(object sender, CancelEventArgs e)
         {
             if(_mainWindowCoordinator.Saved) return;
 
-            if (this.ShowModalMessageExternal(_localizer.CommonWarnig, _localizer.MainWindowCloseWarning, MessageDialogStyle.AffirmativeAndNegative) == MessageDialogResult.Negative)
+            if (_coordinator.ShowModalMessageWindow(_localizer.CommonWarnig, _localizer.MainWindowCloseWarning))
                 e.Cancel = true;
         }
 

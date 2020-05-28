@@ -4,7 +4,6 @@ using System.Windows.Threading;
 using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
-using MahApps.Metro.Controls.Dialogs;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.DataModel.Workspace;
@@ -97,13 +96,14 @@ namespace Tauron.Application.Localizer.UIModels
 
             void RemoveDialog(RemoveProjectName? project)
             {
-                UICall(async c =>
+                UICall(c =>
                        {
-                           var result = await dialogCoordinator.ShowMessageAsync("MainWindow", string.Format(localizer.CenterViewRemoveProjectDialogTitle, project?.Name),
-                               localizer.CenterViewRemoveProjectDialogMessage, MessageDialogStyle.AffirmativeAndNegative);
-                           if (result == MessageDialogResult.Negative) return;
-
-                           workspace.Projects.RemoveProject(project?.Name ?? string.Empty);
+                           dialogCoordinator.ShowMessage( string.Format(localizer.CenterViewRemoveProjectDialogTitle, project?.Name),
+                                    localizer.CenterViewRemoveProjectDialogMessage, result =>
+                                    {
+                                        if (result == true)
+                                            workspace.Projects.RemoveProject(project?.Name ?? string.Empty);
+                                    });
                        });
             }
 
@@ -164,7 +164,7 @@ namespace Tauron.Application.Localizer.UIModels
                 string name = GetActorName(project.ProjectName);
                 if (!ActorPath.IsValidPathElement(name))
                 {
-                    UICall(async c => await dialogCoordinator.ShowMessageAsync("MainWindow", localizer.CommonError, localizer.CenterViewNewProjectInvalidNameMessage));
+                    UICall(c => dialogCoordinator.ShowMessage(localizer.CommonError, localizer.CenterViewNewProjectInvalidNameMessage));
                     return;
                 }
 
