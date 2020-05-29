@@ -35,6 +35,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         private readonly Dictionary<string, Props> _services = new Dictionary<string, Props>();
 
         private ICanTell? _tracker;
+        private ToggleSuspendedMessage _suspendedMessage = new ToggleSuspendedMessage(false);
 
         public HostCoordinationActor()
         {
@@ -80,7 +81,9 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             if (_services.TryGetValue(obj.Name, out var value))
             {
                 _log.Info("Service Found");
-                Context.GetOrCreate(obj.Name, Props.Create(() => new HostManagerActor(value))).Forward(obj);
+                var actor = Context.GetOrCreate(obj.Name, Props.Create(() => new HostManagerActor(value)));
+                actor.Tell(_suspendedMessage);   
+                actor.Forward(obj);
             }
             else
             {
@@ -92,6 +95,8 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         private void ToggleSuspendedMessage(ToggleSuspendedMessage obj)
         {
             _log.Info("Suspended Message {State}", obj.IsSuspended);
+
+            _suspendedMessage = obj;
             foreach (var child in Context.GetChildren()) 
                 child.Forward(obj);
 
