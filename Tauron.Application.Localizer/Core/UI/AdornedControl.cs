@@ -83,7 +83,7 @@ namespace Tauron.Application.Localizer.Core.UI
         /// <summary>
         /// Used in XAML to define the UI content of the adorner.
         /// </summary>
-        public FrameworkElement AdornerContent
+        public FrameworkElement? AdornerContent
         {
             get => (FrameworkElement)GetValue(AdornerContentProperty);
             set => SetValue(AdornerContentProperty, value);
@@ -216,7 +216,7 @@ namespace Tauron.Application.Localizer.Core.UI
 
             if (AdornerContent == null) return;
             _adornerLayer ??= AdornerLayer.GetAdornerLayer(this);
-
+            
             if (_adornerLayer == null) return;
             _adorner = new FrameworkElementAdorner(this.AdornerContent, this, this.HorizontalAdornerPlacement, this.VerticalAdornerPlacement,
                 AdornerOffsetX, AdornerOffsetY);

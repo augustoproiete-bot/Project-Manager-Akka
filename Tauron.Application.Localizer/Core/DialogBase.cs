@@ -1,6 +1,8 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.Localizer.Core
@@ -25,6 +27,22 @@ namespace Tauron.Application.Localizer.Core
         static DialogBase()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(DialogBase), new FrameworkPropertyMetadata(typeof(DialogBase)));
+        }
+
+        public DialogBase()
+        {
+            Loaded += OnLoaded;
+        }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (TryFindResource("Storyboard.Dialogs.Show") is Storyboard res)
+                    res.Begin(this);
+                else
+                    Opacity = 0;
+            }));
         }
 
         public static readonly DependencyProperty DialogTitleFontSizeProperty = DependencyProperty.Register(

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Windows.Markup;
 using JetBrains.Annotations;
 using Tauron.Host;
@@ -20,9 +19,11 @@ namespace Tauron.Application.Wpf.UI
         {
             try
             {
-                ActorApplication.Application.ActorSystem.Loc().Request(EntryName, UpdateValue);
+                return ActorApplication.Application.ActorSystem.Loc().Request(EntryName)!;
 
-                return "Loading...";
+                //Task.Run(() => ActorApplication.Application.ActorSystem.Loc().Request(EntryName, UpdateValue));
+
+                //return "Loading...";
             }
             catch (Exception)
             {

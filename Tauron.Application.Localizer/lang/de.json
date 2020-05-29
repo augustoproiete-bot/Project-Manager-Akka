@@ -3,6 +3,7 @@
   "Common_Warnig": "Warnung",
   "Common_Unkowen": "Unbekannt",
   "Common_Cancel": "Abbrechen",
+  "Common_OK": "OK",
 
   "MainWindow_Title": "Lokalisierungs App",
   "MainWindow_Close_Warning": "Projekt nicht gespeichert. Trotzdem beenden!",
@@ -57,5 +58,5 @@
 
   "ImportProjectDialogView_Button_Add": "Hinzufügen",
   "ImportProjectDialogView_Title": "Projekt Importieren",
-  "ImportProjectDialogView_Button_Cancel":  "Abbrechen"
+  "ImportProjectDialogView_Button_Cancel": "Abbrechen"
 }

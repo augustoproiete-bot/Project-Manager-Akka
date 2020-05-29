@@ -3,6 +3,7 @@
   "Common_Warnig": "Warning",
   "Common_Unkowen": "Unkowen",
   "Common_Cancel": "Cancel",
+  "Common_OK": "OK",
 
   "MainWindow_Title": "Localizing App",
   "MainWindow_Close_Warning": "Project not saved. Quit anyway!",

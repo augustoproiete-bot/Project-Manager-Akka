@@ -4,7 +4,7 @@
     xmlns:core="clr-namespace:Tauron.Application.Localizer.Core">
 
 
-    <Storyboard x:Key="MahApps.Storyboard.Dialogs.Show">
+    <Storyboard x:Key="Storyboard.Dialogs.Show">
         <DoubleAnimation AccelerationRatio=".9"
                          BeginTime="0:0:0"
                          Storyboard.TargetProperty="Opacity"
@@ -12,7 +12,7 @@
                          Duration="0:0:0.2" />
     </Storyboard>
 
-    <Storyboard x:Key="MahApps.Storyboard.Dialogs.Close">
+    <Storyboard x:Key="Storyboard.Dialogs.Close">
         <DoubleAnimation AccelerationRatio=".9"
                          BeginTime="0:0:0"
                          Storyboard.TargetProperty="Opacity"
@@ -20,7 +20,7 @@
                          Duration="0:0:0.2" />
     </Storyboard>
 
-    <ControlTemplate x:Key="MahApps.Templates.BaseMetroDialog" TargetType="{x:Type core:DialogBase}">
+    <ControlTemplate x:Key="Templates.BaseDialog" TargetType="{x:Type core:DialogBase}">
         <Grid Background="{TemplateBinding Background}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -33,9 +33,9 @@
                               SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="{Binding DialogContentMargin, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" />
-                    <ColumnDefinition Width="{Binding DialogContentWidth, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" />
-                    <ColumnDefinition Width="{Binding DialogContentMargin, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" />
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <!--  Content area  -->
                 <Grid Grid.Column="1" Margin="{TemplateBinding Padding}">
@@ -55,7 +55,7 @@
                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                       AutomationProperties.Name="Dialog content"
                                       ContentTemplate="{TemplateBinding ContentTemplate}"
-                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="10"/>
                 </Grid>
             </Grid>
             <ContentPresenter x:Name="PART_Bottom"
@@ -67,11 +67,6 @@
             <Trigger Property="Title" Value="{x:Null}">
                 <Setter TargetName="PART_Title" Property="Visibility" Value="Collapsed" />
             </Trigger>
-            <EventTrigger RoutedEvent="Loaded">
-                <EventTrigger.Actions>
-                    <BeginStoryboard Storyboard="{StaticResource MahApps.Storyboard.Dialogs.Show}" />
-                </EventTrigger.Actions>
-            </EventTrigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
@@ -79,7 +74,6 @@
         <Setter Property="Background" Value="White" />
         <Setter Property="DialogTitleFontSize" Value="25" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.ThemeForeground}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="KeyboardNavigation.ControlTabNavigation" Value="Cycle" />
@@ -87,7 +81,7 @@
         <Setter Property="KeyboardNavigation.TabNavigation" Value="Cycle" />
         <Setter Property="Opacity" Value="0" />
         <Setter Property="Padding" Value="0 10 0 0" />
-        <Setter Property="Template" Value="{StaticResource MahApps.Templates.BaseMetroDialog}" />
+        <Setter Property="Template" Value="{StaticResource Templates.BaseDialog}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
     </Style>

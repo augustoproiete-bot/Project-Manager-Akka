@@ -1,15 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Tauron.Application.Localizer.Core
 {
@@ -18,9 +8,29 @@ namespace Tauron.Application.Localizer.Core
     /// </summary>
     public partial class MessageDialog
     {
-        public MessageDialog()
+        private readonly Action<bool?>? _result;
+        private readonly bool _canCnacel;
+
+        public MessageDialog(string title, string content, Action<bool?>? result, bool canCnacel)
         {
+            _result = result;
+            _canCnacel = canCnacel;
             InitializeComponent();
+            Title = title;
+            ContentBox.Text = content;
+
+            if (!canCnacel)
+                CancelButton.Visibility = Visibility.Hidden;
         }
+
+        private void Ok_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_canCnacel)
+                _result?.Invoke(true);
+            else
+                _result?.Invoke(null);
+        }
+
+        private void Cancel_OnClick(object sender, RoutedEventArgs e) => _result?.Invoke(false);
     }
 }

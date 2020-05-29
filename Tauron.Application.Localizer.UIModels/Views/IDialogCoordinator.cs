@@ -10,6 +10,6 @@ namespace Tauron.Application.Localizer.UIModels.Views
         void ShowMessage(string title, string message);
         void ShowDialog(object dialog);
         void HideDialog();
-        bool ShowModalMessageWindow(string title, string message);
+        bool? ShowModalMessageWindow(string title, string message);
     }
 }

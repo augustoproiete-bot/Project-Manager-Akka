@@ -1,5 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media.Animation;
 using Tauron.Application.Localizer.Core.UI;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.lang;
@@ -36,14 +39,30 @@ namespace Tauron.Application.Localizer
 
             DialogCoordinator.HideDialogEvent += () =>
                                                  {
-                                                     DialogContent.IsAdornerVisible = false;
+                                                     if (DialogContent.Content is FrameworkElement element)
+                                                     {
+                                                         if (element.TryFindResource("Storyboard.Dialogs.Close") is Storyboard story)
+                                                         {
+                                                             story.Begin(element);
+
+                                                             Task.Delay(200).ContinueWith(t => Dispatcher.Invoke(() =>
+                                                             {
+                                                                 DialogContent.HideAdorner();
+                                                                 DialogContent.Content = null;
+                                                             }));
+
+                                                             return;
+                                                         }
+                                                     }
+
+                                                     DialogContent.HideAdorner();
                                                      DialogContent.Content = null;
                                                  };
 
             DialogCoordinator.ShowDialogEvent += o =>
                                                  {
-                                                     DialogContent.Content = o;
-                                                     DialogContent.IsAdornerVisible = true;
+                                                     DialogContent.AdornerContent = o as FrameworkElement;
+                                                     DialogContent.ShowAdorner();
                                                  };
         }
 
@@ -56,7 +75,7 @@ namespace Tauron.Application.Localizer
         {
             if(_mainWindowCoordinator.Saved) return;
 
-            if (_coordinator.ShowModalMessageWindow(_localizer.CommonWarnig, _localizer.MainWindowCloseWarning))
+            if (_coordinator.ShowModalMessageWindow(_localizer.CommonWarnig, _localizer.MainWindowCloseWarning) == true)
                 e.Cancel = true;
         }
 
