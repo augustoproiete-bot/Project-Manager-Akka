@@ -6,7 +6,9 @@ namespace Tauron.Application.Localizer.Core.UI
 {
     public sealed class DialogCoordinator : IDialogCoordinator
     {
-        public 
+        public static event Action<object> ShowDialogEvent;
+
+        public static event Action HideDialogEvent;
 
         public Task<bool?> ShowMessage(string title, string message, Action<bool?>? result)
         {

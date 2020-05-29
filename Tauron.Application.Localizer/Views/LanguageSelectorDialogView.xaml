@@ -4,24 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Tauron.Application.Localizer.Views"
-             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-             xmlns:ui="clr-namespace:Tauron.Application.Localizer.Core.UI"
-             xmlns:li="http://github.com/zeluisping/loadingIndicators/xaml/controls"
+             xmlns:li="http://schemas.syncfusion.com/wpf"
              xmlns:tau="http://schemas.TauronWpf.com"
              xmlns:core="clr-namespace:Tauron.Application.Localizer.Core" Width="1200"
              mc:Ignorable="d" Background="White" Title="{tau:Loc LanguageSelectorDialogView_Title}"
              d:DesignHeight="450" d:DesignWidth="800" d:DataContext="{d:DesignInstance local:LanguageSelectorDialogViewModel}">
     <core:DialogBase.Content>
-        <ui:AdornedControl IsAdornerVisible="{Binding IsLoading}">
-            <ui:AdornedControl.AdornerContent>
-                <Border Background="#7F778899">
-                    <li:LoadingIndicator Mode="Arcs" Foreground="DarkSlateBlue" IsActive="{Binding IsLoading}">
-                        <li:LoadingIndicator.RenderTransform>
-                            <ScaleTransform ScaleX="2" ScaleY="2" />
-                        </li:LoadingIndicator.RenderTransform>
-                    </li:LoadingIndicator>
-                </Border>
-            </ui:AdornedControl.AdornerContent>
+        <li:SfBusyIndicator IsBusy="{Binding IsLoading}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -67,5 +56,6 @@
                     </ItemsControl>
                 </ScrollViewer>
             </Grid>
-        </ui:AdornedControl></core:DialogBase.Content>
+        </li:SfBusyIndicator>
+    </core:DialogBase.Content>
 </core:DialogBase>

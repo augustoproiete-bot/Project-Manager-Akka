@@ -28,7 +28,7 @@ namespace Tauron.Application.Localizer
             builder.RegisterType<LocLocalizer>().AsSelf();
             builder.Register(cc => new ProjectFileWorkspace(cc.Resolve<ActorSystem>())).AsSelf().SingleInstance();
 
-
+            builder.RegisterType<DialogCoordinator>().As<IDialogCoordinator>();
         }
     }
 }

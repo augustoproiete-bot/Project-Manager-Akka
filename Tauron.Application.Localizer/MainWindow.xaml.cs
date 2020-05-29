@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using Tauron.Application.Localizer.Core.UI;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Services;
@@ -32,6 +33,18 @@ namespace Tauron.Application.Localizer
 
             Closing += OnClosing;
             Closed += (sender, args) => Shutdown?.Invoke(this, EventArgs.Empty);
+
+            DialogCoordinator.HideDialogEvent += () =>
+                                                 {
+                                                     DialogContent.IsAdornerVisible = false;
+                                                     DialogContent.Content = null;
+                                                 };
+
+            DialogCoordinator.ShowDialogEvent += o =>
+                                                 {
+                                                     DialogContent.Content = o;
+                                                     DialogContent.IsAdornerVisible = true;
+                                                 };
         }
 
         private void IsBusyChanged()
