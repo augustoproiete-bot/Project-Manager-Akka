@@ -53,8 +53,8 @@ namespace Tauron.Application.Localizer.Core.UI
         /// </summary>
         private void UpdateAdornerDataContext()
         {
-            if (AdornerContent != null) 
-                AdornerContent.DataContext = DataContext;
+            //if (AdornerContent != null) 
+            //    AdornerContent.DataContext = DataContext;
         }
 
         /// <summary>
@@ -220,6 +220,7 @@ namespace Tauron.Application.Localizer.Core.UI
             if (_adornerLayer == null) return;
             _adorner = new FrameworkElementAdorner(this.AdornerContent, this, this.HorizontalAdornerPlacement, this.VerticalAdornerPlacement,
                 AdornerOffsetX, AdornerOffsetY);
+
             _adornerLayer.Add(_adorner);
 
             UpdateAdornerDataContext();
@@ -237,7 +238,7 @@ namespace Tauron.Application.Localizer.Core.UI
             }
 
             _adornerLayer.Remove(_adorner);
-            _adorner.DisconnectChild();
+            //_adorner.DisconnectChild();
 
             _adorner = null;
             _adornerLayer = null;

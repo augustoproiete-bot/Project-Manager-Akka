@@ -28,7 +28,7 @@ namespace Tauron.Application.Localizer.Views
         {
             var result = new TaskCompletionSource<AddLanguageDialogResult?>();
 
-            DataContext = new LanguageSelectorDialogViewModel(c => result.SetResult(c == null ? null : new AddLanguageDialogResult(c)), info => !initalData.Contains(info), Dispatcher);
+            DataContext = new LanguageSelectorDialogViewModel(c => result.SetResult(c == null ? null : new AddLanguageDialogResult(c)), info => initalData.Contains(info), Dispatcher);
 
             return result.Task;
         }
@@ -143,15 +143,14 @@ namespace Tauron.Application.Localizer.Views
                 }
 
                 var (key, value) = _cultures.ElementAt(_position);
-                {
-                    var group = new LanguageGroup(SelectionChanged, key);
-                    group.IsFiltered = _filter(key);
 
-                    foreach (var info in value.Where(c => !_filter(c))) group.List.Add(new SubLanguage(info, SelectionChanged));
+                var group = new LanguageGroup(SelectionChanged, key);
+                group.IsFiltered = _filter(key);
 
-                    if(group.IsFiltered && group.List.Count == 0) continue;
+                foreach (var info in value.Where(c => !_filter(c))) group.List.Add(new SubLanguage(info, SelectionChanged));
+
+                if (!group.IsFiltered || group.List.Count != 0)
                     LanguageGroups.Add(group);
-                }
 
                 _position++;
             }

@@ -6,8 +6,8 @@
              xmlns:ui="http://schemas.TauronWpf.com"
              xmlns:core="clr-namespace:Tauron.Application.Localizer.Core"
              Loaded="OpenFileDialogView_OnLoaded"
-             mc:Ignorable="d" Background="White" Title="{ui:Loc OpenFileDialogView_Header}"
-             d:DesignHeight="250" d:DesignWidth="800" MaxHeight="250" MaxWidth="1000">
+             mc:Ignorable="d" Title="{ui:Loc OpenFileDialogView_Header}"
+             d:DesignHeight="250" d:DesignWidth="800" MaxHeight="250" MaxWidth="1000" Width="700">
     <core:DialogBase.Content>
         <Grid VerticalAlignment="Center" FocusManager.IsFocusScope="True">
             <Grid.RowDefinitions>

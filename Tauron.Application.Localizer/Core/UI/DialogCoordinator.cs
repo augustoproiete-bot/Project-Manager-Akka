@@ -35,15 +35,17 @@ namespace Tauron.Application.Localizer.Core.UI
         public bool? ShowModalMessageWindow(string title, string message)
         {
             var window = new Window();
-             SfSkinManager.SetVisualStyle(window, VisualStyles.MaterialLight);
-             window.Content = new MessageDialog(title, message, b => window.DialogResult = b, true);
+            SfSkinManager.SetVisualStyle(window, VisualStyles.Blend);
+            window.Content = new MessageDialog(title, message, b => window.DialogResult = b, true) { Margin = new Thickness(10)};
 
-             window.Owner = System.Windows.Application.Current.MainWindow;
-             window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-             window.WindowStyle = WindowStyle.ToolWindow;
-             window.ShowInTaskbar = false;
+            window.SizeToContent = SizeToContent.WidthAndHeight;
+            window.ResizeMode = ResizeMode.NoResize;
+            window.Owner = System.Windows.Application.Current.MainWindow;
+            window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            window.WindowStyle = WindowStyle.ToolWindow;
+            window.ShowInTaskbar = false;
 
-             return window.ShowDialog();
+            return window.ShowDialog();
         }
     }
 }

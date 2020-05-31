@@ -189,6 +189,8 @@ namespace Tauron.Application.Wpf
 
                 private Action<object?>? _execute;
 
+                private Func<bool>? _responded;
+
                 public CommandFactory(IViewModel? dataContext) 
                     => DataContext = dataContext;
 
@@ -198,6 +200,8 @@ namespace Tauron.Application.Wpf
 
                 public void Free()
                 {
+                    _responded = null;
+
                     if(LastCommand == null) return;
 
                     LastCommand.CanExecuteEvent += _canExecute;
@@ -208,6 +212,7 @@ namespace Tauron.Application.Wpf
 
                 public void Connect(EventCommand command, string commandName)
                 {
+                    _responded = null;
                     LastCommand = command;
 
                     if (DataContext == null) return;
@@ -217,12 +222,15 @@ namespace Tauron.Application.Wpf
                                {
                                    try
                                    {
-                                       if(!DataContext.IsInitialized) return false;
+                                       if (_responded == null)
+                                       {
+                                           if (!DataContext.IsInitialized) return false;
 
-                                       var result = DataContext
-                                          .Ask<CanCommandExecuteRespond>(new CanCommandExecuteRequest(commandName, parm), TimeSpan.FromSeconds(1)).Result;
+                                           _responded = DataContext
+                                              .Ask<CanCommandExecuteRespond>(new CanCommandExecuteRequest(commandName, parm), TimeSpan.FromSeconds(1)).Result.CanExecute;
+                                       }
 
-                                       return result.CanExecute;
+                                       return _responded?.Invoke() ?? false;
                                    }
                                    catch (AggregateException)
                                    {

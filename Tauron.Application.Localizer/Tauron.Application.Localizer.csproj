@@ -18,7 +18,7 @@
     <PackageReference Include="Syncfusion.SfInput.WPF" Version="18.1.0.54" />
     <PackageReference Include="Syncfusion.SfSkinManager.WPF" Version="18.1.0.54" />
     <PackageReference Include="Syncfusion.Shared.WPF" Version="18.1.0.54" />
-    <PackageReference Include="Syncfusion.Themes.MaterialLightBlue.WPF" Version="18.1.0.54" />
+    <PackageReference Include="Syncfusion.Themes.Blend.WPF" Version="18.1.0.54" />
   </ItemGroup>
 
   <ItemGroup>

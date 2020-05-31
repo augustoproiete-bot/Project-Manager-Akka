@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Akka.Actor;
@@ -18,8 +20,15 @@ namespace Tauron.Application.Wpf.AppCore
 
         public Task WaitForStartAsync(ActorSystem system)
         {
-            void ShutdownApp() 
-                => system.Terminate();
+            void ShutdownApp()
+            {
+                Task.Run(async () =>
+                         {
+                             await Task.Delay(TimeSpan.FromSeconds(60));
+                             Process.GetCurrentProcess().Kill(false);
+                         });
+                system.Terminate();
+            }
 
             void Runner()
             {

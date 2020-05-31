@@ -153,7 +153,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             this.Flow<SupplyNewProjectFile>().To.Mutate(workspace.Source).For(sm => sm.ProjectReset, sm => np => sm.Reset(np.File)).ToSelf()
-               .Then.Action(ProjectRest);
+               .Then.Action(ProjectRest).Receive();
 
             #endregion
 

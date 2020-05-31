@@ -137,6 +137,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => _loadingOperation == null)
+               //.ToFlow(SourceSelected.From(() => "", OpenFileMode.OpenNewFile)).Send.ToSelf()
                .ToFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenNewFile)), OpenFileMode.OpenNewFile)).Send.ToSelf()
                .Return().ThenRegister("NewFile");
 
@@ -162,6 +163,8 @@ namespace Tauron.Application.Localizer.UIModels
             public void AddNewFile(string file)
             {
                 file = file.Trim();
+
+                if(string.IsNullOrWhiteSpace(file) || !File.Exists(file)) return;
 
                 if(this.Any(rf => rf.File == file)) return;
 

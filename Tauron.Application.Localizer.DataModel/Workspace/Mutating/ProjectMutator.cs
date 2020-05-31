@@ -37,6 +37,8 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
 
         public void AddProject(string name)
         {
+            if(string.IsNullOrWhiteSpace(name)) return;
+
             _engine.Mutate(nameof(AddProject), 
                 context =>
                 {

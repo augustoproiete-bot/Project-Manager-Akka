@@ -6,9 +6,10 @@
              xmlns:local="clr-namespace:Tauron.Application.Localizer.Views"
              xmlns:li="http://schemas.syncfusion.com/wpf"
              xmlns:tau="http://schemas.TauronWpf.com"
-             xmlns:core="clr-namespace:Tauron.Application.Localizer.Core" Width="1200"
-             mc:Ignorable="d" Background="White" Title="{tau:Loc LanguageSelectorDialogView_Title}"
-             d:DesignHeight="450" d:DesignWidth="800" d:DataContext="{d:DesignInstance local:LanguageSelectorDialogViewModel}">
+             xmlns:core="clr-namespace:Tauron.Application.Localizer.Core" Width="1200" Height="1000"
+             mc:Ignorable="d" Title="{tau:Loc LanguageSelectorDialogView_Title}"
+             d:DesignHeight="450" d:DesignWidth="800" d:DataContext="{d:DesignInstance local:LanguageSelectorDialogViewModel}"
+             TextElement.FontSize="12">
     <core:DialogBase.Content>
         <li:SfBusyIndicator IsBusy="{Binding IsLoading}">
             <Grid>
@@ -34,7 +35,7 @@
                                     <StackPanel>
                                         <CheckBox Content="{Binding Info.EnglishName}" IsChecked="{Binding IsSelected}"
                                                   IsEnabled="{Binding IsNotFiltered}" />
-                                        <Expander Style="{x:Null}">
+                                        <Expander>
                                             <ItemsControl ItemsSource="{Binding List}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate DataType="local:SubLanguage">

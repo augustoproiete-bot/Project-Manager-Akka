@@ -71,7 +71,7 @@
     </ControlTemplate>
 
     <Style TargetType="{x:Type core:DialogBase}">
-        <Setter Property="Background" Value="White" />
+        <Setter Property="Background" Value="{Binding MetroBackgroundBrush}"/>
         <Setter Property="DialogTitleFontSize" Value="25" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -79,7 +79,7 @@
         <Setter Property="KeyboardNavigation.ControlTabNavigation" Value="Cycle" />
         <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Cycle" />
         <Setter Property="KeyboardNavigation.TabNavigation" Value="Cycle" />
-        <Setter Property="Opacity" Value="0" />
+        <Setter Property="Opacity" Value="1" />
         <Setter Property="Padding" Value="0 10 0 0" />
         <Setter Property="Template" Value="{StaticResource Templates.BaseDialog}" />
         <Setter Property="VerticalAlignment" Value="Center" />

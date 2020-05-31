@@ -6,8 +6,9 @@
              xmlns:local="clr-namespace:Tauron.Application.Localizer.Views"
              xmlns:ui="http://schemas.TauronWpf.com"
              xmlns:core="clr-namespace:Tauron.Application.Localizer.Core"
-             mc:Ignorable="d" Title="{ui:Loc NewProjectDialogView_Header}" Background="White" Loaded="OpenFileDialogView_OnLoaded"
-             d:DesignHeight="250" d:DesignWidth="800" MaxHeight="250" MaxWidth="1000" d:DataContext="{d:DesignInstance local:NewProjectDialogViewModel}">
+             mc:Ignorable="d" Title="{ui:Loc NewProjectDialogView_Header}" Loaded="OpenFileDialogView_OnLoaded"
+             d:DesignHeight="250" d:DesignWidth="800"  d:DataContext="{d:DesignInstance local:NewProjectDialogViewModel}">
+   <!-- MaxHeight="250" MaxWidth="1000">-->
     <core:DialogBase.Content>
         <Grid VerticalAlignment="Center">
             <Grid.RowDefinitions>

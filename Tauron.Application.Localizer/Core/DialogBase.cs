@@ -9,6 +9,7 @@ namespace Tauron.Application.Localizer.Core
 {
 
     [DefaultProperty("Content")]
+    [System.Windows.Markup.ContentProperty("Content")]
     [PublicAPI]
     [TemplatePart(Name="PART_Content", Type = typeof(ContentPresenter))]
     [TemplatePart(Name = "PART_Top", Type = typeof(ContentPresenter))]
@@ -20,7 +21,7 @@ namespace Tauron.Application.Localizer.Core
 
         private ContentPresenter? _top;
 
-        private ContentPresenter? _buttom;
+        private ContentPresenter? _bottom;
 
         private TextBlock? _title;
 
@@ -41,7 +42,7 @@ namespace Tauron.Application.Localizer.Core
                 if (TryFindResource("Storyboard.Dialogs.Show") is Storyboard res)
                     res.Begin(this);
                 else
-                    Opacity = 0;
+                    Opacity = 1;
             }));
         }
 
@@ -109,8 +110,8 @@ namespace Tauron.Application.Localizer.Core
 
         private void ButtomChaned(DependencyPropertyChangedEventArgs args)
         {
-            if(_buttom == null) return;
-            _buttom.Content = args.NewValue;
+            if(_bottom == null) return;
+            _bottom.Content = args.NewValue;
         }
 
         public object Bottom
@@ -131,9 +132,20 @@ namespace Tauron.Application.Localizer.Core
         public override void OnApplyTemplate()
         {
             _content = (ContentPresenter?) GetTemplateChild("PART_Content");
+            if(_content != null)
+                _content.Content = Content;
+
             _top = (ContentPresenter?) GetTemplateChild("PART_Top");
+            if (_top != null)
+                _top.Content = Top;
+
             _title = (TextBlock?) GetTemplateChild("PART_Title");
-            _buttom = (ContentPresenter?) GetTemplateChild("PART_Bottom");
+            if (_title != null)
+                _title.Text = Title;
+
+            _bottom = (ContentPresenter?) GetTemplateChild("PART_Bottom");
+            if (_bottom != null)
+                _bottom.Content = Bottom;
 
             base.OnApplyTemplate();
         }

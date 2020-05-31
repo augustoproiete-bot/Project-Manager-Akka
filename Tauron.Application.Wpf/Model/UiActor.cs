@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Akka.Actor;
-using Akka.Event;
 using Akka.Util.Internal;
 using Autofac;
 using JetBrains.Annotations;
@@ -187,12 +186,12 @@ namespace Tauron.Application.Wpf.Model
             if (!_commandRegistrations.TryGetValue(name, out var registration))
             {
                 Log.Warning("No Command Found {Name}", name);
-                Context.Sender.Tell(new CanCommandExecuteRespond(name, false));
+                Context.Sender.Tell(new CanCommandExecuteRespond(name, () => false));
             }
             else
             {
                 var invoker = registration.CanExecute;
-                Context.Sender.Tell(invoker == null ? new CanCommandExecuteRespond(name, true) : new CanCommandExecuteRespond(name, invoker(parameter)));
+                Context.Sender.Tell(invoker == null ? new CanCommandExecuteRespond(name, () => true) : new CanCommandExecuteRespond(name, () => invoker(parameter)));
             }
         }
 

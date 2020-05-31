@@ -46,6 +46,7 @@ namespace Tauron.Application.Localizer.Views
 
         private void Ready_OnClick(object sender, RoutedEventArgs e)
         {
+            IsEnabled = false;
             string text = PART_Path.Text;
             _selector.SetResult(text);
         }

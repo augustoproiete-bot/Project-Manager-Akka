@@ -1,4 +1,5 @@
-﻿using Amadevus.RecordGenerator;
+﻿using System;
+using Amadevus.RecordGenerator;
 
 namespace Tauron.Application.Wpf.ModelMessages
 {
@@ -7,6 +8,6 @@ namespace Tauron.Application.Wpf.ModelMessages
     {
         public string Name { get; }
 
-        public bool CanExecute { get; }
+        public Func<bool> CanExecute { get; }
     }
 }

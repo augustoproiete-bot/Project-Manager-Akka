@@ -7,23 +7,22 @@
         xmlns:serilogViewer="clr-namespace:Tauron.Application.Wpf.SerilogViewer;assembly=Tauron.Application.Wpf.SerilogViewer"
         xmlns:services="clr-namespace:Tauron.Application.Localizer.UIModels.Services;assembly=Tauron.Application.Localizer.UIModels"
         xmlns:converter="clr-namespace:Tauron.Application.Localizer.Core.Converter"
-        xmlns:ui="clr-namespace:Tauron.Application.Localizer.Core.UI"
-        xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
         xmlns:li="http://schemas.syncfusion.com/wpf"
         xmlns:sfSkinManager="clr-namespace:Syncfusion.SfSkinManager;assembly=Syncfusion.SfSkinManager.WPF"
-        mc:Ignorable="d" WindowState="Maximized" sfSkinManager:SfSkinManager.VisualStyle="MaterialLight"
-        Title="{tau:Loc MainWindow_Title}" Height="450" Width="800" Icon="icon.ico"      
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        mc:Ignorable="d" WindowState="Maximized" sfSkinManager:SfSkinManager.VisualStyle="Blend"
+        Title="{tau:Loc MainWindow_Title}" Height="450" Width="800" Icon="icon.ico"    
+        TextElement.Foreground="White"
         TextElement.FontWeight="Medium"
-        TextElement.FontSize="14"
+        TextElement.FontSize="17"
         TextOptions.TextFormattingMode="Ideal"
-        TextOptions.TextRenderingMode="Auto"
-        Background="{DynamicResource MaterialDesignPaper}"
-        FontFamily="{DynamicResource MaterialDesignFont}">
+        TextOptions.TextRenderingMode="Auto">
     <li:SfBusyIndicator x:Name="SfBusyIndicator" IsBusy="False">
-        <ui:AdornedControl x:Name="DialogContent">
-            <Grid>
+        <Grid>
+            <ContentControl Name="DialogContent" IsEnabled="True" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="600">
+
+            </ContentControl>
+            <Grid Name="MainContent">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition />
@@ -91,5 +90,6 @@
                     </TabControl>
                 </Expander>
             </Grid>
-        </ui:AdornedControl></li:SfBusyIndicator>
+        </Grid>
+    </li:SfBusyIndicator>
 </tau:Window>

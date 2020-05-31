@@ -156,8 +156,11 @@ namespace Tauron
         public EnterFlow<TStart> Build()
             => _flow.Build();
 
-        public void Receive() 
-            => _flow.Register(e => e.Exposed.Receive<TStart>(new ReceiveHelper(Build()).Send));
+        public void Receive()
+        {
+            _flow.Register(e => e.Exposed.Receive<TStart>(new ReceiveHelper(Build()).Send));
+            _flow.BuildReceive();
+        }
 
         public TParent Return() => _flow.Return();
     }
@@ -265,7 +268,7 @@ namespace Tauron
             if(_onReturn != null)
                 _onReturn(Build());
             else
-                throw new InvalidOperationException("No Return Provided");
+                BuildReceive();
 
             return _parent;
         }
@@ -320,8 +323,13 @@ namespace Tauron
             return _delgators.Aggregate(func, (current, delgator) => current.Combine(delgator())) ?? (s => { });
         }
 
+        private bool _buildReceiveCalled;
+
         internal void BuildReceive()
         {
+            if(_buildReceiveCalled) return;
+            _buildReceiveCalled = true;
+
             foreach (var recieve in _recieves)
                 recieve(Actor);
         }
