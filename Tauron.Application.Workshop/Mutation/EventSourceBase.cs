@@ -13,7 +13,8 @@ namespace Tauron.Application.Workshop.Mutation
         private ImmutableList<IActorRef> _intrests = ImmutableList<IActorRef>.Empty;
         private Action<TRespond>? _action;
 
-        protected EventSourceBase(IActorRef mutator) => _mutator = mutator;
+        protected EventSourceBase(IActorRef mutator) 
+            => _mutator = mutator;
 
         public void RespondOn(IActorRef actorRef)
         {

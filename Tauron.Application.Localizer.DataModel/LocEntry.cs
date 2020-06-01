@@ -43,5 +43,10 @@ namespace Tauron.Application.Localizer.DataModel
                 writer.Write(value);
             }
         }
+
+        public static TType ReadFrom<TType>(BinaryReader arg)
+        {
+            
+        }
     }
 }

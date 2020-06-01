@@ -17,5 +17,8 @@ namespace Tauron.Application.Workshop.Analyzing.Actor
             Rule = rule;
             Issues = issues;
         }
+
+        public IssuesEvent ToEvent()
+            => new IssuesEvent(Rule.Name, Issues);
     }
 }

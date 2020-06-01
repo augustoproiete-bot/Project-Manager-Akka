@@ -2,12 +2,13 @@
 using System.IO;
 using Amadevus.RecordGenerator;
 using JetBrains.Annotations;
+using Tauron.Application.Localizer.DataModel.Serialization;
 
 namespace Tauron.Application.Localizer.DataModel
 {
     [Record]
     [PublicAPI]
-    public sealed partial class Project
+    public sealed partial class Project : IWriteable
     {
         public ImmutableList<LocEntry> Entries { get; }
 
@@ -15,33 +16,7 @@ namespace Tauron.Application.Localizer.DataModel
 
         public ImmutableList<ActiveLanguage> ActiveLanguages { get; }
 
-        public ImmutableList<string> Imports { get; } 
-
-        public Project(BinaryReader reader)
-        {
-            ProjectName = reader.ReadString();
-
-            var langList = ImmutableList<ActiveLanguage>.Empty.ToBuilder();
-            var count = reader.ReadInt32();
-            for (var i = 0; i < count; i++)
-                langList.Add(new ActiveLanguage(reader));
-
-            ActiveLanguages = langList.ToImmutable();
-
-            count = reader.ReadInt32();
-            var list = ImmutableList<LocEntry>.Empty.ToBuilder();
-            for (var i = 0; i < count; i++)
-                list.Add(new LocEntry(reader, this));
-
-            Entries = list.ToImmutable();
-
-            count = reader.ReadInt32();
-            var imports = ImmutableList<string>.Empty.ToBuilder();
-            for (int i = 0; i < count; i++) 
-                imports.Add(reader.ReadString());
-
-            Imports = imports.ToImmutable();
-        }
+        public ImmutableList<string> Imports { get; }
 
         public Project()
         {
@@ -52,10 +27,7 @@ namespace Tauron.Application.Localizer.DataModel
         }
 
         public Project(string name)
-            : this()
-        {
-            ProjectName = name;
-        }
+            : this() => ProjectName = name;
 
         public void Write(BinaryWriter writer)
         {
@@ -78,6 +50,23 @@ namespace Tauron.Application.Localizer.DataModel
         public ActiveLanguage GetActiveLanguage(string shortcut)
         {
             return ActiveLanguages.Find(al => al.Shortcut == shortcut) ?? ActiveLanguage.Invariant;
+        }
+
+        public static Project ReadFrom(BinaryReader reader)
+        {
+            var name = reader.ReadString();
+            var project = new Project(name).ToBuilder();
+
+            project.ActiveLanguages = Helper.Read(reader, ActiveLanguage.ReadFrom);
+            project.Entries = Helper.Read(reader, LocEntry.ReadFrom);
+
+            count = reader.ReadInt32();
+            var imports = ImmutableList<string>.Empty.ToBuilder();
+            for (int i = 0; i < count; i++)
+                imports.Add(reader.ReadString());
+
+            Imports = imports.ToImmutable();
+        
         }
     }
 }

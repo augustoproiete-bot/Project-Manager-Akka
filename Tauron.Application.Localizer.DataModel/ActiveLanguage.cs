@@ -2,11 +2,12 @@
 using System.Globalization;
 using System.IO;
 using Amadevus.RecordGenerator;
+using Tauron.Application.Localizer.DataModel.Serialization;
 
 namespace Tauron.Application.Localizer.DataModel
 {
     [Record]
-    public sealed partial class ActiveLanguage : IEquatable<ActiveLanguage>
+    public sealed partial class ActiveLanguage : IEquatable<ActiveLanguage>, IWriteable
     {
         public static readonly ActiveLanguage Invariant = FromCulture(CultureInfo.InvariantCulture);
 
@@ -44,6 +45,11 @@ namespace Tauron.Application.Localizer.DataModel
         {
             writer.Write(Shortcut);
             writer.Write(Name);
+        }
+
+        public static ActiveLanguage ReadFrom(BinaryReader reader)
+        {
+            
         }
     }
 }
