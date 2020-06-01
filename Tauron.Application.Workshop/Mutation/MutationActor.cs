@@ -2,7 +2,7 @@
 using Akka.Actor;
 using Akka.Event;
 
-namespace Tauron.Application.Workshop.MutatingEngine
+namespace Tauron.Application.Workshop.Mutation
 {
     public sealed class MutationActor<TData> : ReceiveActor
     {
@@ -21,7 +21,6 @@ namespace Tauron.Application.Workshop.MutatingEngine
             Receive<WatchIntrest>(wi => Context.WatchWith(wi.Target, new HandlerTerminated(wi.OnRemove)));
             Receive<HandlerTerminated>(ht => ht.Remover());
             Receive<Terminated>(t =>{});
-
         }
 
         private void Mutation(DataMutation<TData> obj)

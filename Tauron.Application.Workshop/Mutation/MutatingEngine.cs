@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Akka.Actor;
 using JetBrains.Annotations;
 
-namespace Tauron.Application.Workshop.MutatingEngine
+namespace Tauron.Application.Workshop.Mutation
 {
     [PublicAPI]
     public sealed class MutatingEngine<TData>
@@ -37,10 +37,10 @@ namespace Tauron.Application.Workshop.MutatingEngine
         private readonly IActorRef _mutator;
         private readonly ResponderList _responder;
 
-        public MutatingEngine(IActorRefFactory factory, IDataSource<TData> dataSource)
+        internal MutatingEngine(IActorRef mutator, IDataSource<TData> dataSource)
         {
             _dataSource = dataSource;
-            _mutator = factory.ActorOf<MutationActor<TData>>("Mutator");
+            _mutator = mutator;
             _responder = new ResponderList(_dataSource.SetData);
         }
 
@@ -56,5 +56,18 @@ namespace Tauron.Application.Workshop.MutatingEngine
 
         public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null) 
             => new EventSource<TRespond,TData>(_mutator, transformer, @where, _responder);
+    }
+
+    [PublicAPI]
+    public static class MutatingEngine
+    {
+        public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, IActorRefFactory factory)
+        {
+            var mutator = factory.ActorOf<MutationActor<TData>>("Mutator");
+            return new MutatingEngine<TData>(mutator, source);
+        }
+
+        public static MutatingEngine<TData> Dummy<TData>(IDataSource<TData> source)
+            => new MutatingEngine<TData>(source);
     }
 }

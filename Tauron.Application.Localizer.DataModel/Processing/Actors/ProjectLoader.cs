@@ -24,7 +24,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
             }
             catch (Exception e)
             {
-                obj.OriginalSender.Tell(new LoadedProjectFile(obj.ProjectFile.OperationId, new ProjectFile(ImmutableList<Project>.Empty, obj.ProjectFile.Source, Sender), e, false));
+                obj.OriginalSender.Tell(new LoadedProjectFile(obj.ProjectFile.OperationId, ProjectFile.FromSource(obj.ProjectFile.Source, Sender), e, false));
             }
             finally
             {

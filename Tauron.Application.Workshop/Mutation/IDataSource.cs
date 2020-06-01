@@ -1,4 +1,4 @@
-﻿namespace Tauron.Application.Workshop.MutatingEngine
+﻿namespace Tauron.Application.Workshop.Mutation
 {
     public interface IDataSource<TData>
     {

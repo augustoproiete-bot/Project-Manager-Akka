@@ -14,7 +14,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing
 
         private void SaveProject(SaveProject obj)
         {
-            var actor = Context.GetOrAdd<ProjectSaver>("saver");
+            var actor = Context.GetOrAdd<ProjectSaver>("Saver");
             actor.Forward(obj);
         }
 

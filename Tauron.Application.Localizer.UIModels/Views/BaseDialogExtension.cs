@@ -15,9 +15,9 @@ namespace Tauron.Application.Localizer.UIModels.Views
 
         public static Func<TData> ShowDialog<TDialog, TData>(this UiActor actor, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TData>
-            => ShowDialog<TDialog, TData, TData>(actor, Array.Empty<TData>(), parameters);
+            => ShowDialog<TDialog, TData, TData>(actor, Array.Empty<TData>, parameters);
 
-        public static Func<TData> ShowDialog<TDialog, TData, TViewData>(this UiActor actor, IEnumerable<TViewData> initalData, params Parameter[] parameters)
+        public static Func<TData> ShowDialog<TDialog, TData, TViewData>(this UiActor actor, Func<IEnumerable<TViewData>> initalData, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TViewData>
         {
             _dialogCoordinator ??= actor.LifetimeScope.Resolve<IDialogCoordinator>();
@@ -29,7 +29,7 @@ namespace Tauron.Application.Localizer.UIModels.Views
                        actor.Dispatcher.Invoke(() =>
                                                {
                                                    var dialog = actor.LifetimeScope.Resolve<TDialog>(parameters);
-                                                   task = dialog.Init(initalData);
+                                                   task = dialog.Init(initalData());
 
                                                    _dialogCoordinator.ShowDialog(dialog);
                                                });

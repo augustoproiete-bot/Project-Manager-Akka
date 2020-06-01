@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Windows.Threading;
 using Akka.Actor;
@@ -178,10 +179,19 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty)
-               .ToFlow(this.ShowDialog<IProjectNameDialog, NewProjectDialogResult, string>(workspace.ProjectFile.Projects.Select(p => p.ProjectName)))
+               .ToFlow(this.ShowDialog<IProjectNameDialog, NewProjectDialogResult, string>(() => workspace.ProjectFile.Projects.Select(p => p.ProjectName)))
                     .To.Mutate(workspace.Projects).For(pm => pm.NewProject, pm => result => pm.AddProject(result.Name)).ToSelf()
                .Then.Action(p => AddProject(p.Project))
                .Return().ThenRegister("AddNewProject");
+
+            #endregion
+
+            #region Add Global Language
+
+            NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty)
+                .ToFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, CultureInfo>(() => workspace.ProjectFile.GlobalLanguages.Select(al => al.ToCulture())))
+                .To.Mutate(workspace.Projects).For(mutator => result => mutator.AddLanguage(result?.CultureInfo))
+                .Return().ThenRegister("AddGlobalLang");
 
             #endregion
         }

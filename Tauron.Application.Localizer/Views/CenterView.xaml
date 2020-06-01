@@ -11,6 +11,7 @@
         <ToolBar DockPanel.Dock="Top">
             <Button Margin="3" Content="{tau:Loc CenterView_NewProject}" tau:CommandBinder.Command="AddNewProject"/>
             <Button Margin="3" Content="{tau:Loc CenterView_RemoveProject}" tau:CommandBinder.Command="RemoveProject"/>
+            <Button Margin="3" Content="{tau:Loc CenterView_AddGlobalLanguage_Label}" tau:CommandBinder.Command="AddGlobalLang"></Button>
         </ToolBar>
         <TabControl ItemsSource="{tau:ActorBinding Views}" SelectedIndex="{tau:ActorBinding CurrentProject}">
             <TabControl.ItemTemplate>
@@ -23,16 +24,6 @@
                     <ContentControl Content="{Binding Model, Converter={tau:ViewModelConverter}}"/>
                 </DataTemplate>
             </TabControl.ContentTemplate>
-            <!--<TabControl.ItemTemplate>
-                <DataTemplate DataType="uiModels:ProjectViewContainer">
-                    <TabItem>
-                        <TabItem.Header>
-                            <TextBlock Text="{Binding Project.ProjectName}"/>
-                        </TabItem.Header>
-                        <ContentControl Content="{Binding Model, Converter={tau:ViewModelConverter}}"/>
-                    </TabItem>
-                </DataTemplate>
-            </TabControl.ItemTemplate>-->
         </TabControl>
     </DockPanel>
 </tau:UserControl>

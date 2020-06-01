@@ -29,6 +29,7 @@
   "CenterView_RemoveProjectDialog_Title": "Remove project {0}",
   "CenterView_RemoveProjectDialog_Message": "Do you want to remove the project",
   "CenterView_NewProject_InvalidName_Message": "The project name contains incorrect characters.",
+  "CenterView_AddGlobalLanguage_Label": "Add Language To All",
 
   "NewProjectDialogView_Header": "New Project",
   "NewProjectDialogView_Name_Lable": "Name: ",

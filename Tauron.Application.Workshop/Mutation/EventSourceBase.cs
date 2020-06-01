@@ -4,7 +4,7 @@ using System.Threading;
 using Akka.Actor;
 using JetBrains.Annotations;
 
-namespace Tauron.Application.Workshop.MutatingEngine
+namespace Tauron.Application.Workshop.Mutation
 {
     [PublicAPI]
     public abstract class EventSourceBase<TRespond> : IEventSource<TRespond>

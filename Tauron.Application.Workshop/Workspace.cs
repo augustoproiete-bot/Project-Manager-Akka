@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 using Tauron.Application.Workshop.Analyzing;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutating.Changes;
-using Tauron.Application.Workshop.MutatingEngine;
+using Tauron.Application.Workshop.Mutation;
 
 namespace Tauron.Application.Workshop
 {
@@ -13,7 +13,7 @@ namespace Tauron.Application.Workshop
         protected MutatingEngine<TData> Engine { get; }
 
         protected WorkspaceBase(IActorRefFactory factory) 
-            => Engine = new MutatingEngine<TData>(factory, this);
+            => Engine = MutatingEngine.From(this, factory);
 
         TData IDataSource<TData>.GetData() => GetDataInternal();
 

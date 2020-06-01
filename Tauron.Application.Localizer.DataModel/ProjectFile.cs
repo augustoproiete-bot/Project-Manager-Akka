@@ -15,6 +15,8 @@ namespace Tauron.Application.Localizer.DataModel
     {
         public ImmutableList<Project> Projects { get; }
 
+        public ImmutableList<ActiveLanguage> GlobalLanguages { get; }
+
         public string Source { get; }
 
         public IActorRef Operator { get; }
@@ -26,6 +28,19 @@ namespace Tauron.Application.Localizer.DataModel
             Projects = ImmutableList<Project>.Empty;
             Source = string.Empty;
             Operator = ActorRefs.Nobody;
+            GlobalLanguages = ImmutableList<ActiveLanguage>.Empty;
+        }
+
+        private ProjectFile(string source, IActorRef op)
+            : this()
+        {
+            Source = source;
+            Operator = op;
+        }
+
+        public static ProjectFile FromSource(string source, IActorRef op)
+        {
+            return new ProjectFile(source, op);
         }
 
         public ProjectFile(BinaryReader reader, string source, IActorRef op)
@@ -40,6 +55,16 @@ namespace Tauron.Application.Localizer.DataModel
                 builder.Add(new Project(reader));
 
             Projects = builder.ToImmutable();
+
+            var langBuilder = ImmutableList.CreateBuilder<ActiveLanguage>();
+
+            count = reader.ReadInt32();
+            for (int i = 0; i < count; i++)
+            {
+                langBuilder.Add(new ActiveLanguage(reader));
+            }
+
+            GlobalLanguages = langBuilder.ToImmutable();
         }
 
         public void Write(BinaryWriter writer)
@@ -47,6 +72,10 @@ namespace Tauron.Application.Localizer.DataModel
             writer.Write(Projects.Count);
             foreach (var project in Projects) 
                 project.Write(writer);
+
+            writer.Write(GlobalLanguages.Count);
+            foreach (var globalLanguage in GlobalLanguages) 
+                globalLanguage.Write(writer);
         }
 
         public static void BeginLoad(IActorContext factory, string operationId, string source, string actorName)
@@ -58,7 +87,7 @@ namespace Tauron.Application.Localizer.DataModel
         public static ProjectFile NewProjectFile(IActorContext factory, string source, string actorName)
         {
             var actor = factory.GetOrAdd<ProjectFileOperator>(actorName);
-            return new ProjectFile(ImmutableList<Project>.Empty, source, actor);
+            return FromSource(source, actor);
         }
 
         public ProjectFile AddLanguage(Project project, ActiveLanguage language)

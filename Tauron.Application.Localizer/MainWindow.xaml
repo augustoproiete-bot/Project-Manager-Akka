@@ -55,9 +55,9 @@
                 <Expander Grid.Row="2" Margin="5">
                     <Expander.Header>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding RunningOperations.Count}"></TextBlock>
-                            <TextBlock Text=" | " />
                             <TextBlock Text="{tau:Loc MainWindow_Operations_Label}" />
+                            <TextBlock Text=" | " />
+                            <TextBlock Text="{Binding RunningOperations.Count}"></TextBlock>
                         </StackPanel>
                     </Expander.Header>
                     <TabControl MinHeight="400">

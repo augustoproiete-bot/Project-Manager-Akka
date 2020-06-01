@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Tauron.Application.Workshop.MutatingEngine
+namespace Tauron.Application.Workshop.Mutation
 {
     public sealed class DataMutation<TData>
     {

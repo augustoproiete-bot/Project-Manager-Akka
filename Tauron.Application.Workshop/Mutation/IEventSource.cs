@@ -1,7 +1,7 @@
 ﻿using System;
 using Akka.Actor;
 
-namespace Tauron.Application.Workshop.MutatingEngine
+namespace Tauron.Application.Workshop.Mutation
 {
     public interface IEventSource<TRespond>
     {

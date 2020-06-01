@@ -116,11 +116,13 @@ namespace Tauron.Application.Localizer.UIModels
             ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).Async();
 
             NewCommad.WithCanExecute(() => GetImportableProjects().Any())
-                .ToFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, string>(GetImportableProjects()))
+                .ToFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, string>(GetImportableProjects))
                 .To.Mutate(workspace.Projects).For(pm => pm.NewImport, pm => r => pm.AddImport(_project, r!.Project)).ToSelf()
                 .Then.Action(AddImport)
-                .Return().ThenRegister("AddImportCommand");
+                .Return().ThenRegister("AddImport");
 
+
+            //TODO Remove Import
             #endregion
 
             #region AddLanguage
@@ -139,7 +141,7 @@ namespace Tauron.Application.Localizer.UIModels
             Languages = this.RegisterUiCollection<ProjectViewLanguageModel>(nameof(Languages)).Async();
 
             NewCommad
-               .ToFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, CultureInfo>(workspace.Get(_project).ActiveLanguages.Select(al => al.ToCulture()).ToArray()))
+               .ToFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, CultureInfo>(() => workspace.Get(_project).ActiveLanguages.Select(al => al.ToCulture()).ToArray()))
                .To.Mutate(workspace.Projects).For(pm => pm.NewLanguage, pm => d => pm.AddLanguage(_project, d!.CultureInfo)).ToSelf()
                .Then.Action(AddActiveLanguage).Return().ThenRegister("AddLanguage");
             
@@ -157,6 +159,12 @@ namespace Tauron.Application.Localizer.UIModels
                 Languages.Add(new ProjectViewLanguageModel(localizer.ProjectViewLanguageBoxFirstLabel, true));
                 Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));
                 SelectedIndex += 0;
+                SelectedIndex.PropertyValueChanged += () =>
+                {
+                    if (SelectedIndex == 0)
+                        return;
+                    SelectedIndex += 0;
+                };
 
                 var self = Context.Self;
 

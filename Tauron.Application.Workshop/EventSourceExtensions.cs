@@ -2,7 +2,7 @@
 using Akka.Actor;
 using JetBrains.Annotations;
 using Tauron.Akka;
-using Tauron.Application.Workshop.MutatingEngine;
+using Tauron.Application.Workshop.Mutation;
 
 namespace Tauron.Application.Workshop
 {
@@ -63,6 +63,8 @@ namespace Tauron.Application.Workshop
             public MutateTargetSelector<TNext, TStart, TParent, TRecieve> For<TNext>(
                 Func<TMutator, IEventSource<TNext>> eventSource, Func<TMutator, Action<TRecieve>> run) =>
                 new MutateTargetSelector<TNext, TStart, TParent, TRecieve>(_selector.Flow, eventSource(_mutator), run(_mutator));
+            public ActionFinisher<TRecieve, TStart, TParent> For(Func<TMutator, Action<TRecieve>> run) =>
+                new ActionFinisher<TRecieve, TStart, TParent>(_selector.Flow, run(_mutator));
         }
 
         #endregion

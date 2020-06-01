@@ -5,15 +5,23 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:tau="http://schemas.TauronWpf.com"
              xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
+             xmlns:dataModel="clr-namespace:Tauron.Application.Localizer.DataModel;assembly=Tauron.Application.Localizer.DataModel"
              mc:Ignorable="d" Background="White" d:DataContext="{d:DesignInstance uiModels:ProjectViewModel}"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <Grid.Resources>
+        <!--<Grid.Resources>
             <Style x:Key="LanguageStyle" TargetType="{x:Type ComboBoxItem}">
-                <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                --><!-- ReSharper disable once Xaml.BindingWithContextNotResolved --><!--
                 <Setter Property="IsEnabled" Value="{Binding IsEnabled, FallbackValue=true}"/>
+                <Setter Property="ContentTemplate">
+                    <Setter.Value>
+                        <DataTemplate DataType="dataModel:ActiveLanguage">
+                            <TextBlock Text="{Binding Name}" Foreground="White"/>
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
-        </Grid.Resources>
+        </Grid.Resources>-->
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -27,8 +35,8 @@
         </Grid.ColumnDefinitions>
         <Button Content="Neuer Entrag" Margin="5"/>
         <Button Content="{tau:Loc ProjectView_Button_AddLanguage_Label}" Margin="5" Grid.Column="1" Grid.Row="0" tau:CommandBinder.Command="AddLanguage"/>
-        <ComboBox Grid.Row="0" Grid.Column="2" MaxHeight="30" SelectedIndex="{tau:ActorBinding SelectedIndex}" ItemsSource="{tau:ActorBinding Languages}" DisplayMemberPath="Name"
-                  ItemContainerStyle="{DynamicResource LanguageStyle}"/>
+        <ComboBox Grid.Row="0" Grid.Column="2" MaxHeight="30" SelectedIndex="{tau:ActorBinding SelectedIndex}" ItemsSource="{tau:ActorBinding Languages}" DisplayMemberPath="Name"/>
+                  <!--ItemContainerStyle="{DynamicResource LanguageStyle}"/>-->
         <DockPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Margin="7" LastChildFill="True">
             <Button Content="{tau:Loc ProjectView_Button_AddImport_Label}" DockPanel.Dock="Right" Margin="3" tau:CommandBinder.Command="AddImport"/>
             <Button Content="{tau:Loc ProjectView_Button_RemoveImport_Label}" DockPanel.Dock="Right" Margin="3"/>
