@@ -5,7 +5,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:tau="http://schemas.TauronWpf.com"
              xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
-             xmlns:dataModel="clr-namespace:Tauron.Application.Localizer.DataModel;assembly=Tauron.Application.Localizer.DataModel"
              mc:Ignorable="d" Background="White" d:DataContext="{d:DesignInstance uiModels:ProjectViewModel}"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
@@ -39,9 +38,9 @@
                   <!--ItemContainerStyle="{DynamicResource LanguageStyle}"/>-->
         <DockPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Margin="7" LastChildFill="True">
             <Button Content="{tau:Loc ProjectView_Button_AddImport_Label}" DockPanel.Dock="Right" Margin="3" tau:CommandBinder.Command="AddImport"/>
-            <Button Content="{tau:Loc ProjectView_Button_RemoveImport_Label}" DockPanel.Dock="Right" Margin="3"/>
+            <Button Content="{tau:Loc ProjectView_Button_RemoveImport_Label}" DockPanel.Dock="Right" Margin="3" tau:CommandBinder.Command="RemoveImport"/>
             <TextBlock Text="{tau:Loc ProjectView_Import_Label}" DockPanel.Dock="Left" Margin="3" VerticalAlignment="Center"/>
-            <ComboBox Margin="3" ItemsSource="{tau:ActorBinding ImportetProjects}" SelectedIndex="{tau:ActorBinding ImportSelectIndex}"/>
+            <ComboBox Margin="3" ItemsSource="{tau:ActorBinding ImportetProjects}" SelectedIndex="{tau:ActorBinding ImportSelectIndex, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
         </DockPanel>
         <TabControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Margin="5" TabStripPlacement="Left" SelectedIndex="{tau:ActorBinding SelectedIndex}" ItemsSource="{tau:ActorBinding ProjectEntrys}">
             <TabControl.ItemTemplate>

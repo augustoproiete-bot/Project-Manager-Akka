@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.IO;
 using Akka.Actor;
 
@@ -18,7 +17,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
             {
                 using var stream = File.OpenRead(obj.ProjectFile.Source);
                 using var reader = new BinaryReader(stream);
-                var projectFile = new ProjectFile(reader, obj.ProjectFile.Source, Sender);
+                var projectFile = ProjectFile.ReadFile(reader, obj.ProjectFile.Source, Sender);
 
                 obj.OriginalSender.Tell(new LoadedProjectFile(obj.ProjectFile.OperationId, projectFile, null, true));
             }

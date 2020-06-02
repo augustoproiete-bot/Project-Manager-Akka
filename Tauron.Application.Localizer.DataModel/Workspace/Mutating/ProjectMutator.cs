@@ -26,6 +26,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
             RemovedProject = engine.EventSource(mc => new RemoveProject(mc.GetChange<RemoveProjectChange>().Project), context => context.Change is RemoveProjectChange);
             NewLanguage = engine.EventSource(mc => mc.GetChange<LanguageChange>().ToEventData(), context => context.Change is LanguageChange);
             NewImport = engine.EventSource(mc => mc.GetChange<AddImportChange>().ToEventData(), context => context.Change is AddImportChange);
+            RemoveImport = engine.EventSource(mc => mc.GetChange<RemoveImportChange>().ToData(), context => context.Change is RemoveImportChange);
 
             NewLanguage.RespondOn(newLang =>
             {
@@ -47,6 +48,8 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
         public IEventSource<AddActiveLanguage> NewLanguage { get; }
 
         public IEventSource<AddImport> NewImport { get; }
+
+        public IEventSource<RemoveImport> RemoveImport { get; }
 
         public void AddProject(string name)
         {
@@ -117,6 +120,19 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
 
                 return context.Update(new AddImportChange(toAdd, projectName), context.Data.AddImport(project, toAdd));
             });
+        }
+
+        public void TryRemoveImport(string projectName, string toRemove)
+        {
+            _engine.Mutate(nameof(RemoveImport), context =>
+                                                 {
+                                                     var pro = context.Data.Projects.Find(p => p.ProjectName == projectName);
+                                                     if (pro == null) return context;
+                                                     if (!pro.Imports.Contains(toRemove)) return context;
+
+                                                     var newData = context.Data.WithProjects(context.Data.Projects.Replace(pro, pro.WithImports(pro.Imports.Remove(toRemove))));
+                                                     return context.Update(new RemoveImportChange(projectName, toRemove), newData);
+                                                 });
         }
     }
 }

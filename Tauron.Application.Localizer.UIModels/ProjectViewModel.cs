@@ -18,6 +18,13 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class ProjectViewModel : UiActor
     {
+        private sealed class InitImportRemove
+        {
+            public string ToRemove { get; }
+
+            public InitImportRemove(string remove) => ToRemove = remove;
+        }
+
         private sealed class UpdateRequest
         {
             public string EntryName { get; }
@@ -112,7 +119,7 @@ namespace Tauron.Application.Localizer.UIModels
                 return workspace.ProjectFile.Projects.Select(p => p.ProjectName).Where(p => p != _project && !pro.Imports.Contains(p));
             }
 
-            ImportSelectIndex = RegisterProperty<int>(nameof(ImportSelectIndex)).WithDefaultValue(0);
+            ImportSelectIndex = RegisterProperty<int>(nameof(ImportSelectIndex)).WithDefaultValue(-1);
             ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).Async();
 
             NewCommad.WithCanExecute(() => GetImportableProjects().Any())
@@ -121,8 +128,18 @@ namespace Tauron.Application.Localizer.UIModels
                 .Then.Action(AddImport)
                 .Return().ThenRegister("AddImport");
 
+            void RemoveImport(RemoveImport import)
+            {
+                if(_project != import.TargetProject) return;
 
-            //TODO Remove Import
+                ImportetProjects.Remove(import.ToRemove);
+            }
+
+            NewCommad.WithCanExecute(() => ImportSelectIndex.Value != -1)
+               .ToFlow(() => new InitImportRemove(ImportetProjects[ImportSelectIndex]))
+               .To.Mutate(workspace.Projects).For(pm => pm.RemoveImport, pm => ir => pm.TryRemoveImport(_project, ir.ToRemove)).ToSelf()
+               .Then.Action(RemoveImport)
+               .Return().ThenRegister("RemoveImport");
             #endregion
 
             #region AddLanguage

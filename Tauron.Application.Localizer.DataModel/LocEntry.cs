@@ -1,14 +1,14 @@
 ﻿using System.Collections.Immutable;
 using System.IO;
-using Akka.Util.Internal;
 using Amadevus.RecordGenerator;
 using JetBrains.Annotations;
+using Tauron.Application.Localizer.DataModel.Serialization;
 
 namespace Tauron.Application.Localizer.DataModel
 {
     [Record]
     [PublicAPI]
-    public sealed partial class LocEntry
+    public sealed partial class LocEntry : IWriteable
     {
         public string Project { get; }
 
@@ -16,37 +16,26 @@ namespace Tauron.Application.Localizer.DataModel
 
         public ImmutableDictionary<ActiveLanguage, string> Values { get; }
 
-        public LocEntry(BinaryReader reader, Project project)
-        {
-            Project = reader.ReadString();
-            Key = reader.ReadString();
-
-            var builder = ImmutableDictionary<ActiveLanguage, string>.Empty.ToBuilder();
-            var count = reader.ReadInt32();
-            for (var i = 0; i < count; i++)
-            {
-                builder.AddOrSet(project.GetActiveLanguage(reader.ReadString()), reader.ReadString());
-            }
-
-            Values = builder.ToImmutable();
-        }
-
         public void Write(BinaryWriter writer)
         {
             writer.Write(Project);
             writer.Write(Key);
 
-            writer.Write(Values.Count);
-            foreach (var (key, value) in Values)
-            {
-                writer.Write(key.Shortcut);
-                writer.Write(value);
-            }
+            Helper.WriteDic(Values, writer);
         }
 
-        public static TType ReadFrom<TType>(BinaryReader arg)
+        public static LocEntry ReadFrom(BinaryReader reader)
         {
-            
+            var builder = new Builder
+                          {
+                              Project = reader.ReadString(), 
+                              Key = reader.ReadString(), 
+                              Values = Helper.Read(reader, ActiveLanguage.ReadFrom, binaryReader => binaryReader.ReadString())
+                          };
+
+
+
+            return builder.ToImmutable();
         }
     }
 }

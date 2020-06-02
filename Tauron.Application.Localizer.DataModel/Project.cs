@@ -32,41 +32,27 @@ namespace Tauron.Application.Localizer.DataModel
         public void Write(BinaryWriter writer)
         {
             writer.Write(ProjectName);
-            writer.Write(Entries.Count);
 
-            writer.Write(ActiveLanguages.Count);
-            foreach (var activeLanguage in ActiveLanguages)
-                activeLanguage.Write(writer);
-
-            writer.Write(Entries.Count);
-            foreach (var locEntry in Entries)
-                locEntry.Write(writer);
-
-            writer.Write(Imports.Count);
-            foreach (var import in Imports) 
-                writer.Write(import);
+            Helper.WriteList(ActiveLanguages, writer);
+            Helper.WriteList(Entries, writer);
+            Helper.WriteList(Imports, writer);
         }
 
-        public ActiveLanguage GetActiveLanguage(string shortcut)
-        {
-            return ActiveLanguages.Find(al => al.Shortcut == shortcut) ?? ActiveLanguage.Invariant;
-        }
+        public ActiveLanguage GetActiveLanguage(string shortcut) 
+            => ActiveLanguages.Find(al => al.Shortcut == shortcut) ?? ActiveLanguage.Invariant;
 
         public static Project ReadFrom(BinaryReader reader)
         {
-            var name = reader.ReadString();
-            var project = new Project(name).ToBuilder();
+            var project = new Builder
+                          {
+                              ProjectName = reader.ReadString(), 
+                              ActiveLanguages = Helper.Read(reader, ActiveLanguage.ReadFrom), 
+                              Entries = Helper.Read(reader, LocEntry.ReadFrom), 
+                              Imports = Helper.ReadString(reader)
+                          };
 
-            project.ActiveLanguages = Helper.Read(reader, ActiveLanguage.ReadFrom);
-            project.Entries = Helper.Read(reader, LocEntry.ReadFrom);
 
-            count = reader.ReadInt32();
-            var imports = ImmutableList<string>.Empty.ToBuilder();
-            for (int i = 0; i < count; i++)
-                imports.Add(reader.ReadString());
-
-            Imports = imports.ToImmutable();
-        
+            return project.ToImmutable();
         }
     }
 }

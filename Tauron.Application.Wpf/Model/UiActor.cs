@@ -307,6 +307,8 @@ namespace Tauron.Application.Wpf.Model
 
             foreach (var actorRef in propertyData.Subscriptors)
                 actorRef.Tell(new ValidatingEvent(propertyData.Error, propertyData.PropertyBase.Name));
+
+            CommandChanged();
         }
 
         private void TrckProperty(TrackPropertyEvent obj)

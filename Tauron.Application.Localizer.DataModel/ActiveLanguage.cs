@@ -14,13 +14,7 @@ namespace Tauron.Application.Localizer.DataModel
         public string Shortcut { get; }
 
         public string Name { get; }
-
-        public ActiveLanguage(BinaryReader reader)
-        {
-            Shortcut = reader.ReadString();
-            Name = reader.ReadString();
-        }
-
+        
         public static ActiveLanguage FromCulture(CultureInfo info)
             => new ActiveLanguage(info.Name, info.EnglishName);
 
@@ -49,7 +43,12 @@ namespace Tauron.Application.Localizer.DataModel
 
         public static ActiveLanguage ReadFrom(BinaryReader reader)
         {
-            
+            var lang = new Builder
+                       {
+                           Shortcut = reader.ReadString(), 
+                           Name = reader.ReadString()
+                       };
+            return lang.ToImmutable();
         }
     }
 }
