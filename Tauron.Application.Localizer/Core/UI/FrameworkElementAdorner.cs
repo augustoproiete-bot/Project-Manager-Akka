@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -25,13 +24,13 @@ namespace Tauron.Application.Localizer.Core.UI
         // Placement of the child.
         //
         private readonly AdornerPlacement _horizontalAdornerPlacement = AdornerPlacement.Inside;
-        private readonly AdornerPlacement _verticalAdornerPlacement = AdornerPlacement.Inside;
 
         //
         // Offset of the child.
         //
         private readonly double _offsetX;
         private readonly double _offsetY;
+        private readonly AdornerPlacement _verticalAdornerPlacement = AdornerPlacement.Inside;
 
         public FrameworkElementAdorner(FrameworkElement adornerChildElement, FrameworkElement adornedElement)
             : base(adornedElement)
@@ -43,8 +42,8 @@ namespace Tauron.Application.Localizer.Core.UI
         }
 
         public FrameworkElementAdorner(FrameworkElement adornerChildElement, FrameworkElement adornedElement,
-                                       AdornerPlacement horizontalAdornerPlacement, AdornerPlacement verticalAdornerPlacement,
-                                       double offsetX, double offsetY)
+            AdornerPlacement horizontalAdornerPlacement, AdornerPlacement verticalAdornerPlacement,
+            double offsetX, double offsetY)
             : base(adornedElement)
         {
             _child = adornerChildElement;
@@ -59,17 +58,36 @@ namespace Tauron.Application.Localizer.Core.UI
             AddVisualChild(adornerChildElement);
         }
 
-        /// <summary>
-        /// Event raised when the adorned control's size has changed.
-        /// </summary>
-        private void adornedElement_SizeChanged(object sender, SizeChangedEventArgs e) => InvalidateMeasure();
-
         //
         // Position of the child (when not set to NaN).
         //
         public double PositionX { get; set; } = double.NaN;
 
         public double PositionY { get; set; } = double.NaN;
+
+        protected override int VisualChildrenCount => 1;
+
+        protected override IEnumerator LogicalChildren
+        {
+            get
+            {
+                ArrayList list = new ArrayList {_child};
+                return list.GetEnumerator();
+            }
+        }
+
+        /// <summary>
+        ///     Override AdornedElement from base class for less type-checking.
+        /// </summary>
+        public new FrameworkElement AdornedElement => (FrameworkElement) base.AdornedElement;
+
+        /// <summary>
+        ///     Event raised when the adorned control's size has changed.
+        /// </summary>
+        private void adornedElement_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            InvalidateMeasure();
+        }
 
         protected override Size MeasureOverride(Size constraint)
         {
@@ -78,7 +96,7 @@ namespace Tauron.Application.Localizer.Core.UI
         }
 
         /// <summary>
-        /// Determine the X coordinate of the child.
+        ///     Determine the X coordinate of the child.
         /// </summary>
         private double DetermineX()
         {
@@ -110,7 +128,7 @@ namespace Tauron.Application.Localizer.Core.UI
                 {
                     var adornerWidth = _child.DesiredSize.Width;
                     var adornedWidth = AdornedElement.ActualWidth;
-                    var x = (adornedWidth / 2) - (adornerWidth / 2);
+                    var x = adornedWidth / 2 - adornerWidth / 2;
                     return x + _offsetX;
                 }
                 case HorizontalAlignment.Stretch:
@@ -121,7 +139,7 @@ namespace Tauron.Application.Localizer.Core.UI
         }
 
         /// <summary>
-        /// Determine the Y coordinate of the child.
+        ///     Determine the Y coordinate of the child.
         /// </summary>
         private double DetermineY()
         {
@@ -152,7 +170,7 @@ namespace Tauron.Application.Localizer.Core.UI
                 {
                     var adornerHeight = _child.DesiredSize.Height;
                     var adornedHeight = AdornedElement.ActualHeight;
-                    var x = (adornedHeight / 2) - (adornerHeight / 2);
+                    var x = adornedHeight / 2 - adornerHeight / 2;
                     return x + _offsetY;
                 }
                 case VerticalAlignment.Stretch:
@@ -165,14 +183,11 @@ namespace Tauron.Application.Localizer.Core.UI
         }
 
         /// <summary>
-        /// Determine the width of the child.
+        ///     Determine the width of the child.
         /// </summary>
         private double DetermineWidth()
         {
-            if (!double.IsNaN(PositionX))
-            {
-                return _child.DesiredSize.Width;
-            }
+            if (!double.IsNaN(PositionX)) return _child.DesiredSize.Width;
 
             return _child.HorizontalAlignment switch
             {
@@ -185,14 +200,11 @@ namespace Tauron.Application.Localizer.Core.UI
         }
 
         /// <summary>
-        /// Determine the height of the child.
+        ///     Determine the height of the child.
         /// </summary>
         private double DetermineHeight()
         {
-            if (!double.IsNaN(PositionY))
-            {
-                return _child.DesiredSize.Height;
-            }
+            if (!double.IsNaN(PositionY)) return _child.DesiredSize.Height;
 
             return _child.VerticalAlignment switch
             {
@@ -216,31 +228,18 @@ namespace Tauron.Application.Localizer.Core.UI
             return finalSize;
         }
 
-        protected override int VisualChildrenCount => 1;
-
-        protected override Visual GetVisualChild(int index) => _child;
-
-        protected override IEnumerator LogicalChildren
+        protected override Visual GetVisualChild(int index)
         {
-            get
-            {
-                ArrayList list = new ArrayList {_child};
-                return list.GetEnumerator();
-            }
+            return _child;
         }
 
         /// <summary>
-        /// Disconnect the child element from the visual tree so that it may be reused later.
+        ///     Disconnect the child element from the visual tree so that it may be reused later.
         /// </summary>
         public void DisconnectChild()
         {
             RemoveLogicalChild(_child);
             RemoveVisualChild(_child);
         }
-
-        /// <summary>
-        /// Override AdornedElement from base class for less type-checking.
-        /// </summary>
-        public new FrameworkElement AdornedElement => (FrameworkElement)base.AdornedElement;
     }
 }

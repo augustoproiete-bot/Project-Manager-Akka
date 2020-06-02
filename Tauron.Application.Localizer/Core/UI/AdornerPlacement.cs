@@ -1,7 +1,7 @@
 ﻿namespace Tauron.Application.Localizer.Core.UI
 {
     /// <summary>
-    /// Specifies the placement of the adorner in related to the adorned control.
+    ///     Specifies the placement of the adorner in related to the adorned control.
     /// </summary>
     public enum AdornerPlacement
     {

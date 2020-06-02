@@ -8,10 +8,12 @@ namespace Tauron.Application.Workshop.Mutating
     {
         public MutatingChange? Change { get; }
 
+        public TData Data { get; }
+
         public TType GetChange<TType>()
             where TType : MutatingChange
-            => (TType) Change!;
-
-        public TData Data { get; }
+        {
+            return (TType) Change!;
+        }
     }
 }

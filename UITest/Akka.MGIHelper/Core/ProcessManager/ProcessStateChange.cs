@@ -1,18 +1,9 @@
 ﻿using System.Diagnostics;
-using Amadevus.RecordGenerator;
 
 namespace Akka.MGIHelper.Core.ProcessManager
 {
-    public sealed partial class ProcessStateChange
+    public sealed class ProcessStateChange
     {
-        public ProcessChange Change { get; }
-
-        public string Name { get; }
-
-        public int Id { get; }
-
-        public Process Process { get; }
-
         public ProcessStateChange(ProcessChange change, string name, int id, Process process)
         {
             Change = change;
@@ -20,5 +11,13 @@ namespace Akka.MGIHelper.Core.ProcessManager
             Id = id;
             Process = process;
         }
+
+        public ProcessChange Change { get; }
+
+        public string Name { get; }
+
+        public int Id { get; }
+
+        public Process Process { get; }
     }
 }

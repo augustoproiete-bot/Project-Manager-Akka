@@ -12,8 +12,8 @@ namespace Tauron.Application.Localizer.Views
 {
     public sealed class NewProjectDialogViewModel : ObservableObject
     {
-        private readonly LocLocalizer _localizer;
         private readonly string[] _blocked;
+        private readonly LocLocalizer _localizer;
         private string _content = string.Empty;
         private string? _error;
 
@@ -22,7 +22,7 @@ namespace Tauron.Application.Localizer.Views
             _localizer = localizer;
             _blocked = blocked.ToArray();
 
-            Return = new SimpleCommand(execute: o => target(new NewProjectDialogResult(Content)), canExecute:o => string.IsNullOrWhiteSpace(Error));
+            Return = new SimpleCommand(execute: o => target(new NewProjectDialogResult(Content)), canExecute: o => string.IsNullOrWhiteSpace(Error));
         }
 
         public string? Error
@@ -52,7 +52,7 @@ namespace Tauron.Application.Localizer.Views
     }
 
     /// <summary>
-    /// Interaktionslogik für NewProjectDialogView.xaml
+    ///     Interaktionslogik für NewProjectDialogView.xaml
     /// </summary>
     public partial class NewProjectDialogView : IProjectNameDialog
     {
@@ -70,7 +70,7 @@ namespace Tauron.Application.Localizer.Views
             DataContext = new NewProjectDialogViewModel(initalData, result => task.SetResult(result), _localizer);
             return task.Task;
         }
-        
+
         private void OpenFileDialogView_OnLoaded(object sender, RoutedEventArgs e)
         {
             FocusManager.SetFocusedElement(this, NameBox);

@@ -2,11 +2,11 @@
 {
     public sealed class SourceUpdated
     {
-        public string Source { get; }
-
         public SourceUpdated(string source)
         {
             Source = source;
         }
+
+        public string Source { get; }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using Autofac;
+﻿using Autofac;
 using JetBrains.Annotations;
 using Serilog;
 using Serilog.Configuration;
@@ -16,7 +15,7 @@ namespace Tauron.Application.Logging
         public static LoggerConfiguration ConfigDefaultLogging(this LoggerConfiguration loggerConfiguration, string applicationName, bool noFile = false)
         {
             if (!noFile)
-                loggerConfiguration.WriteTo.RollingFile(new CompactJsonFormatter(), "Logs\\Log.log", fileSizeLimitBytes: 5_242_880, retainedFileCountLimit:5);
+                loggerConfiguration.WriteTo.RollingFile(new CompactJsonFormatter(), "Logs\\Log.log", fileSizeLimitBytes: 5_242_880, retainedFileCountLimit: 5);
 
             return loggerConfiguration
                 .MinimumLevel.Debug()
@@ -29,7 +28,9 @@ namespace Tauron.Application.Logging
         }
 
         public static LoggerConfiguration WithEventTypeEnricher(this LoggerEnrichmentConfiguration config)
-            => config.With<EventTypeEnricher>();
+        {
+            return config.With<EventTypeEnricher>();
+        }
 
         public static ContainerBuilder AddTauronLogging(this ContainerBuilder collection)
         {

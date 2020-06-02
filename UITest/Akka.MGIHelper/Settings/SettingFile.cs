@@ -8,8 +8,8 @@ namespace Akka.MGIHelper.Settings
     {
         private readonly ILoggingAdapter _log = Context.GetLogger();
         private readonly ISettingProvider _provider;
-        private bool _isLoaded;
         private ImmutableDictionary<string, string> _data = ImmutableDictionary<string, string>.Empty;
+        private bool _isLoaded;
 
         public SettingFile(ISettingProvider provider)
         {

@@ -6,20 +6,11 @@ namespace Tauron.Host
     [PublicAPI]
     public interface IHostApplicationLifetime
     {
-        CancellationToken ApplicationStarted
-        {
-            get;
-        }
+        CancellationToken ApplicationStarted { get; }
 
-        CancellationToken ApplicationStopping
-        {
-            get;
-        }
+        CancellationToken ApplicationStopping { get; }
 
-        CancellationToken ApplicationStopped
-        {
-            get;
-        }
+        CancellationToken ApplicationStopped { get; }
 
         void StopApplication();
     }

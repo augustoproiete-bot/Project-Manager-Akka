@@ -9,12 +9,8 @@
 
     public sealed class RunningOperation : ObservableObject
     {
-        private string? _status;
         private OperationStatus _operation;
-
-        public string Key { get; }
-
-        public string Name { get; }
+        private string? _status;
 
 
         public RunningOperation(string key, string name)
@@ -22,6 +18,10 @@
             Key = key;
             Name = name;
         }
+
+        public string Key { get; }
+
+        public string Name { get; }
 
         public string? Status
         {

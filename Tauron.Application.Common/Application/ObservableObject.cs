@@ -29,6 +29,12 @@ namespace Tauron.Application
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
+        [NotifyPropertyChangedInvocator]
+        public virtual void OnPropertyChanged([CallerMemberName] string? eventArgs = null)
+        {
+            OnPropertyChanged(new PropertyChangedEventArgs(Argument.NotNull(eventArgs!, nameof(eventArgs))));
+        }
+
         public void SetProperty<TType>(ref TType property, TType value, [CallerMemberName] string? name = null)
         {
             if (EqualityComparer<TType>.Default.Equals(property, value)) return;
@@ -45,21 +51,27 @@ namespace Tauron.Application
             OnPropertyChangedExplicit(Argument.NotNull(name!, nameof(name)));
             changed();
         }
-        
-        [NotifyPropertyChangedInvocator]
-        public virtual void OnPropertyChanged([CallerMemberName] string? eventArgs = null) => OnPropertyChanged(new PropertyChangedEventArgs(Argument.NotNull(eventArgs!, nameof(eventArgs))));
 
-        public virtual void OnPropertyChanged(PropertyChangedEventArgs eventArgs) => OnPropertyChanged(this, Argument.NotNull(eventArgs, nameof(eventArgs)));
+        public virtual void OnPropertyChanged(PropertyChangedEventArgs eventArgs)
+        {
+            OnPropertyChanged(this, Argument.NotNull(eventArgs, nameof(eventArgs)));
+        }
 
-        public virtual void OnPropertyChanged(object sender, PropertyChangedEventArgs eventArgs) => 
+        public virtual void OnPropertyChanged(object sender, PropertyChangedEventArgs eventArgs)
+        {
             PropertyChanged?.Invoke(Argument.NotNull(sender, nameof(sender)), Argument.NotNull(eventArgs, nameof(eventArgs)));
+        }
 
         [SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
-        public virtual void OnPropertyChanged<T>(Expression<Func<T>> eventArgs) =>
+        public virtual void OnPropertyChanged<T>(Expression<Func<T>> eventArgs)
+        {
             OnPropertyChanged(new PropertyChangedEventArgs(PropertyHelper.ExtractPropertyName(Argument.NotNull(eventArgs, nameof(eventArgs)))));
+        }
 
 
-        public virtual void OnPropertyChangedExplicit(string propertyName) => 
+        public virtual void OnPropertyChangedExplicit(string propertyName)
+        {
             OnPropertyChanged(new PropertyChangedEventArgs(Argument.NotNull(propertyName, nameof(propertyName))));
+        }
     }
 }

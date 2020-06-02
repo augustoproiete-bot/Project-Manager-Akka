@@ -5,6 +5,18 @@ namespace AkkaTest
 {
     public static class ProxyTest
     {
+        public static void TestProxy()
+        {
+            var builder = new ProxyGenerator(new DefaultProxyBuilder(new ModuleScope(true)));
+
+            var timeMes = Stopwatch.StartNew();
+
+            var test = (IGreter) builder.CreateInterfaceProxyWithoutTarget(typeof(IGreter), new Interceptor());
+            string time = timeMes.Elapsed.ToString();
+
+            var result = test.Hallo("Hallo");
+        }
+
         private class Interceptor : IInterceptor
         {
             public void Intercept(IInvocation invocation)
@@ -23,18 +35,6 @@ namespace AkkaTest
             void Hello2();
 
             string Hello3(string test);
-        }
-
-        public static void TestProxy()
-        {
-            var builder = new ProxyGenerator(new DefaultProxyBuilder(new ModuleScope(true)));
-
-            var timeMes = Stopwatch.StartNew();
-
-            var test = (IGreter)builder.CreateInterfaceProxyWithoutTarget(typeof(IGreter), new Interceptor());
-            string time = timeMes.Elapsed.ToString();
-
-            var result = test.Hallo("Hallo");
         }
     }
 }

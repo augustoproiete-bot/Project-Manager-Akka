@@ -4,7 +4,6 @@ using Akka.MGIHelper.Core.Configuration;
 using Akka.MGIHelper.Core.FanControl;
 using Akka.MGIHelper.Core.FanControl.Events;
 using Autofac;
-using Tauron;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Model;
 using Tauron.Application.Wpf.ModelMessages;
@@ -13,6 +12,34 @@ namespace Akka.MGIHelper.UI.FanControl
 {
     public class AutoFanControlModel : UiActor
     {
+        public AutoFanControlModel(ILifetimeScope scope, Dispatcher dispatcher, FanControlOptions options)
+            : base(scope, dispatcher)
+        {
+            Options = RegisterProperty<FanControlOptions>(nameof(Options)).WithDefaultValue(options);
+            Error = RegisterProperty<bool>(nameof(Error));
+            Reason = RegisterProperty<string>(nameof(Reason));
+            Power = RegisterProperty<int>(nameof(Power));
+            State = RegisterProperty<State>(nameof(State));
+            Pidout = RegisterProperty<double>(nameof(Pidout));
+            PidSetValue = RegisterProperty<int>(nameof(PidSetValue));
+            Pt1000 = RegisterProperty<int>(nameof(Pt1000));
+            FanRunning = RegisterProperty<bool>(nameof(FanRunning)).WithDefaultValue(false);
+
+            Context.ActorOf(() => new Core.FanControl.FanControl(options), "Fan-Control");
+
+            Receive<TrackingEvent>(evt =>
+            {
+                Error += evt.Error;
+                Reason += evt.Reason;
+                Power += evt.Power;
+                State += evt.State;
+                Pidout += evt.Pidout;
+                PidSetValue += evt.PidSetValue;
+                Pt1000 += evt.Pt1000;
+            });
+            Receive<FanStatusChange>(evt => FanRunning += evt.Running);
+        }
+
         private UIProperty<bool> Error { get; set; }
 
         private UIProperty<string> Reason { get; set; }
@@ -31,35 +58,9 @@ namespace Akka.MGIHelper.UI.FanControl
 
         private UIProperty<FanControlOptions> Options { get; }
 
-        public AutoFanControlModel(ILifetimeScope scope, Dispatcher dispatcher, FanControlOptions options)
-            : base(scope, dispatcher)
+        protected override void Initialize(InitEvent evt)
         {
-            Options = RegisterProperty<FanControlOptions>(nameof(Options)).WithDefaultValue(options);
-            Error = RegisterProperty<bool>(nameof(Error));
-            Reason = RegisterProperty<string>(nameof(Reason));
-            Power = RegisterProperty<int>(nameof(Power));
-            State = RegisterProperty<State>(nameof(State));
-            Pidout = RegisterProperty<double>(nameof(Pidout));
-            PidSetValue = RegisterProperty<int>(nameof(PidSetValue));
-            Pt1000 = RegisterProperty<int>(nameof(Pt1000));
-            FanRunning = RegisterProperty<bool>(nameof(FanRunning)).WithDefaultValue(false);
-
-            Context.ActorOf(() => new Core.FanControl.FanControl(options), "Fan-Control");
-
-            Receive<TrackingEvent>(evt =>
-                                   {
-                                       Error += evt.Error;
-                                       Reason += evt.Reason;
-                                       Power += evt.Power;
-                                       State += evt.State;
-                                       Pidout += evt.Pidout;
-                                       PidSetValue += evt.PidSetValue;
-                                       Pt1000 += evt.Pt1000;
-                                   });
-            Receive<FanStatusChange>(evt => FanRunning += evt.Running);
+            Context.Child("Fan-Control").Tell(new ClockEvent(ClockState.Start));
         }
-
-        protected override void Initialize(InitEvent evt) 
-            => Context.Child("Fan-Control").Tell(new ClockEvent(ClockState.Start));
     }
 }

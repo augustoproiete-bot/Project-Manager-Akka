@@ -10,13 +10,19 @@ namespace Tauron.Application.Wpf.Converter
     [MarkupExtensionReturnType(typeof(IValueConverter))]
     public class StringToIntConverter : ValueConverterFactoryBase
     {
-        protected override IValueConverter Create() => new Converter();
+        protected override IValueConverter Create()
+        {
+            return new Converter();
+        }
 
         private class Converter : StringConverterBase<int>
         {
             protected override bool CanConvertBack => true;
 
-            protected override string Convert(int value) => value.ToString();
+            protected override string Convert(int value)
+            {
+                return value.ToString();
+            }
 
             protected override int ConvertBack(string value)
             {
@@ -44,7 +50,10 @@ namespace Tauron.Application.Wpf.Converter
 
         public bool Reverse { get; set; }
 
-        protected override IValueConverter Create() => new Converter(IsHidden, Reverse);
+        protected override IValueConverter Create()
+        {
+            return new Converter(IsHidden, Reverse);
+        }
 
         private class Converter : ValueConverterBase<bool, Visibility>
         {

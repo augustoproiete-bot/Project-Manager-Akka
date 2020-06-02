@@ -11,15 +11,15 @@ namespace Akka.MGIHelper.UI.FanControl
     {
         private static readonly Dictionary<State, string> StadesLabels = new Dictionary<State, string>
         {
-            { State.Cooldown, "Abkühlen" },
-            { State.Error, "Fehler" },
-            { State.Idle, "Aus" },
-            { State.Ignition, "Zünden" },
-            { State.Ready, "Bereit" },
-            { State.Power, "Betrieb" },
-            { State.StandBy, "Bereitschaft" },
-            { State.StartUp, "Starten" },
-            { State.TestRun, "Test" }
+            {State.Cooldown, "Abkühlen"},
+            {State.Error, "Fehler"},
+            {State.Idle, "Aus"},
+            {State.Ignition, "Zünden"},
+            {State.Ready, "Bereit"},
+            {State.Power, "Betrieb"},
+            {State.StandBy, "Bereitschaft"},
+            {State.StartUp, "Starten"},
+            {State.TestRun, "Test"}
         };
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 using Autofac;
+using Syncfusion.Licensing;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Logging;
 using Tauron.Application.Wpf.SerilogViewer;
@@ -33,27 +33,27 @@ namespace Tauron.Application.Localizer
 
         public static async Task Main(string[] args)
         {
-            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MjY0ODk0QDMxMzgyZTMxMmUzMEx6Vkt0M1ZIRFVPRWFqMEcwbWVrK3dqUldkYzZiaXA3TGFlWDFORDFNSms9");
+            SyncfusionLicenseProvider.RegisterLicense("MjY0ODk0QDMxMzgyZTMxMmUzMEx6Vkt0M1ZIRFVPRWFqMEcwbWVrK3dqUldkYzZiaXA3TGFlWDFORDFNSms9");
 
             var builder = ActorApplication.Create(args);
 
             builder
-               .ConfigureLogging((context, configuration) => configuration.ConfigDefaultLogging("Localizer").WriteTo.Sink<SeriLogViewerSink>())
-               .ConfigureAutoFac(cb => cb.RegisterModule<MainModule>().RegisterModule<UIModule>())
-               .ConfigurateAkkSystem(((context, system) => system.RegisterLocalization()))
-               .UseWpf<MainWindow>(c => c.WithAppFactory(() =>
-                                                         {
-                                                             var runapp = new System.Windows.Application
-                                                                       {
-                                                                           Resources = new ResourceDictionary
-                                                                                       {
-                                                                                           Source = new Uri("/Theme.xaml", UriKind.Relative)
-                                                                                       }
-                                                                       };
+                .ConfigureLogging((context, configuration) => configuration.ConfigDefaultLogging("Localizer").WriteTo.Sink<SeriLogViewerSink>())
+                .ConfigureAutoFac(cb => cb.RegisterModule<MainModule>().RegisterModule<UIModule>())
+                .ConfigurateAkkSystem((context, system) => system.RegisterLocalization())
+                .UseWpf<MainWindow>(c => c.WithAppFactory(() =>
+                {
+                    var runapp = new System.Windows.Application
+                    {
+                        Resources = new ResourceDictionary
+                        {
+                            Source = new Uri("/Theme.xaml", UriKind.Relative)
+                        }
+                    };
 
 
-                                                             return runapp;
-                                                         }));
+                    return runapp;
+                }));
 
             using var app = builder.Build();
             await app.Run();

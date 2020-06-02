@@ -7,12 +7,14 @@ namespace Tauron.Application.Localizer.Core.Converter
 {
     public sealed class OperationStateConverter : ValueConverterFactoryBase
     {
-        protected override IValueConverter Create() 
-            => CreateCommonConverter<OperationStatus, SolidColorBrush>(s => s switch
+        protected override IValueConverter Create()
         {
-            OperationStatus.Running => Brushes.DarkSlateBlue,
-            OperationStatus.Success => Brushes.DarkGreen,
-            _ => Brushes.DarkRed
-        });
+            return CreateCommonConverter<OperationStatus, SolidColorBrush>(s => s switch
+            {
+                OperationStatus.Running => Brushes.DarkSlateBlue,
+                OperationStatus.Success => Brushes.DarkGreen,
+                _ => Brushes.DarkRed
+            });
+        }
     }
 }

@@ -14,7 +14,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         public RemoteServiceActor()
         {
             Receive<RemoteServiceRequest>(RemoteServiceRequest);
-            Receive<Terminated>(_ => {});
+            Receive<Terminated>(_ => { });
             Receive<RemoteService.ServiceTerminated>(Terminated);
         }
 

@@ -2,9 +2,11 @@
 {
     public sealed class NewProjectDialogResult
     {
-        public string Name { get; }
+        public NewProjectDialogResult(string name)
+        {
+            Name = name;
+        }
 
-        public NewProjectDialogResult(string name) 
-            => Name = name;
+        public string Name { get; }
     }
 }

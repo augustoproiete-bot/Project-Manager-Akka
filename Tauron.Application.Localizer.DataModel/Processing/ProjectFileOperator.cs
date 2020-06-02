@@ -18,7 +18,9 @@ namespace Tauron.Application.Localizer.DataModel.Processing
             actor.Forward(obj);
         }
 
-        private void LoadProjectFile(LoadProjectFile obj) 
-            => Context.ActorOf<ProjectLoader>().Tell(new InternalLoadProject(obj, Sender));
+        private void LoadProjectFile(LoadProjectFile obj)
+        {
+            Context.ActorOf<ProjectLoader>().Tell(new InternalLoadProject(obj, Sender));
+        }
     }
 }

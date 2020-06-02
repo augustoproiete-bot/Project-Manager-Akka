@@ -1,27 +1,26 @@
 ﻿<tau:Window x:Class="Tauron.Application.Localizer.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:tau="http://schemas.TauronWpf.com"
-        xmlns:serilogViewer="clr-namespace:Tauron.Application.Wpf.SerilogViewer;assembly=Tauron.Application.Wpf.SerilogViewer"
-        xmlns:services="clr-namespace:Tauron.Application.Localizer.UIModels.Services;assembly=Tauron.Application.Localizer.UIModels"
-        xmlns:converter="clr-namespace:Tauron.Application.Localizer.Core.Converter"
-        xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
-        xmlns:li="http://schemas.syncfusion.com/wpf"
-        xmlns:sfSkinManager="clr-namespace:Syncfusion.SfSkinManager;assembly=Syncfusion.SfSkinManager.WPF"
-        mc:Ignorable="d" WindowState="Maximized" sfSkinManager:SfSkinManager.VisualStyle="Blend"
-        Title="{tau:Loc MainWindow_Title}" Height="450" Width="800" Icon="icon.ico"    
-        TextElement.Foreground="White"
-        TextElement.FontWeight="Medium"
-        TextElement.FontSize="17"
-        TextOptions.TextFormattingMode="Ideal"
-        TextOptions.TextRenderingMode="Auto">
+            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+            xmlns:tau="http://schemas.TauronWpf.com"
+            xmlns:serilogViewer="clr-namespace:Tauron.Application.Wpf.SerilogViewer;assembly=Tauron.Application.Wpf.SerilogViewer"
+            xmlns:services="clr-namespace:Tauron.Application.Localizer.UIModels.Services;assembly=Tauron.Application.Localizer.UIModels"
+            xmlns:converter="clr-namespace:Tauron.Application.Localizer.Core.Converter"
+            xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
+            xmlns:li="http://schemas.syncfusion.com/wpf"
+            xmlns:sfSkinManager="clr-namespace:Syncfusion.SfSkinManager;assembly=Syncfusion.SfSkinManager.WPF"
+            mc:Ignorable="d" WindowState="Maximized" sfSkinManager:SfSkinManager.VisualStyle="Blend"
+            Title="{tau:Loc MainWindow_Title}" Height="450" Width="800" Icon="icon.ico"
+            TextElement.Foreground="White"
+            TextElement.FontWeight="Medium"
+            TextElement.FontSize="17"
+            TextOptions.TextFormattingMode="Ideal"
+            TextOptions.TextRenderingMode="Auto">
     <li:SfBusyIndicator x:Name="SfBusyIndicator" IsBusy="False">
         <Grid>
-            <ContentControl Name="DialogContent" IsEnabled="True" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center" MinWidth="600">
-
-            </ContentControl>
+            <ContentControl Name="DialogContent" IsEnabled="True" Visibility="Collapsed" VerticalAlignment="Center"
+                            HorizontalAlignment="Center" MinWidth="600" />
             <Grid Name="MainContent">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -57,7 +56,7 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{tau:Loc MainWindow_Operations_Label}" />
                             <TextBlock Text=" | " />
-                            <TextBlock Text="{Binding RunningOperations.Count}"></TextBlock>
+                            <TextBlock Text="{Binding RunningOperations.Count}" />
                         </StackPanel>
                     </Expander.Header>
                     <TabControl MinHeight="400">

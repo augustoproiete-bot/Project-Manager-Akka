@@ -1,13 +1,11 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Akka.Actor;
 
 namespace Tauron.Host
 {
     public interface IAppRoute
     {
-        Task WaitForStartAsync(ActorSystem actorSystem);
-
         Task ShutdownTask { get; }
+        Task WaitForStartAsync(ActorSystem actorSystem);
     }
 }

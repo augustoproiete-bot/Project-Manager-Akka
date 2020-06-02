@@ -6,6 +6,11 @@ namespace Tauron.Application.Wpf.Model
     {
         private bool _isSetLocked;
 
+        protected UIPropertyBase(string name)
+        {
+            Name = name;
+        }
+
         public string Name { get; }
 
         protected internal object? InternalValue { get; internal set; }
@@ -15,17 +20,18 @@ namespace Tauron.Application.Wpf.Model
 
         internal event Action? PriorityChanged;
 
-        internal void LockSet() => _isSetLocked = true;
+        internal void LockSet()
+        {
+            _isSetLocked = true;
+        }
 
         protected internal void SetValue(object? value)
         {
-            if(_isSetLocked) return;
+            if (_isSetLocked) return;
 
             InternalValue = value;
             OnPropertyValueChanged();
         }
-
-        protected UIPropertyBase(string name) => Name = name;
 
         private void OnPropertyValueChanged()
         {

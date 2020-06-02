@@ -6,22 +6,15 @@ namespace Tauron.Application.Workshop.Mutation
 {
     public sealed class MutationActor<TData> : ReceiveActor
     {
-        private sealed class HandlerTerminated
-        {
-            public Action Remover { get; }
-
-            public HandlerTerminated(Action remover) => Remover = remover;
-        }
-
-        private ILoggingAdapter _log => Context.GetLogger();
-
         public MutationActor()
         {
             Receive<DataMutation<TData>>(Mutation);
             Receive<WatchIntrest>(wi => Context.WatchWith(wi.Target, new HandlerTerminated(wi.OnRemove)));
             Receive<HandlerTerminated>(ht => ht.Remover());
-            Receive<Terminated>(t =>{});
+            Receive<Terminated>(t => { });
         }
+
+        private ILoggingAdapter _log => Context.GetLogger();
 
         private void Mutation(DataMutation<TData> obj)
         {
@@ -35,6 +28,16 @@ namespace Tauron.Application.Workshop.Mutation
             {
                 _log.Error(e, "Mutation Failed: {Name}", obj.Name);
             }
+        }
+
+        private sealed class HandlerTerminated
+        {
+            public HandlerTerminated(Action remover)
+            {
+                Remover = remover;
+            }
+
+            public Action Remover { get; }
         }
     }
 }

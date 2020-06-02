@@ -20,7 +20,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void QueryServiceRequest(QueryServiceRequest request)
         {
-            var hostName = Context.Sender.Path.Address.Host ?? "Unkowen" + "-" + 
+            var hostName = Context.Sender.Path.Address.Host ?? "Unkowen" + "-" +
                 Context.Sender.Path.Address.System + "-Manager";
 
             _log.Info("Create or Return {Service}", hostName);
@@ -32,7 +32,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         private void ToggleSuspendedMessage(ToggleSuspendedMessage suspended)
         {
             _suspendedMessage = suspended;
-            foreach (var actorRef in Context.GetChildren()) 
+            foreach (var actorRef in Context.GetChildren())
                 actorRef.Tell(suspended);
         }
     }

@@ -58,7 +58,7 @@ namespace Tauron.Localization.Actor
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            if (_files.TryGetValue(language, out var entrys) && 
+            if (_files.TryGetValue(language, out var entrys) &&
                 entrys.TryGetValue(name, out var entry) && entry is JValue value)
                 return value.Value;
 
@@ -67,10 +67,9 @@ namespace Tauron.Localization.Actor
 
         private void EnsureInitialized()
         {
-            if(_isInitialized) return;
+            if (_isInitialized) return;
             if (_configuration == null) return;
             _files.Clear();
-
 
 
             foreach (var file in Directory.EnumerateFiles(_configuration.RootDic, "*.json"))
@@ -79,7 +78,7 @@ namespace Tauron.Localization.Actor
                 using var stream = new FileStream(file, FileMode.Open);
                 var text = new StreamReader(stream, Encoding.UTF8).ReadToEnd();
                 var name = GetName(file);
-                if(string.IsNullOrWhiteSpace(name)) return;
+                if (string.IsNullOrWhiteSpace(name)) return;
 
                 _files[name] = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(text);
             }

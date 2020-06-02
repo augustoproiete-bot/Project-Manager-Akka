@@ -7,8 +7,6 @@ namespace Tauron.Application.Wpf.SerilogViewer
 {
     public class LogEventViewModel
     {
-        public SerilogEvent Info { get; }
-
         public LogEventViewModel(SerilogEvent info)
         {
             Info = info;
@@ -25,6 +23,8 @@ namespace Tauron.Application.Wpf.SerilogViewer
 
             SetupColors(logEventInfo);
         }
+
+        public SerilogEvent Info { get; }
 
 
         public string Time { get; }
@@ -55,6 +55,7 @@ namespace Tauron.Application.Wpf.SerilogViewer
                 Background = Brushes.Black;
                 BackgroundMouseOver = Brushes.DarkGray;
             }
+
             Foreground = Brushes.White;
             ForegroundMouseOver = Brushes.White;
         }

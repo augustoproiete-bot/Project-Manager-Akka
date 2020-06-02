@@ -12,8 +12,10 @@ namespace Tauron.Application.Wpf.UI
     {
         private readonly string _name;
 
-        public ActorBinding(string name) 
-            => _name = name;
+        public ActorBinding(string name)
+        {
+            _name = name;
+        }
 
         public override object? ProvideValue(IServiceProvider provider)
         {

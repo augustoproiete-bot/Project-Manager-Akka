@@ -6,17 +6,23 @@ namespace Tauron.Application.Akka.ServiceResolver.Data
 {
     public sealed class ServiceRequirement
     {
-        public static readonly ServiceRequirement Empty = new ServiceRequirement(Array.Empty<string>()); 
+        public static readonly ServiceRequirement Empty = new ServiceRequirement(Array.Empty<string>());
+
+        public ServiceRequirement(IReadOnlyList<string> neededServices)
+        {
+            NeededServices = neededServices;
+        }
 
         public IReadOnlyList<string> NeededServices { get; }
 
-        public ServiceRequirement(IReadOnlyList<string> neededServices) 
-            => NeededServices = neededServices;
-
         public static ServiceRequirement Create(params string[] neededServices)
-            => new ServiceRequirement(neededServices);
+        {
+            return new ServiceRequirement(neededServices);
+        }
 
-        public bool IsDefiend(IReadOnlyList<string> services) 
-            => NeededServices.All(services.Contains!);
+        public bool IsDefiend(IReadOnlyList<string> services)
+        {
+            return NeededServices.All(services.Contains!);
+        }
     }
 }

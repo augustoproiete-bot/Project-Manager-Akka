@@ -33,7 +33,10 @@ namespace Tauron.Application.Wpf.Helper
             private readonly ControlBindableBase _control;
             private bool _isDisposed;
 
-            public CleanUpHelper(ControlBindableBase control) => _control = control;
+            public CleanUpHelper(ControlBindableBase control)
+            {
+                _control = control;
+            }
 
             public void Dispose()
             {

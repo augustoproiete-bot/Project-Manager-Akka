@@ -12,21 +12,23 @@ namespace Tauron.Application.Wpf.AppCore
     public sealed class AppLifetime : IAppRoute
     {
         private readonly ILifetimeScope _factory;
-        private System.Windows.Application? _internalApplication;
         private readonly TaskCompletionSource<int> _shutdownWaiter = new TaskCompletionSource<int>();
+        private System.Windows.Application? _internalApplication;
 
-        public AppLifetime(ILifetimeScope factory) 
-            => _factory = factory;
+        public AppLifetime(ILifetimeScope factory)
+        {
+            _factory = factory;
+        }
 
         public Task WaitForStartAsync(ActorSystem system)
         {
             void ShutdownApp()
             {
                 Task.Run(async () =>
-                         {
-                             await Task.Delay(TimeSpan.FromSeconds(60));
-                             Process.GetCurrentProcess().Kill(false);
-                         });
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(60));
+                    Process.GetCurrentProcess().Kill(false);
+                });
                 system.Terminate();
             }
 
@@ -45,7 +47,7 @@ namespace Tauron.Application.Wpf.AppCore
 
                     var mainWindow = scope.Resolve<IMainWindow>();
                     mainWindow.Window.Show();
-                    mainWindow.Shutdown += (o, eventArgs) 
+                    mainWindow.Shutdown += (o, eventArgs)
                         => ShutdownApp();
 
                     splash?.Hide();
@@ -58,10 +60,10 @@ namespace Tauron.Application.Wpf.AppCore
             }
 
             Thread uiThread = new Thread(Runner)
-                              {
-                                  Name = "UI Thread",
-                                  IsBackground = true
-                              };
+            {
+                Name = "UI Thread",
+                IsBackground = true
+            };
             uiThread.SetApartmentState(ApartmentState.STA);
             uiThread.Start();
 

@@ -213,7 +213,9 @@ namespace Tauron
                         labelExpression);
                 }
                 else
+                {
                     targetExpression = Expression.Convert(targetExpression, typeof(object));
+                }
 
                 accessor = Expression.Lambda<Func<object?, object?[]?, object>>(targetExpression, instParam, argsParam).CompileFast();
                 _methodCache[info] = accessor;
@@ -237,8 +239,10 @@ namespace Tauron
         }
 
         public static T ParseEnum<T>(this string value, bool ignoreCase)
-            where T : struct =>
-            Enum.TryParse(value, ignoreCase, out T evalue) ? evalue : default;
+            where T : struct
+        {
+            return Enum.TryParse(value, ignoreCase, out T evalue) ? evalue : default;
+        }
 
         public static IEnumerable<Tuple<MemberInfo, TAttribute>> FindMemberAttributes<TAttribute>(
             this Type type,
@@ -250,17 +254,15 @@ namespace Tauron
             if (nonPublic) bindingflags |= BindingFlags.NonPublic;
 
             if (!Enum.IsDefined(typeof(BindingFlags), BindingFlags.FlattenHierarchy))
-            {
                 return from mem in type.GetMembers(bindingflags)
-                       let attr = CustomAttributeExtensions.GetCustomAttribute<TAttribute>(mem)
-                       where attr != null
-                       select Tuple.Create(mem, attr);
-            }
+                    let attr = CustomAttributeExtensions.GetCustomAttribute<TAttribute>(mem)
+                    where attr != null
+                    select Tuple.Create(mem, attr);
 
             return from mem in type.GetHieratichialMembers(bindingflags)
-                   let attr = mem.GetCustomAttribute<TAttribute>()
-                   where attr != null
-                   select Tuple.Create(mem, attr);
+                let attr = mem.GetCustomAttribute<TAttribute>()
+                where attr != null
+                select Tuple.Create(mem, attr);
         }
 
         public static IEnumerable<MemberInfo> GetHieratichialMembers(this Type? type, BindingFlags flags)
@@ -295,7 +297,7 @@ namespace Tauron
         public static object[] GetAllCustomAttributes(this ICustomAttributeProvider member, Type type)
         {
             if (member == null) throw new ArgumentNullException(nameof(member));
-            if (type   == null) throw new ArgumentNullException(nameof(type));
+            if (type == null) throw new ArgumentNullException(nameof(type));
             return member.GetCustomAttributes(type, true);
         }
 
@@ -361,7 +363,7 @@ namespace Tauron
 
         public static PropertyInfo? GetPropertyFromMethod(this MethodInfo method, Type implementingType)
         {
-            if (method           == null) throw new ArgumentNullException(nameof(method));
+            if (method == null) throw new ArgumentNullException(nameof(method));
             if (implementingType == null) throw new ArgumentNullException(nameof(implementingType));
             if (!method.IsSpecialName || method.Name.Length < 4) return null;
 
@@ -411,14 +413,14 @@ namespace Tauron
         public static bool HasAttribute(this ICustomAttributeProvider member, Type type)
         {
             if (member == null) throw new ArgumentNullException(nameof(member));
-            if (type   == null) throw new ArgumentNullException(nameof(type));
+            if (type == null) throw new ArgumentNullException(nameof(type));
             return member.IsDefined(type, true);
         }
 
         public static bool HasMatchingAttribute<T>(this ICustomAttributeProvider member, T attributeToMatch)
             where T : Attribute
         {
-            if (member           == null) throw new ArgumentNullException(nameof(member));
+            if (member == null) throw new ArgumentNullException(nameof(member));
             if (attributeToMatch == null) throw new ArgumentNullException(nameof(attributeToMatch));
             var attributes = member.GetAllCustomAttributes<T>();
 
@@ -514,13 +516,19 @@ namespace Tauron
             GetPropertySetter(Argument.NotNull(info, nameof(info)))(target, index, value);
         }
 
-        public static object FastCreate(this ConstructorInfo info, params object[] parms) => GetCreator(Argument.NotNull(info, nameof(info)))(parms);
+        public static object FastCreate(this ConstructorInfo info, params object[] parms)
+        {
+            return GetCreator(Argument.NotNull(info, nameof(info)))(parms);
+        }
 
         public static object? GetValueFast(this PropertyInfo info, object? instance, params object[] index)
         {
             return GetPropertyAccessor(Argument.NotNull(info, nameof(info)), () => info.GetIndexParameters().Select(pi => pi.ParameterType))(instance, index);
         }
 
-        public static object? GetValueFast(this FieldInfo info, object? instance) => GetFieldAccessor(Argument.NotNull(info, nameof(info)))(instance);
+        public static object? GetValueFast(this FieldInfo info, object? instance)
+        {
+            return GetFieldAccessor(Argument.NotNull(info, nameof(info)))(instance);
+        }
     }
 }

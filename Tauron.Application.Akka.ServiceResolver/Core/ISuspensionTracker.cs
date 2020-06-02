@@ -1,5 +1,4 @@
-﻿using System;
-using Tauron.Application.Akka.ServiceResolver.Messages.Global;
+﻿using Tauron.Application.Akka.ServiceResolver.Messages.Global;
 
 namespace Tauron.Application.Akka.ServiceResolver.Core
 {

@@ -9,33 +9,46 @@ namespace Tauron.Akka
         where TActor : ActorBase
     {
         private readonly ActorRefFactory<TActor> _builder;
-        private IActorRef _ref = ActorRefs.Nobody;
 
-        public event Action? Initialized;
+        protected BaseActorRef(ActorRefFactory<TActor> actorBuilder)
+        {
+            _builder = actorBuilder;
+        }
 
         public bool IsInitialized { get; private set; }
 
-        protected BaseActorRef(ActorRefFactory<TActor> actorBuilder)
-            => _builder = actorBuilder;
-
         protected virtual bool IsSync => false;
 
-        public IActorRef Actor => _ref;
+        public IActorRef Actor { get; private set; } = ActorRefs.Nobody;
 
-        public void Tell(object message, IActorRef sender) => _ref.Tell(message, sender);
+        public ActorPath Path => Actor.Path;
 
-        public bool Equals(IActorRef? other) => _ref.Equals(other);
+        public event Action? Initialized;
 
-        public int CompareTo(IActorRef? other) => _ref.CompareTo(other);
+        public void Tell(object message, IActorRef sender)
+        {
+            Actor.Tell(message, sender);
+        }
 
-        public int CompareTo(object? obj) => _ref.CompareTo(obj);
+        public bool Equals(IActorRef? other)
+        {
+            return Actor.Equals(other);
+        }
 
-        public ActorPath Path => _ref.Path;
+        public int CompareTo(IActorRef? other)
+        {
+            return Actor.CompareTo(other);
+        }
+
+        public int CompareTo(object? obj)
+        {
+            return Actor.CompareTo(obj);
+        }
 
         public virtual void Init(string? name = null)
         {
             CheckIsInit();
-            _ref = _builder.Create(IsSync, name);
+            Actor = _builder.Create(IsSync, name);
             IsInitialized = true;
             Initialized?.Invoke();
         }
@@ -43,14 +56,14 @@ namespace Tauron.Akka
         public virtual void Init(IActorRefFactory factory, string? name = null)
         {
             CheckIsInit();
-            _ref = factory.ActorOf(_builder.CreateProps(IsSync), name);
+            Actor = factory.ActorOf(_builder.CreateProps(IsSync), name);
             IsInitialized = true;
             Initialized?.Invoke();
         }
 
         protected void ResetInternal()
         {
-            _ref = ActorRefs.Nobody;
+            Actor = ActorRefs.Nobody;
             IsInitialized = false;
         }
 

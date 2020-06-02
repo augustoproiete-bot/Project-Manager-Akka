@@ -2,8 +2,11 @@
 {
     public sealed class EntryRemove
     {
-        public LocEntry Entry { get; }
+        public EntryRemove(LocEntry entry)
+        {
+            Entry = entry;
+        }
 
-        public EntryRemove(LocEntry entry) => Entry = entry;
+        public LocEntry Entry { get; }
     }
 }

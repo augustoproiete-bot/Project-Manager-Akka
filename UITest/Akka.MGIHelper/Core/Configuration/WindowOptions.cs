@@ -6,6 +6,11 @@ namespace Akka.MGIHelper.Core.Configuration
 {
     public sealed class WindowOptions : ConfigurationBase
     {
+        public WindowOptions(IDefaultActorRef<SettingsManager> actor, string scope)
+            : base(actor, scope)
+        {
+        }
+
         public double PositionX
         {
             get => GetValue(double.Parse)!;
@@ -16,11 +21,6 @@ namespace Akka.MGIHelper.Core.Configuration
         {
             get => GetValue(double.Parse)!;
             set => SetValue(value.ToString(CultureInfo.InvariantCulture));
-        }
-
-        public WindowOptions(IDefaultActorRef<SettingsManager> actor, string scope) 
-            : base(actor, scope)
-        {
         }
     }
 }

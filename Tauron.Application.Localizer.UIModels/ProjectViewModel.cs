@@ -7,6 +7,7 @@ using Autofac;
 using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Workspace;
+using Tauron.Application.Localizer.DataModel.Workspace.Mutating;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Workshop;
@@ -18,73 +19,92 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class ProjectViewModel : UiActor
     {
-        private sealed class InitImportRemove
-        {
-            public string ToRemove { get; }
-
-            public InitImportRemove(string remove) => ToRemove = remove;
-        }
-
-        private sealed class UpdateRequest
-        {
-            public string EntryName { get; }
-
-            public ActiveLanguage Language { get; }
-
-            public string Content { get; }
-
-            public string ProjectName { get; }
-
-            public UpdateRequest(string entryName, ActiveLanguage language, string content, string projectName)
-            {
-                EntryName = entryName;
-                Language = language;
-                Content = content;
-                ProjectName = projectName;
-            }
-        }
-
-        private sealed class RemoveRequest
-        {
-            public string EntryName { get; }
-
-            public string ProjectName { get; }
-
-            public RemoveRequest(string entryName, string projectName)
-            {
-                EntryName = entryName;
-                ProjectName = projectName;
-            }
-        }
-
         private string _project = string.Empty;
 
-        public UICollectionProperty<ProjectViewLanguageModel> Languages { get; }
-        public UIProperty<int> SelectedIndex { get; set; }
-        public UICollectionProperty<ProjectEntryModel> ProjectEntrys { get; }
-
-        public UIProperty<int> ImportSelectIndex { get; }
-
-        public UICollectionProperty<string> ImportetProjects { get; }
-
-        public ProjectViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, LocLocalizer localizer, IDialogCoordinator dialogCoordinator, ProjectFileWorkspace workspace) 
+        public ProjectViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, LocLocalizer localizer, IDialogCoordinator dialogCoordinator, ProjectFileWorkspace workspace)
             : base(lifetimeScope, dispatcher)
         {
+            #region Init
+
+            ProjectEntrys = this.RegisterUiCollection<ProjectEntryModel>(nameof(ProjectEntrys)).Async();
+            SelectedIndex = RegisterProperty<int>(nameof(SelectedIndex));
+
+            var self = Context.Self;
+
+            void TryUpdateEntry((string ProjectName, string EntryName, ActiveLanguage Lang, string Content) data)
+            {
+                var (projectName, entryName, lang, content) = data;
+                self.Tell(new UpdateRequest(entryName, lang, content, projectName));
+            }
+
+
+            void TryRemoveEntry((string ProjectName, string EntryName) data)
+            {
+                var (projectName, entryName) = data;
+                self.Tell(new RemoveRequest(entryName, projectName));
+            }
+
+            void InitProjectViewModel(InitProjectViewModel obj)
+            {
+                _project = obj.Project.ProjectName;
+
+                Languages.Add(new ProjectViewLanguageModel(localizer.ProjectViewLanguageBoxFirstLabel, true));
+                Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));
+                SelectedIndex += 0;
+                SelectedIndex.PropertyValueChanged += () =>
+                {
+                    if (SelectedIndex == 0)
+                        return;
+                    SelectedIndex += 0;
+                };
+
+                foreach (var projectEntry in obj.Project.Entries)
+                {
+
+                    ProjectEntrys.Add(new ProjectEntryModel(obj.Project, projectEntry, TryUpdateEntry, TryRemoveEntry));
+                }
+            }
+
+            Receive<InitProjectViewModel>(InitProjectViewModel);
+
+            #endregion
+
+            #region New Entry
+
+            IEnumerable<string> GetEntrys()
+            {
+                var list = ImportetProjects.ToList();
+                list.Add(_project);
+
+                return list.SelectMany(pro => workspace.Get(pro).Entries.Select(e => e.Key));
+            }
+
+            void AddEntry(EntryAdd entry) 
+                => ProjectEntrys.Add(new ProjectEntryModel(workspace.Get(_project), entry.Entry, TryUpdateEntry, TryRemoveEntry));
+
+            NewCommad
+                .ToFlow(this.ShowDialog<INewEntryDialog, NewEntryDialogResult, string>(GetEntrys))
+                .To.Mutate(workspace.Entrys).For(em => em.EntryAdd, em => res => em.NewEntry(_project, res.Name)).ToSelf()
+                .Then.Action(AddEntry)
+                .Return().ThenRegister("NewEntry");
+
+            #endregion
+
             #region Remove Request
 
             void RemoveEntry(EntryRemove entry)
             {
-                if(_project != entry.Entry.Project) return;
+                if (_project != entry.Entry.Project) return;
 
                 var index = ProjectEntrys.FindIndex(em => em.EntryName == entry.Entry.Key);
-                if(index == -1) return;
+                if (index == -1) return;
 
                 ProjectEntrys.RemoveAt(index);
             }
-            
+
             this.Flow<RemoveRequest>()
-               .To.Mutate(workspace.Entrys).For(em => em.EntryRemove, em => rr => em.RemoveEntry(rr.ProjectName, rr.EntryName)).ToSelf()
-               .Then.Action(RemoveEntry).Receive();
+                .To.Mutate(workspace.Entrys).For(em => em.EntryRemove, em => rr => em.RemoveEntry(rr.ProjectName, rr.EntryName)).ToSelf()
+                .Then.Action(RemoveEntry).Receive();
 
             #endregion
 
@@ -92,16 +112,15 @@ namespace Tauron.Application.Localizer.UIModels
 
             void UpdateEntry(EntryUpdate obj)
             {
-                if(_project != obj.Entry.Project) return;
+                if (_project != obj.Entry.Project) return;
 
                 var model = ProjectEntrys.FirstOrDefault(m => m.EntryName == obj.Entry.Key);
                 model.Update(obj.Entry);
             }
 
             this.Flow<UpdateRequest>()
-               .To.Mutate(workspace.Entrys).For(em => em.EntryUpdate, em => ur => em.UpdateEntry(ur.ProjectName, ur.Language, ur.EntryName, ur.Content)).ToSelf()
-               .Then.Action(UpdateEntry).Receive();
-               
+                .To.Mutate(workspace.Entrys).For(em => em.EntryUpdate, em => ur => em.UpdateEntry(ur.ProjectName, ur.Language, ur.EntryName, ur.Content)).ToSelf()
+                .Then.Action(UpdateEntry).Receive();
 
             #endregion
 
@@ -109,7 +128,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             void AddImport(AddImport obj)
             {
-                if(obj.ProjectName != _project) return;
+                if (obj.ProjectName != _project) return;
                 ImportetProjects.Add(obj.Import);
             }
 
@@ -130,16 +149,17 @@ namespace Tauron.Application.Localizer.UIModels
 
             void RemoveImport(RemoveImport import)
             {
-                if(_project != import.TargetProject) return;
+                if (_project != import.TargetProject) return;
 
                 ImportetProjects.Remove(import.ToRemove);
             }
 
             NewCommad.WithCanExecute(() => ImportSelectIndex.Value != -1)
-               .ToFlow(() => new InitImportRemove(ImportetProjects[ImportSelectIndex]))
-               .To.Mutate(workspace.Projects).For(pm => pm.RemoveImport, pm => ir => pm.TryRemoveImport(_project, ir.ToRemove)).ToSelf()
-               .Then.Action(RemoveImport)
-               .Return().ThenRegister("RemoveImport");
+                .ToFlow(() => new InitImportRemove(ImportetProjects[ImportSelectIndex]))
+                .To.Mutate(workspace.Projects).For(pm => pm.RemoveImport, pm => ir => pm.TryRemoveImport(_project, ir.ToRemove)).ToSelf()
+                .Then.Action(RemoveImport)
+                .Return().ThenRegister("RemoveImport");
+
             #endregion
 
             #region AddLanguage
@@ -158,52 +178,61 @@ namespace Tauron.Application.Localizer.UIModels
             Languages = this.RegisterUiCollection<ProjectViewLanguageModel>(nameof(Languages)).Async();
 
             NewCommad
-               .ToFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, CultureInfo>(() => workspace.Get(_project).ActiveLanguages.Select(al => al.ToCulture()).ToArray()))
-               .To.Mutate(workspace.Projects).For(pm => pm.NewLanguage, pm => d => pm.AddLanguage(_project, d!.CultureInfo)).ToSelf()
-               .Then.Action(AddActiveLanguage).Return().ThenRegister("AddLanguage");
-            
+                .ToFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, CultureInfo>(() => workspace.Get(_project).ActiveLanguages.Select(al => al.ToCulture()).ToArray()))
+                .To.Mutate(workspace.Projects).For(pm => pm.NewLanguage, pm => d => pm.AddLanguage(_project, d!.CultureInfo)).ToSelf()
+                .Then.Action(AddActiveLanguage).Return().ThenRegister("AddLanguage");
+
             #endregion
+        }
 
-            #region Init
+        public UICollectionProperty<ProjectViewLanguageModel> Languages { get; }
+        public UIProperty<int> SelectedIndex { get; set; }
+        public UICollectionProperty<ProjectEntryModel> ProjectEntrys { get; }
 
-            ProjectEntrys = this.RegisterUiCollection<ProjectEntryModel>(nameof(ProjectEntrys)).Async();
-            SelectedIndex = RegisterProperty<int>(nameof(SelectedIndex));
+        public UIProperty<int> ImportSelectIndex { get; }
 
-            void InitProjectViewModel(InitProjectViewModel obj)
+        public UICollectionProperty<string> ImportetProjects { get; }
+
+        private sealed class InitImportRemove
+        {
+            public InitImportRemove(string remove)
             {
-                _project = obj.Project.ProjectName;
-
-                Languages.Add(new ProjectViewLanguageModel(localizer.ProjectViewLanguageBoxFirstLabel, true));
-                Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));
-                SelectedIndex += 0;
-                SelectedIndex.PropertyValueChanged += () =>
-                {
-                    if (SelectedIndex == 0)
-                        return;
-                    SelectedIndex += 0;
-                };
-
-                var self = Context.Self;
-
-                foreach (var projectEntry in obj.Project.Entries)
-                {
-                    ProjectEntrys.Add(new ProjectEntryModel(obj.Project, projectEntry,
-                        data =>
-                        {
-                            var (projectName, entryName, lang, content) = data;
-                            self.Tell(new UpdateRequest(entryName, lang, content, projectName));
-                        },
-                        data =>
-                        {
-                            var (projectName, entryName) = data;
-                            self.Tell(new RemoveRequest(entryName, projectName));
-                        }));
-                }
+                ToRemove = remove;
             }
 
-            Receive<InitProjectViewModel>(InitProjectViewModel);
+            public string ToRemove { get; }
+        }
 
-            #endregion
+        private sealed class UpdateRequest
+        {
+            public UpdateRequest(string entryName, ActiveLanguage language, string content, string projectName)
+            {
+                EntryName = entryName;
+                Language = language;
+                Content = content;
+                ProjectName = projectName;
+            }
+
+            public string EntryName { get; }
+
+            public ActiveLanguage Language { get; }
+
+            public string Content { get; }
+
+            public string ProjectName { get; }
+        }
+
+        private sealed class RemoveRequest
+        {
+            public RemoveRequest(string entryName, string projectName)
+            {
+                EntryName = entryName;
+                ProjectName = projectName;
+            }
+
+            public string EntryName { get; }
+
+            public string ProjectName { get; }
         }
     }
 }

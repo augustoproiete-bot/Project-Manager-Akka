@@ -8,10 +8,6 @@ namespace Tauron.Application.Localizer.Core.UI
 {
     public sealed class DialogCoordinator : IDialogCoordinator
     {
-        public static event Action<object>? ShowDialogEvent;
-
-        public static event Action? HideDialogEvent;
-
         public Task<bool?> ShowMessage(string title, string message, Action<bool?>? result)
         {
             var resultTask = new TaskCompletionSource<bool?>();
@@ -26,17 +22,26 @@ namespace Tauron.Application.Localizer.Core.UI
             return resultTask.Task;
         }
 
-        public void ShowMessage(string title, string message) => ShowDialog(new MessageDialog(title, message, b => HideDialog(), false));
+        public void ShowMessage(string title, string message)
+        {
+            ShowDialog(new MessageDialog(title, message, b => HideDialog(), false));
+        }
 
-        public void ShowDialog(object dialog) => ShowDialogEvent?.Invoke(dialog);
+        public void ShowDialog(object dialog)
+        {
+            ShowDialogEvent?.Invoke(dialog);
+        }
 
-        public void HideDialog() => HideDialogEvent?.Invoke();
+        public void HideDialog()
+        {
+            HideDialogEvent?.Invoke();
+        }
 
         public bool? ShowModalMessageWindow(string title, string message)
         {
             var window = new Window();
             SfSkinManager.SetVisualStyle(window, VisualStyles.Blend);
-            window.Content = new MessageDialog(title, message, b => window.DialogResult = b, true) { Margin = new Thickness(10)};
+            window.Content = new MessageDialog(title, message, b => window.DialogResult = b, true) {Margin = new Thickness(10)};
 
             window.SizeToContent = SizeToContent.WidthAndHeight;
             window.ResizeMode = ResizeMode.NoResize;
@@ -47,5 +52,9 @@ namespace Tauron.Application.Localizer.Core.UI
 
             return window.ShowDialog();
         }
+
+        public static event Action<object>? ShowDialogEvent;
+
+        public static event Action? HideDialogEvent;
     }
 }

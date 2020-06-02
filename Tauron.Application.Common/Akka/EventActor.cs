@@ -9,22 +9,20 @@ namespace Tauron.Akka
     [PublicAPI]
     public sealed class EventActor : UntypedActor
     {
-        private sealed class HookEventActor : IEventActor
+        private readonly bool _killOnFirstRespond;
+        private readonly ILoggingAdapter _log = Context.GetLogger();
+
+        private readonly Dictionary<Type, Delegate> _registrations = new Dictionary<Type, Delegate>();
+
+        public EventActor(bool killOnFirstRespond)
         {
-            public HookEventActor(IActorRef actorRef) 
-                => OriginalRef = actorRef;
-
-            public IActorRef OriginalRef { get; }
-
-            public void Register(HookEvent hookEvent) 
-                => OriginalRef.Tell(hookEvent);
-
-            public void Send(IActorRef actor, object send) 
-                => actor.Tell(send, OriginalRef);
+            _killOnFirstRespond = killOnFirstRespond;
         }
 
-        public static IEventActor Create(IActorRefFactory system, bool killOnFirstResponse = false) 
-            => new HookEventActor(system.ActorOf(Props.Create(() => new EventActor(killOnFirstResponse))));
+        public static IEventActor Create(IActorRefFactory system, bool killOnFirstResponse = false)
+        {
+            return new HookEventActor(system.ActorOf(Props.Create(() => new EventActor(killOnFirstResponse))));
+        }
 
         public static IEventActor Create<TPayload>(IActorRefFactory system, Action<TPayload> handler, bool killOnFirstResponse = false)
         {
@@ -32,13 +30,6 @@ namespace Tauron.Akka
             temp.Register(HookEvent.Create(handler));
             return temp;
         }
-
-        private readonly Dictionary<Type, Delegate> _registrations = new Dictionary<Type, Delegate>();
-        private readonly bool _killOnFirstRespond;
-        private readonly ILoggingAdapter _log = Context.GetLogger();
-
-        public EventActor(bool killOnFirstRespond) 
-            => _killOnFirstRespond = killOnFirstRespond;
 
         protected override void OnReceive(object message)
         {
@@ -65,12 +56,35 @@ namespace Tauron.Akka
                             _log.Error(e, "Error On Event Hook Execution");
                         }
 
-                        if(_killOnFirstRespond)
+                        if (_killOnFirstRespond)
                             Context.Self.Tell(PoisonPill.Instance);
                     }
                     else
+                    {
                         Unhandled(message);
+                    }
+
                     break;
+            }
+        }
+
+        private sealed class HookEventActor : IEventActor
+        {
+            public HookEventActor(IActorRef actorRef)
+            {
+                OriginalRef = actorRef;
+            }
+
+            public IActorRef OriginalRef { get; }
+
+            public void Register(HookEvent hookEvent)
+            {
+                OriginalRef.Tell(hookEvent);
+            }
+
+            public void Send(IActorRef actor, object send)
+            {
+                actor.Tell(send, OriginalRef);
             }
         }
     }

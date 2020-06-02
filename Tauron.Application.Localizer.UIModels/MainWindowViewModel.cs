@@ -10,6 +10,7 @@ using Autofac;
 using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
+using Tauron.Application.Localizer.DataModel.Workspace;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Messages;
 using Tauron.Application.Localizer.UIModels.Services;
@@ -22,19 +23,17 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class MainWindowViewModel : UiActor
     {
-        private UIProperty<IEnumerable<RunningOperation>> RunningOperations { get; }
+        private ProjectFile? _last;
 
-        private UIProperty<RenctFilesCollection> RenctFiles { get; }
-
-        private UIModel<CenterViewModel> CenterView { get; }
+        private OperationController? _loadingOperation;
 
         public MainWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IOperationManager operationManager, LocLocalizer localizer, IDialogCoordinator dialogCoordinator,
-            AppConfig config, IDialogFactory dialogFactory, IViewModel<CenterViewModel> model, IMainWindowCoordinator mainWindowCoordinator) 
+            AppConfig config, IDialogFactory dialogFactory, IViewModel<CenterViewModel> model, IMainWindowCoordinator mainWindowCoordinator, ProjectFileWorkspace workspace)
             : base(lifetimeScope, dispatcher)
         {
             var self = Self;
             CenterView = this.RegisterViewModel(nameof(CenterView), model);
-            
+
             #region Operation Manager
 
             RunningOperations = RegisterProperty<IEnumerable<RunningOperation>>(nameof(RunningOperations)).WithDefaultValue(operationManager.RunningOperations);
@@ -61,11 +60,10 @@ namespace Tauron.Application.Localizer.UIModels
                 if (!string.IsNullOrWhiteSpace(source)) return false;
                 UICall(() => dialogCoordinator.ShowMessage(localizer.CommonError, localizer.MainWindowModelLoadProjectSourceEmpty));
                 return true;
-
             }
 
             NewCommad.WithCanExecute(() => _last != null)
-               .ToFlow(SaveAsProject).Send.ToModel(CenterView);
+                .ToFlow(SaveAsProject).Send.ToModel(CenterView);
 
             #endregion
 
@@ -86,6 +84,10 @@ namespace Tauron.Application.Localizer.UIModels
 
                 mainWindowCoordinator.IsBusy = true;
                 _loadingOperation = operationManager.StartOperation(string.Format(localizer.MainWindowModelLoadProjectOperation, Path.GetFileName(source) ?? source));
+
+                if (!workspace.ProjectFile.IsEmpty)
+                    workspace.ProjectFile.Operator.Tell(ForceSave.Force(workspace.ProjectFile));
+
                 ProjectFile.BeginLoad(Context, _loadingOperation.Id, source!, "Project_Operator");
             }
 
@@ -94,7 +96,9 @@ namespace Tauron.Application.Localizer.UIModels
                 if (_loadingOperation != null)
                 {
                     if (obj.Ok)
+                    {
                         _loadingOperation.Compled();
+                    }
                     else
                     {
                         mainWindowCoordinator.IsBusy = false;
@@ -111,15 +115,15 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => _loadingOperation == null)
-               .ToFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenExistingFile)), OpenFileMode.OpenExistingFile))
-               .To.Func(SourceSelectedFunc).ToSelf()
-               .Then.Func(ProjectLoaded!).ToModel(CenterView)
-               .Then.Return().ThenRegister("OpenFile");
+                .ToFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenExistingFile)), OpenFileMode.OpenExistingFile))
+                .To.Func(SourceSelectedFunc).ToSelf()
+                .Then.Func(ProjectLoaded!).ToModel(CenterView)
+                .Then.Return().ThenRegister("OpenFile");
 
             #endregion
 
             #region New File
-            
+
             async Task<LoadedProjectFile?> NewFileSource(string? source)
             {
                 source ??= string.Empty;
@@ -137,15 +141,18 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => _loadingOperation == null)
-               //.ToFlow(SourceSelected.From(() => "", OpenFileMode.OpenNewFile)).Send.ToSelf()
-               .ToFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenNewFile)), OpenFileMode.OpenNewFile)).Send.ToSelf()
-               .Return().ThenRegister("NewFile");
+                //.ToFlow(SourceSelected.From(() => "", OpenFileMode.OpenNewFile)).Send.ToSelf()
+                .ToFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenNewFile)), OpenFileMode.OpenNewFile)).Send.ToSelf()
+                .Return().ThenRegister("NewFile");
 
             #endregion
         }
 
-        private OperationController? _loadingOperation;
-        private ProjectFile? _last;
+        private UIProperty<IEnumerable<RunningOperation>> RunningOperations { get; }
+
+        private UIProperty<RenctFilesCollection> RenctFiles { get; }
+
+        private UIModel<CenterViewModel> CenterView { get; }
 
 
         private sealed class RenctFilesCollection : UIObservableCollection<RenctFile>
@@ -164,13 +171,13 @@ namespace Tauron.Application.Localizer.UIModels
             {
                 file = file.Trim();
 
-                if(string.IsNullOrWhiteSpace(file) || !File.Exists(file)) return;
+                if (string.IsNullOrWhiteSpace(file) || !File.Exists(file)) return;
 
-                if(this.Any(rf => rf.File == file)) return;
+                if (this.Any(rf => rf.File == file)) return;
 
-                if(Count > 10)
+                if (Count > 10)
                     RemoveAt(Count - 1);
-                
+
                 Add(new RenctFile(file, _loader));
                 _config.RenctFiles = ImmutableList<string>.Empty.AddRange(this.Select(rf => rf.File));
             }
@@ -178,9 +185,12 @@ namespace Tauron.Application.Localizer.UIModels
 
         private sealed class InternlRenctFile
         {
-            public string File { get; }
+            public InternlRenctFile(string file)
+            {
+                File = file;
+            }
 
-            public InternlRenctFile(string file) => File = file;
+            public string File { get; }
         }
     }
 }

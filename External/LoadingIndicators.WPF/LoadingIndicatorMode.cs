@@ -31,7 +31,7 @@ namespace LoadingIndicators.WPF
         ThreeDots
     }
 
-    
+
     internal static class LoadingIndicatorModeUtility
     {
         public static string GetDescription(this LoadingIndicatorMode value)

@@ -8,7 +8,7 @@ namespace Tauron.Application.Workshop.Analyzing
         IEventSource<IssuesEvent> Issues { get; }
     }
 
-    public interface IAnalyzer<out TWorkspace, TData> : IAnalyzer 
+    public interface IAnalyzer<out TWorkspace, TData> : IAnalyzer
         where TWorkspace : WorkspaceBase<TData>
     {
         void RegisterRule(IRule<TWorkspace, TData> rule);

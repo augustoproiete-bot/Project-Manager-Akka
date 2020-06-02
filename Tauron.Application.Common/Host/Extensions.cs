@@ -13,28 +13,28 @@ namespace Tauron.Host
             where TType : notnull, new()
         {
             return builder.Register(c =>
-                                    {
-                                        var appConfig = c.Resolve<IConfiguration>();
-                                        var config = new TType();
-                                        if (string.IsNullOrWhiteSpace(name))
-                                            appConfig.Bind(config);
-                                        else
-                                            appConfig.Bind(name, config);
+            {
+                var appConfig = c.Resolve<IConfiguration>();
+                var config = new TType();
+                if (string.IsNullOrWhiteSpace(name))
+                    appConfig.Bind(config);
+                else
+                    appConfig.Bind(name, config);
 
-                                        return config;
-                                    });
+                return config;
+            });
         }
 
         public static IRegistrationBuilder<TType, SimpleActivatorData, SingleRegistrationStyle> Configure<TType>(this ContainerBuilder builder, Action<TType> configAction)
             where TType : notnull, new()
         {
             return builder.Register(c =>
-                                    {
-                                        var config = new TType();
-                                        configAction(config);
+            {
+                var config = new TType();
+                configAction(config);
 
-                                        return config;
-                                    });
+                return config;
+            });
         }
     }
 }

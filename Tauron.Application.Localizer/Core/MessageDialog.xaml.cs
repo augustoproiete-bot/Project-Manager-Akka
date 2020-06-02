@@ -4,12 +4,12 @@ using System.Windows;
 namespace Tauron.Application.Localizer.Core
 {
     /// <summary>
-    /// Interaktionslogik für MessageDialog.xaml
+    ///     Interaktionslogik für MessageDialog.xaml
     /// </summary>
     public partial class MessageDialog
     {
-        private readonly Action<bool?>? _result;
         private readonly bool _canCnacel;
+        private readonly Action<bool?>? _result;
 
         public MessageDialog(string title, string content, Action<bool?>? result, bool canCnacel)
         {
@@ -31,6 +31,9 @@ namespace Tauron.Application.Localizer.Core
                 _result?.Invoke(null);
         }
 
-        private void Cancel_OnClick(object sender, RoutedEventArgs e) => _result?.Invoke(false);
+        private void Cancel_OnClick(object sender, RoutedEventArgs e)
+        {
+            _result?.Invoke(false);
+        }
     }
 }

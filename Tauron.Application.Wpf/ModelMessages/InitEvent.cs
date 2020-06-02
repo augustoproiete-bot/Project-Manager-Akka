@@ -2,8 +2,11 @@
 {
     public sealed class InitEvent
     {
-        public string Key { get; }
+        public InitEvent(string key)
+        {
+            Key = key;
+        }
 
-        public InitEvent(string key) => Key = key;
+        public string Key { get; }
     }
 }

@@ -9,9 +9,7 @@ namespace Akka.MGIHelper.UI
 {
     public sealed class LogWindowViewModel : UiActor
     {
-        private UICollectionProperty<string> UnhandledMessages { get; }
-
-        public LogWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher) 
+        public LogWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher)
             : base(lifetimeScope, dispatcher)
         {
             UnhandledMessages = this.RegisterUiCollection<string>(nameof(UnhandledMessages)).Async();
@@ -21,11 +19,13 @@ namespace Akka.MGIHelper.UI
             Context.System.EventStream.Subscribe(Context.Self, typeof(UnhandledMessage));
         }
 
+        private UICollectionProperty<string> UnhandledMessages { get; }
+
         private void NewUnhandledMessage(UnhandledMessage obj)
         {
             var builder = new StringBuilder($"Name: {obj.GetType().Name}");
 
-            foreach (var propertyInfo in obj.Message.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) 
+            foreach (var propertyInfo in obj.Message.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 builder.Append($" - {propertyInfo.GetValue(obj.Message)}");
 
             UnhandledMessages.Add(builder.ToString());

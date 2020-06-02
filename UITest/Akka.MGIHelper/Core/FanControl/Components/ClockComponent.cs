@@ -12,9 +12,9 @@ namespace Akka.MGIHelper.Core.FanControl.Components
     {
         private readonly FanControlOptions _options;
         private readonly Timer _timer;
+        private ClockState _clockState;
 
         private MessageBus? _messageBus;
-        private ClockState _clockState;
 
         public ClockComponent(FanControlOptions options)
         {
@@ -23,23 +23,9 @@ namespace Akka.MGIHelper.Core.FanControl.Components
             _timer = new Timer(Invoke);
         }
 
-        private async void Invoke(object state)
+        public async ValueTask DisposeAsync()
         {
-            try
-            {
-                await _messageBus!.Publish(new TickEvent());
-            }
-            catch
-            {
-                // ignored
-            }
-            finally
-            {
-                if (_clockState == ClockState.Start)
-                {
-                    _timer.Change(_options.ClockTimeMs, -1);
-                }
-            }
+            await _timer.DisposeAsync();
         }
 
         public Task Handle(ClockEvent msg, MessageBus messageBus)
@@ -62,6 +48,20 @@ namespace Akka.MGIHelper.Core.FanControl.Components
             return Task.CompletedTask;
         }
 
-        public async ValueTask DisposeAsync() => await _timer.DisposeAsync();
+        private async void Invoke(object state)
+        {
+            try
+            {
+                await _messageBus!.Publish(new TickEvent());
+            }
+            catch
+            {
+                // ignored
+            }
+            finally
+            {
+                if (_clockState == ClockState.Start) _timer.Change(_options.ClockTimeMs, -1);
+            }
+        }
     }
 }

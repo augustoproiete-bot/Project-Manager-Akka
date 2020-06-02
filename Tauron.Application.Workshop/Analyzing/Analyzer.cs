@@ -14,8 +14,6 @@ namespace Tauron.Application.Workshop.Analyzing
     {
         private readonly HashSet<string> _rules = new HashSet<string>();
 
-        public IActorRef Actor { get; }
-
         internal Analyzer(TWorkspace workspace, IActorRef actor, IEventSource<IssuesEvent> source)
         {
             Actor = actor;
@@ -28,11 +26,13 @@ namespace Tauron.Application.Workshop.Analyzing
             Issues = new AnalyzerEventSource<TWorkspace, TData>(Actor);
         }
 
+        public IActorRef Actor { get; }
+
         public void RegisterRule(IRule<TWorkspace, TData> rule)
         {
             lock (_rules)
             {
-                if(!_rules.Add(rule.Name))
+                if (!_rules.Add(rule.Name))
                     return;
             }
 
@@ -45,18 +45,6 @@ namespace Tauron.Application.Workshop.Analyzing
     [PublicAPI]
     public static class Analyzer
     {
-        private class SourceFabricator<TWorkspace, TData> where TWorkspace : WorkspaceBase<TData>
-        {
-            public AnalyzerEventSource<TWorkspace, TData>? EventSource { get; private set; }
-
-
-
-            public void Init(IActorRef actor) => EventSource = new AnalyzerEventSource<TWorkspace, TData>(actor);
-
-            public void Send(RuleIssuesChanged<TWorkspace, TData> evt)
-                => EventSource?.SendEvent(evt);
-        }
-
         public static IAnalyzer<TWorkspace, TData> From<TWorkspace, TData>(TWorkspace workspace, IActorRefFactory factory)
             where TWorkspace : WorkspaceBase<TData>
         {
@@ -67,5 +55,20 @@ namespace Tauron.Application.Workshop.Analyzing
             return new Analyzer<TWorkspace, TData>(workspace, actor, evtSource.EventSource ?? throw new InvalidOperationException("Create Analyzer"));
         }
 
+        private class SourceFabricator<TWorkspace, TData> where TWorkspace : WorkspaceBase<TData>
+        {
+            public AnalyzerEventSource<TWorkspace, TData>? EventSource { get; private set; }
+
+
+            public void Init(IActorRef actor)
+            {
+                EventSource = new AnalyzerEventSource<TWorkspace, TData>(actor);
+            }
+
+            public void Send(RuleIssuesChanged<TWorkspace, TData> evt)
+            {
+                EventSource?.SendEvent(evt);
+            }
+        }
     }
 }

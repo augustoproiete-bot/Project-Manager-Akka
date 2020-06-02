@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,21 +8,18 @@ using Akka.Code.Configuration.Elements;
 using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Logger.Serilog;
-using Akka.Streams;
-using Akka.Streams.Dsl;
 using Serilog;
 using Tauron.Application.Akka.ServiceResolver;
 using Tauron.Application.Akka.ServiceResolver.Actor;
 using Tauron.Application.Akka.ServiceResolver.Configuration;
 using Tauron.Application.Akka.ServiceResolver.Core;
-using Tauron.Application.Akka.ServiceResolver.Data;
 
 namespace AkkaTest
 {
     [DebuggerNonUserCode]
     public sealed class CallingThreadDispatcherInternalConfigurator : MessageDispatcherConfigurator
     {
-        private CallingThreadDispatcherInternal _dispatcher;
+        private readonly CallingThreadDispatcherInternal _dispatcher;
 
         public CallingThreadDispatcherInternalConfigurator(Config config, IDispatcherPrerequisites prerequisites) : base(config, prerequisites)
         {
@@ -31,7 +27,9 @@ namespace AkkaTest
         }
 
         public override MessageDispatcher Dispatcher()
-            => _dispatcher;
+        {
+            return _dispatcher;
+        }
     }
 
     [DebuggerNonUserCode]
@@ -40,27 +38,30 @@ namespace AkkaTest
         public CallingThreadDispatcherInternal(MessageDispatcherConfigurator configurator)
             : base(configurator)
         {
-
         }
 
-        protected override void ExecuteTask(IRunnable run) 
-            => run.Run();
+        protected override void ExecuteTask(IRunnable run)
+        {
+            run.Run();
+        }
 
         protected override void Shutdown()
-        { }
+        {
+        }
     }
 
     public sealed class TestMessage
     {
-        public string Message { get; }
+        public TestMessage(string message)
+        {
+            Message = message;
+        }
 
-        public TestMessage(string message) 
-            => Message = message;
+        public string Message { get; }
     }
 
     public sealed class KillService
     {
-
     }
 
     public sealed class TestService : ReceiveActor
@@ -71,8 +72,10 @@ namespace AkkaTest
             Receive<KillService>(KillService);
         }
 
-        private void KillService(KillService obj) 
-            => Context.Self.Tell(PoisonPill.Instance);
+        private void KillService(KillService obj)
+        {
+            Context.Self.Tell(PoisonPill.Instance);
+        }
 
         private void TestMessage(TestMessage obj)
         {
@@ -82,40 +85,9 @@ namespace AkkaTest
         }
     }
 
-    class Program
+    internal class Program
     {
-        [DebuggerNonUserCode]
-        private sealed class TestSync : SynchronizationContext
-        {
-            public override void Post(SendOrPostCallback d, object? state) 
-                => d(state);
-
-            public override void Send(SendOrPostCallback d, object? state) 
-                => d(state);
-        }
-
-        private sealed class TestClient : ReceiveActor
-        {
-            public TestClient()
-            {
-                Receive<string>(SendTest);
-                Receive<KillService>(Kill);
-            }
-
-            private void Kill(KillService obj)
-            {
-                var service = Context.ResolveRemoteService(nameof(TestService));
-                service.Service.Tell(obj);
-            }
-
-            private void SendTest(string obj)
-            {
-                var service = Context.ResolveRemoteService(nameof(TestService));
-                service.Service.Tell(new TestMessage(obj));
-            }
-        }
-
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             //ProxyTest.TestProxy();
             //SynchronizationContext.SetSynchronizationContext(new TestSync());
@@ -141,7 +113,7 @@ namespace AkkaTest
             using var system = ActorSystem.Create("Test", config);
 
             var globalTemp = system.ActorOf<GlobalResolver>("Global");
-            globalTemp.Tell(new GlobalResolver.Initialize(new ResolverSettings(Config.Empty) { IsGlobal = true }));
+            globalTemp.Tell(new GlobalResolver.Initialize(new ResolverSettings(Config.Empty) {IsGlobal = true}));
 
             var exz = system.AddServiceResolver();
 
@@ -156,6 +128,41 @@ namespace AkkaTest
 
             globalTemp.Tell(PoisonPill.Instance);
             await system.WhenTerminated;
+        }
+
+        [DebuggerNonUserCode]
+        private sealed class TestSync : SynchronizationContext
+        {
+            public override void Post(SendOrPostCallback d, object? state)
+            {
+                d(state);
+            }
+
+            public override void Send(SendOrPostCallback d, object? state)
+            {
+                d(state);
+            }
+        }
+
+        private sealed class TestClient : ReceiveActor
+        {
+            public TestClient()
+            {
+                Receive<string>(SendTest);
+                Receive<KillService>(Kill);
+            }
+
+            private void Kill(KillService obj)
+            {
+                var service = Context.ResolveRemoteService(nameof(TestService));
+                service.Service.Tell(obj);
+            }
+
+            private void SendTest(string obj)
+            {
+                var service = Context.ResolveRemoteService(nameof(TestService));
+                service.Service.Tell(new TestMessage(obj));
+            }
         }
     }
 }

@@ -13,14 +13,6 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
     {
         private readonly ExtendedActorSystem _system;
 
-        public IActorRef GlobalResolver { get; } 
-
-        public IActorRef HostActor { get; }
-
-        public IActorRef RemoteServiceActor { get; }
-
-        public ResolverSettings Settings { get; }
-
         public ResolverExt(ExtendedActorSystem system)
         {
             _system = system;
@@ -30,8 +22,18 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
             RemoteServiceActor = system.ActorOf<RemoteServiceActor>("RemoteServices");
         }
 
-        internal void Initialize() 
-            => GlobalResolver.Tell(new GlobalResolver.Initialize(Settings));
+        public IActorRef GlobalResolver { get; }
+
+        public IActorRef HostActor { get; }
+
+        public IActorRef RemoteServiceActor { get; }
+
+        public ResolverSettings Settings { get; }
+
+        internal void Initialize()
+        {
+            GlobalResolver.Tell(new GlobalResolver.Initialize(Settings));
+        }
 
         public void RegisterEndpoint(EndpointConfig config)
         {
@@ -40,6 +42,8 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
         }
 
         public Task<QueryServiceResponse> GetServiceEntry(string name)
-            => GlobalResolver.Ask<QueryServiceResponse>(new QueryServiceRequest(name), TimeSpan.FromSeconds(10));
+        {
+            return GlobalResolver.Ask<QueryServiceResponse>(new QueryServiceRequest(name), TimeSpan.FromSeconds(10));
+        }
     }
 }

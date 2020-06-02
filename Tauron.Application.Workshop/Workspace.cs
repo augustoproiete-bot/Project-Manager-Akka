@@ -10,16 +10,24 @@ namespace Tauron.Application.Workshop
     [PublicAPI]
     public abstract class WorkspaceBase<TData> : IDataSource<TData>
     {
+        protected WorkspaceBase(IActorRefFactory factory)
+        {
+            Engine = MutatingEngine.From(this, factory);
+        }
+
         protected MutatingEngine<TData> Engine { get; }
 
-        protected WorkspaceBase(IActorRefFactory factory) 
-            => Engine = MutatingEngine.From(this, factory);
+        TData IDataSource<TData>.GetData()
+        {
+            return GetDataInternal();
+        }
 
-        TData IDataSource<TData>.GetData() => GetDataInternal();
+        void IDataSource<TData>.SetData(TData data)
+        {
+            SetDataInternal(data);
+        }
 
         protected abstract TData GetDataInternal();
-
-        void IDataSource<TData>.SetData(TData data) => SetDataInternal(data);
 
         protected abstract void SetDataInternal(TData data);
     }
@@ -29,13 +37,17 @@ namespace Tauron.Application.Workshop
         where TThis : Workspace<TThis, TRawData>
 
     {
+        protected Workspace(IActorRefFactory factory)
+            : base(factory)
+        {
+            Analyzer = Analyzing.Analyzer.From<TThis, MutatingContext<TRawData>>((TThis) this, factory);
+        }
+
         public IAnalyzer<TThis, MutatingContext<TRawData>> Analyzer { get; }
 
-        protected Workspace(IActorRefFactory factory)
-            : base(factory) =>
-            Analyzer = Analyzing.Analyzer.From<TThis, MutatingContext<TRawData>>((TThis) this, factory);
-
-        public void Reset(TRawData newData) 
-            => Engine.Mutate(nameof(Reset), data => data.Update(new ResetChange(), newData));
+        public void Reset(TRawData newData)
+        {
+            Engine.Mutate(nameof(Reset), data => data.Update(new ResetChange(), newData));
+        }
     }
 }

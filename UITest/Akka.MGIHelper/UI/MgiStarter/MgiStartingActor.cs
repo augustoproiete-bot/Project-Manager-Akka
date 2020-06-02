@@ -5,7 +5,7 @@ using System.Threading;
 using Akka.Actor;
 using Akka.Event;
 using Akka.MGIHelper.Core.Configuration;
-using Akka.Util;
+using IniParser;
 using Tauron.Application.Wpf;
 using Tauron.Localization;
 
@@ -13,35 +13,9 @@ namespace Akka.MGIHelper.UI.MgiStarter
 {
     public sealed class MgiStartingActor : ReceiveActor
     {
-        public sealed class TryStart
-        {
-            public ProcessConfig Config { get; }
-
-            public Action Kill { get; }
-
-
-
-            public TryStart(ProcessConfig config, Action kill)
-            {
-                Config = config;
-                Kill = kill;
-            }
-        }
-
-        public sealed class TryStartResponse
-        {
-        }
-
-        public sealed class StartStatusUpdate
-        {
-            public string Status { get; }
-
-            public StartStatusUpdate(string status) 
-                => Status = status;
-        }
+        private readonly IDialogFactory _dialogFactory;
 
         private readonly ILoggingAdapter _log = Context.GetLogger();
-        private readonly IDialogFactory _dialogFactory;
 
         public MgiStartingActor(IDialogFactory dialogFactory)
         {
@@ -98,7 +72,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
             var kernelPath = config.Kernel.Trim();
             var statusPath = Path.Combine(Path.GetDirectoryName(kernelPath) ?? string.Empty, "Status.ini");
             const int iterationCount = 60;
-            var parser = new IniParser.FileIniDataParser();
+            var parser = new FileIniDataParser();
 
             if (File.Exists(statusPath))
                 File.Delete(statusPath);
@@ -109,7 +83,6 @@ namespace Akka.MGIHelper.UI.MgiStarter
             Thread.Sleep(5000);
 
             for (var i = 0; i < iterationCount; i++)
-            {
                 try
                 {
                     Thread.Sleep(1100);
@@ -129,9 +102,35 @@ namespace Akka.MGIHelper.UI.MgiStarter
                 {
                     Thread.Sleep(500);
                 }
-            }
 
             return false;
+        }
+
+        public sealed class TryStart
+        {
+            public TryStart(ProcessConfig config, Action kill)
+            {
+                Config = config;
+                Kill = kill;
+            }
+
+            public ProcessConfig Config { get; }
+
+            public Action Kill { get; }
+        }
+
+        public sealed class TryStartResponse
+        {
+        }
+
+        public sealed class StartStatusUpdate
+        {
+            public StartStatusUpdate(string status)
+            {
+                Status = status;
+            }
+
+            public string Status { get; }
         }
     }
 }

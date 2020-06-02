@@ -21,26 +21,18 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class CenterViewModel : UiActor
     {
-        private sealed class RemoveProjectName
-        {
-            public string Name { get; }
-
-            public RemoveProjectName(string name) => Name = name;
-        }
-        
-        private UICollectionProperty<ProjectViewContainer> Views { get; }
-
-        private UIProperty<int?> CurrentProject { get; set; }
-
         public CenterViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IOperationManager manager, LocLocalizer localizer, IDialogCoordinator dialogCoordinator,
-                            IMainWindowCoordinator mainWindow, ProjectFileWorkspace workspace) 
+            IMainWindowCoordinator mainWindow, ProjectFileWorkspace workspace)
             : base(lifetimeScope, dispatcher)
         {
             Views = this.RegisterUiCollection<ProjectViewContainer>(nameof(Views)).Async();
             CurrentProject = RegisterProperty<int?>(nameof(CurrentProject));
 
 
-            static string GetActorName(string projectName) => projectName.Replace(' ', '_') + "-View";
+            static string GetActorName(string projectName)
+            {
+                return projectName.Replace(' ', '_') + "-View";
+            }
 
             #region Project Save
 
@@ -71,15 +63,15 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             this.Flow<SaveRequest>().To.EventSource(workspace.Source.SaveRequest).ToSelf()
-               .Then.Action(SaveRequested)
-               .RespondTo<SavedProject>().Action(ProjectSaved).Receive();
+                .Then.Action(SaveRequested)
+                .RespondTo<SavedProject>().Action(ProjectSaved).Receive();
 
             #endregion
 
             #region Update Source
 
             this.Flow<UpdateSource>().To.Mutate(workspace.Source).For(sm => sm.SourceUpdate, sm => us => sm.UpdateSource(us.Name)).ToSelf()
-               .Then.Action(su => mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source));
+                .Then.Action(su => mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source));
 
             #endregion
 
@@ -98,14 +90,14 @@ namespace Tauron.Application.Localizer.UIModels
             void RemoveDialog(RemoveProjectName? project)
             {
                 UICall(c =>
-                       {
-                           dialogCoordinator.ShowMessage( string.Format(localizer.CenterViewRemoveProjectDialogTitle, project?.Name),
-                                    localizer.CenterViewRemoveProjectDialogMessage, result =>
-                                    {
-                                        if (result == true)
-                                            workspace.Projects.RemoveProject(project?.Name ?? string.Empty);
-                                    });
-                       });
+                {
+                    dialogCoordinator.ShowMessage(string.Format(localizer.CenterViewRemoveProjectDialogTitle, project?.Name),
+                        localizer.CenterViewRemoveProjectDialogMessage, result =>
+                        {
+                            if (result == true)
+                                workspace.Projects.RemoveProject(project?.Name ?? string.Empty);
+                        });
+                });
             }
 
             void RemoveProject(Project project)
@@ -118,9 +110,9 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty && CurrentProject != null)
-               .ToFlow(TryGetRemoveProjectName()).To.Mutate(workspace.Projects).For(pm => pm.RemovedProject, pm => RemoveDialog).ToSelf()
-               .Then.Action(rp => RemoveProject(rp.Project))
-               .Return().ThenRegister("RemoveProject");
+                .ToFlow(TryGetRemoveProjectName()).To.Mutate(workspace.Projects).For(pm => pm.RemovedProject, pm => RemoveDialog).ToSelf()
+                .Then.Action(rp => RemoveProject(rp.Project))
+                .Return().ThenRegister("RemoveProject");
 
             #endregion
 
@@ -136,7 +128,9 @@ namespace Tauron.Application.Localizer.UIModels
 
                 string titleName = obj.ProjectFile.Source;
                 if (string.IsNullOrWhiteSpace(titleName))
+                {
                     titleName = localizer.CommonUnkowen;
+                }
                 else
                 {
                     titleName = Path.GetFileNameWithoutExtension(obj.ProjectFile.Source);
@@ -154,7 +148,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             this.Flow<SupplyNewProjectFile>().To.Mutate(workspace.Source).For(sm => sm.ProjectReset, sm => np => sm.Reset(np.File)).ToSelf()
-               .Then.Action(ProjectRest).Receive();
+                .Then.Action(ProjectRest).Receive();
 
             #endregion
 
@@ -179,10 +173,10 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty)
-               .ToFlow(this.ShowDialog<IProjectNameDialog, NewProjectDialogResult, string>(() => workspace.ProjectFile.Projects.Select(p => p.ProjectName)))
-                    .To.Mutate(workspace.Projects).For(pm => pm.NewProject, pm => result => pm.AddProject(result.Name)).ToSelf()
-               .Then.Action(p => AddProject(p.Project))
-               .Return().ThenRegister("AddNewProject");
+                .ToFlow(this.ShowDialog<IProjectNameDialog, NewProjectDialogResult, string>(() => workspace.ProjectFile.Projects.Select(p => p.ProjectName)))
+                .To.Mutate(workspace.Projects).For(pm => pm.NewProject, pm => result => pm.AddProject(result.Name)).ToSelf()
+                .Then.Action(p => AddProject(p.Project))
+                .Return().ThenRegister("AddNewProject");
 
             #endregion
 
@@ -194,6 +188,20 @@ namespace Tauron.Application.Localizer.UIModels
                 .Return().ThenRegister("AddGlobalLang");
 
             #endregion
+        }
+
+        private UICollectionProperty<ProjectViewContainer> Views { get; }
+
+        private UIProperty<int?> CurrentProject { get; set; }
+
+        private sealed class RemoveProjectName
+        {
+            public RemoveProjectName(string name)
+            {
+                Name = name;
+            }
+
+            public string Name { get; }
         }
     }
 }

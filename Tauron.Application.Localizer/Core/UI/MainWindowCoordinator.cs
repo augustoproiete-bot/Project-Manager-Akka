@@ -5,8 +5,8 @@ namespace Tauron.Application.Localizer.Core.UI
 {
     public sealed class MainWindowCoordinator : IMainWindowCoordinator
     {
-        private string _titlePostfix = string.Empty;
         private bool _isBusy;
+        private string _titlePostfix = string.Empty;
 
         public event Action? TitleChanged;
         public event Action? IsBusyChanged;

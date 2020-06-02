@@ -2,9 +2,11 @@
 {
     public sealed class ImportProjectDialogResult
     {
-        public string Project { get; }
+        public ImportProjectDialogResult(string project)
+        {
+            Project = project;
+        }
 
-        public ImportProjectDialogResult(string project) 
-            => Project = project;
+        public string Project { get; }
     }
 }

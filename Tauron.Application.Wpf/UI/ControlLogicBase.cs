@@ -13,11 +13,11 @@ namespace Tauron.Application.Wpf.UI
     public abstract class ControlLogicBase<TControl> : IView
         where TControl : FrameworkElement, IView
     {
-        protected readonly TControl UserControl;
-        protected readonly IViewModel Model;
         protected readonly ControlBindLogic BindLogic;
 
         protected readonly ILogger Logger = Log.ForContext<TControl>();
+        protected readonly IViewModel Model;
+        protected readonly TControl UserControl;
 
         protected ControlLogicBase(TControl userControl, IViewModel model)
         {
@@ -34,19 +34,34 @@ namespace Tauron.Application.Wpf.UI
             userControl.DataContextChanged += (sender, args) =>
             {
                 if (args.NewValue != model)
-                    ((FrameworkElement)sender).DataContext = model;
+                    ((FrameworkElement) sender).DataContext = model;
             };
-
         }
+
+        public void Register(string key, IControlBindable bindable, DependencyObject affectedPart)
+        {
+            BindLogic.Register(key, bindable, affectedPart);
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        public void CleanUp(string key)
+        {
+            BindLogic.CleanUp(key);
+        }
+
+        public string Key { get; } = Guid.NewGuid().ToString();
+        public ViewManager ViewManager => ViewManager.Manager;
+
+        public event Action? ControlUnload;
 
         protected virtual void WireUpLoaded()
         {
-            UserControl.Loaded += (sender, args) =>  UserControlOnLoaded();
+            UserControl.Loaded += (sender, args) => UserControlOnLoaded();
         }
 
         protected virtual void WireUpUnloaded()
         {
-            UserControl.Unloaded += (sender, args) =>  UserControlOnUnloaded();
+            UserControl.Unloaded += (sender, args) => UserControlOnUnloaded();
         }
 
         protected virtual void UserControlOnUnloaded()
@@ -75,22 +90,8 @@ namespace Tauron.Application.Wpf.UI
                     Model.Init();
             }
 
-            Model.Tell(new InitEvent(((IView)UserControl).Key));
+            Model.Tell(new InitEvent(UserControl.Key));
             CommandManager.InvalidateRequerySuggested();
         }
-
-        public void Register(string key, IControlBindable bindable, DependencyObject affectedPart)
-        {
-            BindLogic.Register(key, bindable, affectedPart);
-            CommandManager.InvalidateRequerySuggested();
-        }
-
-        public void CleanUp(string key)
-            => BindLogic.CleanUp(key);
-
-        public string Key { get; } = Guid.NewGuid().ToString();
-        public ViewManager ViewManager => ViewManager.Manager;
-
-        public event Action? ControlUnload;
     }
 }

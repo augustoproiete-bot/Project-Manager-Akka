@@ -1,12 +1,14 @@
-﻿using System;
-using System.Windows.Data;
+﻿using System.Windows.Data;
 using Tauron.Application.Wpf.Converter;
 
 namespace Tauron.Application.Localizer.Core.Converter
 {
     public sealed class OperationBadgetConverter : ValueConverterFactoryBase
     {
-        protected override IValueConverter Create() => CreateCommonConverter<int, object?>(ConvertInt);
+        protected override IValueConverter Create()
+        {
+            return CreateCommonConverter<int, object?>(ConvertInt);
+        }
 
         private static object? ConvertInt(int arg)
         {

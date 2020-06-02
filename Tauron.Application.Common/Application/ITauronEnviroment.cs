@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace Tauron.Application
@@ -12,7 +11,7 @@ namespace Tauron.Application
         string LocalApplicationData { get; }
 
         string LocalApplicationTempFolder { get; }
-        
+
         IEnumerable<string> GetProfiles([NotNull] string application);
     }
 }

@@ -9,7 +9,7 @@ namespace Tauron.Akka
         IActorRef OriginalRef { get; }
 
         void Register(HookEvent hookEvent);
-        
+
         void Send(IActorRef actor, object send);
     }
 }

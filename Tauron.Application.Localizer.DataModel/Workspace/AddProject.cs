@@ -2,8 +2,11 @@
 {
     public sealed class AddProject
     {
-        public Project Project { get; }
+        public AddProject(Project project)
+        {
+            Project = project;
+        }
 
-        public AddProject(Project project) => Project = project;
+        public Project Project { get; }
     }
 }

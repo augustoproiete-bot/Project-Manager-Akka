@@ -11,8 +11,8 @@ namespace Tauron.Localization.Extension
     [PublicAPI]
     public sealed class LocExtensionAdaptor
     {
-        private readonly ActorSystem _system;
         private readonly LocExtension _extension;
+        private readonly ActorSystem _system;
 
         public LocExtensionAdaptor(LocExtension extension, ActorSystem system)
         {
@@ -27,17 +27,24 @@ namespace Tauron.Localization.Extension
             hook.Send(_extension.LocCoordinator, new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture));
         }
 
-        public object? Request(string name, CultureInfo? info = null) 
-            => _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture)).Result.Result;
+        public object? Request(string name, CultureInfo? info = null)
+        {
+            return _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture)).Result.Result;
+        }
 
         public Task<object?> RequestTask(string name, CultureInfo? info = null)
-            => _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture)).
-                ContinueWith(t => t.Result.Result);
+        {
+            return _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture)).ContinueWith(t => t.Result.Result);
+        }
 
-        public string RequestString(string name, CultureInfo? info = null) 
-            => Request(name, info)?.ToString() ?? string.Empty;
+        public string RequestString(string name, CultureInfo? info = null)
+        {
+            return Request(name, info)?.ToString() ?? string.Empty;
+        }
 
         public void RequestString(string name, Action<string> valueResponse, CultureInfo? info = null)
-            => Request(name, o => valueResponse(o?.ToString() ?? string.Empty), info);
+        {
+            Request(name, o => valueResponse(o?.ToString() ?? string.Empty), info);
+        }
     }
 }

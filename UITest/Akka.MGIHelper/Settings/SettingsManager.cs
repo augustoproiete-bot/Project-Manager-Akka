@@ -35,9 +35,10 @@ namespace Akka.MGIHelper.Settings
             actor = Context.Child(name);
             return actor.Equals(ActorRefs.Nobody);
         }
+
         private void RequestAllValues(RequestAllValues obj)
         {
-            if(GetChild(obj.SettingScope, out var actor))
+            if (GetChild(obj.SettingScope, out var actor))
                 Context.Sender.Tell(ImmutableDictionary<string, string>.Empty);
             else
                 actor.Forward(obj);

@@ -1,10 +1,9 @@
-﻿using System.Windows;
-using Tauron.Application.Wpf;
+﻿using Tauron.Application.Wpf;
 
 namespace Akka.MGIHelper.UI
 {
     /// <summary>
-    /// Interaktionslogik für LogWindow.xaml
+    ///     Interaktionslogik für LogWindow.xaml
     /// </summary>
     public partial class LogWindow
     {

@@ -1,9 +1,10 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
+
 <Config>
-  <Kernel>
-    C:\Noyau\Noyau_MGI.exe
-  </Kernel>
-  <Client>
-    C:\IHM\JETvarnish.exe
-  </Client>
+	<Kernel>
+		C:\Noyau\Noyau_MGI.exe
+	</Kernel>
+	<Client>
+		C:\IHM\JETvarnish.exe
+	</Client>
 </Config>

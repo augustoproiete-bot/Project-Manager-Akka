@@ -7,12 +7,16 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Analyzing
 {
     public abstract class ProjectRule : RuleBase<ProjectFileWorkspace, MutatingContext<ProjectFile>>
     {
-        protected override void ActorConstruct(IActorDsl dsl, IActorContext context) 
-            => dsl.Receive<ProjectRest>(ValidateAll);
+        protected override void ActorConstruct(IActorDsl dsl, IActorContext context)
+        {
+            dsl.Receive<ProjectRest>(ValidateAll);
+        }
 
         protected abstract void ValidateAll(ProjectRest projectRest, IActorContext context);
 
-        protected override void RegisterResponds(ProjectFileWorkspace workspace, IActorContext context) 
-            => workspace.Source.ProjectReset.RespondOn(context.Self);
+        protected override void RegisterResponds(ProjectFileWorkspace workspace, IActorContext context)
+        {
+            workspace.Source.ProjectReset.RespondOn(context.Self);
+        }
     }
 }

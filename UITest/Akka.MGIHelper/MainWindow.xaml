@@ -1,21 +1,22 @@
 ﻿<tau:Window x:Class="Akka.MGIHelper.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:tau="http://schemas.TauronWpf.com"
-        mc:Ignorable="d"
-        Title="MGI Helfer" Height="650" Width="370" ResizeMode="NoResize"       
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        TextElement.FontWeight="Medium" Icon="Resources/gear-setting-appearance-process.png"
-        TextElement.FontSize="14" Closed="MainWindow_OnClosed"
-        TextOptions.TextFormattingMode="Ideal" LocationChanged="MainWindow_OnLocationChanged"
-        TextOptions.TextRenderingMode="Auto" Loaded="MainWindow_OnLoaded"
-        Background="{DynamicResource MaterialDesignPaper}"
-        FontFamily="{DynamicResource MaterialDesignFont}">
+            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+            xmlns:tau="http://schemas.TauronWpf.com"
+            mc:Ignorable="d"
+            Title="MGI Helfer" Height="650" Width="370" ResizeMode="NoResize"
+            TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+            TextElement.FontWeight="Medium" Icon="Resources/gear-setting-appearance-process.png"
+            TextElement.FontSize="14" Closed="MainWindow_OnClosed"
+            TextOptions.TextFormattingMode="Ideal" LocationChanged="MainWindow_OnLocationChanged"
+            TextOptions.TextRenderingMode="Auto" Loaded="MainWindow_OnLoaded"
+            Background="{DynamicResource MaterialDesignPaper}"
+            FontFamily="{DynamicResource MaterialDesignFont}">
     <DockPanel LastChildFill="True" Margin="5">
-        <Button DockPanel.Dock="Bottom" Margin="5" Content="{tau:Loc showlogs}" tau:CommandBinder.Command="OpenLogs" Cursor="Hand"/>
-        <ContentControl Height="130" Content="{tau:ViewModelBinding MgiStarter}" DockPanel.Dock="Top"/>
-        <ContentControl Content="{tau:ViewModelBinding FanControl}"/>
+        <Button DockPanel.Dock="Bottom" Margin="5" Content="{tau:Loc showlogs}" tau:CommandBinder.Command="OpenLogs"
+                Cursor="Hand" />
+        <ContentControl Height="130" Content="{tau:ViewModelBinding MgiStarter}" DockPanel.Dock="Top" />
+        <ContentControl Content="{tau:ViewModelBinding FanControl}" />
     </DockPanel>
 </tau:Window>

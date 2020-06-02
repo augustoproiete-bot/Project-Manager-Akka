@@ -1,11 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Akka.Actor;
 using Amadevus.RecordGenerator;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.ModelMessages
 {
-
     [Record]
     public sealed partial class GetValueRequest
     {
@@ -20,7 +18,7 @@ namespace Tauron.Application.Wpf.ModelMessages
 
         public object? Value { get; }
 
-        [return:MaybeNull]
+        [return: MaybeNull]
         public TValue TryCast<TValue>()
         {
             if (Value is TValue value)

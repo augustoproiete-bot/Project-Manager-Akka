@@ -6,6 +6,8 @@ namespace Akka.Code.Configuration.Elements
     public sealed class RemoteConfiguration : ConfigurationElement
     {
         public DotNettyTcpConfiguration AddDotNettyTcp()
-            => GetAddElement<DotNettyTcpConfiguration>("dot-netty.tcp");
+        {
+            return GetAddElement<DotNettyTcpConfiguration>("dot-netty.tcp");
+        }
     }
 }

@@ -9,7 +9,10 @@ namespace Tauron.Application.Wpf.UI
     [PublicAPI]
     public sealed class ViewModelConverterExtension : ValueConverterFactoryBase
     {
-        protected override IValueConverter Create() => new ViewModelConverter();
+        protected override IValueConverter Create()
+        {
+            return new ViewModelConverter();
+        }
     }
 
     public class ViewModelConverter : IValueConverter
@@ -30,6 +33,9 @@ namespace Tauron.Application.Wpf.UI
             //root.ViewManager.ThenRegister(model, view, root);
         }
 
-        public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => new FrameworkObject(value).DataContext;
+        public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return new FrameworkObject(value).DataContext;
+        }
     }
 }

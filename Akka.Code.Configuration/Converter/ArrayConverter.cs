@@ -4,6 +4,9 @@
     {
         public static ArrayConverter Instance = new ArrayConverter();
 
-        public override string? ToElementValue(object? obj) => obj?.ToString();
+        public override string? ToElementValue(object? obj)
+        {
+            return obj?.ToString();
+        }
     }
 }

@@ -4,6 +4,7 @@ using Autofac.Builder;
 using JetBrains.Annotations;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.AppCore;
+using Window = System.Windows.Window;
 
 // ReSharper disable once CheckNamespace
 namespace Tauron.Host
@@ -26,9 +27,9 @@ namespace Tauron.Host
 
             return hostBuilder;
         }
-        
-        public static IRegistrationBuilder<SimpleSplashScreen<TWindow>, ConcreteReflectionActivatorData, SingleRegistrationStyle> 
-            AddSplash<TWindow>(this ContainerBuilder collection) where TWindow : System.Windows.Window, new()
+
+        public static IRegistrationBuilder<SimpleSplashScreen<TWindow>, ConcreteReflectionActivatorData, SingleRegistrationStyle>
+            AddSplash<TWindow>(this ContainerBuilder collection) where TWindow : Window, new()
         {
             return collection.RegisterType<SimpleSplashScreen<TWindow>>().As<ISplashScreen>();
         }

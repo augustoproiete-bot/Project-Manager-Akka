@@ -13,83 +13,10 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 {
     public class GlobalResolver : ResolveActorBase, IWithUnboundedStash
     {
-        public sealed class Initialize
-        {
-            public ResolverSettings Settings { get; }
-
-            public Initialize(ResolverSettings settings) 
-                => Settings = settings;
-        }
-
-        public sealed class RegisterEndpoint
-        {
-            public IReadOnlyList<string> ProvidedServices { get; }
-
-            public ServiceRequirement Requirement { get; }
-
-            public IActorRef Host { get; }
-
-            public RegisterEndpoint(IReadOnlyList<string> providedServices, ServiceRequirement requirement, IActorRef host)
-            {
-                ProvidedServices = providedServices;
-                Requirement = requirement;
-                Host = host;
-            }
-        }
-
-        private sealed class ResolverService : ICanTell
-        {
-            private Task<IActorRef>? _resolver;
-
-            private IActorRef ActorRef
-            {
-                get
-                {
-                    if(_resolver == null)
-                        throw new InvalidOperationException("Resolver Task nicht erstellt");
-
-                    if(!_resolver.IsCompleted)
-                        _resolver.Wait();
-                    
-                    return _resolver.Result;
-                }
-            }
-
-            public void Init(ActorSelection selection, ICanWatch watch, ILoggingAdapter log)
-            {
-                log.Info("Try Resolve GlobalResolver");
-
-                _resolver = selection.ResolveOne(TimeSpan.FromMinutes(1)).ContinueWith(t =>
-                                                                                       {
-                                                                                           var r = t.Result;
-                                                                                           log.Info("Global Resolver Found {Path}", r.Path);
-                                                                                           watch.Watch(r);
-                                                                                           return r;
-                                                                                       });
-            }
-
-            public void Tell(object message, IActorRef sender) 
-                => ActorRef.Tell(message, sender);
-        }
-
-        private sealed class ServiceEntry
-        {
-            public IReadOnlyList<string> Services { get; }
-
-            public bool Supended { get; set; }
-
-            public ServiceEntry(IReadOnlyList<string> services)
-            {
-                Services = services;
-            }
-        }
-
         private readonly ILoggingAdapter _log;
-        private readonly Dictionary<string, ServiceEntry> _services = new Dictionary<string, ServiceEntry>();
         private readonly ResolverService _resolverService = new ResolverService();
+        private readonly Dictionary<string, ServiceEntry> _services = new Dictionary<string, ServiceEntry>();
         private ResolverSettings _resolverSettings = new ResolverSettings(Config.Empty);
-
-        public IStash? Stash { get; set; }
 
         public GlobalResolver()
         {
@@ -97,6 +24,8 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             Receive<Initialize>(InitializeHandle);
             ReceiveAny(_ => Stash!.Stash());
         }
+
+        public IStash? Stash { get; set; }
 
         private void InitializeHandle(Initialize obj)
         {
@@ -120,13 +49,88 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
                     Become(BecomeGlobalProvider);
                 }
             }
-            
+
             Stash!.UnstashAll();
         }
 
         private void Faulted()
         {
             ReceiveAny(_ => throw new InvalidResolverStateExcepion("Setting Verification Failed"));
+        }
+
+        public sealed class Initialize
+        {
+            public Initialize(ResolverSettings settings)
+            {
+                Settings = settings;
+            }
+
+            public ResolverSettings Settings { get; }
+        }
+
+        public sealed class RegisterEndpoint
+        {
+            public RegisterEndpoint(IReadOnlyList<string> providedServices, ServiceRequirement requirement, IActorRef host)
+            {
+                ProvidedServices = providedServices;
+                Requirement = requirement;
+                Host = host;
+            }
+
+            public IReadOnlyList<string> ProvidedServices { get; }
+
+            public ServiceRequirement Requirement { get; }
+
+            public IActorRef Host { get; }
+        }
+
+        private sealed class ResolverService : ICanTell
+        {
+            private Task<IActorRef>? _resolver;
+
+            private IActorRef ActorRef
+            {
+                get
+                {
+                    if (_resolver == null)
+                        throw new InvalidOperationException("Resolver Task nicht erstellt");
+
+                    if (!_resolver.IsCompleted)
+                        _resolver.Wait();
+
+                    return _resolver.Result;
+                }
+            }
+
+            public void Tell(object message, IActorRef sender)
+            {
+                ActorRef.Tell(message, sender);
+            }
+
+            public void Init(ActorSelection selection, ICanWatch watch, ILoggingAdapter log)
+            {
+                log.Info("Try Resolve GlobalResolver");
+
+                _resolver = selection.ResolveOne(TimeSpan.FromMinutes(1)).ContinueWith(t =>
+                {
+                    var r = t.Result;
+                    log.Info("Global Resolver Found {Path}", r.Path);
+                    watch.Watch(r);
+                    return r;
+                });
+            }
+        }
+
+        private sealed class ServiceEntry
+        {
+            public ServiceEntry(IReadOnlyList<string> services)
+            {
+                Services = services;
+            }
+
+            public IReadOnlyList<string> Services { get; }
+
+            public bool Supended { get; set; }
         }
 
         #region Provider Implementation
@@ -144,11 +148,15 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             Context.System.Terminate();
         }
 
-        private void QueryServiceRequestProvider(QueryServiceRequest obj) 
-            => _resolverService.Tell(obj, Context.Sender);
+        private void QueryServiceRequestProvider(QueryServiceRequest obj)
+        {
+            _resolverService.Tell(obj, Context.Sender);
+        }
 
-        private void MakeEndpoint(RegisterEndpoint obj) 
-            => _resolverService.Tell(new RegisterEndpointMessage(obj.Requirement, obj.ProvidedServices, _resolverSettings.Name), obj.Host);
+        private void MakeEndpoint(RegisterEndpoint obj)
+        {
+            _resolverService.Tell(new RegisterEndpointMessage(obj.Requirement, obj.ProvidedServices, _resolverSettings.Name), obj.Host);
+        }
 
         #endregion
 
@@ -186,7 +194,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void SuspendedService(ToggleSuspendedMessage obj)
         {
-            if(!_services.TryGetValue(Context.Sender.Path.Name, out var entry))
+            if (!_services.TryGetValue(Context.Sender.Path.Name, out var entry))
                 return;
 
             entry.Supended = !entry.Supended;
@@ -215,13 +223,11 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         {
             _log.Info("Trigger Recheck of Sercive Requirement");
             foreach (var actorRef in Context.GetChildren())
-            {
                 actorRef.Tell(new EndPointManager.ServiceChangeMessages(
                     _services
-                       .Select(p => p.Value)
-                       .Where(s => !s.Supended)
-                       .SelectMany(s => s.Services).ToList().AsReadOnly()));
-            }
+                        .Select(p => p.Value)
+                        .Where(s => !s.Supended)
+                        .SelectMany(s => s.Services).ToList().AsReadOnly()));
         }
 
         #endregion

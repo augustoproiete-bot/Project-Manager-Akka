@@ -9,13 +9,22 @@ namespace Tauron.Application.Wpf
     [PublicAPI]
     public class Window : System.Windows.Window, IView
     {
-
         private readonly WindowControlLogic _controlLogic;
 
-        protected Window(IViewModel viewModel) => _controlLogic = new WindowControlLogic(this, viewModel);
-        public void Register(string key, IControlBindable bindable, DependencyObject affectedPart) => _controlLogic.Register(key, bindable, affectedPart);
+        protected Window(IViewModel viewModel)
+        {
+            _controlLogic = new WindowControlLogic(this, viewModel);
+        }
 
-        public void CleanUp(string key) => _controlLogic.CleanUp(key);
+        public void Register(string key, IControlBindable bindable, DependencyObject affectedPart)
+        {
+            _controlLogic.Register(key, bindable, affectedPart);
+        }
+
+        public void CleanUp(string key)
+        {
+            _controlLogic.CleanUp(key);
+        }
 
         public string Key => _controlLogic.Key;
 

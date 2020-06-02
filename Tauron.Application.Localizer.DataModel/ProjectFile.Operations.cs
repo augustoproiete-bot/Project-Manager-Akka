@@ -19,13 +19,19 @@ namespace Tauron.Application.Localizer.DataModel
         }
 
         public ProjectFile AddProject(Project project)
-            => WithProjects(Projects.Add(project));
+        {
+            return WithProjects(Projects.Add(project));
+        }
 
         public ProjectFile RemoveProject(Project project)
-            => WithProjects(Projects.Remove(project));
+        {
+            return WithProjects(Projects.Remove(project));
+        }
 
         public ProjectFile AddImport(Project project, string toAdd)
-            => WithProjects(Projects.Replace(project, project.WithImports(project.Imports.Add(toAdd))));
+        {
+            return WithProjects(Projects.Replace(project, project.WithImports(project.Imports.Add(toAdd))));
+        }
 
         public ProjectFile ReplaceEntry(LocEntry? oldEntry, LocEntry? newEntry)
         {

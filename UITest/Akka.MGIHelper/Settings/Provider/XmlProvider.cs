@@ -1,7 +1,7 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Xml.Linq;
-using Tauron.Host;
 
 namespace Akka.MGIHelper.Settings.Provider
 {
@@ -12,12 +12,12 @@ namespace Akka.MGIHelper.Settings.Provider
             XElement ele = XElement.Load("ProcessConfig.xml");
 
             return ele.Elements()
-               .Aggregate(ImmutableDictionary<string, string>.Empty, (current, xElement) => current.Add(xElement.Name.ToString(), xElement.Value));
+                .Aggregate(ImmutableDictionary<string, string>.Empty, (current, xElement) => current.Add(xElement.Name.ToString(), xElement.Value));
         }
 
         public void Save(ImmutableDictionary<string, string> data)
         {
-            throw new System.NotSupportedException("Xml does Not Support Saving");
+            throw new NotSupportedException("Xml does Not Support Saving");
         }
     }
 }

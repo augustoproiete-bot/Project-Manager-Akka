@@ -7,17 +7,23 @@ namespace Akka.Code.Configuration.Elements
 {
     public sealed class ArrayElement<TType> : IList<TType>
     {
-        private readonly List<TType> _elements = new List<TType>();
         private readonly ConverterBase _converter;
+        private readonly List<TType> _elements = new List<TType>();
 
-        public ArrayElement() => _converter = ConverterBase.Find(typeof(TType));
+        public ArrayElement()
+        {
+            _converter = ConverterBase.Find(typeof(TType));
+        }
 
-        public IEnumerator<TType> GetEnumerator() => _elements.GetEnumerator();
+        public IEnumerator<TType> GetEnumerator()
+        {
+            return _elements.GetEnumerator();
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable) _elements).GetEnumerator();
-
-        public override string ToString()
-            => $"[{string.Join(", ", _elements.Select(e => _converter.ToElementValue(e)).Where(s => !string.IsNullOrEmpty(s)))}]";
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable) _elements).GetEnumerator();
+        }
 
         public void Add(TType item)
         {
@@ -29,20 +35,29 @@ namespace Akka.Code.Configuration.Elements
             _elements.Clear();
         }
 
-        public bool Contains(TType item) => _elements.Contains(item);
+        public bool Contains(TType item)
+        {
+            return _elements.Contains(item);
+        }
 
         public void CopyTo(TType[] array, int arrayIndex)
         {
             _elements.CopyTo(array, arrayIndex);
         }
 
-        public bool Remove(TType item) => _elements.Remove(item);
+        public bool Remove(TType item)
+        {
+            return _elements.Remove(item);
+        }
 
         public int Count => _elements.Count;
 
-        public bool IsReadOnly => ((IList<TType>)_elements).IsReadOnly;
+        public bool IsReadOnly => ((IList<TType>) _elements).IsReadOnly;
 
-        public int IndexOf(TType item) => _elements.IndexOf(item);
+        public int IndexOf(TType item)
+        {
+            return _elements.IndexOf(item);
+        }
 
         public void Insert(int index, TType item)
         {
@@ -58,6 +73,11 @@ namespace Akka.Code.Configuration.Elements
         {
             get => _elements[index];
             set => _elements[index] = value;
+        }
+
+        public override string ToString()
+        {
+            return $"[{string.Join(", ", _elements.Select(e => _converter.ToElementValue(e)).Where(s => !string.IsNullOrEmpty(s)))}]";
         }
     }
 }

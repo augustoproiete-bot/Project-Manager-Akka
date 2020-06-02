@@ -2,8 +2,11 @@
 {
     public sealed class FanStatusChange
     {
-        public bool Running { get; }
+        public FanStatusChange(bool running)
+        {
+            Running = running;
+        }
 
-        public FanStatusChange(bool running) => Running = running;
+        public bool Running { get; }
     }
 }

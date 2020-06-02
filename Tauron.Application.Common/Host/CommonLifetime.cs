@@ -9,9 +9,9 @@ namespace Tauron.Host
 {
     public sealed class CommonLifetime : IHostLifetime
     {
+        private readonly string _appRoute;
         private readonly IComponentContext _factory;
         private readonly ILogger _logger = Log.Logger.ForContext<CommonLifetime>();
-        private readonly string _appRoute;
 
         private IAppRoute? _route;
 
@@ -20,6 +20,7 @@ namespace Tauron.Host
             _factory = factory;
             _appRoute = configuration.GetValue("route", "default");
         }
+
         public async Task WaitForStartAsync(ActorSystem actorSystem)
         {
             _logger.Information("Begin Start Application");
@@ -43,6 +44,8 @@ namespace Tauron.Host
         public Task ShutdownTask { get; private set; } = Task.CompletedTask;
 
         private IAppRoute GetRoute(string name)
-            => _factory.ResolveNamed<IAppRoute>(name);
+        {
+            return _factory.ResolveNamed<IAppRoute>(name);
+        }
     }
 }

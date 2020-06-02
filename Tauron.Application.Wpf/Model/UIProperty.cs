@@ -10,21 +10,25 @@ namespace Tauron.Application.Wpf.Model
 #pragma warning restore CS0661 // Typ definiert Operator == oder Operator !=, überschreibt jedoch nicht Object.GetHashCode()
 #pragma warning restore CS0660 // Typ definiert Operator == oder Operator !=, überschreibt jedoch nicht Object.Equals(Objekt o)
     {
+        internal UIProperty(string name)
+            : base(name)
+        {
+        }
+
         public TData Value
         {
             [return: MaybeNull] get => InternalValue is TData data ? data : default!;
         }
 
         public void Set([AllowNull] TData data)
-            => SetValue(data);
+        {
+            SetValue(data);
+        }
 
         [return: MaybeNull]
         public static implicit operator TData(UIProperty<TData> property)
-            => property.Value;
-
-        internal UIProperty(string name)
-            : base(name)
         {
+            return property.Value;
         }
 
         public static UIProperty<TData> operator +(UIProperty<TData> prop, TData data)
@@ -33,10 +37,19 @@ namespace Tauron.Application.Wpf.Model
             return prop;
         }
 
-        public static bool operator ==(UIProperty<TData> prop, TData data) => Equals(prop.Value, data);
+        public static bool operator ==(UIProperty<TData> prop, TData data)
+        {
+            return Equals(prop.Value, data);
+        }
 
-        public static bool operator !=(UIProperty<TData> prop, TData data) => !Equals(prop.Value, data);
+        public static bool operator !=(UIProperty<TData> prop, TData data)
+        {
+            return !Equals(prop.Value, data);
+        }
 
-        public override string ToString() => Value?.ToString() ?? "null--" + typeof(TData);
+        public override string ToString()
+        {
+            return Value?.ToString() ?? "null--" + typeof(TData);
+        }
     }
 }

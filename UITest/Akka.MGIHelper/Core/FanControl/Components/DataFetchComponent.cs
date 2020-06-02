@@ -13,21 +13,30 @@ namespace Akka.MGIHelper.Core.FanControl.Components
     {
         private static readonly Dictionary<string, State> StatesMapping = new Dictionary<string, State>
         {
-            { "Idle".ToLower(), State.Idle},
-            { "Ready".ToLower(), State.Ready },
-            { "Ignition".ToLower(), State.Ignition },
-            { "Start_up".ToLower(), State.StartUp },
-            { "Stand_by".ToLower(), State.StandBy },
-            { "Power".ToLower(), State.Power },
-            { "Cool_down".ToLower(), State.Cooldown },
-            { "Test_run".ToLower(), State.TestRun },
-            { "Error".ToLower(), State.Error }
+            {"Idle".ToLower(), State.Idle},
+            {"Ready".ToLower(), State.Ready},
+            {"Ignition".ToLower(), State.Ignition},
+            {"Start_up".ToLower(), State.StartUp},
+            {"Stand_by".ToLower(), State.StandBy},
+            {"Power".ToLower(), State.Power},
+            {"Cool_down".ToLower(), State.Cooldown},
+            {"Test_run".ToLower(), State.TestRun},
+            {"Error".ToLower(), State.Error}
         };
 
-        private readonly WebClient _webClient = new MyWebClient();
         private readonly FanControlOptions _options;
 
-        public DataFetchComponent(FanControlOptions options) => _options = options;
+        private readonly WebClient _webClient = new MyWebClient();
+
+        public DataFetchComponent(FanControlOptions options)
+        {
+            _options = options;
+        }
+
+        public void Dispose()
+        {
+            _webClient?.Dispose();
+        }
 
         public async Task Handle(TickEvent msg, MessageBus messageBus)
         {
@@ -37,7 +46,7 @@ namespace Akka.MGIHelper.Core.FanControl.Components
 
                 var elements = trackingString.Split("&");
 
-                var pairs = elements.Select(s => s.Split("=")).Select(ele => new ValuePair { Name = ele[0], Value = ele[1] }).ToArray();
+                var pairs = elements.Select(s => s.Split("=")).Select(ele => new ValuePair {Name = ele[0], Value = ele[1]}).ToArray();
 
                 var power = int.Parse(pairs.First(p => p.Name.ToLower() == "power").Value);
                 var state = StatesMapping[pairs.First(p => p.Name.ToLower() == "sysstate").Value.ToLower()];
@@ -52,8 +61,6 @@ namespace Akka.MGIHelper.Core.FanControl.Components
                 await messageBus.Publish(new TrackingEvent(true, e.Message));
             }
         }
-
-        public void Dispose() => _webClient?.Dispose();
 
         private class ValuePair
         {

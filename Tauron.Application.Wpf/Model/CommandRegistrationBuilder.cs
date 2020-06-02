@@ -7,40 +7,19 @@ namespace Tauron.Application.Wpf.Model
     [PublicAPI]
     public sealed class CommandRegistrationBuilder
     {
-        public ExposedReceiveActor Target { get; }
         private readonly Action<string, Action<object?>, Func<object?, bool>?> _register;
 
-        private sealed class ActionMapper
-        {
-            private readonly Action _action;
-
-            public ActionMapper(Action action) => _action = action;
-
-            private void ActionImpl(object? o) => _action();
-
-            public Action<object?> Action => ActionImpl;
-        }
-
-        private sealed class FuncMapper
-        {
-            private readonly Func<bool> _action;
-
-            public FuncMapper(Func<bool> action) => _action = action;
-
-            private bool ActionImpl(object? o) => _action();
-
-            public Func<object?, bool> Action => ActionImpl;
-        }
+        private Delegate? _canExecute;
 
         private Delegate? _command;
-
-        private Delegate? _canExecute;
 
         internal CommandRegistrationBuilder(Action<string, Action<object?>, Func<object?, bool>?> register, ExposedReceiveActor target)
         {
             Target = target;
             _register = register;
         }
+
+        public ExposedReceiveActor Target { get; }
 
         public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<object?, bool>? canExecute)
         {
@@ -88,9 +67,43 @@ namespace Tauron.Application.Wpf.Model
 
         public void ThenRegister(string name)
         {
-            if(_command == null) return;
+            if (_command == null) return;
 
             _register(name, (Action<object?>) _command, _canExecute as Func<object?, bool>);
+        }
+
+        private sealed class ActionMapper
+        {
+            private readonly Action _action;
+
+            public ActionMapper(Action action)
+            {
+                _action = action;
+            }
+
+            public Action<object?> Action => ActionImpl;
+
+            private void ActionImpl(object? o)
+            {
+                _action();
+            }
+        }
+
+        private sealed class FuncMapper
+        {
+            private readonly Func<bool> _action;
+
+            public FuncMapper(Func<bool> action)
+            {
+                _action = action;
+            }
+
+            public Func<object?, bool> Action => ActionImpl;
+
+            private bool ActionImpl(object? o)
+            {
+                return _action();
+            }
         }
     }
 }

@@ -10,33 +10,23 @@ namespace Tauron.Application.Akka.ServiceResolver
     [PublicAPI]
     public static class Extensions
     {
-        private class TellCombiner : ICanTell
+        public static ResolverExt AddServiceResolver(this ActorSystem system)
         {
-            private readonly ICanTell?[] _teller;
-
-            public TellCombiner(ICanTell?[] teller) 
-                => _teller = teller;
-
-            public void Tell(object message, IActorRef sender)
-            {
-                foreach (var tell in _teller) 
-                    tell?.Tell(message, sender);
-            }
+            return (ResolverExt) system.RegisterExtension(ResolverExtension.Id);
         }
 
-        public static ResolverExt AddServiceResolver(this ActorSystem system) 
-            => (ResolverExt) system.RegisterExtension(ResolverExtension.Id);
-
         public static Task<QueryServiceResponse> GetServiceEntry(this ActorSystem actorSystem, string name)
-            => actorSystem.GetExtension<ResolverExt>().GetServiceEntry(name);
+        {
+            return actorSystem.GetExtension<ResolverExt>().GetServiceEntry(name);
+        }
 
         public static RemoteService ResolveRemoteService(this IActorContext context, string name)
         {
             return context.System
-               .GetExtension<ResolverExt>()
-               .RemoteServiceActor
-               .Ask<RemoteServiceResponse>(new RemoteServiceRequest(name))
-               .Result.Service;
+                .GetExtension<ResolverExt>()
+                .RemoteServiceActor
+                .Ask<RemoteServiceResponse>(new RemoteServiceRequest(name))
+                .Result.Service;
         }
 
         public static IActorRef GetOrCreate(this IActorContext context, string name, Props props)
@@ -48,14 +38,14 @@ namespace Tauron.Application.Akka.ServiceResolver
         public static Task<IActorRef> HostLocalService(this ActorSystem system, string name, Props props)
         {
             return system
-               .GetExtension<ResolverExt>()
-               .HostActor.Ask<HostLocalServiceResponse>(new HostLocalServiceMessage(props, name))
-               .ContinueWith(t =>
-                             {
-                                 if(t.Result.Service == null)
-                                     throw new ResolverException("Local Host is Aready Regitrated");
-                                 return t.Result.Service;
-                             }, TaskContinuationOptions.RunContinuationsAsynchronously);
+                .GetExtension<ResolverExt>()
+                .HostActor.Ask<HostLocalServiceResponse>(new HostLocalServiceMessage(props, name))
+                .ContinueWith(t =>
+                {
+                    if (t.Result.Service == null)
+                        throw new ResolverException("Local Host is Aready Regitrated");
+                    return t.Result.Service;
+                }, TaskContinuationOptions.RunContinuationsAsynchronously);
         }
 
         public static ICanTell Combine(this ICanTell? teller, params ICanTell?[] toCombine)
@@ -66,6 +56,22 @@ namespace Tauron.Application.Akka.ServiceResolver
             temp[0] = teller;
 
             return new TellCombiner(temp);
+        }
+
+        private class TellCombiner : ICanTell
+        {
+            private readonly ICanTell?[] _teller;
+
+            public TellCombiner(ICanTell?[] teller)
+            {
+                _teller = teller;
+            }
+
+            public void Tell(object message, IActorRef sender)
+            {
+                foreach (var tell in _teller)
+                    tell?.Tell(message, sender);
+            }
         }
     }
 }

@@ -8,6 +8,10 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
     [PublicAPI]
     public class EndpointConfig
     {
+        internal EndpointConfig()
+        {
+        }
+
         public static EndpointConfig New => new EndpointConfig();
 
         internal IActorRef? Tracker { get; set; }
@@ -17,11 +21,6 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
         internal Dictionary<string, Props> Services { get; } = new Dictionary<string, Props>();
 
         internal ServiceRequirement ServiceRequirement { get; set; } = ServiceRequirement.Empty;
-
-        internal EndpointConfig()
-        {
-
-        }
 
         public EndpointConfig WithSuspensionTracker(IActorRef tracker)
         {
@@ -37,7 +36,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
 
         public EndpointConfig WithServices(params (string Name, Props Service)[] services)
         {
-            foreach (var (name, service) in services) 
+            foreach (var (name, service) in services)
                 Services[name] = service;
 
             return this;

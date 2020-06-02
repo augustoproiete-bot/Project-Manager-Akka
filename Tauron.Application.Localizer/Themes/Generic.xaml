@@ -33,9 +33,9 @@
                               SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <!--  Content area  -->
                 <Grid Grid.Column="1" Margin="{TemplateBinding Padding}">
@@ -55,7 +55,7 @@
                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                       AutomationProperties.Name="Dialog content"
                                       ContentTemplate="{TemplateBinding ContentTemplate}"
-                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="10"/>
+                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="10" />
                 </Grid>
             </Grid>
             <ContentPresenter x:Name="PART_Bottom"
@@ -71,7 +71,7 @@
     </ControlTemplate>
 
     <Style TargetType="{x:Type core:DialogBase}">
-        <Setter Property="Background" Value="{Binding MetroBackgroundBrush}"/>
+        <Setter Property="Background" Value="{Binding MetroBackgroundBrush}" />
         <Setter Property="DialogTitleFontSize" Value="25" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />

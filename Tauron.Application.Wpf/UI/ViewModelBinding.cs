@@ -11,8 +11,10 @@ namespace Tauron.Application.Wpf.UI
     {
         private readonly string _name;
 
-        public ViewModelBinding(string name) 
-            => _name = name;
+        public ViewModelBinding(string name)
+        {
+            _name = name;
+        }
 
         //public override object? ProvideValue(IServiceProvider provider)
         //{
@@ -27,15 +29,18 @@ namespace Tauron.Application.Wpf.UI
         //    return base.ProvideValue(provider);
         //}
 
-        protected override object DesignTime() => "Design Time: No View";
+        protected override object DesignTime()
+        {
+            return "Design Time: No View";
+        }
 
         protected override object ProvideValueInternal(IServiceProvider serviceProvider)
         {
-            if (!(serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service)) 
+            if (!(serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service))
                 return "Invalid IProvideValueTarget: " + _name;
             if (!(service.TargetObject is DependencyObject target))
                 return "Invalid Target Object: " + _name;
-            if (!(ControlBindLogic.FindDataContext(target, out var promise)))
+            if (!ControlBindLogic.FindDataContext(target, out var promise))
                 return "No Data Context Found: " + _name;
             if (!(ControlBindLogic.FindRoot(target) is IView view))
                 return "No View as Root: " + _name;

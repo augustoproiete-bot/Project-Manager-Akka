@@ -7,7 +7,7 @@ using Tauron.Application.Workshop.Analyzing.Actor;
 namespace Tauron.Application.Workshop.Analyzing.Rules
 {
     [PublicAPI]
-    public abstract  class RuleBase<TWorkspace, TData> : IRule<TWorkspace, TData> 
+    public abstract class RuleBase<TWorkspace, TData> : IRule<TWorkspace, TData>
         where TWorkspace : WorkspaceBase<TData>
     {
         public abstract string Name { get; }

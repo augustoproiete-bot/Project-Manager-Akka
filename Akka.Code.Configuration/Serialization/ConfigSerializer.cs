@@ -21,7 +21,7 @@ namespace Akka.Code.Configuration.Serialization
         public AkkaRootConfiguration Read(BinaryReader reader)
         {
             var config = new AkkaRootConfiguration();
-            ((IBinarySerializable)config).Read(reader);
+            ((IBinarySerializable) config).Read(reader);
             return config;
         }
 
@@ -37,7 +37,9 @@ namespace Akka.Code.Configuration.Serialization
             Write(writer, config);
         }
 
-        public void Write(BinaryWriter writer, AkkaRootConfiguration config) 
-            => ((IBinarySerializable)config).Write(writer);
+        public void Write(BinaryWriter writer, AkkaRootConfiguration config)
+        {
+            ((IBinarySerializable) config).Write(writer);
+        }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using Akka.Code.Configuration.Elements;
 using Akka.Configuration;
 using JetBrains.Annotations;

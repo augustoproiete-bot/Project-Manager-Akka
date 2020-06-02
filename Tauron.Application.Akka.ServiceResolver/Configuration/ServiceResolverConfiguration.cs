@@ -20,7 +20,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Configuration
 
         public bool IsGlobal
         {
-            get => Get<bool>(nameof(IsGlobal)); 
+            get => Get<bool>(nameof(IsGlobal));
             set => Set(value, nameof(IsGlobal));
         }
     }

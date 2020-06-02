@@ -34,7 +34,7 @@ namespace Akka.MGIHelper.Core.FanControl
             messageBus.Subscribe(new StandByCoolingComponent(options));
 
             messageBus.Subscribe(new FanControlComponent(options, e =>
-            { 
+            {
                 parent.Tell(new FanStatusChange(e));
                 return Task.CompletedTask;
             }));
@@ -42,8 +42,10 @@ namespace Akka.MGIHelper.Core.FanControl
             Receive<ClockEvent>(async msg => await messageBus.Publish(msg));
         }
 
-        private void CreateComponent<TComp>(Expression<Func<TComp>> fac) 
-            where TComp : ActorBase =>
+        private void CreateComponent<TComp>(Expression<Func<TComp>> fac)
+            where TComp : ActorBase
+        {
             Context.ActorOf(Props.Create(fac), typeof(TComp).Name); //.WithDispatcher("akka.CallingThread")
+        }
     }
 }

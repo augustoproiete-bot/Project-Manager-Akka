@@ -9,16 +9,10 @@ namespace Tauron.Application.Localizer.UIModels
 {
     public sealed class ProjectEntryModel : ObservableObject
     {
-        private readonly Action<(string ProjectName, string EntryName, ActiveLanguage Lang, string Content)> _updater;
         private readonly string _projectName;
+        private readonly Action<(string ProjectName, string EntryName, ActiveLanguage Lang, string Content)> _updater;
 
-        public string EntryName { get; }
-
-        public UIObservableCollection<ProjectLangEntry> Entries { get; }
-
-        public ICommand RemoveCommand { get; }
-
-        public ProjectEntryModel(Project project, LocEntry target, Action<(string ProjectName, string EntryName, ActiveLanguage Lang, string Content)> updater, 
+        public ProjectEntryModel(Project project, LocEntry target, Action<(string ProjectName, string EntryName, ActiveLanguage Lang, string Content)> updater,
             Action<(string ProjectName, string EntryName)> remove)
         {
             _updater = updater;
@@ -28,18 +22,26 @@ namespace Tauron.Application.Localizer.UIModels
             RemoveCommand = new SimpleCommand(() => remove((_projectName, EntryName)));
 
             foreach (var language in project.ActiveLanguages)
-            {
-                Entries.Add(target.Values.TryGetValue(language, out var content) 
-                    ? new ProjectLangEntry(EntryChanged, language, content) 
+                Entries.Add(target.Values.TryGetValue(language, out var content)
+                    ? new ProjectLangEntry(EntryChanged, language, content)
                     : new ProjectLangEntry(EntryChanged, language, string.Empty));
-            }
         }
 
-        private void EntryChanged(string content, ActiveLanguage language) 
-            => _updater((_projectName, EntryName, language, content));
+        public string EntryName { get; }
 
-        public void AddLanguage(ActiveLanguage lang) 
-            => Entries.Add(new ProjectLangEntry(EntryChanged, lang, string.Empty));
+        public UIObservableCollection<ProjectLangEntry> Entries { get; }
+
+        public ICommand RemoveCommand { get; }
+
+        private void EntryChanged(string content, ActiveLanguage language)
+        {
+            _updater((_projectName, EntryName, language, content));
+        }
+
+        public void AddLanguage(ActiveLanguage lang)
+        {
+            Entries.Add(new ProjectLangEntry(EntryChanged, lang, string.Empty));
+        }
 
         public void Update(LocEntry entry)
         {

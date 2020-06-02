@@ -34,6 +34,8 @@ namespace Tauron.Application.Wpf
 
         private static bool _isIn;
 
+        private static readonly Random Rnd = new Random();
+
         //public static bool AutoRegister { get; set; } = true;
 
         public static ICommand? Find(string name)
@@ -46,23 +48,47 @@ namespace Tauron.Application.Wpf
             return new EventCommand();
         }
 
-        public static string GetCommand(DependencyObject obj) => (string) Argument.NotNull(obj, nameof(obj)).GetValue(CommandProperty);
+        public static string GetCommand(DependencyObject obj)
+        {
+            return (string) Argument.NotNull(obj, nameof(obj)).GetValue(CommandProperty);
+        }
 
 
-        public static string GetCustomPropertyName(DependencyObject obj) => (string) Argument.NotNull(obj, nameof(obj)).GetValue(CustomPropertyNameProperty);
+        public static string GetCustomPropertyName(DependencyObject obj)
+        {
+            return (string) Argument.NotNull(obj, nameof(obj)).GetValue(CustomPropertyNameProperty);
+        }
 
-        public static ICommand? GetTargetCommand(DependencyObject obj) => (ICommand) Argument.NotNull(obj, nameof(obj)).GetValue(TargetCommandProperty);
+        public static ICommand? GetTargetCommand(DependencyObject obj)
+        {
+            return (ICommand) Argument.NotNull(obj, nameof(obj)).GetValue(TargetCommandProperty);
+        }
 
-        public static bool GetUseDirect(DependencyObject obj) => (bool) Argument.NotNull(obj, nameof(obj)).GetValue(UseDirectProperty);
+        public static bool GetUseDirect(DependencyObject obj)
+        {
+            return (bool) Argument.NotNull(obj, nameof(obj)).GetValue(UseDirectProperty);
+        }
 
 
-        public static void SetCommand(DependencyObject obj, string value) => Argument.NotNull(obj, nameof(obj)).SetValue(CommandProperty, value);
+        public static void SetCommand(DependencyObject obj, string value)
+        {
+            Argument.NotNull(obj, nameof(obj)).SetValue(CommandProperty, value);
+        }
 
-        public static void SetCustomPropertyName(DependencyObject obj, string value) => Argument.NotNull(obj, nameof(obj)).SetValue(CustomPropertyNameProperty, value);
+        public static void SetCustomPropertyName(DependencyObject obj, string value)
+        {
+            Argument.NotNull(obj, nameof(obj)).SetValue(CustomPropertyNameProperty, value);
+        }
 
-        public static void SetTargetCommand(DependencyObject obj, ICommand value) => Argument.NotNull(obj, nameof(obj)).SetValue(TargetCommandProperty, value);
+        public static void SetTargetCommand(DependencyObject obj, ICommand value)
+        {
+            Argument.NotNull(obj, nameof(obj)).SetValue(TargetCommandProperty, value);
+        }
 
-        public static void SetUseDirect(DependencyObject obj, bool value) => Argument.NotNull(obj, nameof(obj)).SetValue(UseDirectProperty, value);
+        public static void SetUseDirect(DependencyObject obj, bool value)
+        {
+            Argument.NotNull(obj, nameof(obj)).SetValue(UseDirectProperty, value);
+        }
 
         private static void OnCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -90,8 +116,6 @@ namespace Tauron.Application.Wpf
             var name = GetCommand(d);
             BindInternal(name, name, root, d);
         }
-
-        private static readonly Random Rnd = new Random();
 
         private static void BindInternal(string? oldValue, string? newValue, IBinderControllable binder, DependencyObject affectedPart)
         {
@@ -159,13 +183,9 @@ namespace Tauron.Application.Wpf
                 }
 
                 if (_factory == null)
-                {
                     _factory = new CommandFactory(dataContext as IViewModel);
-                }
                 else
-                {
                     _factory.DataContext = dataContext as IViewModel;
-                }
 
                 if (!useDirect)
                     _factory.Connect(targetCommand, commandTarget);
@@ -191,8 +211,10 @@ namespace Tauron.Application.Wpf
 
                 private Func<bool>? _responded;
 
-                public CommandFactory(IViewModel? dataContext) 
-                    => DataContext = dataContext;
+                public CommandFactory(IViewModel? dataContext)
+                {
+                    DataContext = dataContext;
+                }
 
                 public EventCommand? LastCommand { get; private set; }
 
@@ -202,7 +224,7 @@ namespace Tauron.Application.Wpf
                 {
                     _responded = null;
 
-                    if(LastCommand == null) return;
+                    if (LastCommand == null) return;
 
                     LastCommand.CanExecuteEvent += _canExecute;
                     LastCommand.ExecuteEvent += _execute;
@@ -219,28 +241,28 @@ namespace Tauron.Application.Wpf
 
                     _execute = parm => DataContext.Tell(new CommandExecuteEvent(commandName, parm));
                     _canExecute = parm =>
-                               {
-                                   try
-                                   {
-                                       if (_responded == null)
-                                       {
-                                           if (!DataContext.IsInitialized) return false;
+                    {
+                        try
+                        {
+                            if (_responded == null)
+                            {
+                                if (!DataContext.IsInitialized) return false;
 
-                                           _responded = DataContext
-                                              .Ask<CanCommandExecuteRespond>(new CanCommandExecuteRequest(commandName, parm), TimeSpan.FromSeconds(1)).Result.CanExecute;
-                                       }
+                                _responded = DataContext
+                                    .Ask<CanCommandExecuteRespond>(new CanCommandExecuteRequest(commandName, parm), TimeSpan.FromSeconds(1)).Result.CanExecute;
+                            }
 
-                                       return _responded?.Invoke() ?? false;
-                                   }
-                                   catch (AggregateException)
-                                   {
-                                       return false;
-                                   }
-                                   catch (TimeoutException)
-                                   {
-                                       return false;
-                                   }
-                               };
+                            return _responded?.Invoke() ?? false;
+                        }
+                        catch (AggregateException)
+                        {
+                            return false;
+                        }
+                        catch (TimeoutException)
+                        {
+                            return false;
+                        }
+                    };
 
                     LastCommand.CanExecuteEvent += _canExecute;
                     LastCommand.ExecuteEvent += _execute;
@@ -307,7 +329,7 @@ namespace Tauron.Application.Wpf
                             var tarType = AffectedObject.GetType();
                             _prop = tarType.GetProperty(CustomName ?? string.Empty);
                             if (_prop != null
-                             && (!_prop.CanWrite || !typeof(ICommand).IsAssignableFrom(_prop.PropertyType)))
+                                && (!_prop.CanWrite || !typeof(ICommand).IsAssignableFrom(_prop.PropertyType)))
                             {
                                 var typeName = tarType.ToString();
                                 var propName = _prop == null ? CustomName + "(Not Found)" : _prop.Name;

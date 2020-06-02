@@ -21,7 +21,6 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         {
             Receive<ToggleSuspendedMessage>(ToggleSuspendedMessage);
             ReceiveAny(m => GetService().Forward(m));
-
         }
 
         private void Suspended()
@@ -32,7 +31,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void ToggleSuspendedMessage(ToggleSuspendedMessage obj)
         {
-            if(obj.IsSuspended)
+            if (obj.IsSuspended)
                 Become(Suspended);
             else
                 Become(Running);
@@ -44,7 +43,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             var service = Context.Child(name);
             if (service.Equals(ActorRefs.Nobody))
                 service = Context.ActorOf(_serviceType, name);
-            
+
             return service;
         }
 

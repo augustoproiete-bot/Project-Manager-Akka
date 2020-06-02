@@ -1,6 +1,4 @@
-﻿using Akka.Code.Configuration.Elements;
-
-namespace Akka.Code.Configuration.Converter
+﻿namespace Akka.Code.Configuration.Converter
 {
     public sealed class EnumConverter : ConverterBase
     {

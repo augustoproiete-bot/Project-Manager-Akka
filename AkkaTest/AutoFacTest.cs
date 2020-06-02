@@ -7,11 +7,15 @@ namespace AkkaTest
     {
         private readonly string _content;
 
-        public Test(string content) 
-            => _content = content;
+        public Test(string content)
+        {
+            _content = content;
+        }
 
-        public void Dispose() 
-            => Console.Write(_content);
+        public void Dispose()
+        {
+            Console.Write(_content);
+        }
     }
 
     public static class AutoFacTest

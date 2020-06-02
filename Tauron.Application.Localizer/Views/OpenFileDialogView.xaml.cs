@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Wpf;
@@ -11,14 +10,14 @@ using Tauron.Application.Wpf;
 namespace Tauron.Application.Localizer.Views
 {
     /// <summary>
-    /// Interaktionslogik für OpenFileDialogView.xaml
+    ///     Interaktionslogik für OpenFileDialogView.xaml
     /// </summary>
     public partial class OpenFileDialogView : IOpenFileDialog
     {
         private readonly IDialogCoordinator _coordinator;
         private readonly IDialogFactory _dialogFactory;
-        private readonly LocLocalizer _localizer;
         private readonly OpenFileMode _filemode;
+        private readonly LocLocalizer _localizer;
         private readonly TaskCompletionSource<string?> _selector = new TaskCompletionSource<string?>();
 
         public OpenFileDialogView(IDialogCoordinator coordinator, IDialogFactory dialogFactory, LocLocalizer localizer, OpenFileMode filemode)
@@ -33,13 +32,18 @@ namespace Tauron.Application.Localizer.Views
                 Title += _localizer.OpenFileDialogViewHeaderNewPrefix;
         }
 
+        public Task<string?> Init(IEnumerable<string?> initalData)
+        {
+            return _selector.Task;
+        }
+
         private void Search_OnClick(object sender, RoutedEventArgs e)
         {
             var result = _dialogFactory.ShowOpenFileDialog(null, _filemode == OpenFileMode.OpenExistingFile, "transp", true, _localizer.OpenFileDialogViewDialogFilter, false,
-                                                                            _localizer.OpenFileDialogViewDialogTitle,
-                true, true, out bool? ok);
+                _localizer.OpenFileDialogViewDialogTitle,
+                true, true, out var ok);
 
-            if(ok != true) return;
+            if (ok != true) return;
 
             PART_Path.Text = result.FirstOrDefault();
         }
@@ -50,8 +54,6 @@ namespace Tauron.Application.Localizer.Views
             string text = PART_Path.Text;
             _selector.SetResult(text);
         }
-
-        public Task<string?> Init(IEnumerable<string?> initalData) => _selector.Task;
 
         private void OpenFileDialogView_OnLoaded(object sender, RoutedEventArgs e)
         {

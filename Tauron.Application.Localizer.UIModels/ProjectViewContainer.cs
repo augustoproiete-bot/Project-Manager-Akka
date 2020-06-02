@@ -6,15 +6,14 @@ namespace Tauron.Application.Localizer.UIModels
 {
     public sealed class ProjectViewContainer
     {
-        [UsedImplicitly]
-        public IViewModel Model { get; }
-
-        public Project Project { get; }
-
         public ProjectViewContainer(IViewModel model, Project project)
         {
             Model = model;
             Project = project;
         }
+
+        [UsedImplicitly] public IViewModel Model { get; }
+
+        public Project Project { get; }
     }
 }

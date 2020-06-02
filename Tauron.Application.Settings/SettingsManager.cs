@@ -10,7 +10,7 @@ namespace Tauron.Application.Settings
     {
         public SettingsManager(IEnumerable<ISettingProviderConfiguration> configurations)
         {
-            foreach (var configuration in configurations) 
+            foreach (var configuration in configurations)
                 Context.ActorOf(Props.Create(() => new SettingFile(configuration.Provider)), configuration.Scope);
 
             Receive<SetSettingValue>(SetSettingValue);
@@ -22,9 +22,10 @@ namespace Tauron.Application.Settings
             actor = Context.Child(name);
             return actor.Equals(ActorRefs.Nobody);
         }
+
         private void RequestAllValues(RequestAllValues obj)
         {
-            if(GetChild(obj.SettingScope, out var actor))
+            if (GetChild(obj.SettingScope, out var actor))
                 Context.Sender.Tell(ImmutableDictionary<string, string>.Empty);
             else
                 actor.Forward(obj);

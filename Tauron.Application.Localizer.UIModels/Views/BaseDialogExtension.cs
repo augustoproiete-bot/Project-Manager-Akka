@@ -15,7 +15,9 @@ namespace Tauron.Application.Localizer.UIModels.Views
 
         public static Func<TData> ShowDialog<TDialog, TData>(this UiActor actor, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TData>
-            => ShowDialog<TDialog, TData, TData>(actor, Array.Empty<TData>, parameters);
+        {
+            return ShowDialog<TDialog, TData, TData>(actor, Array.Empty<TData>, parameters);
+        }
 
         public static Func<TData> ShowDialog<TDialog, TData, TViewData>(this UiActor actor, Func<IEnumerable<TViewData>> initalData, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TViewData>
@@ -23,23 +25,23 @@ namespace Tauron.Application.Localizer.UIModels.Views
             _dialogCoordinator ??= actor.LifetimeScope.Resolve<IDialogCoordinator>();
 
             return () =>
-                   {
-                       Task<TData>? task = null;
+            {
+                Task<TData>? task = null;
 
-                       actor.Dispatcher.Invoke(() =>
-                                               {
-                                                   var dialog = actor.LifetimeScope.Resolve<TDialog>(parameters);
-                                                   task = dialog.Init(initalData());
+                actor.Dispatcher.Invoke(() =>
+                {
+                    var dialog = actor.LifetimeScope.Resolve<TDialog>(parameters);
+                    task = dialog.Init(initalData());
 
-                                                   _dialogCoordinator.ShowDialog(dialog);
-                                               });
+                    _dialogCoordinator.ShowDialog(dialog);
+                });
 
-                       var result = task!.Result;
+                var result = task!.Result;
 
-                       actor.Dispatcher.Invoke(() => _dialogCoordinator.HideDialog());
+                actor.Dispatcher.Invoke(() => _dialogCoordinator.HideDialog());
 
-                       return result;
-                   };
+                return result;
+            };
         }
     }
 }

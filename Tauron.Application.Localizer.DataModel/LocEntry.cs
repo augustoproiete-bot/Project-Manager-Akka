@@ -10,6 +10,13 @@ namespace Tauron.Application.Localizer.DataModel
     [PublicAPI]
     public sealed partial class LocEntry : IWriteable
     {
+        public LocEntry(string project, string name)
+        {
+            Project = project;
+            Key = name;
+            Values = ImmutableDictionary<ActiveLanguage, string>.Empty;
+        }
+
         public string Project { get; }
 
         public string Key { get; }
@@ -27,12 +34,11 @@ namespace Tauron.Application.Localizer.DataModel
         public static LocEntry ReadFrom(BinaryReader reader)
         {
             var builder = new Builder
-                          {
-                              Project = reader.ReadString(), 
-                              Key = reader.ReadString(), 
-                              Values = Helper.Read(reader, ActiveLanguage.ReadFrom, binaryReader => binaryReader.ReadString())
-                          };
-
+            {
+                Project = reader.ReadString(),
+                Key = reader.ReadString(),
+                Values = Helper.Read(reader, ActiveLanguage.ReadFrom, binaryReader => binaryReader.ReadString())
+            };
 
 
             return builder.ToImmutable();

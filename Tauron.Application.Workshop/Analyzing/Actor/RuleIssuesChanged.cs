@@ -8,17 +8,19 @@ namespace Tauron.Application.Workshop.Analyzing.Actor
     public sealed class RuleIssuesChanged<TWorkspace, TData>
         where TWorkspace : WorkspaceBase<TData>
     {
-        public IRule<TWorkspace, TData> Rule { get; }
-
-        public IEnumerable<Issue> Issues { get; }
-
         public RuleIssuesChanged(IRule<TWorkspace, TData> rule, IEnumerable<Issue> issues)
         {
             Rule = rule;
             Issues = issues;
         }
 
+        public IRule<TWorkspace, TData> Rule { get; }
+
+        public IEnumerable<Issue> Issues { get; }
+
         public IssuesEvent ToEvent()
-            => new IssuesEvent(Rule.Name, Issues);
+        {
+            return new IssuesEvent(Rule.Name, Issues);
+        }
     }
 }

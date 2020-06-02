@@ -11,7 +11,7 @@ namespace Tauron.Application.Localizer.DataModel.Serialization
             var count = reader.ReadInt32();
             var builder = ImmutableDictionary.CreateBuilder<TKey, TValue>();
 
-            for (var i = 0; i < count; i++) 
+            for (var i = 0; i < count; i++)
                 builder.Add(keyConversion(reader), valueConversion(reader));
 
             return builder.ToImmutable();
@@ -38,13 +38,16 @@ namespace Tauron.Application.Localizer.DataModel.Serialization
             return builder.ToImmutable();
         }
 
-        public static ImmutableList<string> ReadString(BinaryReader reader) => Read(reader, binaryReader => binaryReader.ReadString());
+        public static ImmutableList<string> ReadString(BinaryReader reader)
+        {
+            return Read(reader, binaryReader => binaryReader.ReadString());
+        }
 
         public static void WriteList<TType>(ImmutableList<TType> list, BinaryWriter writer)
             where TType : IWriteable
         {
             writer.Write(list.Count);
-            foreach (var writeable in list) 
+            foreach (var writeable in list)
                 writeable.Write(writer);
         }
 

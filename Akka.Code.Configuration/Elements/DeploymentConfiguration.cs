@@ -9,6 +9,9 @@ namespace Akka.Code.Configuration.Elements
     {
         public IEnumerable<SingleActorConfiguration> Actors => ToAddElements.Select(p => p.Value).OfType<SingleActorConfiguration>();
 
-        public SingleActorConfiguration AddActor(string path) => GetAddElement<SingleActorConfiguration>(path);
+        public SingleActorConfiguration AddActor(string path)
+        {
+            return GetAddElement<SingleActorConfiguration>(path);
+        }
     }
 }

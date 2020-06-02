@@ -2,8 +2,11 @@
 {
     public sealed class RemoveProject
     {
-        public Project Project { get; }
+        public RemoveProject(Project project)
+        {
+            Project = project;
+        }
 
-        public RemoveProject(Project project) => Project = project;
+        public Project Project { get; }
     }
 }

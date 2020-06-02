@@ -12,16 +12,19 @@ namespace Tauron.Application.Wpf.Implementation
     public sealed class DialogFactory : IDialogFactory
     {
         private readonly System.Windows.Window _mainWindow;
-        private Dispatcher CurrentDispatcher { get; }
-        
+
         public DialogFactory(Dispatcher currentDispatcher, IMainWindow mainWindow)
         {
             _mainWindow = mainWindow.Window;
             CurrentDispatcher = currentDispatcher;
         }
 
-        public void FormatException(System.Windows.Window? owner, Exception exception) 
-            => ShowMessageBox(owner, $"Type: {exception.GetType().Name} \n {exception.Message}", "Error", MsgBoxButton.Ok, MsgBoxImage.Error);
+        private Dispatcher CurrentDispatcher { get; }
+
+        public void FormatException(System.Windows.Window? owner, Exception exception)
+        {
+            ShowMessageBox(owner, $"Type: {exception.GetType().Name} \n {exception.Message}", "Error", MsgBoxButton.Ok, MsgBoxImage.Error);
+        }
 
         public MsgBoxResult ShowMessageBox(System.Windows.Window? owner, string text, string caption, MsgBoxButton button, MsgBoxImage icon)
         {
@@ -38,30 +41,30 @@ namespace Tauron.Application.Wpf.Implementation
             try
             {
                 return CurrentDispatcher.Invoke(() =>
+                {
+                    var dialog = new VistaOpenFileDialog
                     {
-                        var dialog = new VistaOpenFileDialog
-                        {
-                            CheckFileExists = checkFileExists,
-                            DefaultExt = defaultExt,
-                            DereferenceLinks =
-                                dereferenceLinks,
-                            Filter = filter,
-                            Multiselect = multiSelect,
-                            Title = title,
-                            ValidateNames = validateNames,
-                            CheckPathExists = checkPathExists
-                        };
+                        CheckFileExists = checkFileExists,
+                        DefaultExt = defaultExt,
+                        DereferenceLinks =
+                            dereferenceLinks,
+                        Filter = filter,
+                        Multiselect = multiSelect,
+                        Title = title,
+                        ValidateNames = validateNames,
+                        CheckPathExists = checkPathExists
+                    };
 
-                        TranslateDefaultExt(dialog);
+                    TranslateDefaultExt(dialog);
 
-                        tempresult = owner != null
-                            ? dialog.ShowDialog(owner)
-                            : dialog.ShowDialog(_mainWindow);
+                    tempresult = owner != null
+                        ? dialog.ShowDialog(owner)
+                        : dialog.ShowDialog(_mainWindow);
 
-                        return tempresult == false
-                            ? Enumerable.Empty<string>()
-                            : dialog.FileNames;
-                    });
+                    return tempresult == false
+                        ? Enumerable.Empty<string>()
+                        : dialog.FileNames;
+                });
             }
             finally
             {
@@ -69,7 +72,7 @@ namespace Tauron.Application.Wpf.Implementation
             }
         }
 
-        public string? ShowOpenFolderDialog(System.Windows.Window? owner, string description, Environment.SpecialFolder rootFolder, bool showNewFolderButton, 
+        public string? ShowOpenFolderDialog(System.Windows.Window? owner, string description, Environment.SpecialFolder rootFolder, bool showNewFolderButton,
             bool useDescriptionForTitle, out bool? result)
         {
             Argument.NotNull(owner, nameof(owner));
@@ -181,10 +184,8 @@ namespace Tauron.Application.Wpf.Implementation
             var filter = dialog.Filter;
             var filters = filter.Split('|');
             for (var i = 1; i < filters.Length; i += 2)
-            {
                 if (filters[i] == ext)
                     dialog.FilterIndex = 1 + (i - 1) / 2;
-            }
         }
     }
 }

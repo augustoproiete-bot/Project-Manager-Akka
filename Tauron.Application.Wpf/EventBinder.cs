@@ -22,7 +22,10 @@ namespace Tauron.Application.Wpf
             DependencyProperty.RegisterAttached("Events", typeof(string), typeof(EventBinder), new UIPropertyMetadata(null, OnEventsChanged));
 
         [NotNull]
-        public static string GetEvents(DependencyObject obj) => (string) Argument.NotNull(obj, nameof(obj)).GetValue(EventsProperty);
+        public static string GetEvents(DependencyObject obj)
+        {
+            return (string) Argument.NotNull(obj, nameof(obj)).GetValue(EventsProperty);
+        }
 
         public static void SetEvents(DependencyObject obj, string value)
         {
@@ -112,20 +115,20 @@ namespace Tauron.Application.Wpf
             private class InternalEventLinker : IDisposable
             {
                 private static readonly MethodInfo Method = typeof(InternalEventLinker).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-                   .First(m => m.Name == "Handler");
+                    .First(m => m.Name == "Handler");
 
                 private readonly IViewModel _dataContext;
 
                 private readonly EventInfo? _event;
                 private readonly DependencyObject? _host;
                 private readonly string _targetName;
-                private Delegate? _delegate;
                 private Action<EventData>? _command;
+                private Delegate? _delegate;
                 private bool _isDirty;
 
-                public InternalEventLinker(EventInfo? @event, IViewModel dataContext,  string targetName, DependencyObject? host)
+                public InternalEventLinker(EventInfo? @event, IViewModel dataContext, string targetName, DependencyObject? host)
                 {
-                    _isDirty = (@event == null);
+                    _isDirty = @event == null;
 
                     _host = host;
                     _event = @event;

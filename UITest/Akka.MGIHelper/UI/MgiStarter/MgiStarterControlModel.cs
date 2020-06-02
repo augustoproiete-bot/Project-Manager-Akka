@@ -16,39 +16,11 @@ namespace Akka.MGIHelper.UI.MgiStarter
 {
     public sealed class MgiStarterControlModel : UiActor
     {
-        private class LocalHelper
-        {
-            public string Unkowen { get; }
-
-            public string GenericStart { get; }
-
-            public string GenericNotStart { get; }
-
-            public LocalHelper(IActorContext context)
-            {
-                var loc = context.Loc();
-
-                Unkowen = loc.RequestString("genericunkowen");
-                GenericStart = loc.RequestString("genericstart");
-                GenericNotStart = loc.RequestString("genericnotstart");
-            }
-        }
-
         private readonly ProcessConfig _config;
-        private readonly IActorRef _processManager;
         private readonly LocalHelper _localHelper;
+        private readonly IActorRef _processManager;
 
-        private UIProperty<Process?> Client { get; set; }
-
-        private UIProperty<Process?> Kernel { get; set; }
-
-        private UIProperty<string?> Status { get; set; }
-
-        private UIProperty<bool> InternalStart { get; set; }
-
-        private UIProperty<string?> StatusLabel { get; set; }
-
-        public MgiStarterControlModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, ProcessConfig config) 
+        public MgiStarterControlModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, ProcessConfig config)
             : base(lifetimeScope, dispatcher)
         {
             Client = RegisterProperty<Process?>(nameof(Client)).OnChange(UpdateLabel);
@@ -89,8 +61,20 @@ namespace Akka.MGIHelper.UI.MgiStarter
             UpdateLabel();
         }
 
-        private void StatusUpdate(MgiStartingActor.StartStatusUpdate obj) 
-            => Status += obj.Status;
+        private UIProperty<Process?> Client { get; set; }
+
+        private UIProperty<Process?> Kernel { get; set; }
+
+        private UIProperty<string?> Status { get; set; }
+
+        private UIProperty<bool> InternalStart { get; set; }
+
+        private UIProperty<string?> StatusLabel { get; set; }
+
+        private void StatusUpdate(MgiStartingActor.StartStatusUpdate obj)
+        {
+            Status += obj.Status;
+        }
 
         private void TryStartResponseHandler(MgiStartingActor.TryStartResponse obj)
         {
@@ -103,7 +87,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
             try
             {
                 var processChange = obj.Change;
-                var name = obj.Name; 
+                var name = obj.Name;
                 var process = obj.Process;
                 switch (processChange)
                 {
@@ -113,11 +97,13 @@ namespace Akka.MGIHelper.UI.MgiStarter
                             ConfigProcess(process);
                             Kernel += process;
                         }
+
                         if (_config.Client.Contains(name))
                         {
                             ConfigProcess(process);
                             Client += process;
                         }
+
                         break;
                     case ProcessChange.Stopped:
                         if (_config.Kernel.Contains(name))
@@ -129,7 +115,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
                         throw new ArgumentOutOfRangeException();
                 }
 
-                if(Kernel != null && Client != null)
+                if (Kernel != null && Client != null)
                     Status += Context.Loc().RequestString("uistatusstartet");
                 if (Kernel == null && Client == null)
                     Status += Context.Loc().RequestString("uistatusstopped");
@@ -153,7 +139,6 @@ namespace Akka.MGIHelper.UI.MgiStarter
         }
 
 
-
         private void UpdateLabel()
         {
             var builder = new StringBuilder();
@@ -166,7 +151,7 @@ namespace Akka.MGIHelper.UI.MgiStarter
                 StatusLabel = status;
                 return;
             }
-            
+
             builder.AppendLine(string.IsNullOrWhiteSpace(status) ? _localHelper.Unkowen : status);
 
             builder.Append("Kernel: ");
@@ -175,6 +160,24 @@ namespace Akka.MGIHelper.UI.MgiStarter
             builder.AppendLine(client ? _localHelper.GenericStart : _localHelper.GenericNotStart);
 
             StatusLabel += builder.ToString();
+        }
+
+        private class LocalHelper
+        {
+            public LocalHelper(IActorContext context)
+            {
+                var loc = context.Loc();
+
+                Unkowen = loc.RequestString("genericunkowen");
+                GenericStart = loc.RequestString("genericstart");
+                GenericNotStart = loc.RequestString("genericnotstart");
+            }
+
+            public string Unkowen { get; }
+
+            public string GenericStart { get; }
+
+            public string GenericNotStart { get; }
         }
     }
 }

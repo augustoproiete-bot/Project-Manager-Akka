@@ -13,12 +13,17 @@ namespace Tauron.Application.Wpf.UI
 
         private readonly ILifetimeScope _provider;
 
-        public AutoViewLocation(ILifetimeScope provider) => _provider = provider;
+        public AutoViewLocation(ILifetimeScope provider)
+        {
+            _provider = provider;
+        }
 
         public static AutoViewLocation Manager => ActorApplication.Application.Continer.Resolve<AutoViewLocation>();
 
-        public static void AddPair(Type view, Type model) 
-            => Views[model] = view;
+        public static void AddPair(Type view, Type model)
+        {
+            Views[model] = view;
+        }
 
         public IView? ResolveView(object viewModel)
         {

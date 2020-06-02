@@ -6,14 +6,21 @@ using Tauron.Localization;
 
 namespace Tauron.Application.Wpf.UI
 {
-    [MarkupExtensionReturnType(typeof(object)), PublicAPI]
+    [MarkupExtensionReturnType(typeof(object))]
+    [PublicAPI]
     public sealed class Loc : UpdatableMarkupExtension
     {
+        public Loc(string entryName)
+        {
+            EntryName = entryName;
+        }
+
         public string EntryName { get; set; }
 
-        public Loc(string entryName) => EntryName = entryName;
-        
-        protected override object DesignTime() => nameof(DesignTime);
+        protected override object DesignTime()
+        {
+            return nameof(DesignTime);
+        }
 
         protected override object ProvideValueInternal(IServiceProvider serviceProvider)
         {

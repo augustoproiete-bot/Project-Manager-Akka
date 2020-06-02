@@ -13,25 +13,29 @@ namespace Tauron.Application
         where TType : class
     {
         private readonly List<WeakReference<TType>> _internalCollection = new List<WeakReference<TType>>();
-        
-        public WeakCollection() => WeakCleanUp.RegisterAction(CleanUp);
+
+        public WeakCollection()
+        {
+            WeakCleanUp.RegisterAction(CleanUp);
+        }
+
+        public int EffectiveCount => _internalCollection.Count(refer => refer.IsAlive());
 
         public TType this[int index]
         {
             get => _internalCollection[index].TypedTarget()!;
             set => _internalCollection[index] = new WeakReference<TType>(value);
         }
-        
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public event EventHandler? CleanedEvent;
-        
-        public int EffectiveCount => _internalCollection.Count(refer => refer.IsAlive());
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         public int Count => _internalCollection.Count;
-        
+
         public bool IsReadOnly => false;
-        
+
         public void Add(TType item)
         {
             if (item == null) return;
@@ -39,9 +43,15 @@ namespace Tauron.Application
         }
 
         /// <summary>The clear.</summary>
-        public void Clear() => _internalCollection.Clear();
+        public void Clear()
+        {
+            _internalCollection.Clear();
+        }
 
-        public bool Contains(TType item) => item != null && _internalCollection.Any(it => it.TypedTarget() == item);
+        public bool Contains(TType item)
+        {
+            return item != null && _internalCollection.Any(it => it.TypedTarget() == item);
+        }
 
         public void CopyTo(TType[] array, int arrayIndex)
         {
@@ -62,7 +72,7 @@ namespace Tauron.Application
                 array[i] = target;
             }
         }
-        
+
         public IEnumerator<TType> GetEnumerator()
         {
             return
@@ -70,7 +80,7 @@ namespace Tauron.Application
                     .Where(target => target != null)
                     .GetEnumerator()!;
         }
-        
+
         public int IndexOf(TType item)
         {
             if (item == null) return -1;
@@ -84,13 +94,13 @@ namespace Tauron.Application
 
             return index == _internalCollection.Count ? -1 : index;
         }
-        
+
         public void Insert(int index, TType item)
         {
             if (item == null) return;
             _internalCollection.Insert(index, new WeakReference<TType>(item));
         }
-        
+
         public bool Remove(TType item)
         {
             if (item == null) return false;
@@ -100,8 +110,13 @@ namespace Tauron.Application
             _internalCollection.RemoveAt(index);
             return true;
         }
-        
-        public void RemoveAt(int index) => _internalCollection.RemoveAt(index);
+
+        public void RemoveAt(int index)
+        {
+            _internalCollection.RemoveAt(index);
+        }
+
+        public event EventHandler? CleanedEvent;
 
         internal void CleanUp()
         {
@@ -110,22 +125,30 @@ namespace Tauron.Application
 
             OnCleaned();
         }
-        
-        private void OnCleaned() => CleanedEvent?.Invoke(this, EventArgs.Empty);
+
+        private void OnCleaned()
+        {
+            CleanedEvent?.Invoke(this, EventArgs.Empty);
+        }
     }
-    
+
     [DebuggerNonUserCode]
     public class WeakReferenceCollection<TType> : Collection<TType>
         where TType : IWeakReference
     {
-        public WeakReferenceCollection() => WeakCleanUp.RegisterAction(CleanUpMethod);
+        public WeakReferenceCollection()
+        {
+            WeakCleanUp.RegisterAction(CleanUpMethod);
+        }
 
         protected override void ClearItems()
         {
             lock (this)
+            {
                 base.ClearItems();
+            }
         }
-        
+
         protected override void InsertItem(int index, TType item)
         {
             lock (this)
@@ -134,19 +157,23 @@ namespace Tauron.Application
                 base.InsertItem(index, item);
             }
         }
-        
+
         protected override void RemoveItem(int index)
         {
             lock (this)
+            {
                 base.RemoveItem(index);
+            }
         }
-        
+
         protected override void SetItem(int index, TType item)
         {
             lock (this)
+            {
                 base.SetItem(index, item);
+            }
         }
-        
+
         private void CleanUpMethod()
         {
             lock (this)

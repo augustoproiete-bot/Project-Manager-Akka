@@ -2,9 +2,11 @@
 {
     public sealed class EntryUpdate
     {
+        public EntryUpdate(LocEntry entry)
+        {
+            Entry = entry;
+        }
+
         public LocEntry Entry { get; }
-
-
-        public EntryUpdate(LocEntry entry) => Entry = entry;
     }
 }

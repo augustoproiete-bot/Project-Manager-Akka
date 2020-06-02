@@ -23,6 +23,9 @@ namespace LoadingIndicators.WPF
 
         public string Name { get; }
 
-        public override object ProvideValue(IServiceProvider serviceProvider) => Name;
+        public override object ProvideValue(IServiceProvider serviceProvider)
+        {
+            return Name;
+        }
     }
 }

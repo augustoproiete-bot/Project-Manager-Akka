@@ -8,7 +8,7 @@ namespace Akka.MGIHelper.Core.FanControl.Components
     {
         public async Task Handle(TrackingEvent msg, MessageBus messageBus)
         {
-            if(msg.Error) return;
+            if (msg.Error) return;
             if (msg.State == State.Cooldown)
                 await messageBus.Publish(new FanStartEvent());
         }

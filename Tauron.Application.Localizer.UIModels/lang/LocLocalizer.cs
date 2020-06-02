@@ -8,6 +8,46 @@ namespace Tauron.Application.Localizer.UIModels.lang
     [PublicAPI]
     public sealed class LocLocalizer
     {
+        private readonly Task<string> _centerViewNewProjectInvalidNameMessage;
+
+        private readonly Task<string> _centerViewRemoveProjectDialogMessage;
+
+        private readonly Task<string> _centerViewRemoveProjectDialogTitle;
+
+        private readonly Task<string> _centerViewSaveProjectOperation;
+
+        private readonly Task<string> _commonError;
+
+        private readonly Task<string> _commonUnkowen;
+
+        private readonly Task<string> _commonWarnig;
+
+        private readonly Task<string> _mainWindowCloseWarning;
+
+        private readonly Task<string> _mainWindowMainMenuFileSaveAs;
+
+        private readonly Task<string> _mainWindowModelLoadProjectOperation;
+
+        private readonly Task<string> _mainWindowModelLoadProjectSourceEmpty;
+
+        private readonly Task<string> _mainWindowTitle;
+
+        private readonly Task<string> _newProjectDialogViewErrorDuplicate;
+
+        private readonly Task<string> _openFileDialogViewDialogFilter;
+
+        private readonly Task<string> _openFileDialogViewDialogTitle;
+
+        private readonly Task<string> _openFileDialogViewHeaderNewPrefix;
+
+        private readonly Task<string> _operationControllerFailed;
+
+        private readonly Task<string> _operationControllerRunning;
+
+        private readonly Task<string> _operationControllerSucess;
+
+        private readonly Task<string> _projectViewLanguageBoxFirstLabel;
+
         public LocLocalizer(ActorSystem system)
         {
             var loc = system.Loc();
@@ -34,86 +74,49 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _projectViewLanguageBoxFirstLabel = ToString(loc.RequestTask("ProjectView_LanguageBox_FirstLabel"));
         }
 
-        private Task<string> ToString(Task<object?> task) => task.ContinueWith(t => t.Result as string ?? string.Empty);
-
-        private readonly Task<string> _operationControllerSucess;
-
         public string OperationControllerSuccess => _operationControllerSucess.Result;
-
-        private readonly Task<string> _operationControllerFailed;
 
         public string OperationControllerFailed => _operationControllerFailed.Result;
 
-        private readonly Task<string> _operationControllerRunning;
-
         public string OperationControllerRunning => _operationControllerRunning.Result;
-
-        private readonly Task<string> _mainWindowModelLoadProjectOperation;
 
         public string MainWindowModelLoadProjectOperation => _mainWindowModelLoadProjectOperation.Result;
 
-        private readonly Task<string> _openFileDialogViewDialogFilter;
-
         public string OpenFileDialogViewDialogFilter => _openFileDialogViewDialogFilter.Result;
-
-        private readonly Task<string> _openFileDialogViewDialogTitle;
 
         public string OpenFileDialogViewDialogTitle => _openFileDialogViewDialogTitle.Result;
 
-        private readonly Task<string> _commonError;
-
         public string CommonError => _commonError.Result;
-
-        private readonly Task<string> _mainWindowModelLoadProjectSourceEmpty;
 
         public string MainWindowModelLoadProjectSourceEmpty => _mainWindowModelLoadProjectSourceEmpty.Result;
 
-        private readonly Task<string> _openFileDialogViewHeaderNewPrefix;
-
         public string OpenFileDialogViewHeaderNewPrefix => _openFileDialogViewHeaderNewPrefix.Result;
-
-        private readonly Task<string> _mainWindowMainMenuFileSaveAs;
 
         public string MainWindowMainMenuFileSaveAs => _mainWindowMainMenuFileSaveAs.Result;
 
-        private readonly Task<string> _centerViewSaveProjectOperation;
-
         public string CenterViewSaveProjectOperation => _centerViewSaveProjectOperation.Result;
-
-        private readonly Task<string> _newProjectDialogViewErrorDuplicate;
 
         public string NewProjectDialogViewErrorDuplicate => _newProjectDialogViewErrorDuplicate.Result;
 
-        private readonly Task<string> _centerViewRemoveProjectDialogTitle;
-
         public string CenterViewRemoveProjectDialogTitle => _centerViewRemoveProjectDialogTitle.Result;
-
-        private readonly Task<string> _centerViewRemoveProjectDialogMessage;
 
         public string CenterViewRemoveProjectDialogMessage => _centerViewRemoveProjectDialogMessage.Result;
 
-        private readonly Task<string> _centerViewNewProjectInvalidNameMessage;
-
         public string CenterViewNewProjectInvalidNameMessage => _centerViewNewProjectInvalidNameMessage.Result;
-
-        private readonly Task<string> _commonUnkowen;
 
         public string CommonUnkowen => _commonUnkowen.Result;
 
-        private readonly Task<string> _mainWindowTitle;
-
         public string MainWindowTitle => _mainWindowTitle.Result;
-
-        private readonly Task<string> _commonWarnig;
 
         public string CommonWarnig => _commonWarnig.Result;
 
-        private readonly Task<string> _mainWindowCloseWarning;
-
         public string MainWindowCloseWarning => _mainWindowCloseWarning.Result;
 
-        private readonly Task<string> _projectViewLanguageBoxFirstLabel;
-
         public string ProjectViewLanguageBoxFirstLabel => _projectViewLanguageBoxFirstLabel.Result;
+
+        private Task<string> ToString(Task<object?> task)
+        {
+            return task.ContinueWith(t => t.Result as string ?? string.Empty);
+        }
     }
 }

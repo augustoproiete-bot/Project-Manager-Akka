@@ -2,14 +2,14 @@
 {
     public sealed class AddActiveLanguage
     {
-        public ActiveLanguage ActiveLanguage { get; }
-
-        public string ProjectName { get; }
-
         public AddActiveLanguage(ActiveLanguage activeLanguage, string projectName)
         {
             ActiveLanguage = activeLanguage;
             ProjectName = projectName;
         }
+
+        public ActiveLanguage ActiveLanguage { get; }
+
+        public string ProjectName { get; }
     }
 }

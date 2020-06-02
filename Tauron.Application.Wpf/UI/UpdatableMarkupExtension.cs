@@ -40,7 +40,10 @@ namespace Tauron.Application.Wpf.UI
                 {
                     var obj = TargetObject as DependencyObject;
 
-                    void UpdateAction() => obj.SetValue(dependencyProperty, value);
+                    void UpdateAction()
+                    {
+                        obj.SetValue(dependencyProperty, value);
+                    }
 
                     // Check whether the target object can be accessed from the
                     // current thread, and use Dispatcher.Invoke if it can't
@@ -58,7 +61,7 @@ namespace Tauron.Application.Wpf.UI
             }
         }
 
-        protected virtual bool TryGetTargetItems(IServiceProvider? provider, [NotNullWhen(true)]out DependencyObject? target, [NotNullWhen(true)] out DependencyProperty? dp)
+        protected virtual bool TryGetTargetItems(IServiceProvider? provider, [NotNullWhen(true)] out DependencyObject? target, [NotNullWhen(true)] out DependencyProperty? dp)
         {
             target = null;
             dp = null;

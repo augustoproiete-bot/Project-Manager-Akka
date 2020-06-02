@@ -25,21 +25,25 @@ namespace Akka.MGIHelper.Core.ProcessManager
             Receive<RegisterProcessFile>(Track);
         }
 
-        private void ProcessExit(ProcessExitMessage obj) 
-            => Context.Parent.Tell(new ProcessStateChange(ProcessChange.Stopped, obj.Name, obj.Id, obj.Target));
+        private void ProcessExit(ProcessExitMessage obj)
+        {
+            Context.Parent.Tell(new ProcessStateChange(ProcessChange.Stopped, obj.Name, obj.Id, obj.Target));
+        }
 
-        private string FormatName(int id) => $"Process-{id}";
+        private string FormatName(int id)
+        {
+            return $"Process-{id}";
+        }
 
         private void GetProcesses(GatherProcess state)
         {
             try
             {
-                if(Context.GetChildren().Count() == _tracked.Length)
+                if (Context.GetChildren().Count() == _tracked.Length)
                     return;
 
                 _log.Info("Update Processes");
                 foreach (var process in Process.GetProcesses())
-                {
                     try
                     {
                         if (!Context.Child(FormatName(process.Id)).Equals(ActorRefs.Nobody))
@@ -63,25 +67,28 @@ namespace Akka.MGIHelper.Core.ProcessManager
                     {
                         _log.Error(e, "Error on Check Process");
                     }
-                }
             }
             catch (Exception e)
             {
                 _log.Error(e, "Error on Get Processes");
             }
-
         }
 
         private void Track(RegisterProcessFile msg)
         {
             var fileName = msg.FileName.Trim();
-            if(string.IsNullOrWhiteSpace(fileName)) return;
+            if (string.IsNullOrWhiteSpace(fileName)) return;
             _tracked = _tracked.Add(fileName);
         }
 
-        protected override void PostStop() 
-            => _processUpdater.Dispose();
+        protected override void PostStop()
+        {
+            _processUpdater.Dispose();
+        }
 
-        protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(exception => Directive.Stop);
+        protected override SupervisorStrategy SupervisorStrategy()
+        {
+            return new OneForOneStrategy(exception => Directive.Stop);
+        }
     }
 }

@@ -8,21 +8,9 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 {
     public sealed class EndPointManager : ReceiveActor
     {
-        public sealed class EndpointLostMessage
-        {
-
-        }
-
-        public sealed class ServiceChangeMessages
-        {
-            public IReadOnlyList<string> AllServices { get; }
-
-            public ServiceChangeMessages(IReadOnlyList<string> allServices) => AllServices = allServices;
-        }
-
         private readonly ILoggingAdapter _log;
-        private readonly IActorRef _targetEndpoint;
         private readonly ServiceRequirement _requirement;
+        private readonly IActorRef _targetEndpoint;
         private bool _isSuspended;
 
         public EndPointManager(IActorRef targetEndpoint, ServiceRequirement requirement)
@@ -38,13 +26,15 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             Receive<QueryServiceRequest>(QueryServiceRequest);
         }
 
-        private void QueryServiceRequest(QueryServiceRequest obj) 
-            => Context.Sender.Tell(new QueryServiceResponse(_targetEndpoint));
+        private void QueryServiceRequest(QueryServiceRequest obj)
+        {
+            Context.Sender.Tell(new QueryServiceResponse(_targetEndpoint));
+        }
 
         private void ServiceChangeMessagesHandler(ServiceChangeMessages obj)
         {
             var ok = !_requirement.IsDefiend(obj.AllServices);
-            if(_isSuspended == ok) return;
+            if (_isSuspended == ok) return;
 
             _log.Info("Switch Service Suspension From {Current} To {New} On {Endpoint}", ok, !ok, _targetEndpoint.Path);
             _isSuspended = ok;
@@ -59,6 +49,20 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             _log.Warning("Endpoint Conecction Lost {Endpoint}", _targetEndpoint.Path);
             Context.Parent.Tell(new EndpointLostMessage());
             Context.Stop(Self);
+        }
+
+        public sealed class EndpointLostMessage
+        {
+        }
+
+        public sealed class ServiceChangeMessages
+        {
+            public ServiceChangeMessages(IReadOnlyList<string> allServices)
+            {
+                AllServices = allServices;
+            }
+
+            public IReadOnlyList<string> AllServices { get; }
         }
     }
 }

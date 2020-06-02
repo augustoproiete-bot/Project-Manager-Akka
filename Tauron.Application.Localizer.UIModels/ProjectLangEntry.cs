@@ -7,6 +7,14 @@ namespace Tauron.Application.Localizer.UIModels
     {
         private readonly Action<string, ActiveLanguage> _changed;
         private string _content;
+
+        public ProjectLangEntry(Action<string, ActiveLanguage> changed, ActiveLanguage language, string content)
+        {
+            _changed = changed;
+            _content = content;
+            Language = language;
+        }
+
         public ActiveLanguage Language { get; }
 
         public string Content
@@ -19,13 +27,6 @@ namespace Tauron.Application.Localizer.UIModels
                 OnPropertyChanged();
                 _changed(value, Language);
             }
-        }
-
-        public ProjectLangEntry(Action<string, ActiveLanguage> changed, ActiveLanguage language, string content)
-        {
-            _changed = changed;
-            _content = content;
-            Language = language;
         }
 
         public void UpdateContent(string content)

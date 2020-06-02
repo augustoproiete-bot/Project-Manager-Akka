@@ -6,6 +6,10 @@ namespace Akka.MGIHelper.Core.Configuration
 {
     public sealed class FanControlOptions : ConfigurationBase
     {
+        public FanControlOptions(IDefaultActorRef<SettingsManager> actor, string scope) : base(actor, scope)
+        {
+        }
+
         public int ClockTimeMs
         {
             get => GetValue(int.Parse, 1000)!;
@@ -40,10 +44,6 @@ namespace Akka.MGIHelper.Core.Configuration
         {
             get => GetValue(double.Parse, 1.3d)!;
             set => SetValue(value.ToString(CultureInfo.InvariantCulture));
-        }
-
-        public FanControlOptions(IDefaultActorRef<SettingsManager> actor, string scope) : base(actor, scope)
-        {
         }
     }
 }

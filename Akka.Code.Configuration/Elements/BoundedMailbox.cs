@@ -6,6 +6,25 @@ namespace Akka.Code.Configuration.Elements
     [PublicAPI]
     public sealed class BoundedMailbox : ConfigurationElement
     {
+        public BoundedMailbox()
+        {
+            MailboxType = "Akka.Dispatch.BoundedMailbox, Akka";
+        }
+
+        public BoundedMailbox(int capacity)
+            : this()
+        {
+            Capacity = capacity;
+            Timeout = new TimeSpan(-1);
+        }
+
+        public BoundedMailbox(int capacity, TimeSpan timeout)
+            : this()
+        {
+            Capacity = capacity;
+            Timeout = timeout;
+        }
+
         public int Capacity
         {
             get => Get<int>("mailbox-capacity");
@@ -22,23 +41,6 @@ namespace Akka.Code.Configuration.Elements
         {
             get => Get<string>("mailbox-type");
             private set => Set(value, "mailbox-type");
-        }
-
-        public BoundedMailbox() 
-            => MailboxType = "Akka.Dispatch.BoundedMailbox, Akka";
-
-        public BoundedMailbox(int capacity)
-            : this()
-        {
-            Capacity = capacity;
-            Timeout = new TimeSpan(-1);
-        }
-
-        public BoundedMailbox(int capacity, TimeSpan timeout)
-            : this()
-        {
-            Capacity = capacity;
-            Timeout = timeout;
         }
     }
 }

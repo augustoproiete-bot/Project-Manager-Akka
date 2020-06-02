@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Windows.Data;
 using JetBrains.Annotations;
 
@@ -20,6 +19,8 @@ namespace Tauron.Application.Wpf.Model
             actor.RegisterProperty(Property);
         }
 
+        public UIProperty<ObservableCollection<TData>> Property { get; }
+
         public FluentCollectionPropertyRegistration<TData> Async()
         {
             if (_isAsync) return this;
@@ -34,9 +35,9 @@ namespace Tauron.Application.Wpf.Model
             return this;
         }
 
-        public UIProperty<ObservableCollection<TData>> Property { get; }
-
         public static implicit operator UICollectionProperty<TData>(FluentCollectionPropertyRegistration<TData> config)
-            => new UICollectionProperty<TData>(config.Property);
+        {
+            return new UICollectionProperty<TData>(config.Property);
+        }
     }
 }

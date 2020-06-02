@@ -9,10 +9,9 @@ namespace Akka.MGIHelper.Core.FanControl.Components
 {
     public class FanControlComponent : IHandler<FanStartEvent>, IDisposable
     {
-        private readonly Timer _timer;
-
         private readonly FanControlOptions _options;
         private readonly Func<bool, Task> _statusChange;
+        private readonly Timer _timer;
 
         public FanControlComponent(FanControlOptions options, Func<bool, Task> statusChange)
         {
@@ -21,13 +20,18 @@ namespace Akka.MGIHelper.Core.FanControl.Components
             _statusChange = statusChange;
         }
 
+        public void Dispose()
+        {
+            _timer.Dispose();
+        }
+
         public async Task Handle(FanStartEvent msg, MessageBus messageBus)
         {
             //TODO Start Fan
 
             await _statusChange(true);
 
-            int time = (int) (_options.ClockTimeMs * _options.FanControlMultipler);
+            var time = (int) (_options.ClockTimeMs * _options.FanControlMultipler);
 
             _timer.Change(time, -1);
         }
@@ -38,7 +42,5 @@ namespace Akka.MGIHelper.Core.FanControl.Components
 
             await _statusChange(false);
         }
-
-        public void Dispose() => _timer.Dispose();
     }
 }

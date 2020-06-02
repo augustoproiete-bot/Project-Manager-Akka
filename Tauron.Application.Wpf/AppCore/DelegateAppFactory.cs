@@ -6,9 +6,14 @@ namespace Tauron.Application.Wpf.AppCore
     {
         private readonly Func<System.Windows.Application> _creator;
 
-        public DelegateAppFactory(Func<System.Windows.Application> creator) 
-            => _creator = creator;
+        public DelegateAppFactory(Func<System.Windows.Application> creator)
+        {
+            _creator = creator;
+        }
 
-        public System.Windows.Application Create() => _creator();
+        public System.Windows.Application Create()
+        {
+            return _creator();
+        }
     }
 }

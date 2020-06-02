@@ -10,11 +10,13 @@ namespace Tauron.Application.Workshop.Mutation
     public abstract class EventSourceBase<TRespond> : IEventSource<TRespond>
     {
         private readonly IActorRef _mutator;
-        private ImmutableList<IActorRef> _intrests = ImmutableList<IActorRef>.Empty;
         private Action<TRespond>? _action;
+        private ImmutableList<IActorRef> _intrests = ImmutableList<IActorRef>.Empty;
 
-        protected EventSourceBase(IActorRef mutator) 
-            => _mutator = mutator;
+        protected EventSourceBase(IActorRef mutator)
+        {
+            _mutator = mutator;
+        }
 
         public void RespondOn(IActorRef actorRef)
         {

@@ -8,11 +8,14 @@ using Tauron.Application.Wpf.Commands;
 namespace Tauron.Application.Localizer.Views
 {
     /// <summary>
-    /// Interaktionslogik für ImportProjectDialogView.xaml
+    ///     Interaktionslogik für ImportProjectDialogView.xaml
     /// </summary>
     public partial class ImportProjectDialogView : IImportProjectDialog
     {
-        public ImportProjectDialogView() => InitializeComponent();
+        public ImportProjectDialogView()
+        {
+            InitializeComponent();
+        }
 
         public Task<ImportProjectDialogResult?> Init(IEnumerable<string> initalData)
         {
@@ -27,6 +30,14 @@ namespace Tauron.Application.Localizer.Views
     public sealed class ImportProjectViewModel : ObservableObject
     {
         private string? _curretElement;
+
+        public ImportProjectViewModel(Action<string?> selector, IEnumerable<string> projects)
+        {
+            Projects = projects;
+
+            CancelCommand = new SimpleCommand(() => selector(null));
+            SelectCommand = new SimpleCommand(o => !string.IsNullOrWhiteSpace(CurretElement), o => selector(CurretElement));
+        }
 
         public IEnumerable<string> Projects { get; }
 
@@ -44,13 +55,5 @@ namespace Tauron.Application.Localizer.Views
         public ICommand SelectCommand { get; }
 
         public ICommand CancelCommand { get; }
-
-        public ImportProjectViewModel(Action<string?> selector, IEnumerable<string> projects)
-        {
-            Projects = projects;
-
-            CancelCommand = new SimpleCommand(() => selector(null));
-            SelectCommand = new SimpleCommand(o => !string.IsNullOrWhiteSpace(CurretElement), o => selector(CurretElement));
-        }
     }
 }

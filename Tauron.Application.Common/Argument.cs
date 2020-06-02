@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 
 namespace Tauron
 {
-    [JetBrains.Annotations.PublicAPI]
+    [PublicAPI]
     [DebuggerStepThrough]
     public static class Argument
     {
@@ -19,8 +19,9 @@ namespace Tauron
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        [return:NotNull]
-        public static TType NotNull<TType>([NotNull]TType toCheck, string parameterName)
+        [return: System.Diagnostics.CodeAnalysis.NotNull]
+        public static TType NotNull<TType>([System.Diagnostics.CodeAnalysis.NotNull]
+            TType toCheck, string parameterName)
         {
             Check(() => toCheck == null ? new ArgumentNullException(parameterName) : null);
 #pragma warning disable CS8777 // Parameter must have a non-null value when exiting.
@@ -49,8 +50,9 @@ namespace Tauron
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        [return:NotNull]
-        public static TValue CheckResult<TValue>([NotNull]TValue value, string name)
+        [return: System.Diagnostics.CodeAnalysis.NotNull]
+        public static TValue CheckResult<TValue>([System.Diagnostics.CodeAnalysis.NotNull]
+            TValue value, string name)
         {
             Check(() => value == null ? new ArgumentNullException(name) : null);
 #pragma warning disable CS8777 // Parameter must have a non-null value when exiting.

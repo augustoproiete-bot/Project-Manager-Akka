@@ -7,15 +7,15 @@ namespace Akka.MGIHelper.Core.ProcessManager
 {
     public sealed class ProcessManagerActor : ReceiveActor
     {
-        private ImmutableDictionary<string, IActorRef> _targetProcesses = ImmutableDictionary<string, IActorRef>.Empty;
+        private readonly ILoggingAdapter _log = Context.GetLogger();
 
         private readonly IActorRef _processTracker;
-        private readonly ILoggingAdapter _log = Context.GetLogger();
+        private ImmutableDictionary<string, IActorRef> _targetProcesses = ImmutableDictionary<string, IActorRef>.Empty;
 
         public ProcessManagerActor()
         {
             _processTracker = Context.ActorOf<ProcessTrackerActor>();
-            
+
             Receive<RegisterProcessList>(Register);
             Receive<ProcessStateChange>(ProcessStateChange);
         }
@@ -23,8 +23,8 @@ namespace Akka.MGIHelper.Core.ProcessManager
         private void ProcessStateChange(ProcessStateChange obj)
         {
             var (key, target) = _targetProcesses.FirstOrDefault(p => p.Key.Contains(obj.Name));
-            if(string.IsNullOrWhiteSpace(key)) return;
-            
+            if (string.IsNullOrWhiteSpace(key)) return;
+
             target.Tell(obj);
         }
 
@@ -32,7 +32,7 @@ namespace Akka.MGIHelper.Core.ProcessManager
         {
             foreach (var fileName in script.Files.Where(fileName => !string.IsNullOrWhiteSpace(fileName)))
             {
-                if(_targetProcesses.ContainsKey(fileName))
+                if (_targetProcesses.ContainsKey(fileName))
                     _log.Error("Only One Scrip per File Suporrtet: {Script}", script.Intrest.Path.ToString());
 
                 _targetProcesses = _targetProcesses.SetItem(fileName, script.Intrest);

@@ -9,33 +9,11 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 {
     public sealed class HostCoordinationActor : ResolveActorBase
     {
-        private sealed class Tracker : ICanTell
-        {
-            private readonly ISuspensionTracker? _tarcker;
-
-            public Tracker(ISuspensionTracker? tarcker) 
-                => _tarcker = tarcker;
-
-            public void Tell(object message, IActorRef sender)
-            {
-                if(message is ToggleSuspendedMessage msg)
-                    _tarcker?.Suspended(msg);
-            }
-        }
-
-        public sealed class RegisterServices
-        {
-            public EndpointConfig Config { get; }
-
-            public RegisterServices(EndpointConfig services) 
-                => Config = services;
-        }
-
         private readonly ILoggingAdapter _log = Context.GetLogger();
         private readonly Dictionary<string, Props> _services = new Dictionary<string, Props>();
+        private ToggleSuspendedMessage _suspendedMessage = new ToggleSuspendedMessage(false);
 
         private ICanTell? _tracker;
-        private ToggleSuspendedMessage _suspendedMessage = new ToggleSuspendedMessage(false);
 
         public HostCoordinationActor()
         {
@@ -57,7 +35,9 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
                 response = new HostLocalServiceResponse(null);
             }
             else
+            {
                 response = new HostLocalServiceResponse(Context.ActorOf(Props.Create(() => new ServiceHostActor(obj.Props)), obj.Name));
+            }
 
             Context.Sender.Tell(response);
         }
@@ -82,7 +62,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             {
                 _log.Info("Service Found");
                 var actor = Context.GetOrCreate(obj.Name, Props.Create(() => new HostManagerActor(value)));
-                actor.Tell(_suspendedMessage);   
+                actor.Tell(_suspendedMessage);
                 actor.Forward(obj);
             }
             else
@@ -97,10 +77,36 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             _log.Info("Suspended Message {State}", obj.IsSuspended);
 
             _suspendedMessage = obj;
-            foreach (var child in Context.GetChildren()) 
+            foreach (var child in Context.GetChildren())
                 child.Forward(obj);
 
             _tracker?.Tell(obj, Context.Sender);
+        }
+
+        private sealed class Tracker : ICanTell
+        {
+            private readonly ISuspensionTracker? _tarcker;
+
+            public Tracker(ISuspensionTracker? tarcker)
+            {
+                _tarcker = tarcker;
+            }
+
+            public void Tell(object message, IActorRef sender)
+            {
+                if (message is ToggleSuspendedMessage msg)
+                    _tarcker?.Suspended(msg);
+            }
+        }
+
+        public sealed class RegisterServices
+        {
+            public RegisterServices(EndpointConfig services)
+            {
+                Config = services;
+            }
+
+            public EndpointConfig Config { get; }
         }
     }
 }

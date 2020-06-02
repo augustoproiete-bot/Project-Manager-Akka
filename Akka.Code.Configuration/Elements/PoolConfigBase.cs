@@ -5,9 +5,10 @@ namespace Akka.Code.Configuration.Elements
     [PublicAPI]
     public abstract class PoolConfigBase : RouterConfigBase
     {
-
         protected PoolConfigBase(AkkaType type)
-            : base(type) { }
+            : base(type)
+        {
+        }
 
         public ResizerConfiguration Resizer => GetAddElement<ResizerConfiguration>("resizer");
 

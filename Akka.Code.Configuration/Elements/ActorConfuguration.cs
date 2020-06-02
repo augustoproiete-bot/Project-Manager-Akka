@@ -22,7 +22,7 @@ namespace Akka.Code.Configuration.Elements
 
         public TimeSpan AskTimeout
         {
-            get => Get<TimeSpan>("ask-timeout"); 
+            get => Get<TimeSpan>("ask-timeout");
             set => Set(value, "ask-timeout");
         }
 

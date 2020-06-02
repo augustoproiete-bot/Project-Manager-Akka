@@ -7,19 +7,10 @@ namespace Akka.MGIHelper.Core.ProcessManager
 {
     public sealed class TrackedProcessActor : ReceiveActor
     {
-        private sealed class InternalProcessExit
-        {
-            
-        }
-
-        private sealed class InternalCheckProcess
-        {
-            
-        }
-
-        private readonly ILoggingAdapter _log = Context.GetLogger();
         private readonly Timer _exitCheck;
         private readonly int _id;
+
+        private readonly ILoggingAdapter _log = Context.GetLogger();
         private readonly string _processName;
         private readonly Process _target;
 
@@ -40,7 +31,7 @@ namespace Akka.MGIHelper.Core.ProcessManager
 
         private void CheckProcess(InternalCheckProcess obj)
         {
-            if(_target.HasExited)
+            if (_target.HasExited)
                 Self.Tell(new InternalProcessExit());
         }
 
@@ -57,6 +48,14 @@ namespace Akka.MGIHelper.Core.ProcessManager
         {
             _exitCheck.Dispose();
             _target.Dispose();
+        }
+
+        private sealed class InternalProcessExit
+        {
+        }
+
+        private sealed class InternalCheckProcess
+        {
         }
     }
 }

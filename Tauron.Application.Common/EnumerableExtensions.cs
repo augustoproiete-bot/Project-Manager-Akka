@@ -24,21 +24,25 @@ namespace Tauron
             if (oldIndex == newIndex) return; // No-op
             var tmp = array[oldIndex];
             if (newIndex < oldIndex)
-                System.Array.Copy(array, newIndex, array, newIndex + 1, oldIndex - newIndex);
+                Array.Copy(array, newIndex, array, newIndex + 1, oldIndex - newIndex);
             else
-                System.Array.Copy(array, oldIndex + 1, array, oldIndex, newIndex - oldIndex);
+                Array.Copy(array, oldIndex + 1, array, oldIndex, newIndex - oldIndex);
             array[newIndex] = tmp;
         }
 
-        public static string Concat(this IEnumerable<string> strings) 
-            => string.Concat(strings);
+        public static string Concat(this IEnumerable<string> strings)
+        {
+            return string.Concat(strings);
+        }
 
-        public static string Concat([NotNull] this IEnumerable<object> objects) 
-            => string.Concat(objects);
+        public static string Concat([NotNull] this IEnumerable<object> objects)
+        {
+            return string.Concat(objects);
+        }
 
         public static void Foreach<TValue>(this IEnumerable<TValue> enumerator, [NotNull] Action<TValue> action)
         {
-            foreach (var value in enumerator) 
+            foreach (var value in enumerator)
                 action(value);
         }
 
@@ -48,7 +52,7 @@ namespace Tauron
 
             var realCount = list.Count - count;
 
-            for (var i = 0; i < realCount; i++) 
+            for (var i = 0; i < realCount; i++)
                 yield return list[i];
         }
 
@@ -63,18 +67,21 @@ namespace Tauron
 
             return -1;
         }
-        
-        public static int IndexOf<T>([NotNull] this IEnumerable<T> items, T item) => items.FindIndex(i => EqualityComparer<T>.Default.Equals(item, i));
-        
+
+        public static int IndexOf<T>([NotNull] this IEnumerable<T> items, T item)
+        {
+            return items.FindIndex(i => EqualityComparer<T>.Default.Equals(item, i));
+        }
+
         public static IEnumerable<IEnumerable<T>> Split<T>(this T[] array, int size)
         {
-            for (var i = 0; i < (float)array.Length / size; i++)
+            for (var i = 0; i < (float) array.Length / size; i++)
                 yield return array.Skip(i * size).Take(size);
         }
 
         public static IEnumerable<IEnumerable<T>> Split<T>(this List<T> array, int size)
         {
-            for (var i = 0; i < (float)array.Count / size; i++)
+            for (var i = 0; i < (float) array.Count / size; i++)
                 yield return array.Skip(i * size).Take(size);
         }
 

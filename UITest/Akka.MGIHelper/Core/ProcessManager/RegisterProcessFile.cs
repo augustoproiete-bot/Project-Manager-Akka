@@ -1,11 +1,12 @@
-﻿using Amadevus.RecordGenerator;
-
-namespace Akka.MGIHelper.Core.ProcessManager
+﻿namespace Akka.MGIHelper.Core.ProcessManager
 {
-    public sealed partial class RegisterProcessFile
+    public sealed class RegisterProcessFile
     {
-        public string FileName { get; }
+        public RegisterProcessFile(string fileName)
+        {
+            FileName = fileName;
+        }
 
-        public RegisterProcessFile(string fileName) => FileName = fileName;
+        public string FileName { get; }
     }
 }

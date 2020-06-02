@@ -11,15 +11,19 @@ namespace Tauron.Application
     [PublicAPI]
     public abstract class TauronProfile : ObservableObject, IEnumerable<string>
     {
-        private readonly ILogger _logger = Log.ForContext<TauronProfile>();
         private static readonly char[] ContentSplitter = {'='};
-        
+
+        private readonly string _defaultPath;
+        private readonly ILogger _logger = Log.ForContext<TauronProfile>();
+
+        private readonly Dictionary<string, string> _settings = new Dictionary<string, string>();
+
         protected TauronProfile(string application, string defaultPath)
         {
             Application = Argument.NotNull(application, nameof(application));
             _defaultPath = Argument.NotNull(defaultPath, nameof(defaultPath));
         }
-        
+
         public virtual string this[[NotNull] string key]
         {
             get => _settings[key];
@@ -31,24 +35,26 @@ namespace Tauron.Application
             }
         }
 
-        public IEnumerator<string> GetEnumerator() => _settings.Select(k => k.Key).GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        private readonly string _defaultPath;
-        
-        private readonly Dictionary<string, string> _settings = new Dictionary<string, string>();
-        
         public int Count => _settings.Count;
-        
+
         public string Application { get; private set; }
-        
+
         public string? Name { get; private set; }
-        
+
         protected string? Dictionary { get; private set; }
-        
+
         protected string? FilePath { get; private set; }
-        
+
+        public IEnumerator<string> GetEnumerator()
+        {
+            return _settings.Select(k => k.Key).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
         public void Delete()
         {
             _settings.Clear();
@@ -57,7 +63,7 @@ namespace Tauron.Application
 
             Dictionary?.DeleteDirectory();
         }
-        
+
         public virtual void Load([NotNull] string name)
         {
             Argument.NotNull<object>(name, nameof(name));
@@ -81,7 +87,7 @@ namespace Tauron.Application
                 _settings[vals[0]] = vals[1];
             }
         }
-        
+
         public virtual void Save()
         {
             _logger.Information($"{Application} -- Begin Save Profile infos...");
@@ -90,7 +96,7 @@ namespace Tauron.Application
             {
                 using var writer = FilePath?.OpenTextWrite();
 
-                if(writer == null) return;
+                if (writer == null) return;
 
                 foreach (var (key, value) in _settings)
                 {
@@ -104,7 +110,7 @@ namespace Tauron.Application
                 _logger.Error(e, "Error on Profile Save");
             }
         }
-        
+
         public virtual string? GetValue(string? defaultValue, [CallerMemberName] string? key = null)
         {
             var cKey = Argument.NotNull(key, nameof(key));
@@ -114,11 +120,15 @@ namespace Tauron.Application
             return !_settings.ContainsKey(cKey) ? defaultValue : _settings[cKey];
         }
 
-        public virtual int GetValue(int defaultValue, [CallerMemberName] string? key = null) 
-            => int.TryParse(GetValue(null, key), out var result) ? result : defaultValue;
+        public virtual int GetValue(int defaultValue, [CallerMemberName] string? key = null)
+        {
+            return int.TryParse(GetValue(null, key), out var result) ? result : defaultValue;
+        }
 
         public virtual bool GetValue(bool defaultValue, [CallerMemberName] string? key = null)
-            => bool.TryParse(GetValue(null, key), out var result) ? result : defaultValue;
+        {
+            return bool.TryParse(GetValue(null, key), out var result) ? result : defaultValue;
+        }
 
         public virtual void SetVaue(object value, [CallerMemberName] string? key = null)
         {
@@ -130,8 +140,14 @@ namespace Tauron.Application
             OnPropertyChangedExplicit(cKey);
         }
 
-        private void IlligalCharCheck(string key) => Argument.Check(key.Contains('='), () => new ArgumentException($"The Key ({key}) Contains an Illigal Char: ="));
+        private void IlligalCharCheck(string key)
+        {
+            Argument.Check(key.Contains('='), () => new ArgumentException($"The Key ({key}) Contains an Illigal Char: ="));
+        }
 
-        public void Clear() => _settings.Clear();
+        public void Clear()
+        {
+            _settings.Clear();
+        }
     }
 }

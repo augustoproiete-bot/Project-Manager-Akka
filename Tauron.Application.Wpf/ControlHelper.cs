@@ -22,9 +22,15 @@ namespace Tauron.Application.Wpf
         public static readonly DependencyProperty MarkWindowProperty =
             DependencyProperty.RegisterAttached("MarkWindow", typeof(string), typeof(ControlHelper), new UIPropertyMetadata(null, MarkWindowChanged));
 
-        public static string GetMarkControl(DependencyObject obj) => (string) Argument.NotNull(obj, nameof(obj)).GetValue(MarkControlProperty);
+        public static string GetMarkControl(DependencyObject obj)
+        {
+            return (string) Argument.NotNull(obj, nameof(obj)).GetValue(MarkControlProperty);
+        }
 
-        public static string GetMarkWindow(DependencyObject obj) => (string) Argument.NotNull(obj, nameof(obj)).GetValue(MarkWindowProperty);
+        public static string GetMarkWindow(DependencyObject obj)
+        {
+            return (string) Argument.NotNull(obj, nameof(obj)).GetValue(MarkWindowProperty);
+        }
 
         public static void SetMarkControl(DependencyObject obj, string value)
         {
@@ -73,7 +79,7 @@ namespace Tauron.Application.Wpf
         {
             protected override void Scan()
             {
-                if(DataContext is IViewModel model && AffectedObject is FrameworkElement element)
+                if (DataContext is IViewModel model && AffectedObject is FrameworkElement element)
                     model.Tell(new ControlSetEvent(element, Name));
             }
         }
@@ -132,7 +138,7 @@ namespace Tauron.Application.Wpf
 
                 if (priTarget == null) return;
 
-                if(DataContext is IViewModel model && priTarget is FrameworkElement element)
+                if (DataContext is IViewModel model && priTarget is FrameworkElement element)
                     model.Tell(new ControlSetEvent(element, Name));
             }
         }

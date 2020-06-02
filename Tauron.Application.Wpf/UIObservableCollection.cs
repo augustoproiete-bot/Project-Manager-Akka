@@ -15,15 +15,16 @@ namespace Tauron.Application.Wpf
     {
         private bool _isBlocked;
 
-        private Dispatcher _synchronize = System.Windows.Application.Current.Dispatcher;
-
-        public UIObservableCollection(){}
+        public UIObservableCollection()
+        {
+        }
 
         public UIObservableCollection(IEnumerable<TType> enumerable)
-            : base(enumerable){}
+            : base(enumerable)
+        {
+        }
 
-        [NotNull]
-        protected Dispatcher InternalUISynchronize => _synchronize;
+        [NotNull] protected Dispatcher InternalUISynchronize { get; } = System.Windows.Application.Current.Dispatcher;
 
         public void AddRange(IEnumerable<TType> enumerable)
         {
@@ -31,7 +32,25 @@ namespace Tauron.Application.Wpf
             foreach (var item in enumerable) Add(item);
         }
 
-        public IDisposable BlockChangedMessages() => new DispoableBlocker(this);
+        public IDisposable BlockChangedMessages()
+        {
+            return new DispoableBlocker(this);
+        }
+
+        protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
+        {
+            if (_isBlocked) return;
+            if (InternalUISynchronize.CheckAccess())
+                base.OnCollectionChanged(e);
+            InternalUISynchronize.Invoke(() => base.OnCollectionChanged(e));
+        }
+
+        protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+        {
+            if (_isBlocked) return;
+            if (InternalUISynchronize.CheckAccess()) base.OnPropertyChanged(e);
+            else InternalUISynchronize.Invoke(() => base.OnPropertyChanged(e));
+        }
 
         private class DispoableBlocker : IDisposable
         {
@@ -48,21 +67,6 @@ namespace Tauron.Application.Wpf
                 _collection._isBlocked = false;
                 _collection.OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             }
-        }
-
-        protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
-        {
-            if (_isBlocked) return;
-            if (InternalUISynchronize.CheckAccess())
-                base.OnCollectionChanged(e);
-            InternalUISynchronize.Invoke(() => base.OnCollectionChanged(e));
-        }
-        
-        protected override void OnPropertyChanged(PropertyChangedEventArgs e)
-        {
-            if (_isBlocked) return;
-            if (InternalUISynchronize.CheckAccess()) base.OnPropertyChanged(e);
-            else InternalUISynchronize.Invoke(() => base.OnPropertyChanged(e));
         }
     }
 }

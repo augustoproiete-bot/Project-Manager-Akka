@@ -7,15 +7,6 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
     [PublicAPI]
     public sealed class ResolverSettings
     {
-        public Config Config { get; }
-
-        public bool IsGlobal { get; set; }
-
-        public string ResolverPath { get; set; }
-
-        public string Name { get; set; }
-
-
         public ResolverSettings(Config config)
         {
             Config = config;
@@ -27,6 +18,14 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
             Name = Config.GetString("akka.ServiceResolver.Name");
         }
 
+        public Config Config { get; }
+
+        public bool IsGlobal { get; set; }
+
+        public string ResolverPath { get; set; }
+
+        public string Name { get; set; }
+
         public bool Verify(ActorSystem system)
         {
             if (IsGlobal)
@@ -37,7 +36,6 @@ namespace Tauron.Application.Akka.ServiceResolver.Core
 
             system.Terminate();
             return false;
-
         }
     }
 }

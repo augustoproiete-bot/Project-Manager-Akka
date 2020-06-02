@@ -3,6 +3,6 @@
                     xmlns:local="clr-namespace:Tauron.Application.Localizer"
                     xmlns:materialDesignMahApps="http://materialdesigninxaml.net/winfx/xaml/themes">
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="Themes/Generic.xaml"/>
+        <ResourceDictionary Source="Themes/Generic.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

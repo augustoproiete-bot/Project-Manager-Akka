@@ -1,5 +1,4 @@
-﻿using Akka.Actor;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 
 namespace Tauron.Akka
 {

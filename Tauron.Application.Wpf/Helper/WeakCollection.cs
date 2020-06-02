@@ -29,10 +29,13 @@ namespace Tauron.Application.Wpf.Helper
             get => _internalCollection[index]?.TypedTarget();
 #pragma warning restore CS8766 // Nullability of reference types in return type doesn't match implicitly implemented member (possibly because of nullability attributes).
             set => _internalCollection[index] = value == null ? null : new WeakReference<TType>(value);
-            #pragma warning restore CS8613 // Die NULL-Zulässigkeit von Verweistypen im Rückgabetyp entspricht nicht dem implizit implementierten Member.
+#pragma warning restore CS8613 // Die NULL-Zulässigkeit von Verweistypen im Rückgabetyp entspricht nicht dem implizit implementierten Member.
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         public int Count => _internalCollection.Count;
 
@@ -79,8 +82,8 @@ namespace Tauron.Application.Wpf.Helper
         {
             return
                 _internalCollection.Select(reference => reference?.TypedTarget())
-                   .Where(target => target != null)
-                   .GetEnumerator()!;
+                    .Where(target => target != null)
+                    .GetEnumerator()!;
         }
 
         public int IndexOf(TType item)
@@ -134,7 +137,8 @@ namespace Tauron.Application.Wpf.Helper
         }
     }
 
-    [DebuggerNonUserCode, PublicAPI]
+    [DebuggerNonUserCode]
+    [PublicAPI]
     public class WeakReferenceCollection<TType> : Collection<TType>
         where TType : IInternalWeakReference
     {
@@ -145,7 +149,10 @@ namespace Tauron.Application.Wpf.Helper
 
         protected override void ClearItems()
         {
-            lock (this) base.ClearItems();
+            lock (this)
+            {
+                base.ClearItems();
+            }
         }
 
         protected override void InsertItem(int index, TType item)
@@ -159,12 +166,18 @@ namespace Tauron.Application.Wpf.Helper
 
         protected override void RemoveItem(int index)
         {
-            lock (this) base.RemoveItem(index);
+            lock (this)
+            {
+                base.RemoveItem(index);
+            }
         }
 
         protected override void SetItem(int index, TType item)
         {
-            lock (this) base.SetItem(index, item);
+            lock (this)
+            {
+                base.SetItem(index, item);
+            }
         }
 
         private void CleanUpMethod()
@@ -172,13 +185,13 @@ namespace Tauron.Application.Wpf.Helper
             lock (this)
             {
                 Items.ToArray()
-                   .Where(it => !it.IsAlive)
-                   .ForEach(it =>
-                            {
-                                if (it is IDisposable dis) dis.Dispose();
+                    .Where(it => !it.IsAlive)
+                    .ForEach(it =>
+                    {
+                        if (it is IDisposable dis) dis.Dispose();
 
-                                Items.Remove(it);
-                            });
+                        Items.Remove(it);
+                    });
             }
         }
     }

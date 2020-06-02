@@ -14,24 +14,24 @@ namespace Akka.MGIHelper.Core.Configuration
     public abstract class ConfigurationBase : ObservableObject
     {
         private readonly IDefaultActorRef<SettingsManager> _actor;
-        private readonly string _scope;
         private readonly Task _loader;
-
-        private bool _isBlocked;
+        private readonly string _scope;
 
         private ImmutableDictionary<string, string> _dic = ImmutableDictionary<string, string>.Empty;
 
-        public IDisposable BlockSet()
-        {
-            _isBlocked = true;
-            return new ActionDispose(() => _isBlocked = false);
-        }
+        private bool _isBlocked;
 
         protected ConfigurationBase(IDefaultActorRef<SettingsManager> actor, string scope)
         {
             _actor = actor;
             _scope = scope;
             _loader = Task.Run(async () => await LoadValues());
+        }
+
+        public IDisposable BlockSet()
+        {
+            _isBlocked = true;
+            return new ActionDispose(() => _isBlocked = false);
         }
 
         private async Task LoadValues()
@@ -41,7 +41,7 @@ namespace Akka.MGIHelper.Core.Configuration
             Interlocked.Exchange(ref _dic, result);
         }
 
-        [return:MaybeNull]
+        [return: MaybeNull]
         protected TValue GetValue<TValue>(Func<string, TValue> converter, TValue defaultValue = default, [CallerMemberName] string? name = null)
         {
             try

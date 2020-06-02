@@ -15,14 +15,178 @@ namespace Akka.Code.Configuration
     [PublicAPI]
     public abstract class ConfigurationElement : IBinarySerializable
     {
+        private Lazy<Dictionary<string, DataValue>> _data = new Lazy<Dictionary<string, DataValue>>();
+
+        private Dictionary<string, ConfigurationElement> _toAdd = new Dictionary<string, ConfigurationElement>();
+        private List<ConfigurationElement> _toMerge = new List<ConfigurationElement>();
+
+        public ElementAcessor ElementAcessor => new ElementAcessor(this);
+
+        protected internal IEnumerable<KeyValuePair<string, ConfigurationElement>> ToAddElements => _toAdd.Where(e => true);
+
+        void IBinarySerializable.Write(BinaryWriter writer)
+        {
+            void Write(IBinarySerializable element)
+            {
+                writer.Write(element.GetType().AssemblyQualifiedName);
+                element.Write(writer);
+            }
+
+            writer.Write(_toAdd.Count);
+            _toAdd.ForEach(e =>
+            {
+                writer.Write(e.Key);
+                Write(e.Value);
+            });
+
+            writer.Write(_toMerge.Count);
+            _toMerge.ForEach(Write);
+
+            if (_data.IsValueCreated)
+            {
+                writer.Write(true);
+                writer.Write(_data.Value.Count);
+                foreach (var (dataKey, dataValue) in _data.Value)
+                {
+                    writer.Write(dataKey);
+                    dataValue.Write(writer);
+                }
+            }
+            else
+            {
+                writer.Write(false);
+            }
+        }
+
+        void IBinarySerializable.Read(BinaryReader reader)
+        {
+            ConfigurationElement Read()
+            {
+                var element = (ConfigurationElement) Activator.CreateInstance(Type.GetType(reader.ReadString()));
+                ((IBinarySerializable) element).Read(reader);
+                return element;
+            }
+
+            var count = reader.ReadInt32();
+            for (var i = 0; i < count; i++)
+                _toAdd[reader.ReadString()] = Read();
+
+            count = reader.ReadInt32();
+            for (var i = 0; i < count; i++)
+                _toMerge.Add(Read());
+
+            if (!reader.ReadBoolean()) return;
+
+            var data = _data.Value;
+            count = reader.ReadInt32();
+            for (var i = 0; i < count; i++)
+                data[reader.ReadString()] = new DataValue(reader);
+        }
+
+        protected internal TType Set<TType>(TType value, string name)
+        {
+            var targetType = typeof(TType);
+            var data = _data.Value;
+
+            if (data.TryGetValue(name, out var dataValue) && dataValue.TargetType == targetType) dataValue.Value = value;
+            else data[name] = new DataValue(value, ConverterBase.Find(targetType), targetType);
+
+            return value;
+        }
+
+        protected internal TType Get<TType>(string name)
+        {
+            if (_data.IsValueCreated && _data.Value.TryGetValue(name, out var value) && value.Value is TType typedType)
+                return typedType;
+            return default!;
+        }
+
+        protected internal bool ContainsProperty(string name)
+        {
+            return _data.IsValueCreated && _data.Value.ContainsKey(name);
+        }
+
+        protected internal TType GetOrAdd<TType>(string name, Func<TType> fac)
+        {
+            return ContainsProperty(name) ? Get<TType>(name) : Set(fac(), name);
+        }
+
+        protected internal TType GetAddElement<TType>(string name)
+            where TType : ConfigurationElement, new()
+        {
+            if (_toAdd.TryGetValue(name, out var ele))
+                return (TType) ele;
+
+            var element = new TType();
+            _toAdd[name] = element;
+
+            return element;
+        }
+
+        protected internal TType? TryGetMergeElement<TType>()
+            where TType : ConfigurationElement
+        {
+            return _toMerge.OfType<TType>().FirstOrDefault();
+        }
+
+        protected internal TType GetMergeElement<TType>()
+            where TType : ConfigurationElement, new()
+        {
+            var element = _toMerge.OfType<TType>().FirstOrDefault();
+            if (element != null) return element;
+
+            element = new TType();
+            _toMerge.Add(element);
+            return element;
+        }
+
+        protected internal void ReplaceMerge<TType>(TType? target)
+            where TType : ConfigurationElement
+        {
+            var element = _toMerge.OfType<TType>().FirstOrDefault();
+            if (element != null) _toMerge.Remove(element);
+            if (target == null) return;
+
+            _toMerge.Add(target);
+        }
+
+        public virtual void Add(string name, ConfigurationElement element)
+        {
+            _toAdd[name] = element;
+        }
+
+        public virtual void Merge(ConfigurationElement element)
+        {
+            _toMerge.Add(element);
+        }
+
+        public virtual void Construct(StringBuilder target)
+        {
+            if (_toAdd.Count == 0 && _toMerge.Count == 0 && !_data.IsValueCreated)
+                return;
+
+            foreach (var (key, value) in _data.Value)
+            {
+                var content = value.ConvertToString();
+                if (content == null) continue;
+
+                target.AppendLine($"{key} = {content}");
+            }
+
+            foreach (var ele in _toMerge)
+                ele.Construct(target);
+
+            foreach (var (key, value) in _toAdd)
+            {
+                target.Append($"{key} = ");
+                target.AppendLine("{");
+                value.Construct(target);
+                target.AppendLine("}");
+            }
+        }
+
         private sealed class DataValue
         {
-            public object? Value { get; set; }
-
-            public Type TargetType { get; }
-
-            private ConverterBase Converter { get; }
-
             public DataValue(object? value, ConverterBase converter, Type targetType)
             {
                 Value = value;
@@ -41,7 +205,7 @@ namespace Akka.Code.Configuration
                 }
 
                 // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
-                switch ((TypeCode)reader.ReadInt32())
+                switch ((TypeCode) reader.ReadInt32())
                 {
                     case TypeCode.Boolean:
                         Value = reader.ReadBoolean();
@@ -89,29 +253,40 @@ namespace Akka.Code.Configuration
                         Value = reader.ReadUInt64();
                         break;
                     case TypeCode.Object:
-                        if (TargetType == typeof(AkkaType)) 
+                        if (TargetType == typeof(AkkaType))
+                        {
                             Value = new AkkaType(reader.ReadString());
+                        }
                         else if (TargetType.IsEnum)
+                        {
                             Value = Enum.Parse(TargetType, reader.ReadString());
-                        else if(typeof(ConfigurationElement).IsAssignableFrom(TargetType))
+                        }
+                        else if (typeof(ConfigurationElement).IsAssignableFrom(TargetType))
                         {
                             var ele = Activator.CreateInstance(Type.GetType(reader.ReadString()));
-                            ((IBinarySerializable)ele).Read(reader);
+                            ((IBinarySerializable) ele).Read(reader);
                             Value = ele;
                         }
                         else
                         {
                             var converter = TypeDescriptor.GetConverter(TargetType);
-                            if(converter == null)
+                            if (converter == null)
                                 throw new FormatException("Binary Data not Supportet Format");
 
                             Value = converter.ConvertFromString(reader.ReadString());
                         }
+
                         break;
                     default:
                         throw new FormatException("Binary Data not Supportet Format");
                 }
             }
+
+            public object? Value { get; set; }
+
+            public Type TargetType { get; }
+
+            private ConverterBase Converter { get; }
 
             public void Write(BinaryWriter writer)
             {
@@ -123,55 +298,55 @@ namespace Akka.Code.Configuration
                 }
 
                 writer.Write(false);
-                writer.Write((int)Convert.GetTypeCode(Value));
+                writer.Write((int) Convert.GetTypeCode(Value));
 
                 // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
                 switch (Convert.GetTypeCode(Value))
                 {
                     case TypeCode.Boolean:
-                        writer.Write((bool)Value);
+                        writer.Write((bool) Value);
                         break;
                     case TypeCode.Byte:
-                        writer.Write((byte)Value);
+                        writer.Write((byte) Value);
                         break;
                     case TypeCode.Char:
-                        writer.Write((char)Value);
+                        writer.Write((char) Value);
                         break;
                     case TypeCode.DateTime:
-                        writer.Write(((DateTime)Value).ToBinary());
+                        writer.Write(((DateTime) Value).ToBinary());
                         break;
                     case TypeCode.Decimal:
-                        writer.Write((decimal)Value);
+                        writer.Write((decimal) Value);
                         break;
                     case TypeCode.Double:
-                        writer.Write((double)Value);
+                        writer.Write((double) Value);
                         break;
                     case TypeCode.Int16:
-                        writer.Write((short)Value);
+                        writer.Write((short) Value);
                         break;
                     case TypeCode.Int32:
-                        writer.Write((int)Value);
+                        writer.Write((int) Value);
                         break;
                     case TypeCode.Int64:
-                        writer.Write((long)Value);
+                        writer.Write((long) Value);
                         break;
                     case TypeCode.SByte:
-                        writer.Write((sbyte)Value);
+                        writer.Write((sbyte) Value);
                         break;
                     case TypeCode.Single:
-                        writer.Write((float)Value);
+                        writer.Write((float) Value);
                         break;
                     case TypeCode.String:
-                        writer.Write((string)Value);
+                        writer.Write((string) Value);
                         break;
                     case TypeCode.UInt16:
-                        writer.Write((ushort)Value);
+                        writer.Write((ushort) Value);
                         break;
                     case TypeCode.UInt32:
-                        writer.Write((uint)Value);
+                        writer.Write((uint) Value);
                         break;
                     case TypeCode.UInt64:
-                        writer.Write((ulong)Value);
+                        writer.Write((ulong) Value);
                         break;
                     case TypeCode.Object:
                         switch (Value)
@@ -184,181 +359,26 @@ namespace Akka.Code.Configuration
                                 break;
                             case ConfigurationElement ele:
                                 writer.Write(ele.GetType().AssemblyQualifiedName);
-                                ((IBinarySerializable)ele).Write(writer);
+                                ((IBinarySerializable) ele).Write(writer);
                                 break;
                             default:
                                 var converter = TypeDescriptor.GetConverter(TargetType);
-                                if(converter == null)
+                                if (converter == null)
                                     throw new NotSupportedException("Object type Not Supportet");
                                 writer.Write(converter.ConvertToString(Value));
                                 break;
                         }
+
                         break;
                     default:
                         throw new NotSupportedException("Object type Not Supportet");
                 }
             }
 
-            public string? ConvertToString() => Converter.ToElementValue(Value);
-        }
-
-        private Dictionary<string, ConfigurationElement> _toAdd = new Dictionary<string, ConfigurationElement>();
-        private List<ConfigurationElement> _toMerge = new List<ConfigurationElement>();
-        private Lazy<Dictionary<string, DataValue>> _data = new Lazy<Dictionary<string, DataValue>>();
-
-        public ElementAcessor ElementAcessor => new ElementAcessor(this);
-
-        protected internal IEnumerable<KeyValuePair<string, ConfigurationElement>> ToAddElements => _toAdd.Where(e => true);
-
-        protected internal TType Set<TType>(TType value, string name)
-        {
-            var targetType = typeof(TType);
-            var data = _data.Value;
-
-            if (data.TryGetValue(name, out var dataValue) && dataValue.TargetType == targetType) dataValue.Value = value;
-            else data[name] = new DataValue(value, ConverterBase.Find(targetType), targetType);
-
-            return value;
-        }
-
-        protected internal TType Get<TType>(string name)
-        {
-            if (_data.IsValueCreated && _data.Value.TryGetValue(name, out var value) && value.Value is TType typedType)
-                return typedType;
-            return default!;
-        }
-
-        protected internal bool ContainsProperty(string name) 
-            => _data.IsValueCreated && _data.Value.ContainsKey(name);
-
-        protected internal TType GetOrAdd<TType>(string name, Func<TType> fac)
-            => ContainsProperty(name) ? Get<TType>(name) : Set(fac(), name);
-
-        protected internal TType GetAddElement<TType>(string name)
-            where TType : ConfigurationElement, new()
-        {
-            if (_toAdd.TryGetValue(name, out var ele))
-                return (TType) ele;
-
-            var element = new TType();
-            _toAdd[name] = element;
-
-            return element;
-        }
-
-        protected internal TType? TryGetMergeElement<TType>()
-            where TType : ConfigurationElement =>
-            _toMerge.OfType<TType>().FirstOrDefault();
-
-        protected internal TType GetMergeElement<TType>()
-            where TType : ConfigurationElement, new()
-        {
-            var element = _toMerge.OfType<TType>().FirstOrDefault();
-            if (element != null) return element;
-
-            element = new TType();
-            _toMerge.Add(element);
-            return element;
-
-        }
-
-        protected internal void ReplaceMerge<TType>(TType? target)
-            where TType : ConfigurationElement
-        {
-            var element = _toMerge.OfType<TType>().FirstOrDefault();
-            if (element != null) _toMerge.Remove(element);
-            if(target == null) return;
-
-            _toMerge.Add(target);
-        }
-
-        public virtual void Add(string name, ConfigurationElement element)
-            => _toAdd[name] = element;
-
-        public virtual void Merge(ConfigurationElement element) 
-            => _toMerge.Add(element);
-
-        public virtual void Construct(StringBuilder target)
-        {
-            if (_toAdd.Count == 0 && _toMerge.Count == 0 && !_data.IsValueCreated)
-                return;
-            
-            foreach (var (key, value) in _data.Value)
+            public string? ConvertToString()
             {
-                var content = value.ConvertToString();
-                if(content == null) continue;
-
-                target.AppendLine($"{key} = {content}");
-            }
-
-            foreach (var ele in _toMerge)
-                ele.Construct(target);
-
-            foreach (var (key, value) in _toAdd)
-            {
-                target.Append($"{key} = ");
-                target.AppendLine("{");
-                value.Construct(target);
-                target.AppendLine("}");
+                return Converter.ToElementValue(Value);
             }
         }
-
-        void IBinarySerializable.Write(BinaryWriter writer)
-        {
-            void Write(IBinarySerializable element)
-            {
-                writer.Write(element.GetType().AssemblyQualifiedName);
-                element.Write(writer);
-            }
-
-            writer.Write(_toAdd.Count);
-            _toAdd.ForEach(e =>
-            {
-                writer.Write(e.Key);
-                Write(e.Value);
-            });
-
-            writer.Write(_toMerge.Count);
-            _toMerge.ForEach(Write);
-
-            if (_data.IsValueCreated)
-            {
-                writer.Write(true);
-                writer.Write(_data.Value.Count);
-                foreach (var (dataKey, dataValue) in _data.Value)
-                {
-                    writer.Write(dataKey);
-                    dataValue.Write(writer);
-                }
-            }
-            else
-                writer.Write(false);
-        }
-
-        void IBinarySerializable.Read(BinaryReader reader)
-        {
-            ConfigurationElement Read()
-            {
-                var element = (ConfigurationElement) Activator.CreateInstance(Type.GetType(reader.ReadString()));
-                ((IBinarySerializable)element).Read(reader);
-                return element;
-            }
-
-            var count = reader.ReadInt32();
-            for (var i = 0; i < count; i++) 
-                _toAdd[reader.ReadString()] = Read();
-
-            count = reader.ReadInt32();
-            for (var i = 0; i < count; i++)
-                _toMerge.Add(Read());
-
-            if(!reader.ReadBoolean()) return;
-
-            var data = _data.Value;
-            count = reader.ReadInt32();
-            for (var i = 0; i < count; i++)
-                data[reader.ReadString()] = new DataValue(reader);
-        }
-
     }
 }

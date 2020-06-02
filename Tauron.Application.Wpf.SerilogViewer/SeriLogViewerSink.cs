@@ -6,21 +6,21 @@ namespace Tauron.Application.Wpf.SerilogViewer
 {
     public sealed class SeriLogViewerSink : ILogEventSink
     {
-        internal static SeriLogViewerSink? CurrentSink { get; private set; }
-
-        public event Action<LogEvent>? LogReceived;
-
-        public LimitedList<LogEvent> Logs { get; } = new LimitedList<LogEvent>(150);
-
         public SeriLogViewerSink()
         {
             CurrentSink = this;
         }
+
+        internal static SeriLogViewerSink? CurrentSink { get; private set; }
+
+        public LimitedList<LogEvent> Logs { get; } = new LimitedList<LogEvent>(150);
 
         public void Emit(LogEvent logEvent)
         {
             Logs.Add(logEvent);
             LogReceived?.Invoke(logEvent);
         }
+
+        public event Action<LogEvent>? LogReceived;
     }
 }

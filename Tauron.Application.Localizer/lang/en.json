@@ -56,6 +56,7 @@
   "ProjectView_Button_AddImport_Label": "Add Project",
   "ProjectView_Button_RemoveImport_Label": "Remove Project",
   "ProjectView_Import_Label": "Import Projects",
+  "ProjectView_NewEntry_Label": "New Entry",
 
   "ImportProjectDialogView_Button_Add": "Add",
   "ImportProjectDialogView_Title": "Import Project",

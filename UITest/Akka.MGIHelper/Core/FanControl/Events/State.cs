@@ -10,6 +10,6 @@
         StandBy,
         Power,
         Cooldown,
-        TestRun,
+        TestRun
     }
 }

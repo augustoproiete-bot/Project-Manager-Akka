@@ -12,7 +12,7 @@ using Tauron.Application.Wpf.Commands;
 namespace Tauron.Application.Localizer.Views
 {
     /// <summary>
-    /// Interaktionslogik für LanguageSelectorDialogView.xaml
+    ///     Interaktionslogik für LanguageSelectorDialogView.xaml
     /// </summary>
     public partial class LanguageSelectorDialogView : ILanguageSelectorDialog
     {
@@ -20,7 +20,7 @@ namespace Tauron.Application.Localizer.Views
         {
             InitializeComponent();
 
-            Loaded += (sender, args) =>  ((LanguageSelectorDialogViewModel)DataContext).OnLoad();
+            Loaded += (sender, args) => ((LanguageSelectorDialogViewModel) DataContext).OnLoad();
         }
 
 
@@ -36,8 +36,13 @@ namespace Tauron.Application.Localizer.Views
 
     public abstract class LanguageSelectable : ObservableObject
     {
-        private bool _isSelected;
         private readonly Action<LanguageSelectable> _isSelectedAction;
+        private bool _isSelected;
+
+        protected LanguageSelectable(Action<LanguageSelectable> isSelected)
+        {
+            _isSelectedAction = isSelected;
+        }
 
         public bool IsSelected
         {
@@ -51,50 +56,67 @@ namespace Tauron.Application.Localizer.Views
             }
         }
 
-        protected LanguageSelectable(Action<LanguageSelectable> isSelected)
-        {
-            _isSelectedAction = isSelected;
-        }
-
         public abstract CultureInfo Info { get; }
     }
 
     public sealed class SubLanguage : LanguageSelectable
     {
-        public override CultureInfo Info { get; }
+        public SubLanguage(CultureInfo info, Action<LanguageSelectable> isSelected)
+            : base(isSelected)
+        {
+            Info = info;
+        }
 
-        public SubLanguage(CultureInfo info, Action<LanguageSelectable> isSelected) 
-            : base(isSelected) => Info = info;
+        public override CultureInfo Info { get; }
     }
 
     public sealed class LanguageGroup : LanguageSelectable
     {
-        public override  CultureInfo Info { get; }
-
-        public bool IsFiltered { get; set; }
-
-        public bool IsNotFiltered => !IsFiltered;
-
-        public List<SubLanguage> List { get; }
-
         public LanguageGroup(Action<LanguageSelectable> isSelected, CultureInfo baseInfo)
             : base(isSelected)
         {
             Info = baseInfo;
             List = new List<SubLanguage>();
         }
+
+        public override CultureInfo Info { get; }
+
+        public bool IsFiltered { get; set; }
+
+        public bool IsNotFiltered => !IsFiltered;
+
+        public List<SubLanguage> List { get; }
     }
 
     public sealed class LanguageSelectorDialogViewModel : ObservableObject
     {
-        private bool _isLoading = true;
-        private readonly Predicate<CultureInfo> _filter;
-        private readonly Dispatcher _dispatcher;
         private readonly GroupDictionary<CultureInfo, CultureInfo> _cultures;
-
-        public ObservableCollection<LanguageGroup> LanguageGroups { get; } = new ObservableCollection<LanguageGroup>();
+        private readonly Dispatcher _dispatcher;
+        private readonly Predicate<CultureInfo> _filter;
 
         private LanguageSelectable? _current;
+        private bool _isLoading = true;
+
+        private int _position;
+
+        public LanguageSelectorDialogViewModel(Action<CultureInfo?> selector, Predicate<CultureInfo> filter, Dispatcher dispatcher)
+        {
+            _filter = filter;
+            _dispatcher = dispatcher;
+            _cultures = new GroupDictionary<CultureInfo, CultureInfo>();
+
+            foreach (var info in CultureInfo.GetCultures(CultureTypes.AllCultures).OrderBy(c => c.EnglishName))
+            {
+                if (Equals(info, CultureInfo.InvariantCulture) || info.IsNeutralCulture) continue;
+
+                _cultures.Add(info.Parent, info);
+            }
+
+            RejectCommand = new SimpleCommand(() => selector(null));
+            AddCommand = new SimpleCommand(o => IsSomethingSelected, o => selector(_current?.Info));
+        }
+
+        public ObservableCollection<LanguageGroup> LanguageGroups { get; } = new ObservableCollection<LanguageGroup>();
 
         public bool IsSomethingSelected => _current != null;
 
@@ -112,25 +134,6 @@ namespace Tauron.Application.Localizer.Views
         public ICommand AddCommand { get; }
 
         public ICommand RejectCommand { get; }
-
-        public LanguageSelectorDialogViewModel(Action<CultureInfo?> selector, Predicate<CultureInfo> filter, Dispatcher dispatcher)
-        {
-            _filter = filter;
-            _dispatcher = dispatcher;
-            _cultures = new GroupDictionary<CultureInfo, CultureInfo>();
-
-            foreach (var info in CultureInfo.GetCultures(CultureTypes.AllCultures).OrderBy(c => c.EnglishName))
-            {
-                if(Equals(info, CultureInfo.InvariantCulture) || info.IsNeutralCulture) continue;
-
-                _cultures.Add(info.Parent, info);
-            }
-
-            RejectCommand = new SimpleCommand(() => selector(null));
-            AddCommand = new SimpleCommand(o => IsSomethingSelected, o => selector(_current?.Info));
-        }
-
-        private int _position;
 
         public void OnLoad()
         {
@@ -168,7 +171,7 @@ namespace Tauron.Application.Localizer.Views
                 return;
             }
 
-            if(_current != null)
+            if (_current != null)
                 _current.IsSelected = false;
 
             _current = selectable;

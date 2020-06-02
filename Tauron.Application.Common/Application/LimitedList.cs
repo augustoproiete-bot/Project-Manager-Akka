@@ -7,9 +7,15 @@ namespace Tauron.Application
     public class LimitedList<T> : Collection<T>
     {
         private int _limit;
-        
-        public LimitedList() : this(-1) {}
-        public LimitedList(int limit) => _limit = limit;
+
+        public LimitedList() : this(-1)
+        {
+        }
+
+        public LimitedList(int limit)
+        {
+            _limit = limit;
+        }
 
         public int Limit
         {
@@ -33,7 +39,7 @@ namespace Tauron.Application
             base.SetItem(index, item);
             CleanUp();
         }
-        
+
         private void CleanUp()
         {
             if (Limit == -1) return;

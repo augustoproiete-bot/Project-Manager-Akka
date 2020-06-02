@@ -19,10 +19,9 @@ namespace Tauron.Application.Localizer.UIModels
             builder.RegisterType<AppConfiguration>().As<ISettingProviderConfiguration>();
 
             builder.RegisterType<DefaultActorRef<SettingsManager>>().As<IDefaultActorRef<SettingsManager>>()
-               .OnActivating(i => i.Instance.Init("Settings-Manager"))
-               .OnRelease(sm => sm.Actor.Tell(PoisonPill.Instance))
-               .SingleInstance();
-
+                .OnActivating(i => i.Instance.Init("Settings-Manager"))
+                .OnRelease(sm => sm.Actor.Tell(PoisonPill.Instance))
+                .SingleInstance();
         }
     }
 }

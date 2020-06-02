@@ -19,8 +19,8 @@ namespace Akka.MGIHelper
             builder.RegisterView<LogWindow, LogWindowViewModel>();
 
             builder.RegisterDefaultActor<SettingsManager>().SingleInstance()
-               .OnActivating(e => e.Instance.Init(nameof(SettingsManager)))
-               .OnRelease(sm => sm.Actor.Tell(PoisonPill.Instance));
+                .OnActivating(e => e.Instance.Init(nameof(SettingsManager)))
+                .OnRelease(sm => sm.Actor.Tell(PoisonPill.Instance));
 
             builder.RegisterType<WindowOptions>().AsSelf().InstancePerLifetimeScope().WithParameter("scope", SettingTypes.WindowOptions);
             builder.RegisterType<FanControlOptions>().AsSelf().InstancePerLifetimeScope().WithParameter("scope", SettingTypes.FanControlOptions);

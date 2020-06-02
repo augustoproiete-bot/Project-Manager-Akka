@@ -13,7 +13,6 @@ namespace Tauron.Application.Wpf.Helper
         public DataContextPromise(FrameworkElement element)
         {
             _element = element;
-
         }
 
         public void OnUnload(Action unload)
@@ -139,17 +138,16 @@ namespace Tauron.Application.Wpf.Helper
                 affected = LogicalTreeHelper.GetParent(affected);
                 if (affected is FrameworkElement element && element.DataContext is IViewModel model)
                     return model;
-
             } while (affected != null);
 
             return null;
         }
 
-        public static bool FindDataContext(DependencyObject? affected, [NotNullWhen(true)]out DataContextPromise? promise)
+        public static bool FindDataContext(DependencyObject? affected, [NotNullWhen(true)] out DataContextPromise? promise)
         {
             promise = null;
             var root = FindRoot(affected);
-            if(root is FrameworkElement element)
+            if (root is FrameworkElement element)
                 promise = new DataContextPromise(element);
 
             return promise != null;

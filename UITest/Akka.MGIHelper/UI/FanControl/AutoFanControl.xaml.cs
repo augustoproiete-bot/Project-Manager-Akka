@@ -4,7 +4,7 @@ using Tauron.Application.Wpf;
 namespace Akka.MGIHelper.UI.FanControl
 {
     /// <summary>
-    /// Interaktionslogik für AutoFanControl.xaml
+    ///     Interaktionslogik für AutoFanControl.xaml
     /// </summary>
     public partial class AutoFanControl
     {

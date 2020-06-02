@@ -4,8 +4,11 @@ namespace Tauron.Application.Localizer.UIModels.Views
 {
     public sealed class AddLanguageDialogResult
     {
-        public CultureInfo CultureInfo { get; }
+        public AddLanguageDialogResult(CultureInfo cultureInfo)
+        {
+            CultureInfo = cultureInfo;
+        }
 
-        public AddLanguageDialogResult(CultureInfo cultureInfo) => CultureInfo = cultureInfo;
+        public CultureInfo CultureInfo { get; }
     }
 }

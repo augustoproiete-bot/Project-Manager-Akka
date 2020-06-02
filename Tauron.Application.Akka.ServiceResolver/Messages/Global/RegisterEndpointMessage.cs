@@ -7,27 +7,30 @@ namespace Tauron.Application.Akka.ServiceResolver.Messages.Global
 {
     public sealed class ToggleSuspendedMessage
     {
-        public bool IsSuspended { get; }
+        public ToggleSuspendedMessage(bool isSuspended)
+        {
+            IsSuspended = isSuspended;
+        }
 
-        public ToggleSuspendedMessage(bool isSuspended) => IsSuspended = isSuspended;
+        public bool IsSuspended { get; }
     }
 
     public sealed class RegisterEndpointMessage
     {
-        public ServiceRequirement Requirement { get; }
-
-        public IReadOnlyList<string> ProvidedServices { get; }
-
-        public string EndPointName { get; }
-
         public RegisterEndpointMessage(ServiceRequirement requirement, IReadOnlyList<string> providedServices, string endPointName)
         {
-            if(requirement.NeededServices.Any(providedServices.Contains!))
+            if (requirement.NeededServices.Any(providedServices.Contains!))
                 throw new ArgumentException("Provided Services Cannot ben Needed", nameof(requirement));
 
             Requirement = requirement;
             ProvidedServices = providedServices;
             EndPointName = endPointName;
         }
+
+        public ServiceRequirement Requirement { get; }
+
+        public IReadOnlyList<string> ProvidedServices { get; }
+
+        public string EndPointName { get; }
     }
 }

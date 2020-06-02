@@ -2,8 +2,11 @@
 {
     public sealed class ProjectRest
     {
-        public ProjectFile ProjectFile { get; }
+        public ProjectRest(ProjectFile workspace)
+        {
+            ProjectFile = workspace;
+        }
 
-        public ProjectRest(ProjectFile workspace) => ProjectFile = workspace;
+        public ProjectFile ProjectFile { get; }
     }
 }

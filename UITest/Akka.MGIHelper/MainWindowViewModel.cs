@@ -10,7 +10,7 @@ namespace Akka.MGIHelper
 {
     public sealed class MainWindowViewModel : UiActor
     {
-        public MainWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IViewModel<MgiStarterControlModel> mgiStarter, IViewModel<AutoFanControlModel> autoFanControl) 
+        public MainWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IViewModel<MgiStarterControlModel> mgiStarter, IViewModel<AutoFanControlModel> autoFanControl)
             : base(lifetimeScope, dispatcher)
         {
             this.RegisterViewModel("MgiStarter", mgiStarter);

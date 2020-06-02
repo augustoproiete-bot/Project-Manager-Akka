@@ -9,14 +9,17 @@ namespace Akka.MGIHelper.Core.FanControl.Components
     public class GoStandByComponent : IHandler<TrackingEvent>
     {
         private readonly FanControlOptions _options;
-        private State _lastState = State.Idle;
         private readonly Stopwatch _stopwatch = new Stopwatch();
+        private State _lastState = State.Idle;
 
-        public GoStandByComponent(FanControlOptions options) => _options = options;
+        public GoStandByComponent(FanControlOptions options)
+        {
+            _options = options;
+        }
 
         public async Task Handle(TrackingEvent msg, MessageBus messageBus)
         {
-            if(msg.Error) return;
+            if (msg.Error) return;
 
             try
             {

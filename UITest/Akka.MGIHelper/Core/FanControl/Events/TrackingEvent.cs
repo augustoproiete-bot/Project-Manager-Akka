@@ -2,20 +2,6 @@
 {
     public class TrackingEvent
     {
-        public bool Error { get; }
-
-        public string Reason { get; } = string.Empty;
-
-        public int Power { get; }
-
-        public State State { get; }
-
-        public double Pidout { get; }
-
-        public int PidSetValue { get; }
-
-        public int Pt1000 { get; }
-
         public TrackingEvent(int power, State state, double pidout, int pidSetValue, int pt1000)
         {
             Power = power;
@@ -30,5 +16,19 @@
             Error = error;
             Reason = reason;
         }
+
+        public bool Error { get; }
+
+        public string Reason { get; } = string.Empty;
+
+        public int Power { get; }
+
+        public State State { get; }
+
+        public double Pidout { get; }
+
+        public int PidSetValue { get; }
+
+        public int Pt1000 { get; }
     }
 }

@@ -6,7 +6,9 @@ namespace Akka.Code.Configuration.Converter
     {
         public static readonly TimeSpanConverter Converter = new TimeSpanConverter();
 
-        protected override string? ConvertGeneric(TimeSpan obj) 
-            => obj.Ticks == -1 ? "infinite" : $"{obj.TotalMilliseconds:F0}ms";
+        protected override string? ConvertGeneric(TimeSpan obj)
+        {
+            return obj.Ticks == -1 ? "infinite" : $"{obj.TotalMilliseconds:F0}ms";
+        }
     }
 }

@@ -13,44 +13,43 @@ namespace Tauron.Application.Wpf.UI
     [PublicAPI]
     public abstract class ModelConnectorBase<TDrived>
     {
-        protected string Name { get; }
-        protected IViewModel? Model { get; private set; }
         protected readonly ILogger Log = Serilog.Log.ForContext<TDrived>();
 
-        private int _isInitializing = 1;
-        protected int IsInitializing => _isInitializing;
-
         private IEventActor? _eventActor;
+
+        private int _isInitializing = 1;
 
         protected ModelConnectorBase(string name, DataContextPromise promise)
         {
             Name = name;
 
-            promise.OnUnload(() =>
-            {
-
-
-            });
+            promise.OnUnload(() => { });
 
             promise
-               .OnContext(model =>
-               {
-                   Model = model;
+                .OnContext(model =>
+                {
+                    Model = model;
 
-                   if (model.IsInitialized)
-                       Task.Run(async () => await InitAsync());
-                   else
-                   {
-                       void OnModelOnInitialized()
-                       {
-                           Task.Run(async () => await InitAsync());
-                           Model.Initialized -= OnModelOnInitialized;
-                       }
+                    if (model.IsInitialized)
+                    {
+                        Task.Run(async () => await InitAsync());
+                    }
+                    else
+                    {
+                        void OnModelOnInitialized()
+                        {
+                            Task.Run(async () => await InitAsync());
+                            Model.Initialized -= OnModelOnInitialized;
+                        }
 
-                       model.Initialized += OnModelOnInitialized;
-                   }
-               });
+                        model.Initialized += OnModelOnInitialized;
+                    }
+                });
         }
+
+        protected string Name { get; }
+        protected IViewModel? Model { get; private set; }
+        protected int IsInitializing => _isInitializing;
 
         private async Task InitAsync()
         {
@@ -76,20 +75,18 @@ namespace Tauron.Application.Wpf.UI
                 Log.Error(e, "Error Bind Property {Name}", Name);
             }
         }
-        
+
         protected virtual void OnUnload()
         {
-
         }
 
         protected virtual void OnLoad()
         {
-
         }
 
         public void ForceUnload()
         {
-            if(Model == null)
+            if (Model == null)
                 return;
 
             OnUnload();

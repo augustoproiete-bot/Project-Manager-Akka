@@ -8,12 +8,12 @@ using Window = System.Windows.Window;
 namespace Akka.MGIHelper
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    ///     Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : IMainWindow
     {
-        private readonly WindowOptions _windowOptions;
         private readonly IDisposable _setBlocker;
+        private readonly WindowOptions _windowOptions;
 
         public MainWindow(IViewModel<MainWindowViewModel> model, WindowOptions windowOptions)
             : base(model)
@@ -30,8 +30,10 @@ namespace Akka.MGIHelper
 
         public event EventHandler? Shutdown;
 
-        private void MainWindow_OnClosed(object? sender, EventArgs e) 
-            => Shutdown?.Invoke(sender, e);
+        private void MainWindow_OnClosed(object? sender, EventArgs e)
+        {
+            Shutdown?.Invoke(sender, e);
+        }
 
         private void MainWindow_OnLocationChanged(object? sender, EventArgs e)
         {

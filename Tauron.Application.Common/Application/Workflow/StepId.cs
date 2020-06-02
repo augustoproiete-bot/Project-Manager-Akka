@@ -16,7 +16,10 @@ namespace Tauron.Application.Workflow
         public static readonly StepId Skip = new StepId("Skip");
 
         [DebuggerStepThrough]
-        public override int GetHashCode() => Name.GetHashCode();
+        public override int GetHashCode()
+        {
+            return Name.GetHashCode();
+        }
 
         public StepId([NotNull] string name) : this()
         {
@@ -24,8 +27,7 @@ namespace Tauron.Application.Workflow
             Name = name;
         }
 
-        [NotNull]
-        public string Name { get; }
+        [NotNull] public string Name { get; }
 
         [DebuggerStepThrough]
         public override bool Equals(object obj)
@@ -36,11 +38,20 @@ namespace Tauron.Application.Workflow
             return ((StepId) obj).Name == Name;
         }
 
-        public static bool operator ==(StepId id1, StepId id2) => id1.Name == id2.Name;
+        public static bool operator ==(StepId id1, StepId id2)
+        {
+            return id1.Name == id2.Name;
+        }
 
-        public static bool operator !=(StepId id1, StepId id2) => id1.Name != id2.Name;
+        public static bool operator !=(StepId id1, StepId id2)
+        {
+            return id1.Name != id2.Name;
+        }
 
         [DebuggerStepThrough]
-        public override string ToString() => Name;
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

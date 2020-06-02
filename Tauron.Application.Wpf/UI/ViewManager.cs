@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace Tauron.Application.Wpf.UI
@@ -9,12 +8,11 @@ namespace Tauron.Application.Wpf.UI
         //private readonly Dictionary<string, Dictionary<long, IView>> _views = new Dictionary<string, Dictionary<long, IView>>();
         private ImmutableDictionary<string, ViewConnector> _models = ImmutableDictionary<string, ViewConnector>.Empty;
 
-        public static ViewManager Manager { get; } = new ViewManager();
-
         private ViewManager()
         {
-            
         }
+
+        public static ViewManager Manager { get; } = new ViewManager();
 
         public void RegisterConnector(string key, ViewConnector connector)
         {
@@ -23,7 +21,9 @@ namespace Tauron.Application.Wpf.UI
         }
 
         public void UnregisterConnector(string key)
-            => ImmutableInterlocked.TryRemove(ref _models, key, out _);
+        {
+            ImmutableInterlocked.TryRemove(ref _models, key, out _);
+        }
 
         //public void ThenRegister(IViewModel model, IView view, IView root)
         //{

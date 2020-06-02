@@ -8,31 +8,6 @@ namespace Tauron.Application.Workshop.Mutation
     [PublicAPI]
     public sealed class MutatingEngine<TData>
     {
-        private sealed class ResponderList : IRespondHandler<TData>
-        {
-            private readonly Action<TData> _root;
-            private readonly List<Action<TData>> _handler = new List<Action<TData>>();
-
-            public ResponderList(Action<TData> root) 
-                => _root = root;
-
-            public void Register(Action<TData> responder)
-            {
-                lock (_handler)
-                    _handler.Add(responder);
-            }
-
-            public void Push(TData data)
-            {
-                _root(data);
-                lock (_handler)
-                {
-                    foreach (var action in _handler)
-                        action(data);
-                }
-            }
-        }
-
         private readonly IDataSource<TData> _dataSource;
         private readonly IActorRef _mutator;
         private readonly ResponderList _responder;
@@ -51,11 +26,41 @@ namespace Tauron.Application.Workshop.Mutation
             _responder = new ResponderList(_dataSource.SetData);
         }
 
-        public void Mutate(string name, Func<TData, TData> transform) 
-            => _mutator.Tell(new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name));
+        public void Mutate(string name, Func<TData, TData> transform)
+        {
+            _mutator.Tell(new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name));
+        }
 
-        public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null) 
-            => new EventSource<TRespond,TData>(_mutator, transformer, @where, _responder);
+        public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null)
+        {
+            return new EventSource<TRespond, TData>(_mutator, transformer, where, _responder);
+        }
+
+        private sealed class ResponderList : IRespondHandler<TData>
+        {
+            private readonly List<Action<TData>> _handler = new List<Action<TData>>();
+            private readonly Action<TData> _root;
+
+            public ResponderList(Action<TData> root) => _root = root;
+
+            public void Register(Action<TData> responder)
+            {
+                lock (_handler)
+                {
+                    _handler.Add(responder);
+                }
+            }
+
+            public void Push(TData data)
+            {
+                _root(data);
+                lock (_handler)
+                {
+                    foreach (var action in _handler)
+                        action(data);
+                }
+            }
+        }
     }
 
     [PublicAPI]
@@ -68,6 +73,8 @@ namespace Tauron.Application.Workshop.Mutation
         }
 
         public static MutatingEngine<TData> Dummy<TData>(IDataSource<TData> source)
-            => new MutatingEngine<TData>(source);
+        {
+            return new MutatingEngine<TData>(source);
+        }
     }
 }

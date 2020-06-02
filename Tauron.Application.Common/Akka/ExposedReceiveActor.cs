@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Dsl;
@@ -12,8 +11,8 @@ namespace Tauron.Akka
     public class ExposedReceiveActor : ReceiveActor, IActorDsl
     {
         private Action<Exception, IActorContext>? _onPostRestart;
-        private Action<Exception, object, IActorContext>? _onPreRestart;
         private Action<IActorContext>? _onPostStop;
+        private Action<Exception, object, IActorContext>? _onPreRestart;
         private Action<IActorContext>? _onPreStart;
         private SupervisorStrategy? _strategy;
 
@@ -21,61 +20,82 @@ namespace Tauron.Akka
 
         public IUntypedActorContext ExposedContext => Context;
 
-        protected override void PostRestart(Exception reason)
+        protected internal ILoggingAdapter Log { get; } = Context.GetLogger();
+
+        void IActorDsl.Receive<T>(Action<T, IActorContext> handler)
         {
-            _onPostRestart?.Invoke(reason, Context);
-            base.PostRestart(reason);
+            Receive<T>(m => handler(m, Context));
         }
 
-        protected override void PreRestart(Exception reason, object message)
+        void IActorDsl.Receive<T>(Predicate<T> shouldHandle, Action<T, IActorContext> handler)
         {
-            _onPreRestart?.Invoke(reason, message, Context);
+            Receive(shouldHandle, obj => handler(obj, Context));
+        }
+
+        void IActorDsl.Receive<T>(Action<T, IActorContext> handler, Predicate<T> shouldHandle)
+        {
+            Receive(t => handler(t, Context), shouldHandle);
+        }
+
+        void IActorDsl.ReceiveAny(Action<object, IActorContext> handler)
+        {
+            ReceiveAny(m => handler(m, Context));
+        }
+
+        void IActorDsl.ReceiveAsync<T>(Func<T, IActorContext, Task> handler, Predicate<T> shouldHandle)
+        {
+            ReceiveAsync(m => handler(m, Context), shouldHandle);
+        }
+
+        void IActorDsl.ReceiveAsync<T>(Predicate<T> shouldHandle, Func<T, IActorContext, Task> handler)
+        {
+            ReceiveAsync(shouldHandle, arg => handler(arg, Context));
+        }
+
+        void IActorDsl.ReceiveAnyAsync(Func<object, IActorContext, Task> handler)
+        {
+            ReceiveAnyAsync(m => handler(m, Context));
+        }
+
+        void IActorDsl.DefaultPreRestart(Exception reason, object message)
+        {
             base.PreRestart(reason, message);
         }
 
-        protected override void PostStop()
+        void IActorDsl.DefaultPostRestart(Exception reason)
         {
-            _onPostStop?.Invoke(Context);
-            base.PostStop();
+            PostRestart(reason);
         }
 
-        protected override void PreStart()
+        void IActorDsl.DefaultPreStart()
         {
-            _onPreStart?.Invoke(Context);
             base.PreStart();
         }
 
-        protected override SupervisorStrategy SupervisorStrategy() => _strategy ?? base.SupervisorStrategy();
+        void IActorDsl.DefaultPostStop()
+        {
+            base.PostStop();
+        }
 
-        void IActorDsl.Receive<T>(Action<T, IActorContext> handler) => Receive<T>(m => handler(m, Context));
+        void IActorDsl.Become(Action<object, IActorContext> handler)
+        {
+            Become(o => handler(o, Context));
+        }
 
-        void IActorDsl.Receive<T>(Predicate<T> shouldHandle, Action<T, IActorContext> handler) => Receive(shouldHandle, obj => handler(obj, Context));
+        void IActorDsl.BecomeStacked(Action<object, IActorContext> handler)
+        {
+            BecomeStacked(o => handler(o, Context));
+        }
 
-        void IActorDsl.Receive<T>(Action<T, IActorContext> handler, Predicate<T> shouldHandle) => Receive(t => handler(t, Context), shouldHandle);
+        void IActorDsl.UnbecomeStacked()
+        {
+            UnbecomeStacked();
+        }
 
-        void IActorDsl.ReceiveAny(Action<object, IActorContext> handler) => ReceiveAny(m => handler(m, Context));
-
-        void IActorDsl.ReceiveAsync<T>(Func<T, IActorContext, Task> handler, Predicate<T> shouldHandle) => ReceiveAsync(m => handler(m, Context), shouldHandle);
-
-        void IActorDsl.ReceiveAsync<T>(Predicate<T> shouldHandle, Func<T, IActorContext, Task> handler) => ReceiveAsync(shouldHandle, arg => handler(arg, Context));
-
-        void IActorDsl.ReceiveAnyAsync(Func<object, IActorContext, Task> handler) => ReceiveAnyAsync(m => handler(m, Context));
-
-        void IActorDsl.DefaultPreRestart(Exception reason, object message) => base.PreRestart(reason, message);
-
-        void IActorDsl.DefaultPostRestart(Exception reason) => PostRestart(reason);
-
-        void IActorDsl.DefaultPreStart() => base.PreStart();
-
-        void IActorDsl.DefaultPostStop() => base.PostStop();
-
-        void IActorDsl.Become(Action<object, IActorContext> handler) => Become(o => handler(o, Context));
-
-        void IActorDsl.BecomeStacked(Action<object, IActorContext> handler) => BecomeStacked(o => handler(o, Context));
-
-        void IActorDsl.UnbecomeStacked() => UnbecomeStacked();
-
-        IActorRef IActorDsl.ActorOf(Action<IActorDsl> config, string name) => Context.ActorOf(config, name);
+        IActorRef IActorDsl.ActorOf(Action<IActorDsl> config, string name)
+        {
+            return Context.ActorOf(config, name);
+        }
 
         Action<Exception, IActorContext>? IActorDsl.OnPostRestart
         {
@@ -107,6 +127,33 @@ namespace Tauron.Akka
             set => _strategy = value;
         }
 
-        protected internal ILoggingAdapter Log { get; } = Context.GetLogger();
+        protected override void PostRestart(Exception reason)
+        {
+            _onPostRestart?.Invoke(reason, Context);
+            base.PostRestart(reason);
+        }
+
+        protected override void PreRestart(Exception reason, object message)
+        {
+            _onPreRestart?.Invoke(reason, message, Context);
+            base.PreRestart(reason, message);
+        }
+
+        protected override void PostStop()
+        {
+            _onPostStop?.Invoke(Context);
+            base.PostStop();
+        }
+
+        protected override void PreStart()
+        {
+            _onPreStart?.Invoke(Context);
+            base.PreStart();
+        }
+
+        protected override SupervisorStrategy SupervisorStrategy()
+        {
+            return _strategy ?? base.SupervisorStrategy();
+        }
     }
 }

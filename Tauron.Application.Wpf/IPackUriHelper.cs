@@ -27,6 +27,5 @@ namespace Tauron.Application.Wpf
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         Stream LoadStream(string pack, string? assembly);
-
     }
 }

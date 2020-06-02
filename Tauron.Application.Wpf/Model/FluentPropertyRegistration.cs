@@ -12,6 +12,8 @@ namespace Tauron.Application.Wpf.Model
             actor.RegisterProperty(Property);
         }
 
+        public UIProperty<TData> Property { get; }
+
         public FluentPropertyRegistration<TData> WithValidator(string name, Func<TData, string> validator)
         {
             Property.Validator = o =>
@@ -36,9 +38,9 @@ namespace Tauron.Application.Wpf.Model
             return this;
         }
 
-        public UIProperty<TData> Property { get; }
-
         public static implicit operator UIProperty<TData>(FluentPropertyRegistration<TData> config)
-            => config.Property;
+        {
+            return config.Property;
+        }
     }
 }
