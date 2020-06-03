@@ -60,5 +60,10 @@
 
   "ImportProjectDialogView_Button_Add": "Hinzufügen",
   "ImportProjectDialogView_Title": "Projekt Importieren",
-  "ImportProjectDialogView_Button_Cancel": "Abbrechen"
+  "ImportProjectDialogView_Button_Cancel": "Abbrechen",
+
+  "NewEntryDialogView_Title_Label": "Neuer Eintrag:",
+  "NewEntryDialogView_Name_Label": "Name:",
+  "NewEntryDialogView_Create_Button": "Erstellen",
+  "NewEntryDialogView_Duplicate_Error": "Doppelter Eintrag"
 }

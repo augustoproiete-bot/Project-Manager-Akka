@@ -21,6 +21,7 @@ namespace Tauron
         public ActorFlowBuilder<TStart, TParent> Flow { get; }
 
         public FuncTargetSelector<TRecieve, TNext, TStart, TParent> Func<TNext>(Func<TRecieve, TNext> transformer)
+            
         {
             return new FuncTargetSelector<TRecieve, TNext, TStart, TParent>(Flow, transformer);
         }

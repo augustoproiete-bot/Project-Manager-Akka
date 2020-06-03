@@ -83,8 +83,8 @@ namespace Tauron.Application.Localizer.UIModels
                 => ProjectEntrys.Add(new ProjectEntryModel(workspace.Get(_project), entry.Entry, TryUpdateEntry, TryRemoveEntry));
 
             NewCommad
-                .ToFlow(this.ShowDialog<INewEntryDialog, NewEntryDialogResult, string>(GetEntrys))
-                .To.Mutate(workspace.Entrys).For(em => em.EntryAdd, em => res => em.NewEntry(_project, res.Name)).ToSelf()
+                .ToFlow(this.ShowDialog<INewEntryDialog, NewEntryDialogResult?, string>(GetEntrys))
+                .To.Mutate(workspace.Entrys).For(em => em.EntryAdd, em => res => em.NewEntry(_project, res!.Name)).ToSelf()
                 .Then.Action(AddEntry)
                 .Return().ThenRegister("NewEntry");
 
