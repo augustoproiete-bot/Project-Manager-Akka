@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.IO;
+using System.Threading;
 using Akka.Actor;
 using Amadevus.RecordGenerator;
 using JetBrains.Annotations;
@@ -13,6 +14,8 @@ namespace Tauron.Application.Localizer.DataModel
     [PublicAPI]
     public sealed partial class ProjectFile : IWriteable
     {
+        public const int Version = 1;
+
         public ProjectFile()
         {
             Projects = ImmutableList<Project>.Empty;
@@ -40,6 +43,7 @@ namespace Tauron.Application.Localizer.DataModel
 
         public void Write(BinaryWriter writer)
         {
+            writer.Write(Version);
             Helper.WriteList(Projects, writer);
             Helper.WriteList(GlobalLanguages, writer);
         }
@@ -54,6 +58,7 @@ namespace Tauron.Application.Localizer.DataModel
             var file = new ProjectFile(source, op);
             var builder = file.ToBuilder();
 
+            reader.ReadInt32();
             builder.Projects = Helper.Read(reader, Project.ReadFrom);
             builder.GlobalLanguages = Helper.Read(reader, ActiveLanguage.ReadFrom);
 
@@ -64,6 +69,7 @@ namespace Tauron.Application.Localizer.DataModel
         {
             var actor = factory.GetOrAdd<ProjectFileOperator>(actorName);
             actor.Tell(new LoadProjectFile(operationId, source));
+            Thread.Sleep(500);
         }
     }
 }

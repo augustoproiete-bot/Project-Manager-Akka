@@ -71,7 +71,7 @@ namespace Tauron.Application.Localizer.UIModels
             #region Update Source
 
             this.Flow<UpdateSource>().To.Mutate(workspace.Source).For(sm => sm.SourceUpdate, sm => us => sm.UpdateSource(us.Name)).ToSelf()
-                .Then.Action(su => mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source));
+                .Then.Action(su => mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source)).Receive();
 
             #endregion
 

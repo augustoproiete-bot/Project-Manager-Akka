@@ -66,5 +66,5 @@
   "NewEntryDialogView_Name_Label": "Name:",
   "NewEntryDialogView_Create_Button": "Create",
   "NewEntryDialogView_Duplicate_Error": "Duplicate Entry",
-
+  "NewEntryDialogView_Char_Error": "Invalid character at position {0}"
 }

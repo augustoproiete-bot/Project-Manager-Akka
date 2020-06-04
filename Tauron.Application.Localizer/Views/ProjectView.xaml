@@ -5,6 +5,7 @@
                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                  xmlns:tau="http://schemas.TauronWpf.com"
                  xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
+                 xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
                  mc:Ignorable="d" Background="White" d:DataContext="{d:DesignInstance uiModels:ProjectViewModel}"
                  d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
@@ -22,8 +23,13 @@
         <Button Content="{tau:Loc ProjectView_NewEntry_Label}" Margin="5" tau:CommandBinder.Command="NewEntry" />
         <Button Content="{tau:Loc ProjectView_Button_AddLanguage_Label}" Margin="5" Grid.Column="1" Grid.Row="0"
                 tau:CommandBinder.Command="AddLanguage" />
-        <ComboBox Grid.Row="0" Grid.Column="2" MaxHeight="30" SelectedIndex="{tau:ActorBinding SelectedIndex}"
-                  ItemsSource="{tau:ActorBinding Languages}" DisplayMemberPath="Name" />
+        <ComboBox Grid.Row="0" Grid.Column="2" MaxHeight="30" ItemsSource="{tau:ActorBinding Languages}" MinWidth="100" SelectedIndex="0">
+            <ComboBox.ItemTemplate>
+                <DataTemplate DataType="uiModels:ProjectViewLanguageModel">
+                    <TextBlock Text="{Binding Name}"/>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
         <DockPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Margin="7" LastChildFill="True">
             <Button Content="{tau:Loc ProjectView_Button_AddImport_Label}" DockPanel.Dock="Right" Margin="3"
                     tau:CommandBinder.Command="AddImport" />
@@ -34,12 +40,24 @@
             <ComboBox Margin="3" ItemsSource="{tau:ActorBinding ImportetProjects}"
                       SelectedIndex="{tau:ActorBinding ImportSelectIndex, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
         </DockPanel>
-        <TabControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Margin="5" TabStripPlacement="Left"
+        <syncfusion:TabControlExt Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Margin="5" TabStripPlacement="Left" CloseButtonType="Hide"
                     SelectedIndex="{tau:ActorBinding SelectedIndex}" ItemsSource="{tau:ActorBinding ProjectEntrys}">
+            <!--<TabControl.ItemContainerStyle>
+                <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource {x:Type TabItem}}">
+                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                </Style>
+            </TabControl.ItemContainerStyle>-->
             <TabControl.ItemTemplate>
                 <DataTemplate DataType="uiModels:ProjectEntryModel">
-                    <StackPanel Orientation="Horizontal" Margin="5">
-                        <Button Margin="1" MinWidth="20" MinHeight="20" MaxWidth="20" MaxHeight="20"
+                    <Grid Margin="5">
+                        <Grid.LayoutTransform>
+                            <RotateTransform CenterX="0.5" CenterY="0.5" Angle="90"/>
+                        </Grid.LayoutTransform>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button Margin="3,2,10,3" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="20" MinHeight="20" MaxWidth="20" MaxHeight="20"
                                 Command="{Binding RemoveCommand}">
                             <Button.Content>
                                 <Grid>
@@ -57,8 +75,8 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-                        <TextBlock Text="{Binding EntryName}" VerticalAlignment="Center" />
-                    </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding EntryName}" VerticalAlignment="Center" FontSize="17"/>
+                    </Grid>
                 </DataTemplate>
             </TabControl.ItemTemplate>
             <TabControl.ContentTemplate>
@@ -67,7 +85,7 @@
                         <ItemsControl ItemsSource="{Binding Entries}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="uiModels:ProjectLangEntry">
-                                    <GroupBox Header="{Binding Language.Name}" Margin="5">
+                                    <GroupBox Header="{Binding Language.Name}" Margin="50, 5">
                                         <TextBox MinHeight="50" Margin="5" AcceptsReturn="True" AcceptsTab="True"
                                                  Text="{Binding Content, Delay=1000, UpdateSourceTrigger=PropertyChanged}" />
                                     </GroupBox>
@@ -77,6 +95,6 @@
                     </ScrollViewer>
                 </DataTemplate>
             </TabControl.ContentTemplate>
-        </TabControl>
+        </syncfusion:TabControlExt>
     </Grid>
 </tau:UserControl>

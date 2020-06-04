@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
+using Akka;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Akka;
@@ -264,6 +265,7 @@ namespace Tauron.Application.Wpf
                         }
                     };
 
+                    LastCommand.Clear();
                     LastCommand.CanExecuteEvent += _canExecute;
                     LastCommand.ExecuteEvent += _execute;
                 }

@@ -76,7 +76,7 @@
                                                         Background="{Binding Operation, Converter={converter:OperationStateConverter}}"
                                                         CornerRadius="15" />
                                                 <TextBlock MinWidth="250" Text="{Binding Name}" />
-                                                <TextBlock Text="{Binding Status}" />
+                                                <TextBlock Text="{Binding Status}" Margin="10,0" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>

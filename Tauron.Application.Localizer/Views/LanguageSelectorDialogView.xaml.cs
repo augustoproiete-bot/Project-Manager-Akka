@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Tauron.Application.Localizer.UIModels.Views;
@@ -93,11 +95,13 @@ namespace Tauron.Application.Localizer.Views
         private readonly GroupDictionary<CultureInfo, CultureInfo> _cultures;
         private readonly Dispatcher _dispatcher;
         private readonly Predicate<CultureInfo> _filter;
+        private readonly ICollectionView _view;
 
         private LanguageSelectable? _current;
         private bool _isLoading = true;
 
         private int _position;
+        private string _filterContent = string.Empty;
 
         public LanguageSelectorDialogViewModel(Action<CultureInfo?> selector, Predicate<CultureInfo> filter, Dispatcher dispatcher)
         {
@@ -114,11 +118,41 @@ namespace Tauron.Application.Localizer.Views
 
             RejectCommand = new SimpleCommand(() => selector(null));
             AddCommand = new SimpleCommand(o => IsSomethingSelected, o => selector(_current?.Info));
+
+            _view = CollectionViewSource.GetDefaultView(LanguageGroups);
+            _view.Filter += FilterLang;
+        }
+
+        private bool FilterLang(object obj)
+        {
+            if (string.IsNullOrWhiteSpace(_filterContent)) return true;
+
+            if (obj is LanguageGroup group)
+            {
+                var lang = group.Info;
+                if (lang.Name.Contains(FilterContent) || lang.DisplayName.Contains(FilterContent) || lang.EnglishName.Contains(FilterContent))
+                    return true;
+                return false;
+            }
+
+            return true;
         }
 
         public ObservableCollection<LanguageGroup> LanguageGroups { get; } = new ObservableCollection<LanguageGroup>();
 
-        public bool IsSomethingSelected => _current != null;
+        private bool IsSomethingSelected => _current != null;
+
+        public string FilterContent
+        {
+            get => _filterContent;
+            set
+            {
+                if (value == _filterContent) return;
+                _filterContent = value;
+                OnPropertyChanged();
+                _view.Refresh();
+            }
+        }
 
         public bool IsLoading
         {
@@ -137,7 +171,7 @@ namespace Tauron.Application.Localizer.Views
 
         public void OnLoad()
         {
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < 15; i++)
             {
                 if (_position == _cultures.Count)
                 {

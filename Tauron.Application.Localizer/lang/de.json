@@ -65,5 +65,6 @@
   "NewEntryDialogView_Title_Label": "Neuer Eintrag:",
   "NewEntryDialogView_Name_Label": "Name:",
   "NewEntryDialogView_Create_Button": "Erstellen",
-  "NewEntryDialogView_Duplicate_Error": "Doppelter Eintrag"
+  "NewEntryDialogView_Duplicate_Error": "Doppelter Eintrag",
+  "NewEntryDialogView_Char_Error": "Ungültiges zeichen an Position {0}"
 }

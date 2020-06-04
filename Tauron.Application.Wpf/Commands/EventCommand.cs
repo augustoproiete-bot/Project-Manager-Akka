@@ -30,5 +30,11 @@ namespace Tauron.Application.Wpf.Commands
         {
             ExecuteEvent?.Invoke(parameter);
         }
+
+        public void Clear()
+        {
+            CanExecuteEvent = null;
+            ExecuteEvent = null;
+        }
     }
 }

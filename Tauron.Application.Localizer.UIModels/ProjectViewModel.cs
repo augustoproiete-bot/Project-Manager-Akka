@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Windows.Threading;
@@ -51,12 +52,6 @@ namespace Tauron.Application.Localizer.UIModels
                 Languages.Add(new ProjectViewLanguageModel(localizer.ProjectViewLanguageBoxFirstLabel, true));
                 Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));
                 SelectedIndex += 0;
-                SelectedIndex.PropertyValueChanged += () =>
-                {
-                    if (SelectedIndex == 0)
-                        return;
-                    SelectedIndex += 0;
-                };
 
                 foreach (var projectEntry in obj.Project.Entries)
                 {
@@ -71,19 +66,31 @@ namespace Tauron.Application.Localizer.UIModels
 
             #region New Entry
 
-            IEnumerable<string> GetEntrys()
+            IEnumerable<NewEntryInfoBase> GetEntrys()
             {
                 var list = ImportetProjects.ToList();
                 list.Add(_project);
 
-                return list.SelectMany(pro => workspace.Get(pro).Entries.Select(e => e.Key));
+                var allEntrys = list.SelectMany(pro => workspace.Get(pro).Entries.Select(e => e.Key)).ToArray();
+
+                return allEntrys.Select(e => new NewEntryInfo(e)).OfType<NewEntryInfoBase>()
+                    .Concat(allEntrys
+                        .Select(s => s.Split('_', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault())
+                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                        .Distinct(StringComparer.Ordinal)
+                        .Select(s => new NewEntrySuggestInfo(s)));
+
             }
 
-            void AddEntry(EntryAdd entry) 
-                => ProjectEntrys.Add(new ProjectEntryModel(workspace.Get(_project), entry.Entry, TryUpdateEntry, TryRemoveEntry));
+            void AddEntry(EntryAdd entry)
+            {
+                if(_project != entry.Entry.Project) return;
+
+                ProjectEntrys.Add(new ProjectEntryModel(workspace.Get(_project), entry.Entry, TryUpdateEntry, TryRemoveEntry));
+            }
 
             NewCommad
-                .ToFlow(this.ShowDialog<INewEntryDialog, NewEntryDialogResult?, string>(GetEntrys))
+                .ToFlow(this.ShowDialog<INewEntryDialog, NewEntryDialogResult?, NewEntryInfoBase>(GetEntrys))
                 .To.Mutate(workspace.Entrys).For(em => em.EntryAdd, em => res => em.NewEntry(_project, res!.Name)).ToSelf()
                 .Then.Action(AddEntry)
                 .Return().ThenRegister("NewEntry");

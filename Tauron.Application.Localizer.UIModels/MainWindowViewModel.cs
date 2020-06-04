@@ -33,11 +33,13 @@ namespace Tauron.Application.Localizer.UIModels
         {
             var self = Self;
             CenterView = this.RegisterViewModel(nameof(CenterView), model);
+            workspace.Source.ProjectReset.RespondOn(pr => _last = pr.ProjectFile);
 
             #region Operation Manager
 
             RunningOperations = RegisterProperty<IEnumerable<RunningOperation>>(nameof(RunningOperations)).WithDefaultValue(operationManager.RunningOperations);
             RenctFiles = RegisterProperty<RenctFilesCollection>(nameof(RenctFiles)).WithDefaultValue(new RenctFilesCollection(config, s => self.Tell(new InternlRenctFile(s))));
+
             NewCommad.WithExecute(operationManager.Clear, operationManager.ShouldClear).ThenRegister("ClearOp");
             NewCommad.WithExecute(operationManager.CompledClear, operationManager.ShouldCompledClear).ThenRegister("ClearAllOp");
 
@@ -47,7 +49,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             UpdateSource? SaveAsProject()
             {
-                var targetFile = dialogFactory.ShowSaveFileDialog(null, true, true, true, "transp", true,
+                var targetFile = dialogFactory.ShowSaveFileDialog(null, true, false, true, "transp", true,
                     localizer.OpenFileDialogViewDialogFilter, true, true, localizer.MainWindowMainMenuFileSaveAs, Directory.GetCurrentDirectory(), out var result);
 
                 if (result != true && CheckSourceOk(targetFile)) return null;
@@ -62,8 +64,9 @@ namespace Tauron.Application.Localizer.UIModels
                 return true;
             }
 
-            NewCommad.WithCanExecute(() => _last != null)
-                .ToFlow(SaveAsProject).Send.ToModel(CenterView);
+            NewCommad.WithCanExecute(() => _last != null && !_last.IsEmpty)
+                .ToFlow(SaveAsProject).Send.ToModel(CenterView)
+                .Return().ThenRegister("SaveAs");
 
             #endregion
 
@@ -107,6 +110,7 @@ namespace Tauron.Application.Localizer.UIModels
                     }
                 }
 
+                _loadingOperation = null;
                 if (obj.Ok) RenctFiles.Value.AddNewFile(obj.ProjectFile.Source);
 
                 _last = obj.ProjectFile;
