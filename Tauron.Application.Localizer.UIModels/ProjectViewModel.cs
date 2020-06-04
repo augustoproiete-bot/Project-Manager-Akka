@@ -53,11 +53,10 @@ namespace Tauron.Application.Localizer.UIModels
                 Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));
                 SelectedIndex += 0;
 
-                foreach (var projectEntry in obj.Project.Entries)
-                {
-
+                foreach (var projectEntry in obj.Project.Entries) 
                     ProjectEntrys.Add(new ProjectEntryModel(obj.Project, projectEntry, TryUpdateEntry, TryRemoveEntry));
-                }
+
+                ImportetProjects.AddRange(obj.Project.Imports);
             }
 
             Receive<InitProjectViewModel>(InitProjectViewModel);

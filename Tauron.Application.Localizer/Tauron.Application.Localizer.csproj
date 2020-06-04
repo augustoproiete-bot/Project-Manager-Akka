@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Syncfusion.SfBusyIndicator.WPF" Version="18.1.0.55" />
+    <PackageReference Include="Syncfusion.SfGrid.WPF" Version="18.1.0.55" />
     <PackageReference Include="Syncfusion.SfInput.WPF" Version="18.1.0.55" />
     <PackageReference Include="Syncfusion.SfSkinManager.WPF" Version="18.1.0.55" />
     <PackageReference Include="Syncfusion.Shared.WPF" Version="18.1.0.55" />

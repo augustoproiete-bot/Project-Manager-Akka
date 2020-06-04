@@ -19,13 +19,17 @@
             TextOptions.TextRenderingMode="Auto">
     <li:SfBusyIndicator x:Name="SfBusyIndicator" IsBusy="False">
         <Grid>
+            <Grid.Resources>
+                <DataTemplate x:Key="HeaderTemplate">
+                    <TextBlock Text="{Binding}" FontSize="14"/>
+                </DataTemplate>
+            </Grid.Resources>
             <ContentControl Name="DialogContent" IsEnabled="True" Visibility="Collapsed" VerticalAlignment="Center"
                             HorizontalAlignment="Center" MinWidth="600" />
             <Grid Name="MainContent">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Menu Margin="5">
                     <MenuItem Header="{tau:Loc MainWindow_MainMenu_File}">
@@ -47,47 +51,57 @@
                             </DataTemplate>
                         </MenuItem.ItemTemplate>
                     </MenuItem>
+                    <MenuItem Header="{tau:Loc MainWindow_MainMenu_View}">
+                        <MenuItem Header="{tau:Loc MainWindow_MainMenu_Reset}" Click="DockReset"/>
+                    </MenuItem>
                 </Menu>
-                <Border BorderBrush="LightGray" BorderThickness="1" Margin="5" Grid.Row="1">
-                    <ContentControl Content="{tau:ViewModelBinding CenterView}" />
-                </Border>
-                <Expander Grid.Row="2" Margin="5">
-                    <Expander.Header>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{tau:Loc MainWindow_Operations_Label}" />
-                            <TextBlock Text=" | " />
-                            <TextBlock Text="{Binding RunningOperations.Count}" />
-                        </StackPanel>
-                    </Expander.Header>
-                    <TabControl MinHeight="400">
-                        <TabItem Header="{tau:Loc MainWindow_Operation_Tabs_Label_Ops}">
-                            <StackPanel>
-                                <ToolBar>
-                                    <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete}"
-                                            tau:CommandBinder.Command="ClearOp" />
-                                    <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete_All}"
-                                            tau:CommandBinder.Command="ClearAllOp" />
-                                </ToolBar>
-                                <ListBox ItemsSource="{tau:ActorBinding RunningOperations}">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate DataType="services:RunningOperation">
-                                            <StackPanel Margin="3" Orientation="Horizontal">
-                                                <Border MinWidth="20" Margin="3,0,15,0"
-                                                        Background="{Binding Operation, Converter={converter:OperationStateConverter}}"
-                                                        CornerRadius="15" />
-                                                <TextBlock MinWidth="250" Text="{Binding Name}" />
-                                                <TextBlock Text="{Binding Status}" Margin="10,0" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </StackPanel>
-                        </TabItem>
-                        <TabItem Header="{tau:Loc MainWindow_Operation_Tabs_Label_Logs}">
-                            <serilogViewer:SerilogViewer />
-                        </TabItem>
-                    </TabControl>
-                </Expander>
+                <li:DockingManager Name="DockingManager" Grid.Row="1" UseDocumentContainer="True" Margin="5" PersistState="True" IsEnableHotTracking="True" Loaded="FrameworkElement_OnLoaded">
+                    <Border Name="Projects" BorderBrush="LightGray" BorderThickness="1" Margin="5" li:DockingManager.CanClose="False" li:DockingManager.State="Document"
+                            li:DockingManager.Header="{tau:Loc MainWindow_ProjectContainer_Header}" li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}" 
+                            li:DockingManager.DockAbility="All" li:DockingManager.DocumentTabOrderIndex="0">
+                        <ContentControl Content="{tau:ViewModelBinding CenterView}" />
+                    </Border>
+                    <ContentControl Name="Analyzer" BorderBrush="LightGray" BorderThickness="1" Margin="5" li:DockingManager.CanClose="False" li:DockingManager.State="Document"
+                                    li:DockingManager.Header="{tau:Loc MainWindow_Analyzer_Header}" li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}" 
+                                    li:DockingManager.DockAbility="All" li:DockingManager.DocumentTabOrderIndex="1">
+                        <li:SfDataGrid ItemsSource="{tau:ActorBinding AnalyzerEntries}" ColumnSizer="AutoLastColumnFill" AllowResizingColumns="True" AllowSorting="True" AllowFiltering="True"
+                                       ShowSortNumbers="True" AllowGrouping="True" ShowGroupDropArea="True" AllowTriStateSorting="True" AllowEditing="False">
+                            <li:SfDataGrid.Columns>
+                                <li:GridTextColumn HeaderText="Rule Name" MappingName="RuleName" FilteredFrom="AdvancedFilter" ImmediateUpdateColumnFilter="True"/>
+                                <li:GridTextColumn HeaderText="Issue Name" MappingName="ErrorName"  FilteredFrom="AdvancedFilter"/>
+                                <li:GridTextColumn HeaderText="Projeckt Name" MappingName="Project" FilteredFrom="AdvancedFilter"/>
+                                <li:GridTextColumn HeaderText="Issue Exploration" MappingName="Message" AllowSorting="False" AllowFiltering="False"/>
+                            </li:SfDataGrid.Columns>
+                        </li:SfDataGrid>
+                    </ContentControl>
+                    <StackPanel Name="Operations" li:DockingManager.CanClose="False" li:DockingManager.State="AutoHidden" li:DockingManager.Header="{tau:Loc MainWindow_Operation_Tabs_Label_Ops}"
+                                        li:DockingManager.SideInDockedMode="Bottom" li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}"   li:DockingManager.DockAbility="All"
+                                        li:DockingManager.DesiredHeightInDockedMode="500">
+                        <ToolBar>
+                            <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete}"
+                                                tau:CommandBinder.Command="ClearOp" />
+                            <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete_All}"
+                                                tau:CommandBinder.Command="ClearAllOp" />
+                        </ToolBar>
+                        <ListBox ItemsSource="{tau:ActorBinding RunningOperations}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="services:RunningOperation">
+                                    <StackPanel Margin="3" Orientation="Horizontal">
+                                        <Border MinWidth="20" Margin="3,0,15,0"
+                                                            Background="{Binding Operation, Converter={converter:OperationStateConverter}}"
+                                                            CornerRadius="15" />
+                                        <TextBlock MinWidth="250" Text="{Binding Name}" />
+                                        <TextBlock Text="{Binding Status}" Margin="10,0" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                    <serilogViewer:SerilogViewer Name="Logger"
+                        li:DockingManager.CanClose="False" li:DockingManager.State="AutoHidden" li:DockingManager.Header="{tau:Loc MainWindow_Operation_Tabs_Label_Logs}"
+                                                     li:DockingManager.SideInDockedMode="Bottom" li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}"    
+                                                     li:DockingManager.DockAbility="All" li:DockingManager.DesiredHeightInDockedMode="500"/>
+                </li:DockingManager>
             </Grid>
         </Grid>
     </li:SfBusyIndicator>

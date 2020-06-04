@@ -59,7 +59,7 @@ namespace Tauron.Application.Wpf.UI
                 if (Model == null) return;
 
                 //Log.Information("Ask For {Property}", _name);
-                var eventActor = await Model.Ask<IEventActor>(new MakeEventHook(), TimeSpan.FromSeconds(5));
+                var eventActor = await Model.Ask<IEventActor>(new MakeEventHook(), TimeSpan.FromSeconds(15));
                 //Log.Information("Ask Compled For {Property}", _name);
 
                 eventActor.Register(HookEvent.Create<PropertyChangedEvent>(PropertyChangedHandler));

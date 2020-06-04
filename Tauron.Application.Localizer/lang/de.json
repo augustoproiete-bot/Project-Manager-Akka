@@ -7,18 +7,23 @@
 
   "MainWindow_Title": "Lokalisierungs App",
   "MainWindow_Close_Warning": "Projekt nicht gespeichert. Trotzdem beenden!",
+  "MainWindow_ProjectContainer_Header": "Projekte",
 
   "MainWindow_MainMenu_File": "Datei",
   "MainWindow_MainMenu_File_Open": "Öffnen",
   "MainWindow_MainMenu_File_New": "Neu",
   "MainWindow_MainMenu_File_SaveAs": "Speichern Unter...",
   "MainWindow_MainMwnu_RenctFile": "Zuletzt Geöffnet",
+  "MainWindow_MainMenu_View": "Ansicht",
+  "MainWindow_MainMenu_Reset": "Ansicht Reset",
 
   "MainWindow_Operations_Label": "Aufgaben",
   "MainWindow_Operation_Tabs_Label_Logs": "Logs Einträge",
   "MainWindow_Operation_Tabs_Label_Ops": "Aufgaben",
   "MainWindow_Operation_Delete": "Löschen",
   "MainWindow_Operation_Delete_All": "Alles Löschen",
+
+  "MainWindow_Analyzer_Header": "Analyse",
 
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",

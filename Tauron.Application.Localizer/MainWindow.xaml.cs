@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using Akka.Actor;
+using Serilog;
+using Syncfusion.UI.Xaml.Grid;
 using Tauron.Application.Localizer.Core.UI;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.DataModel.Workspace;
@@ -96,5 +98,21 @@ namespace Tauron.Application.Localizer
         {
             Title = _localizer.MainWindowTitle + " - " + _mainWindowCoordinator.TitlePostfix;
         }
+
+        private void FrameworkElement_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                DockingManager.LoadDockState();
+            }
+            catch (Exception exception)
+            {
+                Log.ForContext<MainWindow>().Error(exception, "Error on Load Dock State");
+                DockingManager.ResetState();
+            }
+        }
+
+        private void DockReset(object sender, RoutedEventArgs e) 
+            => DockingManager.ResetState();
     }
 }

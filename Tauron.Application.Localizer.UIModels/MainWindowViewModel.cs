@@ -150,7 +150,16 @@ namespace Tauron.Application.Localizer.UIModels
                 .Return().ThenRegister("NewFile");
 
             #endregion
+
+            #region Analyzing
+
+            AnalyzerEntries = this.RegisterUiCollection<AnalyzerEntry>(nameof(AnalyzerEntries)).Async();
+            AnalyzerEntries.Add(new AnalyzerEntry("Test Rule", "Test Proj", "Error", "Test ID"));
+
+            #endregion
         }
+
+        private UICollectionProperty<AnalyzerEntry> AnalyzerEntries { get; }
 
         private UIProperty<IEnumerable<RunningOperation>> RunningOperations { get; }
 

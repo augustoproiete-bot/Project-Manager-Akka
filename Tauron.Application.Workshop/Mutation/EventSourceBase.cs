@@ -20,7 +20,8 @@ namespace Tauron.Application.Workshop.Mutation
 
         public void RespondOn(IActorRef actorRef)
         {
-            Interlocked.Exchange(ref _intrests, _intrests.Add(actorRef));
+            lock(this)
+                Interlocked.Exchange(ref _intrests, _intrests.Add(actorRef));
             _mutator.Tell(new WatchIntrest(() => Interlocked.Exchange(ref _intrests, _intrests.Remove(actorRef)), actorRef));
         }
 

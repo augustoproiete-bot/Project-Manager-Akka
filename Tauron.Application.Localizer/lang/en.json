@@ -7,18 +7,23 @@
 
   "MainWindow_Title": "Localizing App",
   "MainWindow_Close_Warning": "Project not saved. Quit anyway!",
+  "MainWindow_ProjectContainer_Header": "Projeckts",
 
   "MainWindow_MainMenu_File": "File",
   "MainWindow_MainMenu_File_Open": "Open",
   "MainWindow_MainMenu_File_New": "New",
   "MainWindow_MainMenu_File_SaveAs": "Save As",
   "MainWindow_MainMwnu_RenctFile": "Renct Files",
+  "MainWindow_MainMenu_View": "View",
+  "MainWindow_MainMenu_Reset": "Reset Views",
 
   "MainWindow_Operations_Label": "Operations",
   "MainWindow_Operation_Tabs_Label_Logs": "Logs",
   "MainWindow_Operation_Tabs_Label_Ops": "Operations",
   "MainWindow_Operation_Delete": "Delete",
   "MainWindow_Operation_Delete_All": "Delete All",
+
+  "MainWindow_Analyzer_Header": "Analyzer",
 
   "MainWindowModel_LoadProject_Operation": "Load Project {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "No Project File Entered",

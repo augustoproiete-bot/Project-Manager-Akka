@@ -3,7 +3,7 @@ using Akka.Actor;
 
 namespace Tauron.Application.Workshop.Mutation
 {
-    public interface IEventSource<TRespond>
+    public interface IEventSource<out TRespond>
     {
         void RespondOn(IActorRef actorRef);
 
