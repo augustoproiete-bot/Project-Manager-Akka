@@ -18,12 +18,14 @@
   "MainWindow_MainMenu_Reset": "Ansicht Reset",
 
   "MainWindow_Operations_Label": "Aufgaben",
-  "MainWindow_Operation_Tabs_Label_Logs": "Logs Einträge",
+  "MainWindow_Operation_Tabs_Label_Logs": "Log Einträge",
   "MainWindow_Operation_Tabs_Label_Ops": "Aufgaben",
   "MainWindow_Operation_Delete": "Löschen",
   "MainWindow_Operation_Delete_All": "Alles Löschen",
 
   "MainWindow_Analyzer_Header": "Analyse",
+  "MainWindow_Analyzer_RuleName": "Regel",
+  "MainWindow_Analyzer_Issue": "Wharnung Type",
 
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",

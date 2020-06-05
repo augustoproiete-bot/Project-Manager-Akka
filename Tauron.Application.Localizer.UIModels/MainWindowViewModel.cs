@@ -15,6 +15,8 @@ using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Messages;
 using Tauron.Application.Localizer.UIModels.Services;
 using Tauron.Application.Localizer.UIModels.Views;
+using Tauron.Application.Workshop;
+using Tauron.Application.Workshop.Analyzing;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Model;
 
@@ -153,8 +155,17 @@ namespace Tauron.Application.Localizer.UIModels
 
             #region Analyzing
 
+            void IssuesChanged(IssuesEvent obj)
+            {
+                var toRemove = AnalyzerEntries.Where(e => e.RuleName == obj.RuleName).ToList();
+                AnalyzerEntries.RemoveRange(toRemove);
+
+                AnalyzerEntries.AddRange(obj.Issues.Select(i => new AnalyzerEntry(obj.RuleName, i.Project, i.Data?.ToString(), i.IssueType)));
+            }
+
             AnalyzerEntries = this.RegisterUiCollection<AnalyzerEntry>(nameof(AnalyzerEntries)).Async();
-            AnalyzerEntries.Add(new AnalyzerEntry("Test Rule", "Test Proj", "Error", "Test ID"));
+
+            this.RespondOnEventSource(workspace.Analyzer.Issues, IssuesChanged);
 
             #endregion
         }

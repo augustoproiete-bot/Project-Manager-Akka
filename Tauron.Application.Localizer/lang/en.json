@@ -24,6 +24,8 @@
   "MainWindow_Operation_Delete_All": "Delete All",
 
   "MainWindow_Analyzer_Header": "Analyzer",
+  "MainWindow_Analyzer_RuleName": "Rule",
+  "MainWindow_Analyzer_Issue": "Issue Type",
 
   "MainWindowModel_LoadProject_Operation": "Load Project {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "No Project File Entered",

@@ -18,6 +18,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Analyzing
 
         protected override void RegisterResponds(ProjectFileWorkspace workspace, IActorContext context)
         {
+            base.RegisterResponds(workspace, context);
             workspace.Source.SourceUpdate.RespondOn(context.Self);
         }
 
@@ -31,7 +32,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Analyzing
             var issues = new List<Issue>();
 
             if (string.IsNullOrWhiteSpace(source))
-                issues.Add(new Issue(Issues.EmptySource, null));
+                issues.Add(new Issue(Issues.EmptySource, null, string.Empty));
 
             SendIssues(issues, context);
         }

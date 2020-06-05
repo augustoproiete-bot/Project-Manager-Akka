@@ -19,7 +19,9 @@ namespace Tauron.Application.Wpf.UI
 
         protected override object DesignTime()
         {
-            return nameof(DesignTime);
+            if (EntryName?.Length > 25)
+                return EntryName.Substring(EntryName.Length - 25, 10);
+            return EntryName ?? nameof(DesignTime);
         }
 
         protected override object ProvideValueInternal(IServiceProvider serviceProvider)

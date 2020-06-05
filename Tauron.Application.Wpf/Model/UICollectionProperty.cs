@@ -94,5 +94,10 @@ namespace Tauron.Application.Wpf.Model
         {
             foreach (var data in datas) _collection?.Add(data);
         }
+
+        public void RemoveRange(IEnumerable<TData> toRemove)
+        {
+            foreach (var data in toRemove) _collection?.Remove(data);
+        }
     }
 }

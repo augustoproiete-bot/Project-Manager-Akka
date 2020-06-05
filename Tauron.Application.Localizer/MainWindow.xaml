@@ -67,8 +67,8 @@
                         <li:SfDataGrid ItemsSource="{tau:ActorBinding AnalyzerEntries}" ColumnSizer="AutoLastColumnFill" AllowResizingColumns="True" AllowSorting="True" AllowFiltering="True"
                                        ShowSortNumbers="True" AllowGrouping="True" ShowGroupDropArea="True" AllowTriStateSorting="True" AllowEditing="False">
                             <li:SfDataGrid.Columns>
-                                <li:GridTextColumn HeaderText="Rule Name" MappingName="RuleName" FilteredFrom="AdvancedFilter" ImmediateUpdateColumnFilter="True"/>
-                                <li:GridTextColumn HeaderText="Issue Name" MappingName="ErrorName"  FilteredFrom="AdvancedFilter"/>
+                                <li:GridTextColumn HeaderText="{tau:Loc MainWindow_Analyzer_RuleName}" MappingName="RuleName" FilteredFrom="AdvancedFilter" ImmediateUpdateColumnFilter="True"/>
+                                <li:GridTextColumn HeaderText="{tau:Loc MainWindow_Analyzer_Issue}" MappingName="ErrorName"  FilteredFrom="AdvancedFilter"/>
                                 <li:GridTextColumn HeaderText="Projeckt Name" MappingName="Project" FilteredFrom="AdvancedFilter"/>
                                 <li:GridTextColumn HeaderText="Issue Exploration" MappingName="Message" AllowSorting="False" AllowFiltering="False"/>
                             </li:SfDataGrid.Columns>
