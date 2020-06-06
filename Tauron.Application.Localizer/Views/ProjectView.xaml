@@ -42,11 +42,6 @@
         </DockPanel>
         <syncfusion:TabControlExt Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Margin="5" TabStripPlacement="Left" CloseButtonType="Hide"
                     SelectedIndex="{tau:ActorBinding SelectedIndex}" ItemsSource="{tau:ActorBinding ProjectEntrys}">
-            <!--<TabControl.ItemContainerStyle>
-                <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource {x:Type TabItem}}">
-                    <Setter Property="HorizontalAlignment" Value="Left"/>
-                </Style>
-            </TabControl.ItemContainerStyle>-->
             <TabControl.ItemTemplate>
                 <DataTemplate DataType="uiModels:ProjectEntryModel">
                     <Grid Margin="5">
@@ -87,7 +82,7 @@
                                 <DataTemplate DataType="uiModels:ProjectLangEntry">
                                     <GroupBox Header="{Binding Language.Name}" Margin="50, 5">
                                         <TextBox MinHeight="50" Margin="5" AcceptsReturn="True" AcceptsTab="True" SpellCheck.SpellingReform="PreAndPostreform" SpellCheck.IsEnabled="True"
-                                                 Text="{Binding Content, Delay=1000, UpdateSourceTrigger=PropertyChanged}" />
+                                                 Text="{Binding Content, Delay=1000, UpdateSourceTrigger=PropertyChanged}"/>
                                     </GroupBox>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
