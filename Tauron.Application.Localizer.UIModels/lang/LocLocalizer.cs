@@ -52,6 +52,10 @@ namespace Tauron.Application.Localizer.UIModels.lang
 
         private readonly Task<string> _newEntryDialogViewCharError;
 
+        private readonly Task<string> _mainWindowAnalyerRuleSource;
+
+        private readonly Task<string> _mainWindowAnalyerRuleSourceName;
+
         public LocLocalizer(ActorSystem system)
         {
             var loc = system.Loc();
@@ -78,7 +82,14 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _projectViewLanguageBoxFirstLabel = ToString(loc.RequestTask("ProjectView_LanguageBox_FirstLabel"));
             _newEntryDialogViewDuplicateError = ToString(loc.RequestTask("NewEntryDialogView_Duplicate_Error"));
             _newEntryDialogViewCharError = ToString(loc.RequestTask("NewEntryDialogView_Char_Error"));
+            _mainWindowAnalyerRuleSource = ToString(loc.RequestTask("MainWindow_Analyer_Rule_Source"));
+            _mainWindowAnalyerRuleSourceName = ToString(loc.RequestTask("MainWindow_Analyer_Rule_Source_Name"));
+
         }
+
+        public string MainWindowAnalyerRuleSourceName => _mainWindowAnalyerRuleSourceName.Result;
+
+        public string MainWindowAnalyerRuleSource => _mainWindowAnalyerRuleSource.Result;
 
         public string NewEntryDialogViewCharError => _newEntryDialogViewCharError.Result;
 

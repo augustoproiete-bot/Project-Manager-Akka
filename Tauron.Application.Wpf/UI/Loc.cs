@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows.Markup;
+using Akka.Util.Internal;
 using JetBrains.Annotations;
 using Tauron.Host;
 using Tauron.Localization;
@@ -10,10 +12,9 @@ namespace Tauron.Application.Wpf.UI
     [PublicAPI]
     public sealed class Loc : UpdatableMarkupExtension
     {
-        public Loc(string entryName)
-        {
-            EntryName = entryName;
-        }
+        private static Dictionary<string, object?> _cache = new Dictionary<string, object?>();
+
+        public Loc(string entryName) => EntryName = entryName;
 
         public string EntryName { get; set; }
 
@@ -28,11 +29,18 @@ namespace Tauron.Application.Wpf.UI
         {
             try
             {
-                return ActorApplication.Application.ActorSystem.Loc().Request(EntryName)!;
+                lock(_cache)
+                    if (_cache.TryGetValue(EntryName, out var result)) return result!;
+                
+                ActorApplication.Application.ActorSystem.Loc().Request(EntryName, o =>
+                {
+                    var res = o ?? EntryName;
+                    lock(_cache)
+                        _cache[EntryName] = res;
+                    UpdateValue(res);
+                });
 
-                //Task.Run(() => ActorApplication.Application.ActorSystem.Loc().Request(EntryName, UpdateValue));
-
-                //return "Loading...";
+                return "Loading";
             }
             catch (Exception)
             {

@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
@@ -21,7 +22,7 @@ namespace Tauron.Akka
         public TimerScheduler(Config scheduler, ILoggingAdapter log)
             : base(scheduler, log)
         {
-            new Thread(() =>
+            Task.Factory.StartNew(() =>
             {
                 foreach (var action in _toRun.GetConsumingEnumerable())
                     try
@@ -35,7 +36,7 @@ namespace Tauron.Akka
                     }
 
                 _toRun.Dispose();
-            }) {IsBackground = true}.Start();
+            }, TaskCreationOptions.LongRunning);
         }
 
         protected override DateTimeOffset TimeNow => DateTimeOffset.Now;

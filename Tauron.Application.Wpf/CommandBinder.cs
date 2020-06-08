@@ -227,8 +227,8 @@ namespace Tauron.Application.Wpf
 
                     if (LastCommand == null) return;
 
-                    LastCommand.CanExecuteEvent += _canExecute;
-                    LastCommand.ExecuteEvent += _execute;
+                    LastCommand.CanExecuteEvent -= _canExecute;
+                    LastCommand.ExecuteEvent -= _execute;
 
                     LastCommand = null;
                 }

@@ -63,7 +63,7 @@ namespace Tauron.Application.Localizer.UIModels
             bool CheckSourceOk(string? source)
             {
                 if (!string.IsNullOrWhiteSpace(source)) return false;
-                UICall(() => dialogCoordinator.ShowMessage(localizer.CommonError, localizer.MainWindowModelLoadProjectSourceEmpty));
+                UICall(() => dialogCoordinator.ShowMessage(localizer.CommonError, localizer.MainWindowModelLoadProjectSourceEmpty!));
                 return true;
             }
 
@@ -138,7 +138,7 @@ namespace Tauron.Application.Localizer.UIModels
                 if (File.Exists(source))
                 {
                     //TODO NewFile Filog Message
-                    var result = await UICall(async () => await dialogCoordinator.ShowMessage(localizer.CommonError, "", null));
+                    var result = await UICall(async () => await dialogCoordinator.ShowMessage(localizer.CommonError!, "", null));
 
                     if (result != true) return null;
                 }
@@ -156,12 +156,14 @@ namespace Tauron.Application.Localizer.UIModels
 
             #region Analyzing
 
+            var builder = new AnalyzerEntryBuilder(localizer);
+
             void IssuesChanged(IssuesEvent obj)
             {
                 var toRemove = AnalyzerEntries.Where(e => e.RuleName == obj.RuleName).ToList();
                 AnalyzerEntries.RemoveRange(toRemove);
 
-                AnalyzerEntries.AddRange(obj.Issues.Select(i => new AnalyzerEntry(obj.RuleName, i.Project, i.Data?.ToString(), i.IssueType)));
+                AnalyzerEntries.AddRange(obj.Issues.Select(builder.Get));
             }
 
             AnalyzerEntries = this.RegisterUiCollection<AnalyzerEntry>(nameof(AnalyzerEntries)).Async();
@@ -210,24 +212,27 @@ namespace Tauron.Application.Localizer.UIModels
 
         private sealed class InternlRenctFile
         {
-            public InternlRenctFile(string file)
-            {
-                File = file;
-            }
+            public InternlRenctFile(string file) => File = file;
 
             public string File { get; }
         }
 
-        private static class AnalyserEntryBuilder
+        private sealed class AnalyzerEntryBuilder
         {
-            public static AnalyzerEntry Get(Issue issue, LocLocalizer localizer)
+            private readonly LocLocalizer _localizer;
+
+            public AnalyzerEntryBuilder(LocLocalizer localizer) => _localizer = localizer;
+
+            public AnalyzerEntry Get(Issue issue)
             {
+                var builder = new AnalyzerEntry.Builder(issue.RuleName, issue.Project);
+
                 switch (issue.IssueType)
                 {
                     case Issues.EmptySource:
-                        return new AnalyzerEntry();
+                        return builder.Entry(_localizer.MainWindowAnalyerRuleSourceName,_localizer.MainWindowAnalyerRuleSource);
                     default:
-                        return new AnalyzerEntry(localizer.CommonUnkowen, issue.Project, issue.Data?.ToString() ?? string.Empty, localizer.CommonUnkowen);
+                        return new AnalyzerEntry(_localizer.CommonUnkowen, issue.Project, issue.Data?.ToString() ?? string.Empty, _localizer.CommonUnkowen);
                 }
             }
         }

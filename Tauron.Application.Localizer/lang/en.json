@@ -29,6 +29,9 @@
   "MainWindow_Analyzer_Project": "Project Name",
   "MainWindow_Analyzer_IssueDescription": "Issues Description",
 
+  "MainWindow_Analyer_Rule_Source": "The Source File doesn't exist",
+  "MainWindow_Analyer_Rule_Source_Name": "File Error",
+
   "MainWindowModel_LoadProject_Operation": "Load Project {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "No Project File Entered",
 

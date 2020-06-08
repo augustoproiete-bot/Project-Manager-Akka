@@ -7,7 +7,7 @@ namespace Tauron.Localization
     {
         public override LocExtension CreateExtension(ExtendedActorSystem system)
         {
-            return new LocExtension().init(system);
+            return new LocExtension().Init(system);
         }
     }
 }

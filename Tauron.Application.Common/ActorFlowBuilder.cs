@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Actor.Dsl;
 using JetBrains.Annotations;
 using Tauron.Akka;
 
@@ -150,13 +151,13 @@ namespace Tauron
         public ActionFinisher(ActorFlowBuilder<TStart, TParent> flow, Action<TRecieve> runner)
         {
             _flow = flow;
-            _flow.Register(a => a.Exposed.Receive<TRecieve>(new ActionRespond(runner).Run));
+            _flow.Register(a => a.Receive<TRecieve>(new ActionRespond(runner).Run));
         }
 
         public ActionFinisher(ActorFlowBuilder<TStart, TParent> flow, Func<TRecieve, Task> runner)
         {
             _flow = flow;
-            _flow.Register(a => a.Exposed.ReceiveAsync<TRecieve>(new AsyncActionRespond(runner).Run));
+            _flow.Register(a => a.ReceiveAsync<TRecieve>(new AsyncActionRespond(runner).Run));
         }
 
         public RunSelector<TNew, TStart, TParent> RespondTo<TNew>()
@@ -171,7 +172,7 @@ namespace Tauron
 
         public void Receive()
         {
-            _flow.Register(e => e.Exposed.Receive<TStart>(new ReceiveHelper(Build()).Send));
+            _flow.Register(e => e.Receive<TStart>(new ReceiveHelper(Build()).Send));
             _flow.BuildReceive();
         }
 
@@ -245,7 +246,7 @@ namespace Tauron
         public ReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target, Func<TReceive, TNext> transformer)
             : base(flow)
         {
-            flow.Register(a => a.Exposed.Receive<TReceive>(new Receive(target, transformer).Run));
+            flow.Register(a => a.Receive<TReceive>(new Receive(target, transformer).Run));
         }
 
         private sealed class Receive
@@ -274,7 +275,7 @@ namespace Tauron
         public AyncReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target, Func<TReceive, Task<TNext>> transformer)
             : base(flow)
         {
-            flow.Register(a => a.Exposed.ReceiveAsync<TReceive>(new Receive(target, transformer).Run));
+            flow.Register(a => a.ReceiveAsync<TReceive>(new Receive(target, transformer).Run));
         }
 
         private sealed class Receive
@@ -323,7 +324,7 @@ namespace Tauron
         private readonly Action<EnterFlow<TStart>>? _onReturn;
         private readonly TParent _parent;
 
-        private readonly List<Action<ExposedReceiveActor>> _recieves = new List<Action<ExposedReceiveActor>>();
+        private readonly List<Action<IActorDsl>> _recieves = new List<Action<IActorDsl>>();
 
         private bool _buildReceiveCalled;
 
@@ -351,7 +352,7 @@ namespace Tauron
             return _parent;
         }
 
-        public void Register(Action<ExposedReceiveActor> actorRegister)
+        public void Register(Action<IActorDsl> actorRegister)
         {
             _recieves.Add(actorRegister);
         }

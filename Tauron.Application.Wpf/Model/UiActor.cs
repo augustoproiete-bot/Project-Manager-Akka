@@ -265,9 +265,8 @@ namespace Tauron.Application.Wpf.Model
             return Task.CompletedTask;
         }
 
-        protected virtual void ControlUnload(UnloadEvent obj)
-        {
-        }
+        protected virtual void ControlUnload(UnloadEvent obj) 
+            => Context.Stop(Context.Self);
 
         private void InitParentViewModel(InitParentViewModel obj)
         {

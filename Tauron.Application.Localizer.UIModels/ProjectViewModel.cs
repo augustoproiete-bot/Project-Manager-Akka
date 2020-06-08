@@ -27,6 +27,8 @@ namespace Tauron.Application.Localizer.UIModels
         {
             #region Init
 
+            IsEnabled = RegisterProperty<bool>(nameof(IsEnabled)).WithDefaultValue(!workspace.ProjectFile.IsEmpty);
+
             ProjectEntrys = this.RegisterUiCollection<ProjectEntryModel>(nameof(ProjectEntrys)).Async();
             SelectedIndex = RegisterProperty<int>(nameof(SelectedIndex));
 
@@ -190,6 +192,8 @@ namespace Tauron.Application.Localizer.UIModels
 
             #endregion
         }
+
+        public UIProperty<bool> IsEnabled { get; }
 
         public UICollectionProperty<ProjectViewLanguageModel> Languages { get; }
         public UIProperty<int> SelectedIndex { get; set; }

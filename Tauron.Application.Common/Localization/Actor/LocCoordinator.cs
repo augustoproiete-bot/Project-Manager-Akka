@@ -6,7 +6,7 @@ using Tauron.Localization.Provider;
 
 namespace Tauron.Localization.Actor
 {
-    public sealed class LocCoordinator : ReceiveActor
+    public sealed class LocCoordinator : ReceiveActor, IWithTimers
     {
         private readonly Dictionary<string, Request> _requests = new Dictionary<string, Request>();
 
@@ -15,7 +15,7 @@ namespace Tauron.Localization.Actor
             producers.Foreach(sp => Context.ActorOf(sp.GetProps(), sp.Name));
             Receive<RequestLocValue>(RequestLocValueHandler);
             Receive<LocStoreActorBase.QueryResponse>(QueryResponseHandler);
-            Receive<string>(Invalidate);
+            Receive<SendInvalidate>(Invalidate);
         }
 
         private void QueryResponseHandler(LocStoreActorBase.QueryResponse obj)
@@ -35,14 +35,23 @@ namespace Tauron.Localization.Actor
             foreach (var actorRef in Context.GetChildren())
                 actorRef.Tell(new LocStoreActorBase.QueryRequest(request.Key, opId, msg.Lang));
 
-            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(10), Context.Self, opId, Context.Sender);
+            Timers.StartSingleTimer(Guid.NewGuid(), new SendInvalidate(opId), TimeSpan.FromSeconds(10));
         }
 
-        private void Invalidate(string op)
+        private void Invalidate(SendInvalidate op)
         {
-            if (!_requests.Remove(op, out var request)) return;
+            if (!_requests.Remove(op.OpId, out var request)) return;
 
             request.Sender.Tell(new ResponseLocValue(null, request.Key));
+        }
+
+        private sealed class SendInvalidate
+        {
+
+            public string OpId { get; }
+
+            public SendInvalidate(string opId) 
+                => OpId = opId;
         }
 
         public sealed class RequestLocValue
@@ -83,5 +92,7 @@ namespace Tauron.Localization.Actor
 
             public string Key { get; }
         }
+
+        public ITimerScheduler Timers { get; set; } = null!;
     }
 }

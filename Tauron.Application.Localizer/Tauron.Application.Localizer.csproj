@@ -10,7 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SpellCheck\SpellChecker.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="SpellCheck\SpellChecker.cs" />
   </ItemGroup>
 
   <ItemGroup>

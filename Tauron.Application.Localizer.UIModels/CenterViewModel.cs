@@ -28,6 +28,7 @@ namespace Tauron.Application.Localizer.UIModels
             Views = this.RegisterUiCollection<ProjectViewContainer>(nameof(Views)).Async();
             CurrentProject = RegisterProperty<int?>(nameof(CurrentProject));
 
+            AddProject(new Project().WithProjectName("Dummy"));
 
             static string GetActorName(string projectName)
             {
@@ -122,8 +123,8 @@ namespace Tauron.Application.Localizer.UIModels
             {
                 mainWindow.Saved = File.Exists(obj.ProjectFile.Source);
 
-                foreach (var view in Views)
-                    Context.Stop(view.Model.Actor);
+                //foreach (var view in Views)
+                //    Context.Stop(view.Model.Actor);
                 Views.Clear();
 
                 string titleName = obj.ProjectFile.Source;

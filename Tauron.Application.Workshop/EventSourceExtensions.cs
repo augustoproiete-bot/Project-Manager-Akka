@@ -36,7 +36,7 @@ namespace Tauron.Application.Workshop
                 flow.Register(e =>
                 {
                     eventSource.RespondOn(target(Flow.Actor.ExposedContext));
-                    e.Exposed.Receive<TRecieve>(new RecieveHelper(runner).Run);
+                    e.Receive<TRecieve>(new RecieveHelper(runner).Run);
                 });
             }
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Analyzing.Rules;
 
@@ -8,7 +9,7 @@ namespace Tauron.Application.Workshop.Analyzing.Actor
     public sealed class RuleIssuesChanged<TWorkspace, TData>
         where TWorkspace : WorkspaceBase<TData>
     {
-        public RuleIssuesChanged(IRule<TWorkspace, TData> rule, IEnumerable<Issue> issues)
+        public RuleIssuesChanged(IRule<TWorkspace, TData> rule, IEnumerable<Issue.IssueCompleter> issues)
         {
             Rule = rule;
             Issues = issues;
@@ -16,11 +17,9 @@ namespace Tauron.Application.Workshop.Analyzing.Actor
 
         public IRule<TWorkspace, TData> Rule { get; }
 
-        public IEnumerable<Issue> Issues { get; }
+        public IEnumerable<Issue.IssueCompleter> Issues { get; }
 
-        public IssuesEvent ToEvent()
-        {
-            return new IssuesEvent(Rule.Name, Issues);
-        }
+        public IssuesEvent ToEvent() 
+            => new IssuesEvent(Rule.Name, Issues.Select(i => i.Build(Rule.Name)));
     }
 }

@@ -29,6 +29,9 @@
   "MainWindow_Analyzer_Project": "Projekt Name",
   "MainWindow_Analyzer_IssueDescription": "Fehler Beschreibung",
 
+  "MainWindow_Analyer_Rule_Source": "Die Quell Datei existiert nicht",
+  "MainWindow_Analyer_Rule_Source_Name": "Datei Fehler",
+
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",
 

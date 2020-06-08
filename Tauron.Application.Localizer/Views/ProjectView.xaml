@@ -8,7 +8,7 @@
                  xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
                  mc:Ignorable="d" Background="White" d:DataContext="{d:DesignInstance uiModels:ProjectViewModel}"
                  d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
+    <Grid IsEnabled="{tau:ActorBinding IsEnabled}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />

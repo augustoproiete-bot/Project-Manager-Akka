@@ -1,40 +1,28 @@
 ﻿using System.Collections.Generic;
 using Akka.Actor;
-using Akka.Actor.Dsl;
+using Tauron.Akka;
 using Tauron.Application.Workshop.Analyzing;
 
 namespace Tauron.Application.Localizer.DataModel.Workspace.Analyzing
 {
-    public sealed class SourceRule : ProjectRule
+    public sealed class SourceRule : LocalizerRule
     {
         public const string SourceRuleName = "SourceCheck";
 
         public override string Name => SourceRuleName;
 
-        protected override void ValidateAll(ProjectRest projectRest, IActorContext context)
+        protected override IEnumerable<Issue.IssueCompleter> ValidateAll(ProjectRest projectRest, IActorContext context) 
+            => ValidateSource(new SourceUpdated(projectRest.ProjectFile.Source));
+
+        protected override void RegisterRespond(ExposedReceiveActor actor)
         {
-            ValidateSource(projectRest.ProjectFile.Source, context);
+            RegisterRespond(Workspace.Source.SourceUpdate, ValidateSource);
         }
 
-        protected override void RegisterResponds(ProjectFileWorkspace workspace, IActorContext context)
+        private static IEnumerable<Issue.IssueCompleter> ValidateSource(SourceUpdated arg)
         {
-            base.RegisterResponds(workspace, context);
-            workspace.Source.SourceUpdate.RespondOn(context.Self);
-        }
-
-        protected override void RegisterRules(IActorDsl dsl)
-        {
-            dsl.Receive<SourceUpdated>((updated, context) => ValidateSource(updated.Source, context));
-        }
-
-        private void ValidateSource(string source, IActorContext context)
-        {
-            var issues = new List<Issue>();
-
-            if (string.IsNullOrWhiteSpace(source))
-                issues.Add(new Issue(Issues.EmptySource, null, string.Empty));
-
-            SendIssues(issues, context);
+            if (string.IsNullOrWhiteSpace(arg.Source))
+                yield return Issue.New(Issues.EmptySource);
         }
     }
 }

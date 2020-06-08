@@ -8,7 +8,7 @@ namespace Tauron.Localization.Extension
     {
         public IActorRef LocCoordinator { get; private set; } = ActorRefs.Nobody;
 
-        internal LocExtension init(ActorSystem system)
+        internal LocExtension Init(ActorSystem system)
         {
             LocCoordinator = system.ActorOf(system.DI().Props(typeof(LocCoordinator)));
             return this;
