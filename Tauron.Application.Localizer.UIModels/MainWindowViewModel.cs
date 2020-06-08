@@ -11,6 +11,7 @@ using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.DataModel.Workspace;
+using Tauron.Application.Localizer.DataModel.Workspace.Analyzing;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Messages;
 using Tauron.Application.Localizer.UIModels.Services;
@@ -215,6 +216,20 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             public string File { get; }
+        }
+
+        private static class AnalyserEntryBuilder
+        {
+            public static AnalyzerEntry Get(Issue issue, LocLocalizer localizer)
+            {
+                switch (issue.IssueType)
+                {
+                    case Issues.EmptySource:
+                        return new AnalyzerEntry();
+                    default:
+                        return new AnalyzerEntry(localizer.CommonUnkowen, issue.Project, issue.Data?.ToString() ?? string.Empty, localizer.CommonUnkowen);
+                }
+            }
         }
     }
 }

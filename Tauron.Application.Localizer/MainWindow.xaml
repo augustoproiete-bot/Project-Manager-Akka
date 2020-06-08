@@ -69,8 +69,8 @@
                             <li:SfDataGrid.Columns>
                                 <li:GridTextColumn HeaderText="{tau:Loc MainWindow_Analyzer_RuleName}" MappingName="RuleName" FilteredFrom="AdvancedFilter" ImmediateUpdateColumnFilter="True"/>
                                 <li:GridTextColumn HeaderText="{tau:Loc MainWindow_Analyzer_Issue}" MappingName="ErrorName"  FilteredFrom="AdvancedFilter"/>
-                                <li:GridTextColumn HeaderText="Projeckt Name" MappingName="Project" FilteredFrom="AdvancedFilter"/>
-                                <li:GridTextColumn HeaderText="Issue Exploration" MappingName="Message" AllowSorting="False" AllowFiltering="False"/>
+                                <li:GridTextColumn HeaderText="{tau:Loc MainWindow_Analyzer_Project}" MappingName="Project" FilteredFrom="AdvancedFilter"/>
+                                <li:GridTextColumn HeaderText="{tau:Loc MainWindow_Analyzer_IssueDescription}" MappingName="Message" AllowSorting="False" AllowFiltering="False"/>
                             </li:SfDataGrid.Columns>
                         </li:SfDataGrid>
                     </ContentControl>

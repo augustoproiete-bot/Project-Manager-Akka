@@ -26,6 +26,8 @@
   "MainWindow_Analyzer_Header": "Analyse",
   "MainWindow_Analyzer_RuleName": "Regel",
   "MainWindow_Analyzer_Issue": "Wharnung Type",
+  "MainWindow_Analyzer_Project": "Projekt Name",
+  "MainWindow_Analyzer_IssueDescription": "Fehler Beschreibung",
 
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",

@@ -26,6 +26,8 @@
   "MainWindow_Analyzer_Header": "Analyzer",
   "MainWindow_Analyzer_RuleName": "Rule",
   "MainWindow_Analyzer_Issue": "Issue Type",
+  "MainWindow_Analyzer_Project": "Project Name",
+  "MainWindow_Analyzer_IssueDescription": "Issues Description",
 
   "MainWindowModel_LoadProject_Operation": "Load Project {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "No Project File Entered",
