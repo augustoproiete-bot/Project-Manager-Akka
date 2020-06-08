@@ -299,7 +299,7 @@ namespace Tauron.Application.Wpf.Model
             if (_propertys.ContainsKey(name))
                 throw new InvalidOperationException("Property is Regitrated");
 
-            return new FluentPropertyRegistration<TData>(name, this);
+            return new FluentPropertyRegistration<TData>(name, this).WithDefaultValue(default!);
         }
 
         private void GetPropertyValue(GetValueRequest obj)
