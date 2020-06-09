@@ -14,7 +14,7 @@
             <Button Margin="3" Content="{tau:Loc CenterView_AddGlobalLanguage_Label}"
                     tau:CommandBinder.Command="AddGlobalLang" />
         </ToolBar>
-        <TabControl ItemsSource="{tau:ActorBinding Views}" SelectedIndex="{tau:ActorBinding CurrentProject}">
+        <TabControl ItemsSource="{tau:ActorBinding Views}" SelectedIndex="{tau:ActorBinding CurrentProject}" >
             <TabControl.ItemTemplate>
                 <DataTemplate DataType="uiModels:ProjectViewContainer">
                     <TextBlock Text="{Binding Project.ProjectName}" />

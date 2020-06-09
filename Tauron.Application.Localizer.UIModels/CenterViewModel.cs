@@ -123,8 +123,8 @@ namespace Tauron.Application.Localizer.UIModels
             {
                 mainWindow.Saved = File.Exists(obj.ProjectFile.Source);
 
-                //foreach (var view in Views)
-                //    Context.Stop(view.Model.Actor);
+                foreach (var view in Views)
+                    Context.Stop(view.Model.Actor);
                 Views.Clear();
 
                 string titleName = obj.ProjectFile.Source;
