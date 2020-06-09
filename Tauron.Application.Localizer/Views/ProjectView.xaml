@@ -6,7 +6,7 @@
                  xmlns:tau="http://schemas.TauronWpf.com"
                  xmlns:uiModels="clr-namespace:Tauron.Application.Localizer.UIModels;assembly=Tauron.Application.Localizer.UIModels"
                  xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
-                 mc:Ignorable="d" Background="White" d:DataContext="{d:DesignInstance uiModels:ProjectViewModel}"
+                 mc:Ignorable="d" Background="White" d:DataContext="{d:DesignInstance uiModels:ProjectViewModel, IsDesignTimeCreatable=False}"
                  d:DesignHeight="450" d:DesignWidth="800">
     <Grid IsEnabled="{tau:ActorBinding IsEnabled}">
         <Grid.RowDefinitions>

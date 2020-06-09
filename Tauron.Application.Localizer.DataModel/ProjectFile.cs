@@ -14,7 +14,7 @@ namespace Tauron.Application.Localizer.DataModel
     [PublicAPI]
     public sealed partial class ProjectFile : IWriteable
     {
-        public const int Version = 1;
+        public const int Version = 2;
 
         public ProjectFile()
         {
@@ -22,6 +22,7 @@ namespace Tauron.Application.Localizer.DataModel
             Source = string.Empty;
             Operator = ActorRefs.Nobody;
             GlobalLanguages = ImmutableList<ActiveLanguage>.Empty;
+            BuildInfo = new BuildInfo();
         }
 
         private ProjectFile(string source, IActorRef op)
@@ -41,26 +42,28 @@ namespace Tauron.Application.Localizer.DataModel
 
         public bool IsEmpty => Operator.Equals(ActorRefs.Nobody);
 
+        public BuildInfo BuildInfo { get; }
+
         public void Write(BinaryWriter writer)
         {
             writer.Write(Version);
-            Helper.WriteList(Projects, writer);
-            Helper.WriteList(GlobalLanguages, writer);
+            BinaryHelper.WriteList(Projects, writer);
+            BinaryHelper.WriteList(GlobalLanguages, writer);
+            BuildInfo.Write(writer);
         }
 
-        public static ProjectFile FromSource(string source, IActorRef op)
-        {
-            return new ProjectFile(source, op);
-        }
+        public static ProjectFile FromSource(string source, IActorRef op) 
+            => new ProjectFile(source, op);
 
         public static ProjectFile ReadFile(BinaryReader reader, string source, IActorRef op)
         {
             var file = new ProjectFile(source, op);
             var builder = file.ToBuilder();
 
-            reader.ReadInt32();
-            builder.Projects = Helper.Read(reader, Project.ReadFrom);
-            builder.GlobalLanguages = Helper.Read(reader, ActiveLanguage.ReadFrom);
+            var vers = reader.ReadInt32();
+            builder.Projects = BinaryHelper.Read(reader, Project.ReadFrom);
+            builder.GlobalLanguages = BinaryHelper.Read(reader, ActiveLanguage.ReadFrom);
+            builder.BuildInfo = vers == 1 ? new BuildInfo() : BuildInfo.ReadFrom(reader);
 
             return builder.ToImmutable();
         }

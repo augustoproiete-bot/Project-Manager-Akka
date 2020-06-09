@@ -36,9 +36,9 @@ namespace Tauron.Application.Localizer.DataModel
         {
             writer.Write(ProjectName);
 
-            Helper.WriteList(ActiveLanguages, writer);
-            Helper.WriteList(Entries, writer);
-            Helper.WriteList(Imports, writer);
+            BinaryHelper.WriteList(ActiveLanguages, writer);
+            BinaryHelper.WriteList(Entries, writer);
+            BinaryHelper.WriteList(Imports, writer);
         }
 
         public ActiveLanguage GetActiveLanguage(string shortcut)
@@ -51,9 +51,9 @@ namespace Tauron.Application.Localizer.DataModel
             var project = new Builder
             {
                 ProjectName = reader.ReadString(),
-                ActiveLanguages = Helper.Read(reader, ActiveLanguage.ReadFrom),
-                Entries = Helper.Read(reader, LocEntry.ReadFrom),
-                Imports = Helper.ReadString(reader)
+                ActiveLanguages = BinaryHelper.Read(reader, ActiveLanguage.ReadFrom),
+                Entries = BinaryHelper.Read(reader, LocEntry.ReadFrom),
+                Imports = BinaryHelper.ReadString(reader)
             };
 
 

@@ -28,7 +28,7 @@ namespace Tauron.Application.Localizer.DataModel
             writer.Write(Project);
             writer.Write(Key);
 
-            Helper.WriteDic(Values, writer);
+            BinaryHelper.WriteDic(Values, writer);
         }
 
         public static LocEntry ReadFrom(BinaryReader reader)
@@ -37,7 +37,7 @@ namespace Tauron.Application.Localizer.DataModel
             {
                 Project = reader.ReadString(),
                 Key = reader.ReadString(),
-                Values = Helper.Read(reader, ActiveLanguage.ReadFrom, binaryReader => binaryReader.ReadString())
+                Values = BinaryHelper.Read(reader, ActiveLanguage.ReadFrom, binaryReader => binaryReader.ReadString())
             };
 
 

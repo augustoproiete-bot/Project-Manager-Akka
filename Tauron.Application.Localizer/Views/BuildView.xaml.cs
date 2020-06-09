@@ -10,17 +10,22 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Tauron.Akka;
+using Tauron.Application.Localizer.UIModels;
+using Tauron.Application.Wpf;
 
 namespace Tauron.Application.Localizer.Views
 {
     /// <summary>
     /// Interaktionslogik für BuildView.xaml
     /// </summary>
-    public partial class BuildView : UserControl
+    public partial class BuildView
     {
-        public BuildView()
+        public BuildView(IViewModel<BuildViewModel> model)
+            : base(model)
         {
             InitializeComponent();
+            Background = Brushes.Transparent;
         }
     }
 }

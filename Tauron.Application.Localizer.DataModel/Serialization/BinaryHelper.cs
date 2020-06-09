@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Tauron.Application.Localizer.DataModel.Serialization
 {
-    public static class Helper
+    public static class BinaryHelper
     {
         public static ImmutableDictionary<TKey, TValue> Read<TKey, TValue>(BinaryReader reader, Func<BinaryReader, TKey> keyConversion, Func<BinaryReader, TValue> valueConversion)
         {
@@ -15,6 +15,16 @@ namespace Tauron.Application.Localizer.DataModel.Serialization
                 builder.Add(keyConversion(reader), valueConversion(reader));
 
             return builder.ToImmutable();
+        }
+
+        public static void WriteDic(ImmutableDictionary<string, string> dic, BinaryWriter writer)
+        {
+            writer.Write(dic.Count);
+            foreach (var (key, value) in dic)
+            {
+                writer.Write(key);
+                writer.Write(value);
+            }
         }
 
         public static void WriteDic<TKey>(ImmutableDictionary<TKey, string> dic, BinaryWriter writer)

@@ -32,6 +32,8 @@
   "MainWindow_Analyer_Rule_Source": "Die Quell Datei existiert nicht",
   "MainWindow_Analyer_Rule_Source_Name": "Datei Fehler",
 
+  "MainWindow_Build_Meader": "Exportieren",
+
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",
 

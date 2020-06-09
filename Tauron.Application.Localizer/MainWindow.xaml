@@ -56,14 +56,28 @@
                     </MenuItem>
                 </Menu>
                 <li:DockingManager Name="DockingManager" Grid.Row="1" UseDocumentContainer="True" Margin="5" PersistState="True" IsEnableHotTracking="True" Loaded="FrameworkElement_OnLoaded">
-                    <Border Name="Projects" BorderBrush="LightGray" BorderThickness="1" Margin="5" li:DockingManager.CanClose="False" li:DockingManager.State="Document"
-                            li:DockingManager.Header="{tau:Loc MainWindow_ProjectContainer_Header}" li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}" 
-                            li:DockingManager.DockAbility="All" li:DockingManager.DocumentTabOrderIndex="0">
-                        <ContentControl Content="{tau:ViewModelBinding CenterView}" />
-                    </Border>
-                    <ContentControl Name="Analyzer" BorderBrush="LightGray" BorderThickness="1" Margin="5" li:DockingManager.CanClose="False" li:DockingManager.State="Document"
+                    <li:DockingManager.Resources>
+                        <Style x:Key="DockBase">
+                            <Setter Property="li:DockingManager.CanClose" Value="False"/>
+                            <Setter Property="li:DockingManager.DockAbility" Value="All"/>
+                        </Style>
+                        <Style x:Key="DocumentStyle" BasedOn="{StaticResource DockBase}">
+                            <Setter Property="li:DockingManager.State" Value="Document"/>
+                        </Style>
+                        <Style x:Key="ButtomStyle" BasedOn="{StaticResource DockBase}">
+                            <Setter Property="li:DockingManager.State" Value="AutoHidden"/>
+                            <Setter Property="li:DockingManager.DesiredHeightInDockedMode" Value="500"/>
+                            <Setter Property="li:DockingManager.SideInDockedMode" Value="Bottom"/>
+                        </Style>
+                    </li:DockingManager.Resources>
+                    <ContentControl Name="BuildControl" Style="{StaticResource DocumentStyle}" Margin="5" li:DockingManager.Header="{tau:Loc MainWindow_Build_Meader}" 
+                            li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}" Content="{tau:ViewModelBinding BuildModel}" li:DockingManager.DocumentTabOrderIndex="2"/>
+                    <ContentControl Name="Projects" Margin="5" li:DockingManager.Header="{tau:Loc MainWindow_ProjectContainer_Header}" Content="{tau:ViewModelBinding CenterView}"
+                            li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}" li:DockingManager.DocumentTabOrderIndex="0" Style="{StaticResource DocumentStyle}"/>
+                    
+                    <ContentControl Name="Analyzer" BorderBrush="LightGray" BorderThickness="1" Margin="5" Style="{StaticResource DocumentStyle}"
                                     li:DockingManager.Header="{tau:Loc MainWindow_Analyzer_Header}" li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}" 
-                                    li:DockingManager.DockAbility="All" li:DockingManager.DocumentTabOrderIndex="1">
+                                    li:DockingManager.DocumentTabOrderIndex="1">
                         <li:SfDataGrid ItemsSource="{tau:ActorBinding AnalyzerEntries}" ColumnSizer="AutoLastColumnFill" AllowResizingColumns="True" AllowSorting="True" AllowFiltering="True"
                                        ShowSortNumbers="True" AllowGrouping="True" ShowGroupDropArea="True" AllowTriStateSorting="True" AllowEditing="False">
                             <li:SfDataGrid.Columns>
@@ -74,9 +88,8 @@
                             </li:SfDataGrid.Columns>
                         </li:SfDataGrid>
                     </ContentControl>
-                    <StackPanel Name="Operations" li:DockingManager.CanClose="False" li:DockingManager.State="AutoHidden" li:DockingManager.Header="{tau:Loc MainWindow_Operation_Tabs_Label_Ops}"
-                                        li:DockingManager.SideInDockedMode="Bottom" li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}"   li:DockingManager.DockAbility="All"
-                                        li:DockingManager.DesiredHeightInDockedMode="500">
+                    <StackPanel Name="Operations" li:DockingManager.Header="{tau:Loc MainWindow_Operation_Tabs_Label_Ops}" li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}" 
+                                Style="{StaticResource ButtomStyle}">
                         <ToolBar>
                             <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete}"
                                                 tau:CommandBinder.Command="ClearOp" />
@@ -97,10 +110,8 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </StackPanel>
-                    <serilogViewer:SerilogViewer Name="Logger"
-                        li:DockingManager.CanClose="False" li:DockingManager.State="AutoHidden" li:DockingManager.Header="{tau:Loc MainWindow_Operation_Tabs_Label_Logs}"
-                                                     li:DockingManager.SideInDockedMode="Bottom" li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}"    
-                                                     li:DockingManager.DockAbility="All" li:DockingManager.DesiredHeightInDockedMode="500"/>
+                    <serilogViewer:SerilogViewer Name="Logger" li:DockingManager.Header="{tau:Loc MainWindow_Operation_Tabs_Label_Logs}" Style="{StaticResource ButtomStyle}"
+                                                 li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}"/>
                 </li:DockingManager>
             </Grid>
         </Grid>

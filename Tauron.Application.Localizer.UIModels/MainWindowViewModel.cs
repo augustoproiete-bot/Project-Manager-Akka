@@ -171,7 +171,18 @@ namespace Tauron.Application.Localizer.UIModels
             this.RespondOnEventSource(workspace.Analyzer.Issues, IssuesChanged);
 
             #endregion
+
+            #region Build
+
+            var buildModel = lifetimeScope.Resolve<IViewModel<BuildViewModel>>();
+            buildModel.Init(Context, "Build-View");
+
+            BuildModel = RegisterProperty<IViewModel<BuildViewModel>>(nameof(BuildModel)).WithDefaultValue(buildModel);
+
+            #endregion
         }
+
+        public UIProperty<IViewModel<BuildViewModel>> BuildModel { get; }
 
         private UICollectionProperty<AnalyzerEntry> AnalyzerEntries { get; }
 
