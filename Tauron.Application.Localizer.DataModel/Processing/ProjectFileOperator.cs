@@ -13,7 +13,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing
                 .AndReceive();
 
             this.Flow<SaveProject>()
-                .To.Func(s => s).
+                .To.External<>()
 
             Receive<SaveProject>(SaveProject);
         }

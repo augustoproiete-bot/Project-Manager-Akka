@@ -13,92 +13,77 @@ namespace Tauron
 
     public sealed class ExternalActorRecieveBuilder<TNext, TStart, TParent, TTarget> : ReceiveBuilderBase<TNext, TStart, TParent>
     {
-        private readonly Func<IActorContext, IActorRef> _target;
+        public ExternalActorRecieveBuilder([NotNull] ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target, bool forward) 
+            : base(flow)
+        {
+            if(forward)
+                flow.Register(ad => ad.Receive<TTarget>((msg, context) => target(context).Forward(msg)));
+            else
+                flow.Register(ad => ad.Receive<TTarget>((msg, context) => target(context).Tell(msg, context.Self)));
+        }
 
-        public ExternalActorRecieveBuilder([NotNull] ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target) 
-            : base(flow) =>
-            flow.Register(ad => ad.Receive<TTarget>((msg, context) => target(context).Tell(msg, context.Sender)));
-
-        public ExternalActorRecieveBuilder([NotNull] ActorFlowBuilder<TStart, TParent> flow, Func<IActorRef> target)
-            : base(flow) =>
-            flow.Register(ad => ad.Receive<TTarget>((msg, context) => target().Tell(msg, context.Sender)));
+        public ExternalActorRecieveBuilder([NotNull] ActorFlowBuilder<TStart, TParent> flow, Func<IActorRef> target, bool forward)
+            : base(flow)
+        {
+            if(forward)
+                flow.Register(ad => ad.Receive<TTarget>((msg, context) => target().Forward(msg)));
+            else
+                flow.Register(ad => ad.Receive<TTarget>((msg, context) => target().Tell(msg, context.Self)));
+        }
     }
 
     [PublicAPI]
     public sealed class RunSelector<TRecieve, TStart, TParent>
     {
-        public RunSelector(ActorFlowBuilder<TStart, TParent> flow)
-        {
-            Flow = flow;
-        }
+        public RunSelector(ActorFlowBuilder<TStart, TParent> flow) 
+            => Flow = flow;
 
         public ActorFlowBuilder<TStart, TParent> Flow { get; }
 
         public FuncTargetSelector<TRecieve, TNext, TStart, TParent> Func<TNext>(Func<TRecieve, TNext> transformer)
-            
-        {
-            return new FuncTargetSelector<TRecieve, TNext, TStart, TParent>(Flow, transformer);
-        }
+            => new FuncTargetSelector<TRecieve, TNext, TStart, TParent>(Flow, transformer);
 
         public AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent> Func<TNext>(Func<TRecieve, Task<TNext>> transformer)
+            => new AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent>(Flow, transformer);
+
+        public ActionFinisher<TRecieve, TStart, TParent> Action(Action<TRecieve> act) 
+            => new ActionFinisher<TRecieve, TStart, TParent>(Flow, act);
+
+        public ActionFinisher<TRecieve, TStart, TParent> Action(Func<TRecieve, Task> act) 
+            => new ActionFinisher<TRecieve, TStart, TParent>(Flow, act);
+
+        public ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve> External<TRespond>(Func<IActorRef> target, bool forward = false)
+            => new ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve>(Flow, target, forward);
+
+        public ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve> External<TRespond>(Func<IActorContext, IActorRef> target, bool forward = false)
+            => new ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve>(Flow, target, forward);
+
+        public ActionFinisher<TRecieve, TStart, TParent> External(Func<IActorRef> target, bool forward = false)
         {
-            return new AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent>(Flow, transformer);
+            return new ActionFinisher<TRecieve, TStart, TParent>(Flow, recieve => target().Tell(recieve));
         }
 
-        public ActionFinisher<TRecieve, TStart, TParent> Action(Action<TRecieve> act)
+        public ActionFinisher<TRecieve, TStart, TParent> External(Func<IActorContext, IActorRef> target, bool forward = false)
         {
-            return new ActionFinisher<TRecieve, TStart, TParent>(Flow, act);
         }
 
-        public ActionFinisher<TRecieve, TStart, TParent> Action(Func<TRecieve, Task> act)
-        {
-            return new ActionFinisher<TRecieve, TStart, TParent>(Flow, act);
-        }
-
-        public ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve> External<TRespond>(Func<IActorRef> target)
-            => new ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve>(Flow, target);
-
-        public ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve> External<TRespond>(Func<IActorContext, IActorRef> target)
-            => new ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve>(Flow, target);
-
-        public ActionFinisher<TRecieve, TStart, TParent> External(Func<IActorRef> target)   
-            => new ActionFinisher<TRecieve, TStart, TParent>(Flow);
-
-        public TParent Return()
-        {
-            return Flow.Return();
-        }
+        public TParent Return() => Flow.Return();
     }
 
     [PublicAPI]
     public abstract class AbastractTargetSelector<TRespond, TStart, TParent>
     {
-        protected AbastractTargetSelector(ActorFlowBuilder<TStart, TParent> flow)
-        {
-            Flow = flow;
-        }
+        protected AbastractTargetSelector(ActorFlowBuilder<TStart, TParent> flow) => Flow = flow;
 
         public ActorFlowBuilder<TStart, TParent> Flow { get; }
 
-        public TRespond ToSelf()
-        {
-            return ToRef(new RefFunc(RefFuncMode.Self).Send);
-        }
+        public TRespond ToSelf() => ToRef(new RefFunc(RefFuncMode.Self).Send);
 
-        public TRespond ToParent()
-        {
-            return ToRef(new RefFunc(RefFuncMode.Parent).Send);
-        }
+        public TRespond ToParent() => ToRef(new RefFunc(RefFuncMode.Parent).Send);
 
-        public TRespond ToSender()
-        {
-            return ToRef(new RefFunc(RefFuncMode.Sender).Send);
-        }
+        public TRespond ToSender() => ToRef(new RefFunc(RefFuncMode.Sender).Send);
 
-        public TRespond ToRef(IActorRef actorRef)
-        {
-            return ToRef(c => actorRef);
-        }
+        public TRespond ToRef(IActorRef actorRef) => ToRef(c => actorRef);
 
         public abstract TRespond ToRef(Func<IActorContext, IActorRef> actorRef);
 
@@ -137,15 +122,11 @@ namespace Tauron
         private readonly Func<TRecieve, TNext> _transformer;
 
         public FuncTargetSelector(ActorFlowBuilder<TStart, TParent> flow, Func<TRecieve, TNext> transformer)
-            : base(flow)
-        {
+            : base(flow) =>
             _transformer = transformer;
-        }
 
-        public override ReceiveBuilder<TRecieve, TNext, TStart, TParent> ToRef(Func<IActorContext, IActorRef> actorRef)
-        {
-            return new ReceiveBuilder<TRecieve, TNext, TStart, TParent>(Flow, actorRef, _transformer);
-        }
+        public override ReceiveBuilder<TRecieve, TNext, TStart, TParent> ToRef(Func<IActorContext, IActorRef> actorRef) 
+            => new ReceiveBuilder<TRecieve, TNext, TStart, TParent>(Flow, actorRef, _transformer);
     }
 
     [PublicAPI]
@@ -182,6 +163,18 @@ namespace Tauron
             _flow.Register(a => a.ReceiveAsync<TRecieve>(new AsyncActionRespond(runner).Run));
         }
 
+        public ActionFinisher(ActorFlowBuilder<TStart, TParent> flow, Action<IActorContext, TRecieve> runner)
+        {
+            _flow = flow;
+            _flow.Register(a => a.Receive<TRecieve>(new ActionRespondContext(runner).Run));
+        }
+
+        public ActionFinisher(ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, TRecieve, Task> runner)
+        {
+            _flow = flow;
+            _flow.Register(a => a.ReceiveAsync<TRecieve>(new AsyncActionRespondContext(runner).Run));
+        }
+
         public RunSelector<TNew, TStart, TParent> AndRespondTo<TNew>()
         {
             return new RunSelector<TNew, TStart, TParent>(_flow);
@@ -207,30 +200,36 @@ namespace Tauron
         {
             private readonly Action<TRecieve> _runner;
 
-            public ActionRespond(Action<TRecieve> runner)
-            {
-                _runner = runner;
-            }
+            public ActionRespond(Action<TRecieve> runner) => _runner = runner;
 
-            public void Run(TRecieve recieve, IActorContext context)
-            {
-                _runner(recieve);
-            }
+            public void Run(TRecieve recieve, IActorContext context) => _runner(recieve);
         }
 
         private sealed class AsyncActionRespond
         {
             private readonly Func<TRecieve, Task> _runner;
 
-            public AsyncActionRespond(Func<TRecieve, Task> runner)
-            {
-                _runner = runner;
-            }
+            public AsyncActionRespond(Func<TRecieve, Task> runner) => _runner = runner;
 
-            public async Task Run(TRecieve recieve, IActorContext context)
-            {
-                await _runner(recieve);
-            }
+            public async Task Run(TRecieve recieve, IActorContext context) => await _runner(recieve);
+        }
+
+        private sealed class ActionRespondContext
+        {
+            private readonly Action<IActorContext, TRecieve> _runner;
+
+            public ActionRespondContext(Action<IActorContext, TRecieve> runner) => _runner = runner;
+
+            public void Run(TRecieve recieve, IActorContext context) => _runner(context, recieve);
+        }
+
+        private sealed class AsyncActionRespondContext
+        {
+            private readonly Func<IActorContext, TRecieve, Task> _runner;
+
+            public AsyncActionRespondContext(Func<IActorContext, TRecieve, Task> runner) => _runner = runner;
+
+            public async Task Run(TRecieve recieve, IActorContext context) => await _runner(context, recieve);
         }
 
         private sealed class ReceiveHelper
@@ -248,7 +247,6 @@ namespace Tauron
             }
         }
     }
-
 
     public abstract class ReceiveBuilderBase<TNext, TStart, TParent>
     {
