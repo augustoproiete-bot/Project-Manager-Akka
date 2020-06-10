@@ -172,10 +172,10 @@ namespace Tauron.Application.Localizer.UIModels
 
             #endregion
 
-            #region Build
+            #region AndBuild
 
             var buildModel = lifetimeScope.Resolve<IViewModel<BuildViewModel>>();
-            buildModel.Init(Context, "Build-View");
+            buildModel.Init(Context, "AndBuild-View");
 
             BuildModel = RegisterProperty<IViewModel<BuildViewModel>>(nameof(BuildModel)).WithDefaultValue(buildModel);
 

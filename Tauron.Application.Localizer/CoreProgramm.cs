@@ -15,22 +15,6 @@ namespace Tauron.Application.Localizer
 {
     public static class CoreProgramm
     {
-        //static string MakeRelativePath(string absolutePath, string pivotFolder)
-        //{
-        //    //string folder = Path.IsPathRooted(pivotFolder)
-        //    //    ? pivotFolder : Path.GetFullPath(pivotFolder);
-        //    string folder = pivotFolder;
-        //    Uri pathUri = new Uri(absolutePath);
-        //    // Folders must end in a slash
-        //    if (!folder.EndsWith(Path.DirectorySeparatorChar.ToString()))
-        //    {
-        //        folder += Path.DirectorySeparatorChar;
-        //    }
-        //    Uri folderUri = new Uri(folder);
-        //    Uri relativeUri = folderUri.MakeRelativeUri(pathUri);
-        //    return Uri.UnescapeDataString(
-        //        relativeUri.ToString().Replace('/', Path.DirectorySeparatorChar));
-        //}
         //"pack: //application:,,,/Tauron.Application.Localizer;component/Theme.xaml"
 
         public static async Task Main(string[] args)

@@ -113,7 +113,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             this.Flow<RemoveRequest>()
                 .To.Mutate(workspace.Entrys).With(em => em.EntryRemove, em => rr => em.RemoveEntry(rr.ProjectName, rr.EntryName)).ToSelf()
-                .Then.Action(RemoveEntry).Receive();
+                .Then.Action(RemoveEntry).AndReceive();
 
             #endregion
 
@@ -129,7 +129,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             this.Flow<UpdateRequest>()
                 .To.Mutate(workspace.Entrys).With(em => em.EntryUpdate, em => ur => em.UpdateEntry(ur.ProjectName, ur.Language, ur.EntryName, ur.Content)).ToSelf()
-                .Then.Action(UpdateEntry).Receive();
+                .Then.Action(UpdateEntry).AndReceive();
 
             #endregion
 

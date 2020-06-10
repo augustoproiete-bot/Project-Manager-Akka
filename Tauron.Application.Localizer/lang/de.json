@@ -34,6 +34,14 @@
 
   "MainWindow_Build_Meader": "Exportieren",
   "MainWindow_Build_ImportIntigration_Label": "Importierte Projekte Importieren",
+  "MainWindow_Build_Project_GroupBox": "Projekte",
+  "MainWindow_Build_EmptyPath_Label": "Leere Pfade werden Ignoriert",
+  "MainWindow_BuildProject_Label": "Projekt {0}:",
+  "MainWindow_BuildProject_FolderBrowser_Description": "Ausgabe Pfad",
+  "MainWindow_BuildProject_Search_Label": "Suche",
+  "MainWindow_Build_Start_Label": "Exportieren",
+
+  "MainWindowodel_BuildProject_Operation":  "Eportiere Project: {0}",
 
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",

@@ -56,6 +56,12 @@ namespace Tauron.Application.Localizer.UIModels.lang
 
         private readonly Task<string> _mainWindowAnalyerRuleSourceName;
 
+        private readonly Task<string> _mainWindowBuildProjectLabel;
+
+        private readonly Task<string> _mainWindowBuildProjectFolderBrowserDescription;
+
+        private readonly Task<string> _mainWindowodelBuildProjectOperation;
+
         public LocLocalizer(ActorSystem system)
         {
             var loc = system.Loc();
@@ -84,8 +90,16 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _newEntryDialogViewCharError = ToString(loc.RequestTask("NewEntryDialogView_Char_Error"));
             _mainWindowAnalyerRuleSource = ToString(loc.RequestTask("MainWindow_Analyer_Rule_Source"));
             _mainWindowAnalyerRuleSourceName = ToString(loc.RequestTask("MainWindow_Analyer_Rule_Source_Name"));
-
+            _mainWindowBuildProjectLabel = ToString(loc.RequestTask("MainWindow_BuildProject_Label"));
+            _mainWindowBuildProjectFolderBrowserDescription = ToString(loc.RequestTask("MainWindow_BuildProject_FolderBrowser_Description"));
+            _mainWindowodelBuildProjectOperation = ToString(loc.RequestTask("MainWindowodel_BuildProject_Operation"));
         }
+
+        public string MainWindowodelBuildProjectOperation => _mainWindowodelBuildProjectOperation.Result;
+
+        public string MainWindowBuildProjectFolderBrowserDescription => _mainWindowBuildProjectFolderBrowserDescription.Result;
+
+        public string MainWindowBuildProjectLabel => _mainWindowBuildProjectLabel.Result;
 
         public string MainWindowAnalyerRuleSourceName => _mainWindowAnalyerRuleSourceName.Result;
 

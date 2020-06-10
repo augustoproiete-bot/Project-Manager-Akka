@@ -4,11 +4,17 @@ using Tauron.Application.Localizer.DataModel.Processing.Actors;
 
 namespace Tauron.Application.Localizer.DataModel.Processing
 {
-    public sealed class ProjectFileOperator : ReceiveActor
+    public sealed class ProjectFileOperator : ExposedReceiveActor
     {
         public ProjectFileOperator()
         {
-            Receive<LoadProjectFile>(LoadProjectFile);
+            this.Flow<LoadProjectFile>()
+                .To.Func(lp => new InternalLoadProject(lp, Context.Sender)).ToRef(ac => ac.ActorOf<ProjectLoader>())
+                .AndReceive();
+
+            this.Flow<SaveProject>()
+                .To.Func(s => s).
+
             Receive<SaveProject>(SaveProject);
         }
 
@@ -16,11 +22,6 @@ namespace Tauron.Application.Localizer.DataModel.Processing
         {
             var actor = Context.GetOrAdd<ProjectSaver>("Saver");
             actor.Forward(obj);
-        }
-
-        private void LoadProjectFile(LoadProjectFile obj)
-        {
-            Context.ActorOf<ProjectLoader>().Tell(new InternalLoadProject(obj, Sender));
         }
     }
 }

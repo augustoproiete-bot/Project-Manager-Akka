@@ -34,6 +34,14 @@
 
   "MainWindow_Build_Meader": "Export",
   "MainWindow_Build_ImportIntigration_Label": "Importing Imported Projects,",
+  "MainWindow_Build_Project_GroupBox": "Projects",
+  "MainWindow_Build_EmptyPath_Label": "Empty Path is Igrnored during Exort",
+  "MainWindow_BuildProject_Label": "Project {0}:",
+  "MainWindow_BuildProject_FolderBrowser_Description": "Output Folder",
+  "MainWindow_BuildProject_Search_Label": "Search",
+  "MainWindow_Build_Start_Label": "Export",
+
+  "MainWindowodel_BuildProject_Operation": "Eport project: {0}",
 
   "MainWindowModel_LoadProject_Operation": "Load Project {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "No Project File Entered",

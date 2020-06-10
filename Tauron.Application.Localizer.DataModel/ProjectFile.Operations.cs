@@ -1,4 +1,6 @@
-﻿using Akka.Actor;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Akka.Actor;
 using Tauron.Akka;
 using Tauron.Application.Localizer.DataModel.Processing;
 
@@ -52,5 +54,8 @@ namespace Tauron.Application.Localizer.DataModel
 
             return this;
         }
+
+        public string? FindProjectPath(Project project)
+            => BuildInfo.ProjectPaths.FirstOrDefault(p => p.Key == project.ProjectName).Value;
     }
 }

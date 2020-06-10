@@ -65,14 +65,14 @@ namespace Tauron.Application.Localizer.UIModels
 
             this.Flow<SaveRequest>().To.EventSource(workspace.Source.SaveRequest).ToSelf()
                 .Then.Action(SaveRequested)
-                .RespondTo<SavedProject>().Action(ProjectSaved).Receive();
+                .AndRespondTo<SavedProject>().Action(ProjectSaved).AndReceive();
 
             #endregion
 
             #region Update Source
 
             this.Flow<UpdateSource>().To.Mutate(workspace.Source).With(sm => sm.SourceUpdate, sm => us => sm.UpdateSource(us.Name)).ToSelf()
-                .Then.Action(su => mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source)).Receive();
+                .Then.Action(su => mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source)).AndReceive();
 
             #endregion
 
@@ -149,11 +149,11 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             this.Flow<SupplyNewProjectFile>().To.Mutate(workspace.Source).With(sm => sm.ProjectReset, sm => np => sm.Reset(np.File)).ToSelf()
-                .Then.Action(ProjectRest).Receive();
+                .Then.Action(ProjectRest).AndReceive();
 
             #endregion
 
-            #region Add project
+            #region Add Project
 
             void AddProject(Project project)
             {

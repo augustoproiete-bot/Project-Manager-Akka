@@ -1,15 +1,14 @@
 ﻿using System;
 using System.IO;
 using Akka.Actor;
+using Tauron.Akka;
 
 namespace Tauron.Application.Localizer.DataModel.Processing.Actors
 {
-    public sealed class ProjectLoader : ReceiveActor
+    public sealed class ProjectLoader : ExposedReceiveActor
     {
-        public ProjectLoader()
-        {
-            Receive<InternalLoadProject>(LoadProjectFile);
-        }
+        public ProjectLoader() 
+            => this.Flow<InternalLoadProject>().To.Action(LoadProjectFile).AndReceive();
 
         private void LoadProjectFile(InternalLoadProject obj)
         {

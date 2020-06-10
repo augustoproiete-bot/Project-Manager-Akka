@@ -11,6 +11,19 @@ namespace Tauron
 {
     public delegate void EnterFlow<in TStart>(TStart msg);
 
+    public sealed class ExternalActorRecieveBuilder<TNext, TStart, TParent, TTarget> : ReceiveBuilderBase<TNext, TStart, TParent>
+    {
+        private readonly Func<IActorContext, IActorRef> _target;
+
+        public ExternalActorRecieveBuilder([NotNull] ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target) 
+            : base(flow) =>
+            flow.Register(ad => ad.Receive<TTarget>((msg, context) => target(context).Tell(msg, context.Sender)));
+
+        public ExternalActorRecieveBuilder([NotNull] ActorFlowBuilder<TStart, TParent> flow, Func<IActorRef> target)
+            : base(flow) =>
+            flow.Register(ad => ad.Receive<TTarget>((msg, context) => target().Tell(msg, context.Sender)));
+    }
+
     [PublicAPI]
     public sealed class RunSelector<TRecieve, TStart, TParent>
     {
@@ -41,6 +54,15 @@ namespace Tauron
         {
             return new ActionFinisher<TRecieve, TStart, TParent>(Flow, act);
         }
+
+        public ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve> External<TRespond>(Func<IActorRef> target)
+            => new ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve>(Flow, target);
+
+        public ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve> External<TRespond>(Func<IActorContext, IActorRef> target)
+            => new ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve>(Flow, target);
+
+        public ActionFinisher<TRecieve, TStart, TParent> External(Func<IActorRef> target)   
+            => new ActionFinisher<TRecieve, TStart, TParent>(Flow);
 
         public TParent Return()
         {
@@ -160,19 +182,19 @@ namespace Tauron
             _flow.Register(a => a.ReceiveAsync<TRecieve>(new AsyncActionRespond(runner).Run));
         }
 
-        public RunSelector<TNew, TStart, TParent> RespondTo<TNew>()
+        public RunSelector<TNew, TStart, TParent> AndRespondTo<TNew>()
         {
             return new RunSelector<TNew, TStart, TParent>(_flow);
         }
 
-        public EnterFlow<TStart> Build()
+        public EnterFlow<TStart> AndBuild()
         {
             return _flow.Build();
         }
 
-        public void Receive()
+        public void AndReceive()
         {
-            _flow.Register(e => e.Receive<TStart>(new ReceiveHelper(Build()).Send));
+            _flow.Register(e => e.Receive<TStart>(new ReceiveHelper(AndBuild()).Send));
             _flow.BuildReceive();
         }
 
@@ -266,6 +288,11 @@ namespace Tauron
                 if (result == null) return;
                 _target(context).Tell(result, context.Self);
             }
+        }
+
+        public void AndReceive()
+        {
+            Flow.BuildReceive();
         }
     }
 

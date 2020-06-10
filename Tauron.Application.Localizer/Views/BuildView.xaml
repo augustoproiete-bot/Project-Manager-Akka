@@ -20,20 +20,26 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <CheckBox Grid.ColumnSpan="2" Margin="5" Content="{tau:Loc MainWindow_Build_ImportIntigration_Label}" HorizontalAlignment="Center" IsChecked="{tau:ActorBinding Importintegration}"/>
-        <GroupBox Header="Projekte" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5" Foreground="White">
+        <GroupBox Header="{tau:Loc MainWindow_Build_Project_GroupBox}" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5" Foreground="White">
             <StackPanel>
-                <TextBlock Margin="5" Text="Leere Zeilen werden Ignoriet"/>
-                <ItemsControl Margin="5">
-                    <Border Margin="5" BorderThickness="1" BorderBrush="Black">
-                        <DockPanel LastChildFill="True">
-                            <TextBlock DockPanel.Dock="Left" Text="Projekt: Test" Margin="5"/>
-                            <TextBox Margin="5"/>
-                        </DockPanel>
-                    </Border>
+                <TextBlock Margin="5" Text="{tau:Loc MainWindow_Build_EmptyPath_Label}"/>
+                <ItemsControl Margin="5" ScrollViewer.VerticalScrollBarVisibility="Auto" ItemsSource="{tau:ActorBinding Projects}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="uiModels:BuildProjectViewModel">
+                            <Border Margin="5" BorderThickness="1" BorderBrush="Black">
+                                <DockPanel LastChildFill="True">
+                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Label}" Margin="5"/>
+                                    <TextBox Margin="5" Text="{Binding Path, Delay=500, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <Button Margin="5" Content="{tau:Loc MainWindow_BuildProject_Search_Label}" Command="{Binding Search}"/>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
         </GroupBox>
-        <terminal:Terminal Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="5"  IsReadOnly="True" Foreground="White" Background="Transparent"/>
-        <Button Content="Exportieren" Margin="10" Grid.Row="3" Grid.Column="1"></Button>
+        <terminal:Terminal Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="5"  IsReadOnly="True" Foreground="White" Background="Transparent" 
+                           ItemsSource="{tau:ActorBinding TerminalMessages}"/>
+        <Button Content="{tau:Loc MainWindow_Build_Start_Label}" Margin="10" Grid.Row="3" Grid.Column="1" tau:CommandBinder.Command="StartBuild"/>
     </Grid>
 </tau:UserControl>
