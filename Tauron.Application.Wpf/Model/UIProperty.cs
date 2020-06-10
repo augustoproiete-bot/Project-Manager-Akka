@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.Model
@@ -13,12 +14,15 @@ namespace Tauron.Application.Wpf.Model
         internal UIProperty(string name)
             : base(name)
         {
+            PropertyValueChanged += () => PropertyValueChangedFunc?.Invoke(Value);
         }
 
         public TData Value
         {
             [return: MaybeNull] get => InternalValue is TData data ? data : default!;
         }
+
+        public event Action<TData> PropertyValueChangedFunc;
 
         public void Set([AllowNull] TData data)
         {

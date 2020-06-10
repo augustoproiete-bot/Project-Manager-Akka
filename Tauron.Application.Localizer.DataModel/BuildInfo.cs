@@ -12,8 +12,11 @@ namespace Tauron.Application.Localizer.DataModel
 
         public ImmutableDictionary<string, string> ProjectPaths { get; }
 
-        public BuildInfo() 
-            => ProjectPaths = ImmutableDictionary<string, string>.Empty;
+        public BuildInfo()
+        {
+            IntigrateProjects = true;
+            ProjectPaths = ImmutableDictionary<string, string>.Empty;
+        }
 
         public void Write(BinaryWriter writer)
         {

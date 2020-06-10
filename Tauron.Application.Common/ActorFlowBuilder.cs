@@ -176,7 +176,7 @@ namespace Tauron
             _flow.BuildReceive();
         }
 
-        public TParent Return()
+        public TParent AndReturn()
         {
             return _flow.Return();
         }

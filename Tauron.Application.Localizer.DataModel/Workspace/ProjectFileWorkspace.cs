@@ -21,6 +21,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace
             Projects = new ProjectMutator(Engine, this);
             Source = new SourceMutator(Engine, this);
             Entrys = new EntryMutator(Engine);
+            Build = new BuildMutator(Engine);
 
             Analyzer.RegisterRule(new SourceRule());
         }
@@ -33,6 +34,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace
 
         public EntryMutator Entrys { get; }
 
+        public BuildMutator Build { get; }
 
         public Project Get(string name)
         {

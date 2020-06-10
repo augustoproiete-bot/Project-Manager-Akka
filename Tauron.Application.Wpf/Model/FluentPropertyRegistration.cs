@@ -38,6 +38,13 @@ namespace Tauron.Application.Wpf.Model
             return this;
         }
 
+        public FluentPropertyRegistration<TData> OnChange(Action<TData> changed)
+        {
+            Property.PropertyValueChangedFunc += changed;
+            return this;
+        }
+
+
         public static implicit operator UIProperty<TData>(FluentPropertyRegistration<TData> config)
         {
             return config.Property;

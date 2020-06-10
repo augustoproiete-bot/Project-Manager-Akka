@@ -209,7 +209,7 @@ namespace Tauron
                     targetExpression = Expression.Block(
                         Enumerable.Empty<ParameterExpression>(),
                         targetExpression,
-                        //Expression.Return(label, Expression.Constant(null), typeof(object)),
+                        //Expression.AndReturn(label, Expression.Constant(null), typeof(object)),
                         labelExpression);
                 }
                 else

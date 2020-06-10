@@ -19,10 +19,13 @@ namespace Tauron.Application.Wpf.UI
 
         public override object? ProvideValue(IServiceProvider provider)
         {
-            if (!TryGetTargetItems(provider, out var dependencyObject, out _) || !ControlBindLogic.FindDataContext(dependencyObject, out var model)) return null;
+            if (!TryGetTargetItems(provider, out var dependencyObject, out _))
+                return null;
 
             if (DesignerProperties.GetIsInDesignMode(dependencyObject))
                 return null;
+
+            if (!ControlBindLogic.FindDataContext(dependencyObject, out var model)) return null;
 
             Path = Path != null ? new PropertyPath("Value." + Path.Path, Path.PathParameters) : new PropertyPath("Value");
             Source = new DeferredSource(_name, model);

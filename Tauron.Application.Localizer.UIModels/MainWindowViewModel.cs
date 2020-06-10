@@ -68,7 +68,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => _last != null && !_last.IsEmpty)
-                .ToFlow(SaveAsProject).Send.ToModel(CenterView)
+                .ThenFlow(SaveAsProject).Send.ToModel(CenterView)
                 .Return().ThenRegister("SaveAs");
 
             #endregion
@@ -122,7 +122,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => _loadingOperation == null)
-                .ToFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenExistingFile)), OpenFileMode.OpenExistingFile))
+                .ThenFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenExistingFile)), OpenFileMode.OpenExistingFile))
                 .To.Func(SourceSelectedFunc).ToSelf()
                 .Then.Func(ProjectLoaded!).ToModel(CenterView)
                 .Then.Return().ThenRegister("OpenFile");
@@ -148,8 +148,8 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => _loadingOperation == null)
-                //.ToFlow(SourceSelected.From(() => "", OpenFileMode.OpenNewFile)).Send.ToSelf()
-                .ToFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenNewFile)), OpenFileMode.OpenNewFile)).Send.ToSelf()
+                //.ThenFlow(SourceSelected.From(() => "", OpenFileMode.OpenNewFile)).Send.ToSelf()
+                .ThenFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenNewFile)), OpenFileMode.OpenNewFile)).Send.ToSelf()
                 .Return().ThenRegister("NewFile");
 
             #endregion
