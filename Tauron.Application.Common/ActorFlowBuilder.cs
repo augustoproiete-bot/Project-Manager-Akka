@@ -60,11 +60,30 @@ namespace Tauron
 
         public ActionFinisher<TRecieve, TStart, TParent> External(Func<IActorRef> target, bool forward = false)
         {
-            return new ActionFinisher<TRecieve, TStart, TParent>(Flow, recieve => target().Tell(recieve));
+            return forward 
+                ? new ActionFinisher<TRecieve, TStart, TParent>(Flow, recieve => target().Forward(recieve)) 
+                : new ActionFinisher<TRecieve, TStart, TParent>(Flow, recieve => target().Tell(recieve));
         }
 
         public ActionFinisher<TRecieve, TStart, TParent> External(Func<IActorContext, IActorRef> target, bool forward = false)
         {
+            return forward 
+                ? new ActionFinisher<TRecieve, TStart, TParent>(Flow, (context, recieve) => target(context).Forward(recieve)) 
+                : new ActionFinisher<TRecieve, TStart, TParent>(Flow, (context, recieve) => target(context).Tell(recieve));
+        }
+
+        public ActionFinisher<TRecieve, TStart, TParent> External<TTransform>(Func<IActorRef> target, Func<TRecieve, TTransform> convert, bool forward = false)
+        {
+            return forward
+                ? new ActionFinisher<TRecieve, TStart, TParent>(Flow, recieve => target().Forward(convert(recieve)))
+                : new ActionFinisher<TRecieve, TStart, TParent>(Flow, recieve => target().Tell(convert(recieve)));
+        }
+
+        public ActionFinisher<TRecieve, TStart, TParent> External<TTransform>(Func<IActorContext, IActorRef> target, Func<TRecieve, TTransform> convert, bool forward = false)
+        {
+            return forward
+                ? new ActionFinisher<TRecieve, TStart, TParent>(Flow, (context, recieve) => target(context).Forward(convert(recieve)))
+                : new ActionFinisher<TRecieve, TStart, TParent>(Flow, (context, recieve) => target(context).Tell(convert(recieve)));
         }
 
         public TParent Return() => Flow.Return();

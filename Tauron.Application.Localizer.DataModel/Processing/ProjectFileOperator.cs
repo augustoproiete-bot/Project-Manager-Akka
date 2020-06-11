@@ -13,15 +13,12 @@ namespace Tauron.Application.Localizer.DataModel.Processing
                 .AndReceive();
 
             this.Flow<SaveProject>()
-                .To.External<>()
+               .To.External(c => c.GetOrAdd<ProjectSaver>("Saver"), true)
+               .AndReceive();
 
-            Receive<SaveProject>(SaveProject);
-        }
-
-        private void SaveProject(SaveProject obj)
-        {
-            var actor = Context.GetOrAdd<ProjectSaver>("Saver");
-            actor.Forward(obj);
+            this.Flow<BuildRequest>()
+               .To.External(c => c.GetOrAdd<BuildActorCoordinator>("Builder"), true)
+               .AndReceive();
         }
     }
 }

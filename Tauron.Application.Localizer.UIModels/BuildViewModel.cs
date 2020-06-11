@@ -27,7 +27,7 @@ namespace Tauron.Application.Localizer.UIModels
         public ProjectBuildpathRequest(string targetPath, string project)
         {
             TargetPath = targetPath;
-            this.Project = project;
+            Project = project;
         }
     }
 
