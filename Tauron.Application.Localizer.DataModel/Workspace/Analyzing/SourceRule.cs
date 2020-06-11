@@ -14,7 +14,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Analyzing
         protected override IEnumerable<Issue.IssueCompleter> ValidateAll(ProjectRest projectRest, IActorContext context) 
             => ValidateSource(new SourceUpdated(projectRest.ProjectFile.Source));
 
-        protected override void RegisterRespond(ExposedReceiveActor actor)
+        protected override void RegisterRespond(IExposedReceiveActor actor)
         {
             RegisterRespond(Workspace.Source.SourceUpdate, ValidateSource);
         }

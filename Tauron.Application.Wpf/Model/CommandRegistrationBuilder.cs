@@ -13,13 +13,13 @@ namespace Tauron.Application.Wpf.Model
 
         private Delegate? _command;
 
-        internal CommandRegistrationBuilder(Action<string, Action<object?>, Func<object?, bool>?> register, ExposedReceiveActor target)
+        internal CommandRegistrationBuilder(Action<string, Action<object?>, Func<object?, bool>?> register, IExposedReceiveActor target)
         {
             Target = target;
             _register = register;
         }
 
-        public ExposedReceiveActor Target { get; }
+        public IExposedReceiveActor Target { get; }
 
         public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<object?, bool>? canExecute)
         {

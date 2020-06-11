@@ -13,7 +13,7 @@ namespace Tauron.Application.Workshop.Analyzing.Rules
     {
         private sealed class InternalRuleActor : ExposedReceiveActor
         {
-            public InternalRuleActor(Action<ExposedReceiveActor> constructor) 
+            public InternalRuleActor(Action<IExposedReceiveActor> constructor) 
                 => constructor(this);
         }
 
@@ -27,7 +27,7 @@ namespace Tauron.Application.Workshop.Analyzing.Rules
             return superviser.ActorOf(() => new InternalRuleActor(ActorConstruct), Name);
         }
 
-        protected abstract void ActorConstruct(ExposedReceiveActor actor);
+        protected abstract void ActorConstruct(IExposedReceiveActor actor);
 
         //protected abstract void RegisterResponds(TWorkspace workspace, IActorContext context);
 

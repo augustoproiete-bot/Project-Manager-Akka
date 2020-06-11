@@ -32,11 +32,11 @@ namespace Tauron.Application.Wpf
 
         #region UIProperty
 
-        public static ActorFlowBuilder<TData, FluentPropertyRegistration<TData>> ThenFlow<TData>(this FluentPropertyRegistration<TData> prop, ExposedReceiveActor owner)
+        public static ActorFlowBuilder<TData, FluentPropertyRegistration<TData>> ThenFlow<TData>(this FluentPropertyRegistration<TData> prop, IExposedReceiveActor owner)
             => new ActorFlowBuilder<TData, FluentPropertyRegistration<TData>>(owner, prop, flow => prop.OnChange(v => flow(v)));
 
         public static ActorFlowBuilder<TConvert, FluentPropertyRegistration<TData>> ThenFlow<TData, TConvert>(this FluentPropertyRegistration<TData> prop, Func<TData, TConvert> converter,
-            ExposedReceiveActor owner)
+            IExposedReceiveActor owner)
             => new ActorFlowBuilder<TConvert, FluentPropertyRegistration<TData>>(owner, prop, flow => prop.OnChange(v => flow(converter(v))));
 
         #endregion

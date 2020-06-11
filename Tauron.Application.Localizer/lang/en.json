@@ -42,6 +42,8 @@
   "MainWindow_Build_Start_Label": "Export",
 
   "MainWindowodel_BuildProject_Operation": "Eport project: {0}",
+  "MainWindow_BuildProject_GatherData": "Gathering Data",
+  "MainWindow_Buildproject_NoData": "No Data Found",
 
   "MainWindowModel_LoadProject_Operation": "Load Project {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "No Project File Entered",

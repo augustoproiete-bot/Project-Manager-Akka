@@ -154,25 +154,27 @@ namespace Tauron.Application.Localizer.UIModels
 
             #region Terminal
 
-            TerminalMessages = this.RegisterUiCollection<string>(nameof(TerminalMessages)).Async();
+            TerminalMessages = this.RegisterUiCollection<string>(nameof(TerminalMessages));
             var buildMessageLocalizer = new BuildMessageLocalizer(localizer);
 
             this.Flow<BuildMessage>().To.Action(AddMessage).AndReceive();
 
-            void ClearTerminal() => TerminalMessages.Clear();
+            void ClearTerminal() => UICall(TerminalMessages.Clear);
 
             void AddMessage(BuildMessage message)
             {
                 var locMsg = buildMessageLocalizer.Get(message);
                 manager.Find(message.OperationId)?.UpdateStatus(locMsg);
-                TerminalMessages.Add(locMsg);
+                UICall(() => TerminalMessages.Add(locMsg));
             }
 
             #endregion
 
             #region Build
-            
-            NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty).WithExecute(ClearTerminal)
+
+            var canBuild = true;
+
+            NewCommad.WithCanExecute(() => canBuild && !workspace.ProjectFile.IsEmpty).WithExecute(ClearTerminal).WithExecute(() => canBuild = false)
                 .ThenFlow(() => new BuildRequest(manager.StartOperation(localizer.MainWindowodelBuildProjectOperation).Id, workspace.ProjectFile))
                 .To.External<BuildCompled>(() => workspace.ProjectFile.Operator)
                 .Then.Action(BuildCompled)
@@ -187,6 +189,9 @@ namespace Tauron.Application.Localizer.UIModels
                     op.Failed();
                 else
                     op.Compled();
+
+                canBuild = true;
+                CommandChanged();
             }
 
             #endregion
@@ -239,6 +244,8 @@ namespace Tauron.Application.Localizer.UIModels
             {
                 return msg.Message switch
                 {
+                    BuildMessage.Ids.NoData => _localizer.MainWindowBuildprojectNoData,
+                    BuildMessage.Ids.GatherData => _localizer.MainWindowBuildProjectGatherData,
                     _ => msg.Message
                 };
             }

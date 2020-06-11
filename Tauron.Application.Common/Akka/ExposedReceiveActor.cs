@@ -7,8 +7,14 @@ using JetBrains.Annotations;
 
 namespace Tauron.Akka
 {
+    public interface IExposedReceiveActor
+    {
+        IActorDsl Exposed { get; }
+        IUntypedActorContext ExposedContext { get; }
+    }
+
     [PublicAPI]
-    public class ExposedReceiveActor : ReceiveActor, IActorDsl
+    public class ExposedReceiveActor : ReceiveActor, IActorDsl, IExposedReceiveActor
     {
         private Action<Exception, IActorContext>? _onPostRestart;
         private Action<IActorContext>? _onPostStop;

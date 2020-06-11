@@ -41,7 +41,9 @@
   "MainWindow_BuildProject_Search_Label": "Suche",
   "MainWindow_Build_Start_Label": "Exportieren",
 
-  "MainWindowodel_BuildProject_Operation":  "Eportiere Project: {0}",
+  "MainWindowodel_BuildProject_Operation": "Eportiere Project: {0}",
+  "MainWindow_BuildProject_GatherData": "Daten werden Gesammelt",
+  "MainWindow_Buildproject_NoData": "Keine Daten Gefunden",
 
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",

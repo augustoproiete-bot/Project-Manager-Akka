@@ -62,6 +62,10 @@ namespace Tauron.Application.Localizer.UIModels.lang
 
         private readonly Task<string> _mainWindowodelBuildProjectOperation;
 
+        private readonly Task<string> _mainWindowBuildProjectGatherData;
+
+        private readonly Task<string> _mainWindowBuildprojectNoData;
+
         public LocLocalizer(ActorSystem system)
         {
             var loc = system.Loc();
@@ -93,7 +97,13 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _mainWindowBuildProjectLabel = ToString(loc.RequestTask("MainWindow_BuildProject_Label"));
             _mainWindowBuildProjectFolderBrowserDescription = ToString(loc.RequestTask("MainWindow_BuildProject_FolderBrowser_Description"));
             _mainWindowodelBuildProjectOperation = ToString(loc.RequestTask("MainWindowodel_BuildProject_Operation"));
+            _mainWindowBuildProjectGatherData = ToString(loc.RequestTask("MainWindow_BuildProject_GatherData"));
+            _mainWindowBuildprojectNoData = ToString(loc.RequestTask("MainWindow_Buildproject_NoData"));
         }
+
+        public string MainWindowBuildprojectNoData => _mainWindowBuildprojectNoData.Result;
+
+        public string MainWindowBuildProjectGatherData => _mainWindowBuildProjectGatherData.Result;
 
         public string MainWindowodelBuildProjectOperation => _mainWindowodelBuildProjectOperation.Result;
 
