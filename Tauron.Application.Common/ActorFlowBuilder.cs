@@ -425,7 +425,7 @@ namespace Tauron
             BuildReceive();
             EnterFlow<TStart>? func = null;
             if (_recieves.Count > 0)
-                func = new EntryPoint(Actor).Tell;
+                func = new EntryPoint(Actor.ExposedContext.Self).Tell;
 
             return _delgators.Aggregate(func, (current, delgator) => current.Combine(delgator())) ?? (s => { });
         }
@@ -441,9 +441,9 @@ namespace Tauron
 
         private sealed class EntryPoint
         {
-            private readonly IExposedReceiveActor _actor;
+            private readonly IActorRef _actor;
 
-            public EntryPoint(IExposedReceiveActor actor)
+            public EntryPoint(IActorRef actor)
             {
                 _actor = actor;
             }
@@ -451,7 +451,7 @@ namespace Tauron
             public void Tell(TStart start)
             {
                 if (start == null) return;
-                _actor.ExposedContext.Self.Tell(start, _actor.ExposedContext.Self);
+                _actor.Tell(start, _actor);
             }
         }
 

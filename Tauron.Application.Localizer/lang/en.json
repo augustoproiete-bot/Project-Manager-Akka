@@ -1,4 +1,6 @@
 {
+  "CorrectSpellingError": "Ingore All",
+
   "Common_Error": "Error",
   "Common_Warnig": "Warning",
   "Common_Unkowen": "Unkowen",
@@ -44,6 +46,9 @@
   "MainWindowodel_BuildProject_Operation": "Eport project: {0}",
   "MainWindow_BuildProject_GatherData": "Gathering Data",
   "MainWindow_Buildproject_NoData": "No Data Found",
+  "MainWindow_BuildProject_GenerateLangFile": "Json is generated",
+  "MainWindow_BuildProject_GenerateCsFile": "Genrate C# Code",
+  "MainWindow_BuildProject_AgentCompled": "Compled",
 
   "MainWindowModel_LoadProject_Operation": "Load Project {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "No Project File Entered",

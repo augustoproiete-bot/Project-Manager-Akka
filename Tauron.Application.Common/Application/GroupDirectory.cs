@@ -13,7 +13,7 @@ namespace Tauron.Application
     [PublicAPI]
     [DebuggerStepThrough]
     public class GroupDictionary<TKey, TValue> : Dictionary<TKey, ICollection<TValue>>
-        where TKey : class where TValue : class
+        //where TKey : class where TValue : class
     {
         private readonly SerializationInfo? _info;
 
@@ -129,12 +129,12 @@ namespace Tauron.Application
 
         public bool RemoveValue(TValue value)
         {
-            return RemoveImpl(null, value, false, true);
+            return RemoveImpl(default!, value, false, true);
         }
 
         public bool Remove(TValue value, bool removeEmptyLists)
         {
-            return RemoveImpl(null, value, removeEmptyLists, true);
+            return RemoveImpl(default!, value, removeEmptyLists, true);
         }
 
         public bool Remove(TKey key, TValue value)
@@ -147,7 +147,7 @@ namespace Tauron.Application
             return RemoveImpl(key, value, removeListIfEmpty, false);
         }
 
-        private bool RemoveImpl(TKey? key, TValue val, bool removeEmpty, bool removeAll)
+        private bool RemoveImpl(TKey key, TValue val, bool removeEmpty, bool removeAll)
         {
             var ok = false;
 

@@ -1,11 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Akka.Actor;
 using JetBrains.Annotations;
 using Tauron.Localization;
 
 namespace Tauron.Application.Localizer.UIModels.lang
 {
-    [PublicAPI]
+    [PublicAPI, CompilerGenerated]
     public sealed class LocLocalizer
     {
         private readonly Task<string> _centerViewNewProjectInvalidNameMessage;
@@ -66,6 +67,12 @@ namespace Tauron.Application.Localizer.UIModels.lang
 
         private readonly Task<string> _mainWindowBuildprojectNoData;
 
+        private readonly Task<string> _mainWindowBuildProjectGenerateLangFile;
+
+        private readonly Task<string> _mainWindowBuildProjectGenerateCsFile;
+
+        private readonly Task<string> _mainWindowBuildProjectAgentCompled;
+
         public LocLocalizer(ActorSystem system)
         {
             var loc = system.Loc();
@@ -99,7 +106,16 @@ namespace Tauron.Application.Localizer.UIModels.lang
             _mainWindowodelBuildProjectOperation = ToString(loc.RequestTask("MainWindowodel_BuildProject_Operation"));
             _mainWindowBuildProjectGatherData = ToString(loc.RequestTask("MainWindow_BuildProject_GatherData"));
             _mainWindowBuildprojectNoData = ToString(loc.RequestTask("MainWindow_Buildproject_NoData"));
+            _mainWindowBuildProjectGenerateLangFile = ToString(loc.RequestTask("MainWindow_BuildProject_GenerateLangFile"));
+            _mainWindowBuildProjectGenerateCsFile = ToString(loc.RequestTask("MainWindow_BuildProject_GenerateCsFile"));
+            _mainWindowBuildProjectAgentCompled = ToString(loc.RequestTask("MainWindow_BuildProject_AgentCompled"));
         }
+
+        public string MainWindowBuildProjectAgentCompled => _mainWindowBuildProjectAgentCompled.Result;
+
+        public string MainWindowBuildProjectGenerateCsFile => _mainWindowBuildProjectGenerateCsFile.Result;
+
+        public string MainWindowBuildProjectGenerateLangFile => _mainWindowBuildProjectGenerateLangFile.Result;
 
         public string MainWindowBuildprojectNoData => _mainWindowBuildprojectNoData.Result;
 
@@ -159,9 +175,7 @@ namespace Tauron.Application.Localizer.UIModels.lang
 
         public string ProjectViewLanguageBoxFirstLabel => _projectViewLanguageBoxFirstLabel.Result;
 
-        private Task<string> ToString(Task<object?> task)
-        {
-            return task.ContinueWith(t => t.Result as string ?? string.Empty);
-        }
+        private static Task<string> ToString(Task<object?> task) 
+            => task.ContinueWith(t => t.Result as string ?? string.Empty);
     }
 }

@@ -29,8 +29,8 @@
                             <Border Margin="5" BorderThickness="1" BorderBrush="Black">
                                 <DockPanel LastChildFill="True">
                                     <TextBlock DockPanel.Dock="Left" Text="{Binding Label}" Margin="5"/>
-                                    <TextBox Margin="5" Text="{Binding Path, Delay=500, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <Button Margin="5" Content="{tau:Loc MainWindow_BuildProject_Search_Label}" Command="{Binding Search}"/>
+                                    <Button Margin="5" Content="{tau:Loc MainWindow_BuildProject_Search_Label}" Command="{Binding Search}" DockPanel.Dock="Right"/>
+                                    <TextBox Margin="5" Text="{Binding Path, Delay=500, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Left"/>
                                 </DockPanel>
                             </Border>
                         </DataTemplate>

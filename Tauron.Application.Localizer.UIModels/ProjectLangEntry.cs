@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Markup;
 using Tauron.Application.Localizer.DataModel;
 
 namespace Tauron.Application.Localizer.UIModels
@@ -13,9 +14,12 @@ namespace Tauron.Application.Localizer.UIModels
             _changed = changed;
             _content = content;
             Language = language;
+            XmlLanguage = XmlLanguage.GetLanguage(language.ToCulture().IetfLanguageTag);
         }
 
         public ActiveLanguage Language { get; }
+
+        public XmlLanguage XmlLanguage { get; }
 
         public string Content
         {

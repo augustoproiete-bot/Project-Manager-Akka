@@ -1,5 +1,6 @@
 ﻿using Akka.Actor;
 using Akka.Event;
+using Tauron.Akka;
 using Tauron.Application.Akka.ServiceResolver.Messages.Global;
 
 namespace Tauron.Application.Akka.ServiceResolver.Actor
@@ -20,13 +21,13 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void QueryServiceRequest(QueryServiceRequest request)
         {
-            var hostName = Context.Sender.Path.Address.Host ?? "Unkowen" + "-" +
-                Context.Sender.Path.Address.System + "-Manager";
+            var hostName = request.Sender.Path.Address.Host ?? "Unkowen" + "-" +
+                request.Sender.Path.Address.System + "-Manager";
 
             _log.Info("Create or Return {Service}", hostName);
-            var service = Context.GetOrCreate(hostName, Props.Create(() => new ServiceHostActor(_service)));
+            var service = Context.GetOrAdd(hostName, Props.Create(() => new ServiceHostActor(_service)));
             service.Tell(_suspendedMessage);
-            Context.Sender.Tell(new QueryServiceResponse(service));
+            request.Sender.Tell(new QueryServiceResponse(service));
         }
 
         private void ToggleSuspendedMessage(ToggleSuspendedMessage suspended)

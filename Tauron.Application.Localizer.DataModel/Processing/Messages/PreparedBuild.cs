@@ -1,4 +1,6 @@
-﻿namespace Tauron.Application.Localizer.DataModel.Processing
+﻿using System;
+
+namespace Tauron.Application.Localizer.DataModel.Processing
 {
     public sealed class PreparedBuild
     {
@@ -18,7 +20,7 @@
             TargetProject = targetProject;
             ProjectFile = projectFile;
             Operation = operation;
-            TargetPath = targetPath;
+            TargetPath = new Uri(new Uri(projectFile.Source), targetPath).LocalPath;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Akka.Actor;
 using Akka.Event;
+using Tauron.Akka;
 using Tauron.Application.Akka.ServiceResolver.Core;
 using Tauron.Application.Akka.ServiceResolver.Messages;
 using Tauron.Application.Akka.ServiceResolver.Messages.Global;
@@ -61,14 +62,14 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             if (_services.TryGetValue(obj.Name, out var value))
             {
                 _log.Info("Service Found");
-                var actor = Context.GetOrCreate(obj.Name, Props.Create(() => new HostManagerActor(value)));
+                var actor = Context.GetOrAdd(obj.Name, Props.Create(() => new HostManagerActor(value)));
                 actor.Tell(_suspendedMessage);
                 actor.Forward(obj);
             }
             else
             {
                 _log.Warning("Service not Found {Service}", obj.Name);
-                Context.Sender.Tell(new QueryServiceResponse(null));
+                obj.Sender.Tell(new QueryServiceResponse(null));
             }
         }
 
@@ -87,10 +88,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         {
             private readonly ISuspensionTracker? _tarcker;
 
-            public Tracker(ISuspensionTracker? tarcker)
-            {
-                _tarcker = tarcker;
-            }
+            public Tracker(ISuspensionTracker? tarcker) => _tarcker = tarcker;
 
             public void Tell(object message, IActorRef sender)
             {
@@ -101,10 +99,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         public sealed class RegisterServices
         {
-            public RegisterServices(EndpointConfig services)
-            {
-                Config = services;
-            }
+            public RegisterServices(EndpointConfig services) => Config = services;
 
             public EndpointConfig Config { get; }
         }

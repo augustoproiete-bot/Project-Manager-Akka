@@ -1,4 +1,6 @@
 {
+  "CorrectSpellingError": "Alle Ignorieren",
+
   "Common_Error": "Fehler",
   "Common_Warnig": "Warnung",
   "Common_Unkowen": "Unbekannt",
@@ -44,6 +46,9 @@
   "MainWindowodel_BuildProject_Operation": "Eportiere Project: {0}",
   "MainWindow_BuildProject_GatherData": "Daten werden Gesammelt",
   "MainWindow_Buildproject_NoData": "Keine Daten Gefunden",
+  "MainWindow_BuildProject_GenerateLangFile": "Json wird Generiert",
+  "MainWindow_BuildProject_GenerateCsFile": "Generire C# Code",
+  "MainWindow_BuildProject_AgentCompled": "Fertig",
 
   "MainWindowModel_LoadProject_Operation": "Lade Projekt {0}",
   "MainWindowModel_LoadProject_SourceEmpty": "Keine Projekt Datei Eingegeben",

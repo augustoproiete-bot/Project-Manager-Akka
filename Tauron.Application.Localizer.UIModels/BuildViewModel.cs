@@ -116,7 +116,7 @@ namespace Tauron.Application.Localizer.UIModels
             Projects = this.RegisterUiCollection<BuildProjectViewModel>(nameof(Projects)).Async();
 
             var flow = this.Flow<ProjectBuildpathRequest>()
-                .To.Mutate(workspace.Build).With(bm => bm.ProjectPath, bm => r => bm.SetProjectPath(r.TargetPath, r.TargetPath)).ToSelf()
+                .To.Mutate(workspace.Build).With(bm => bm.ProjectPath, bm => r => bm.SetProjectPath(r.Project, r.TargetPath)).ToSelf()
                 .Then.Action(UpdatePath).AndBuild();
 
             BuildProjectViewModel GetBuildModel(Project p, ProjectFile file)
@@ -174,11 +174,16 @@ namespace Tauron.Application.Localizer.UIModels
 
             var canBuild = true;
 
-            NewCommad.WithCanExecute(() => canBuild && !workspace.ProjectFile.IsEmpty).WithExecute(ClearTerminal).WithExecute(() => canBuild = false)
-                .ThenFlow(() => new BuildRequest(manager.StartOperation(localizer.MainWindowodelBuildProjectOperation).Id, workspace.ProjectFile))
-                .To.External<BuildCompled>(() => workspace.ProjectFile.Operator)
-                .Then.Action(BuildCompled)
-                .AndReturn().ThenRegister("StartBuild");
+            NewCommad.WithCanExecute(() => canBuild && !workspace.ProjectFile.IsEmpty && !string.IsNullOrWhiteSpace(workspace.ProjectFile.Source))
+               .WithExecute(ClearTerminal).WithExecute(() =>
+                                                       {
+                                                           canBuild = false;
+                                                           CommandChanged();
+                                                       })
+               .ThenFlow(() => new BuildRequest(manager.StartOperation(localizer.MainWindowodelBuildProjectOperation).Id, workspace.ProjectFile))
+               .To.External<BuildCompled>(() => workspace.ProjectFile.Operator)
+               .Then.Action(BuildCompled)
+               .AndReturn().ThenRegister("StartBuild");
 
             void BuildCompled(BuildCompled msg)
             {
@@ -244,8 +249,11 @@ namespace Tauron.Application.Localizer.UIModels
             {
                 return msg.Message switch
                 {
+                    BuildMessage.Ids.AgentCompled => msg.Agent + _localizer.MainWindowBuildProjectAgentCompled,
+                    BuildMessage.Ids.GenerateCsFiles => msg.Agent + _localizer.MainWindowBuildProjectGenerateCsFile,
+                    BuildMessage.Ids.GenerateLangFiles => msg.Agent + _localizer.MainWindowBuildProjectGenerateLangFile,
                     BuildMessage.Ids.NoData => _localizer.MainWindowBuildprojectNoData,
-                    BuildMessage.Ids.GatherData => _localizer.MainWindowBuildProjectGatherData,
+                    BuildMessage.Ids.GatherData => msg.Agent + _localizer.MainWindowBuildProjectGatherData,
                     _ => msg.Message
                 };
             }

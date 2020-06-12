@@ -10,15 +10,8 @@ namespace Tauron.Application.Akka.ServiceResolver
     [PublicAPI]
     public static class Extensions
     {
-        public static ResolverExt AddServiceResolver(this ActorSystem system)
-        {
-            return (ResolverExt) system.RegisterExtension(ResolverExtension.Id);
-        }
-
-        public static Task<QueryServiceResponse> GetServiceEntry(this ActorSystem actorSystem, string name)
-        {
-            return actorSystem.GetExtension<ResolverExt>().GetServiceEntry(name);
-        }
+        public static Task<QueryServiceResponse> GetServiceEntry(this ActorSystem actorSystem, string name) 
+            => actorSystem.GetExtension<ResolverExt>().GetServiceEntry(name);
 
         public static RemoteService ResolveRemoteService(this IActorContext context, string name)
         {
@@ -27,12 +20,6 @@ namespace Tauron.Application.Akka.ServiceResolver
                 .RemoteServiceActor
                 .Ask<RemoteServiceResponse>(new RemoteServiceRequest(name))
                 .Result.Service;
-        }
-
-        public static IActorRef GetOrCreate(this IActorContext context, string name, Props props)
-        {
-            var actor = context.Child(name);
-            return actor.Equals(ActorRefs.Nobody) ? context.ActorOf(props, name) : actor;
         }
 
         public static Task<IActorRef> HostLocalService(this ActorSystem system, string name, Props props)

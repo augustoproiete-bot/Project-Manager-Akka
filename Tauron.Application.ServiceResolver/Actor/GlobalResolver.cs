@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Configuration;
 using Akka.Event;
-using Tauron.Application.Akka.ServiceResolver.Core;
 using Tauron.Application.Akka.ServiceResolver.Data;
+using Tauron.Application.Akka.ServiceResolver.Messages;
 using Tauron.Application.Akka.ServiceResolver.Messages.Global;
 
 namespace Tauron.Application.Akka.ServiceResolver.Actor
 {
-    public class GlobalResolver : ResolveActorBase, IWithUnboundedStash
+    public class GlobalResolver : ReceiveActor, IWithUnboundedStash
     {
         private readonly ILoggingAdapter _log;
         private readonly ResolverService _resolverService = new ResolverService();
@@ -22,6 +21,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         {
             _log = Context.GetLogger();
             Receive<Initialize>(InitializeHandle);
+
             ReceiveAny(_ => Stash!.Stash());
         }
 
@@ -38,32 +38,18 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             {
                 _log.Info("Initialize as Local Resolver");
                 _resolverSettings = obj.Settings;
-                if (!_resolverSettings.Verify(Context.System))
-                {
-                    _log.Error("Resolver Settings Invalid Become Faulted");
-                    Become(Faulted);
-                }
-                else
-                {
-                    _resolverService.Init(Context.ActorSelection(obj.Settings.ResolverPath), Context, _log);
-                    Become(BecomeGlobalProvider);
-                }
+
+                _resolverService.Init(DistributedPubSub.Get(Context.System), _log);
+                Become(BecomeGlobalProvider);
+
             }
 
             Stash!.UnstashAll();
         }
 
-        private void Faulted()
-        {
-            ReceiveAny(_ => throw new InvalidResolverStateExcepion("Setting Verification Failed"));
-        }
-
         public sealed class Initialize
         {
-            public Initialize(ResolverSettings settings)
-            {
-                Settings = settings;
-            }
+            public Initialize(ResolverSettings settings) => Settings = settings;
 
             public ResolverSettings Settings { get; }
         }
@@ -84,49 +70,25 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             public IActorRef Host { get; }
         }
 
-        private sealed class ResolverService : ICanTell
+        private sealed class ResolverService
         {
-            private Task<IActorRef>? _resolver;
+            private IActorRef _mediator = ActorRefs.Nobody;
 
-            private IActorRef ActorRef
-            {
-                get
-                {
-                    if (_resolver == null)
-                        throw new InvalidOperationException("Resolver Task nicht erstellt");
+            public void Tell(object message) 
+                => _mediator.Tell(new Publish(Topics.ServiceResolver, message));
 
-                    if (!_resolver.IsCompleted)
-                        _resolver.Wait();
-
-                    return _resolver.Result;
-                }
-            }
-
-            public void Tell(object message, IActorRef sender)
-            {
-                ActorRef.Tell(message, sender);
-            }
-
-            public void Init(ActorSelection selection, ICanWatch watch, ILoggingAdapter log)
+            public void Init(DistributedPubSub pubsub, ILoggingAdapter log)
             {
                 log.Info("Try Resolve GlobalResolver");
 
-                _resolver = selection.ResolveOne(TimeSpan.FromMinutes(1)).ContinueWith(t =>
-                {
-                    var r = t.Result;
-                    log.Info("Global Resolver Found {Path}", r.Path);
-                    watch.Watch(r);
-                    return r;
-                });
+                _mediator = pubsub.Mediator;
             }
         }
 
         private sealed class ServiceEntry
         {
-            public ServiceEntry(IReadOnlyList<string> services)
-            {
-                Services = services;
-            }
+            public ServiceEntry(IReadOnlyList<string> services) 
+                => Services = services;
 
             public IReadOnlyList<string> Services { get; }
 
@@ -137,6 +99,11 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void BecomeGlobalProvider()
         {
+            var pubsub = DistributedPubSub.Get(Context.System);
+            pubsub.Mediator.Tell(new Subscribe(Topics.ServiceResolver, Self));
+
+            Receive<SubscribeAck>(sa => { });
+
             Receive<RegisterEndpoint>(MakeEndpoint);
             Receive<QueryServiceRequest>(QueryServiceRequestProvider);
             Receive<Terminated>(Terminated);
@@ -148,15 +115,11 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             Context.System.Terminate();
         }
 
-        private void QueryServiceRequestProvider(QueryServiceRequest obj)
-        {
-            _resolverService.Tell(obj, Context.Sender);
-        }
+        private void QueryServiceRequestProvider(QueryServiceRequest obj) 
+            => _resolverService.Tell(obj.WithSender(Context.Sender));
 
-        private void MakeEndpoint(RegisterEndpoint obj)
-        {
-            _resolverService.Tell(new RegisterEndpointMessage(obj.Requirement, obj.ProvidedServices, _resolverSettings.Name), obj.Host);
-        }
+        private void MakeEndpoint(RegisterEndpoint obj) 
+            => _resolverService.Tell(new RegisterEndpointMessage(obj.Requirement, obj.ProvidedServices, _resolverSettings.Name).WithHost(obj.Host));
 
         #endregion
 
@@ -164,6 +127,11 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
 
         private void BecomeGlobalResolver()
         {
+            var pubsub = DistributedPubSub.Get(Context.System);
+            pubsub.Mediator.Tell(new Subscribe(Topics.ServiceResolver, Self));
+
+            Receive<SubscribeAck>(sa => {});
+
             Receive<RegisterEndpointMessage>(RegisterEndpointMessage);
             Receive<EndPointManager.EndpointLostMessage>(EndPointLost);
             Receive<ToggleSuspendedMessage>(SuspendedService);
@@ -179,7 +147,7 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             if (child.Equals(ActorRefs.Nobody))
             {
                 _log.Warning("No Service Found {Name}--{EndPoint}", obj.Name, key);
-                Context.Sender.Tell(new QueryServiceResponse(null));
+                obj.Sender.Tell(new QueryServiceResponse(null));
             }
 
             child.Forward(obj);
@@ -223,11 +191,13 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
         {
             _log.Info("Trigger Recheck of Sercive Requirement");
             foreach (var actorRef in Context.GetChildren())
+            {
                 actorRef.Tell(new EndPointManager.ServiceChangeMessages(
                     _services
-                        .Select(p => p.Value)
-                        .Where(s => !s.Supended)
-                        .SelectMany(s => s.Services).ToList().AsReadOnly()));
+                       .Select(p => p.Value)
+                       .Where(s => !s.Supended)
+                       .SelectMany(s => s.Services).ToList().AsReadOnly()));
+            }
         }
 
         #endregion

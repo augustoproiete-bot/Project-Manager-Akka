@@ -26,10 +26,8 @@ namespace Tauron.Application.Akka.ServiceResolver.Actor
             Receive<QueryServiceRequest>(QueryServiceRequest);
         }
 
-        private void QueryServiceRequest(QueryServiceRequest obj)
-        {
-            Context.Sender.Tell(new QueryServiceResponse(_targetEndpoint));
-        }
+        private void QueryServiceRequest(QueryServiceRequest obj) 
+            => Context.Sender.Tell(new QueryServiceResponse(_targetEndpoint));
 
         private void ServiceChangeMessagesHandler(ServiceChangeMessages obj)
         {
