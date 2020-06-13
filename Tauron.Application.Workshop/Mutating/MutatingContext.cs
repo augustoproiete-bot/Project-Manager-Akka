@@ -15,5 +15,8 @@ namespace Tauron.Application.Workshop.Mutating
         {
             return (TType) Change!;
         }
+
+        public static MutatingContext<TData> New(TData data)
+            => new MutatingContext<TData>(null, data);
     }
 }

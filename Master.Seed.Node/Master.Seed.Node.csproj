@@ -20,10 +20,12 @@
     <PackageReference Include="Akka.Cluster.Sharding" Version="1.4.7" />
     <PackageReference Include="Akka.Cluster.Tools" Version="1.4.7" />
     <PackageReference Include="Akka.Logger.Serilog" Version="1.4.3" />
+    <PackageReference Include="Petabridge.Cmd.Cluster" Version="0.8.0" />
     <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
     <ProjectReference Include="..\Tauron.Application.ServiceResolver\Tauron.Application.ServiceResolver.csproj" />
   </ItemGroup>
 

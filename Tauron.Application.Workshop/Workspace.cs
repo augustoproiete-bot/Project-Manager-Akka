@@ -38,16 +38,12 @@ namespace Tauron.Application.Workshop
 
     {
         protected Workspace(IActorRefFactory factory)
-            : base(factory)
-        {
+            : base(factory) =>
             Analyzer = Analyzing.Analyzer.From<TThis, MutatingContext<TRawData>>((TThis) this, factory);
-        }
 
         public IAnalyzer<TThis, MutatingContext<TRawData>> Analyzer { get; }
 
-        public void Reset(TRawData newData)
-        {
-            Engine.Mutate(nameof(Reset), data => data.Update(new ResetChange(), newData));
-        }
+        public void Reset(TRawData newData) 
+            => Engine.Mutate(nameof(Reset), data => data.Update(new ResetChange(), newData));
     }
 }

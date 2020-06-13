@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster;
-using Akka.Cluster.Sharding;
 using Akka.Configuration;
-using Akka.Configuration.Hocon;
+using Master.Seed.Node.Commands;
+using Petabridge.Cmd.Host;
 using Serilog;
+using Tauron.Application.Master.Commands;
 
 namespace Master.Seed.Node
 {
@@ -19,6 +18,13 @@ namespace Master.Seed.Node
 
             var config = ConfigurationFactory.ParseString(await File.ReadAllTextAsync("Master.conf"));
             using var master = ActorSystem.Create("Project-Manager", config);
+
+            KillSwitch.Enable(master);
+
+            var cmd = PetabridgeCmd.Get(master);
+            cmd.RegisterCommandPalette(Petabridge.Cmd.Cluster.ClusterCommands.Instance);
+            cmd.RegisterCommandPalette(MasterCommand.New);
+            cmd.Start();
 
             await master.WhenTerminated;
         }
