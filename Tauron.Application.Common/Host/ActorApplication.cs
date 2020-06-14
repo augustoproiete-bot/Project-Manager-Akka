@@ -54,9 +54,10 @@ namespace Tauron.Host
                 {
                     IHostEnvironment hostEnvironment = hostingContext.HostEnvironment;
                     var value = hostingContext.Configuration.GetValue("hostBuilder:reloadConfigOnChange", true);
-                    config.AddJsonFile("appsettings.json", true, value).AddJsonFile("appsettings." + hostEnvironment.EnvironmentName + ".json", true, value);
+                    config.AddJsonFile("appsettings." + hostEnvironment.EnvironmentName + ".json", true, value);
                     config.AddEnvironmentVariables();
-                });
+                })
+               .Configuration(cb => cb.AddJsonFile("appsettings.json", true, true));
 
             return builder;
         }

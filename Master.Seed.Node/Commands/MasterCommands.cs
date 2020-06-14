@@ -10,7 +10,7 @@ namespace Master.Seed.Node.Commands
                .WithName("kill")
                .Build();
 
-        public static CommandPalette MasterPalette = new CommandPalette("master", 
+        public static readonly CommandPalette MasterPalette = new CommandPalette("master", 
             new []{ Kill });
     }
 }

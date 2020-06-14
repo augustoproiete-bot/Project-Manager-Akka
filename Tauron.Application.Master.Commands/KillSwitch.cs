@@ -17,9 +17,10 @@ namespace Tauron.Application.Master.Commands
 
         public static void KillCluster(ActorSystem system)
         {
-            if(!Cluster.Get(system).SelfRoles.Contains("Master"))
+            var cluster = Cluster.Get(system);
+            if (!cluster.SelfRoles.Contains("Master"))
                 throw new InvalidOperationException("Only Masters able to Kill cluster");
-            DistributedPubSub.Get(system).Mediator.Tell(new SendToAll(nameof(KillNode), new KillNode()));
+            DistributedPubSub.Get(system).Mediator.Tell(new Publish(nameof(KillNode), new KillNode()));
         }
 
         public static void Subscripe(ActorSystem system, IActorRef recpient) 

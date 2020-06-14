@@ -6,11 +6,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Master.conf" />
+    <None Remove="akka.conf" />
+    <None Remove="appsettings.json" />
+    <None Remove="seed.conf" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Master.conf">
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="seed.conf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="akka.conf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -25,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />
     <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
     <ProjectReference Include="..\Tauron.Application.ServiceResolver\Tauron.Application.ServiceResolver.csproj" />
   </ItemGroup>
