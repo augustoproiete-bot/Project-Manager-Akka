@@ -13,6 +13,12 @@ namespace ProtoTyping
         {
             var sys = ActorSystem.Create("ClusterSystem", ConfigurationFactory.ParseString(File.ReadAllText("test.conf")));
 
+            var test = Cluster.Get(sys).JoinAsync(Address.Parse("akka.tcp://ClusterSystem@localhost:8081"))
+               .ContinueWith(t =>
+                             {
+                                 var temp = t.Status;
+                             });
+
             Console.ReadKey();
             sys.Terminate().Wait();
         }

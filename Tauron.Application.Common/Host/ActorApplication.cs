@@ -131,7 +131,7 @@ namespace Tauron.Host
                 config = BuildAppConfiguration(hostingEnwiroment, config, context);
                 context.Configuration = config;
                 var akkaConfig = CreateAkkaConfig(context);
-                var system = ActorSystem.Create(context.HostEnvironment.ApplicationName.Replace('.', '-'), akkaConfig);
+                var system = ActorSystem.Create(GetActorSystemName(context.Configuration, context.HostEnvironment), akkaConfig);
 
                 var continer = CreateServiceProvider(hostingEnwiroment, context, config, system);
 
@@ -140,6 +140,14 @@ namespace Tauron.Host
                     action(context, system);
 
                 return new ActorApplication(continer, system);
+            }
+
+            private string GetActorSystemName(IConfiguration config, IHostEnvironment environment)
+            {
+                var name = config["actorsystem"];
+                return !string.IsNullOrWhiteSpace(name) 
+                    ? name 
+                    : environment.ApplicationName.Replace('.', '-');
             }
 
             private void ConfigureLogging(HostBuilderContext context)

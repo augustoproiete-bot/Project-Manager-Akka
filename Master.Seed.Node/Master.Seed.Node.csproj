@@ -35,7 +35,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />
     <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
-    <ProjectReference Include="..\Tauron.Application.ServiceResolver\Tauron.Application.ServiceResolver.csproj" />
   </ItemGroup>
 
 </Project>

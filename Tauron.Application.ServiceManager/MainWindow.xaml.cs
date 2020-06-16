@@ -12,15 +12,18 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Tauron.Application.ServiceManager.ViewModels;
+using Tauron.Application.Wpf;
 
 namespace Tauron.Application.ServiceManager
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
-        public MainWindow()
+        public MainWindow(IViewModel<MainWindowViewModel> model)
+            : base(model)
         {
             InitializeComponent();
         }

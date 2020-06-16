@@ -17,6 +17,14 @@ namespace Tauron.Application.AkkaNode.Boottrap
         {
             return builder
                .ConfigureAutoFac(cb => cb.RegisterType<EmptyAppRoute>().Named<IAppRoute>("default"))
+               .ConfigurateNode()
+               .ConfigureLogging((context, configuration) => configuration.WriteTo.ColoredConsole())
+               .ConfigurateAkkSystem((context, system) => KillSwitch.Enable(system));
+        }
+
+        public static IApplicationBuilder ConfigurateNode(this IApplicationBuilder builder)
+        {
+            return builder
                .ConfigureAkka(hbc =>
                               {
                                   Console.Title = hbc.HostEnvironment.ApplicationName;
@@ -37,7 +45,6 @@ namespace Tauron.Application.AkkaNode.Boottrap
                .ConfigureLogging((context, configuration) =>
                                  {
                                      configuration.WriteTo.RollingFile(new CompactJsonFormatter(), "Logs\\Log.log", fileSizeLimitBytes: 5_242_880, retainedFileCountLimit: 5);
-                                     configuration.WriteTo.ColoredConsole();
 
                                      configuration
                                         .MinimumLevel.Debug()
@@ -47,8 +54,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
                                         .Enrich.FromLogContext()
                                         .Enrich.WithExceptionDetails()
                                         .Enrich.With<EventTypeEnricher>();
-                                 })
-               .ConfigurateAkkSystem((context, system) => KillSwitch.Enable(system));
+                                 });
         }
     }
 }
