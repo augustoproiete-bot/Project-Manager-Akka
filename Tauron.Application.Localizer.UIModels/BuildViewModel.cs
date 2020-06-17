@@ -174,6 +174,8 @@ namespace Tauron.Application.Localizer.UIModels
 
             var canBuild = true;
 
+            this.RespondOnEventSource(workspace.Source.SaveRequest, _ => InvokeCommand("StartBuild"));
+
             NewCommad.WithCanExecute(() => canBuild && !workspace.ProjectFile.IsEmpty && !string.IsNullOrWhiteSpace(workspace.ProjectFile.Source))
                .WithExecute(ClearTerminal).WithExecute(() =>
                                                        {

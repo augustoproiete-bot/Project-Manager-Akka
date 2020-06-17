@@ -44,7 +44,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
                               })
                .ConfigureLogging((context, configuration) =>
                                  {
-                                     configuration.WriteTo.RollingFile(new CompactJsonFormatter(), "Logs\\Log.log", fileSizeLimitBytes: 5_242_880, retainedFileCountLimit: 5);
+                                     configuration.WriteTo.RollingFile(new CompactJsonFormatter(), "Logs\\Log.log", fileSizeLimitBytes: 5_242_880, retainedFileCountLimit: 2);
 
                                      configuration
                                         .MinimumLevel.Debug()

@@ -1,0 +1,9 @@
+{
+  "MainWindow_Label_Title": "Service Manager",
+  "MainWindow_DockHeader_NodeView": "Cluster Nodes",
+  "Common_Error": "Error",
+  "Common_Warning": "Warning",
+  "Common_Unkowen": "Unkowen",
+  "Common_Cancel": "Cancel",
+  "Common_Ok": "OK",
+}

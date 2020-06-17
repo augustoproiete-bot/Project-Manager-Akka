@@ -23,13 +23,13 @@
 
   <ItemGroup>
     <PackageReference Include="Simple.Wpf.Terminal" Version="2.3.15" />
-    <PackageReference Include="Syncfusion.SfBusyIndicator.WPF" Version="18.1.0.56" />
-    <PackageReference Include="Syncfusion.SfGrid.WPF" Version="18.1.0.56" />
-    <PackageReference Include="Syncfusion.SfInput.WPF" Version="18.1.0.56" />
-    <PackageReference Include="Syncfusion.SfSkinManager.WPF" Version="18.1.0.56" />
-    <PackageReference Include="Syncfusion.Shared.WPF" Version="18.1.0.56" />
-    <PackageReference Include="Syncfusion.Themes.Blend.WPF" Version="18.1.0.56" />
-    <PackageReference Include="Syncfusion.Tools.WPF" Version="18.1.0.56" />
+    <PackageReference Include="Syncfusion.SfBusyIndicator.WPF" Version="18.1.0.57" />
+    <PackageReference Include="Syncfusion.SfGrid.WPF" Version="18.1.0.57" />
+    <PackageReference Include="Syncfusion.SfInput.WPF" Version="18.1.0.57" />
+    <PackageReference Include="Syncfusion.SfSkinManager.WPF" Version="18.1.0.57" />
+    <PackageReference Include="Syncfusion.Shared.WPF" Version="18.1.0.57" />
+    <PackageReference Include="Syncfusion.Themes.Blend.WPF" Version="18.1.0.57" />
+    <PackageReference Include="Syncfusion.Tools.WPF" Version="18.1.0.57" />
   </ItemGroup>
 
   <ItemGroup>

@@ -215,6 +215,15 @@ namespace Tauron.Application.Wpf.Model
             }
         }
 
+        protected void InvokeCommand(string name)
+        {
+            if(!_commandRegistrations.TryGetValue(name, out var cr))
+                return;
+
+            if (cr.CanExecute?.Invoke(null) ?? true) 
+                cr.Command(null);
+        }
+
         protected CommandRegistrationBuilder NewCommad
             => new CommandRegistrationBuilder((
                 key, command, canExecute) => _commandRegistrations.Add(key, new CommandRegistration(command, canExecute)), this);

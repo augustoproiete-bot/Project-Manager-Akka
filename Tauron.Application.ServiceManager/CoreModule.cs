@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Tauron.Application.ServiceManager.ViewModels;
+using Tauron.Application.ServiceManager.Views;
 using Tauron.Application.Wpf;
 
 namespace Tauron.Application.ServiceManager
@@ -8,7 +9,9 @@ namespace Tauron.Application.ServiceManager
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterView<MainWindow, MainWindowViewModel>();
+            builder.RegisterView<MainWindow, MainWindowViewModel>()
+               .OnActivated(a => a.Instance.Init("Main-Window"));
+            builder.RegisterView<NodeView, NodeViewModel>();
         }
     }
 }

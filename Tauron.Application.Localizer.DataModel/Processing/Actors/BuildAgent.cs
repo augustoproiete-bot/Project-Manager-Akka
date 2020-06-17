@@ -121,7 +121,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
 
             using var file = new StreamWriter(File.Open(targetPath.CombinePath("LocLocalizer.cs"), FileMode.Create));
 
-            file.WriteLine("using using System.CodeDom.Compiler;");
+            file.WriteLine("using System.CodeDom.Compiler;");
             file.WriteLine("using System.Threading.Tasks;");
             file.WriteLine("using Akka.Actor;");
             file.WriteLine("using JetBrains.Annotations;");

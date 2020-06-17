@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Tauron.Application.ServiceManager"
         xmlns:tau="http://schemas.TauronWpf.com"
+        xmlns:sync="http://schemas.syncfusion.com/wpf"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-
-    </Grid>
+        Title="{tau:Loc MainWindow_Label_Title}" Height="450" Width="800">
+    <sync:DockingManager CanClose="False" UseDocumentContainer="True" DockAbility="All">
+        <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_NodeView}" sync:DockingManager.State="Document"></ContentControl>
+    </sync:DockingManager>
 </tau:Window>
