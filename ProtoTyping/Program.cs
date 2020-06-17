@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Cluster;
@@ -9,18 +11,19 @@ namespace ProtoTyping
 {
     internal class Program
     {
-        private static void Main(string[] args)
+        private static async Task Main(string[] args)
         {
-            var sys = ActorSystem.Create("ClusterSystem", ConfigurationFactory.ParseString(File.ReadAllText("test.conf")));
-
-            var test = Cluster.Get(sys).JoinAsync(Address.Parse("akka.tcp://ClusterSystem@localhost:8081"))
+            var sys = ActorSystem.Create("ClusterSystem", ConfigurationFactory.ParseString(await File.ReadAllTextAsync("test.conf")));
+            
+            var source = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await Cluster.Get(sys).JoinAsync(Address.Parse("akka.tcp://ClusterSystem@localhost:8081"), source.Token)
                .ContinueWith(t =>
                              {
                                  var temp = t.Status;
                              });
 
             Console.ReadKey();
-            sys.Terminate().Wait();
+            await sys.Terminate();
         }
     }
 }
