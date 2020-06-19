@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows;
 
-namespace Tauron.Application.Localizer.Core
+namespace Tauron.Application.Wpf.Dialogs
 {
     /// <summary>
     ///     Interaktionslogik für MessageDialog.xaml

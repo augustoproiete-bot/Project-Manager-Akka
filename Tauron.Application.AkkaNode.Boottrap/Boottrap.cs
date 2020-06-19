@@ -18,8 +18,13 @@ namespace Tauron.Application.AkkaNode.Boottrap
             return builder
                .ConfigureAutoFac(cb => cb.RegisterType<EmptyAppRoute>().Named<IAppRoute>("default"))
                .ConfigurateNode()
-               .ConfigureLogging((context, configuration) => configuration.WriteTo.ColoredConsole())
-               .ConfigurateAkkSystem((context, system) => KillSwitch.Enable(system));
+               .ConfigureLogging((context, configuration) =>
+                                 {
+                                     Console.Title = context.HostEnvironment.ApplicationName;
+
+                                     configuration.WriteTo.ColoredConsole();
+                                 })
+               .ConfigurateAkkaSystem((context, system) => KillSwitch.Enable(system));
         }
 
         public static IApplicationBuilder ConfigurateNode(this IApplicationBuilder builder)
@@ -27,8 +32,6 @@ namespace Tauron.Application.AkkaNode.Boottrap
             return builder
                .ConfigureAkka(hbc =>
                               {
-                                  Console.Title = hbc.HostEnvironment.ApplicationName;
-
                                   const string main = "akka.conf";
                                   const string seed = "seed.conf";
 

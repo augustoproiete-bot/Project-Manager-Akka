@@ -1,14 +1,17 @@
-﻿using Amadevus.RecordGenerator;
-
-namespace Tauron.Application.Wpf.ModelMessages
+﻿namespace Tauron.Application.Wpf.ModelMessages
 {
-    [Record]
-    public sealed partial class ValidatingEvent
+    public sealed class ValidatingEvent
     {
         public string? Reason { get; }
 
         public string Name { get; }
 
         public bool Error => !string.IsNullOrWhiteSpace(Reason);
+
+        public ValidatingEvent(string? reason, string name)
+        {
+            Reason = reason;
+            Name = name;
+        }
     }
 }

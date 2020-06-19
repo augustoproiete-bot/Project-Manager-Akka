@@ -116,7 +116,7 @@ namespace Tauron.Host
                 return this;
             }
 
-            public IApplicationBuilder ConfigurateAkkSystem(Action<HostBuilderContext, ActorSystem> system)
+            public IApplicationBuilder ConfigurateAkkaSystem(Action<HostBuilderContext, ActorSystem> system)
             {
                 _actorSystemConfig.Add(system);
                 return this;

@@ -6,7 +6,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
 {
     public class NodeViewModel : UiActor
     {
-        public NodeViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher) : base(lifetimeScope, dispatcher)
+        public NodeViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher) 
+            : base(lifetimeScope, dispatcher)
         {
         }
     }

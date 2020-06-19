@@ -19,11 +19,11 @@ namespace Tauron.Application.Wpf.UI
 
         public override object? ProvideValue(IServiceProvider provider)
         {
-            if (!TryGetTargetItems(provider, out var dependencyObject, out _))
-                return null;
+            if (!TryGetTargetItems(provider, out var dependencyObject, out var prop))
+                return base.ProvideValue(provider);
 
             if (DesignerProperties.GetIsInDesignMode(dependencyObject))
-                return null;
+                return prop!.GetMetadata(dependencyObject).DefaultValue;
 
             if (!ControlBindLogic.FindDataContext(dependencyObject, out var model)) return null;
 

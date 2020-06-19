@@ -13,8 +13,8 @@ using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Workshop;
 using Tauron.Application.Wpf;
+using Tauron.Application.Wpf.Dialogs;
 using Tauron.Application.Wpf.Model;
-using Tauron.Application.Wpf.ModelMessages;
 
 namespace Tauron.Application.Localizer.UIModels
 {

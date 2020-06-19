@@ -1,12 +1,15 @@
-﻿using Amadevus.RecordGenerator;
-
-namespace Tauron.Application.Wpf.ModelMessages
+﻿namespace Tauron.Application.Wpf.ModelMessages
 {
-    [Record]
-    public sealed partial class PropertyChangedEvent
+    public sealed class PropertyChangedEvent
     {
         public string Name { get; }
 
-        public object Value { get; }
+        public object? Value { get; }
+
+        public PropertyChangedEvent(string name, object? value)
+        {
+            Name = name;
+            Value = value;
+        }
     }
 }

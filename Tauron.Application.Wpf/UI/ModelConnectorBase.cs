@@ -23,40 +23,46 @@ namespace Tauron.Application.Wpf.UI
         {
             Name = name;
 
-            promise.OnUnload(() => { });
+            promise.OnUnload(OnUnload);
+
+            promise.OnNoContext(NoDataContextFound);
 
             promise
-                .OnContext(model =>
-                {
-                    Model = model;
+               .OnContext((model, view) =>
+                          {
+                              View = view;
+                              Model = model;
 
-                    if (model.IsInitialized)
-                    {
-                        Task.Run(async () => await InitAsync());
-                    }
-                    else
-                    {
-                        void OnModelOnInitialized()
-                        {
-                            Task.Run(async () => await InitAsync());
-                            Model.Initialized -= OnModelOnInitialized;
-                        }
+                              if (model.IsInitialized)
+                              {
+                                  Task.Run(async () => await InitAsync());
+                              }
+                              else
+                              {
+                                  void OnModelOnInitialized()
+                                  {
+                                      Task.Run(async () => await InitAsync());
+                                      Model.Initialized -= OnModelOnInitialized;
+                                  }
 
-                        model.Initialized += OnModelOnInitialized;
-                    }
-                });
+                                  model.Initialized += OnModelOnInitialized;
+                              }
+                          });
         }
 
         protected string Name { get; }
         protected IViewModel? Model { get; private set; }
+
+        protected IView? View { get; private set; }
+
         protected int IsInitializing => _isInitializing;
 
         private async Task InitAsync()
         {
             try
             {
-                OnLoad();
                 if (Model == null) return;
+                OnLoad();
 
                 //Log.Information("Ask For {Property}", _name);
                 var eventActor = await Model.Ask<IEventActor>(new MakeEventHook(), TimeSpan.FromSeconds(15));
@@ -84,6 +90,11 @@ namespace Tauron.Application.Wpf.UI
         {
         }
 
+        protected virtual void OnViewFound(IView view)
+        {
+
+        }
+
         public void ForceUnload()
         {
             if (Model == null)
@@ -93,6 +104,8 @@ namespace Tauron.Application.Wpf.UI
             Model = null;
             _eventActor?.OriginalRef.Tell(PoisonPill.Instance);
         }
+
+        protected abstract void NoDataContextFound();
 
         protected abstract void ValidateCompled(ValidatingEvent obj);
 

@@ -24,22 +24,22 @@ namespace Tauron.Application.Localizer
             var builder = ActorApplication.Create(args);
 
             builder
-                .ConfigureLogging((context, configuration) => configuration.ConfigDefaultLogging("Localizer").WriteTo.Sink<SeriLogViewerSink>())
-                .ConfigureAutoFac(cb => cb.RegisterModule<MainModule>().RegisterModule<UIModule>())
-                .ConfigurateAkkSystem((context, system) => system.RegisterLocalization())
-                .UseWpf<MainWindow>(c => c.WithAppFactory(() =>
-                {
-                    var runapp = new System.Windows.Application
-                    {
-                        Resources = new ResourceDictionary
-                        {
-                            Source = new Uri("/Theme.xaml", UriKind.Relative)
-                        }
-                    };
+               .ConfigureLogging((context, configuration) => configuration.ConfigDefaultLogging("Localizer").WriteTo.Sink<SeriLogViewerSink>())
+               .ConfigureAutoFac(cb => cb.RegisterModule<MainModule>().RegisterModule<UIModule>())
+               .ConfigurateAkkaSystem((context, system) => system.RegisterLocalization())
+               .UseWpf<MainWindow>(c => c.WithAppFactory(() =>
+                                                         {
+                                                             var runapp = new System.Windows.Application();
+                                                             //{
+                                                             //    Resources = new ResourceDictionary
+                                                             //    {
+                                                             //        Source = new Uri("/Theme.xaml", UriKind.Relative)
+                                                             //    }
+                                                             //};
 
 
-                    return runapp;
-                }));
+                                                             return runapp;
+                                                         }));
 
             using var app = builder.Build();
             await app.Run();

@@ -21,7 +21,7 @@ namespace Tauron.Host
 
         IApplicationBuilder ConfigureAkka(Func<HostBuilderContext, Config> config);
 
-        IApplicationBuilder ConfigurateAkkSystem(Action<HostBuilderContext, ActorSystem> system);
+        IApplicationBuilder ConfigurateAkkaSystem(Action<HostBuilderContext, ActorSystem> system);
 
         ActorApplication Build();
     }

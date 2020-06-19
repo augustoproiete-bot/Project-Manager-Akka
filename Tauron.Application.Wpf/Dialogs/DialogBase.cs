@@ -6,7 +6,7 @@ using System.Windows.Markup;
 using System.Windows.Media.Animation;
 using JetBrains.Annotations;
 
-namespace Tauron.Application.Localizer.Core
+namespace Tauron.Application.Wpf.Dialogs
 {
     [DefaultProperty("Content")]
     [ContentProperty("Content")]
@@ -47,15 +47,9 @@ namespace Tauron.Application.Localizer.Core
 
         private ContentPresenter? _top;
 
-        static DialogBase()
-        {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(DialogBase), new FrameworkPropertyMetadata(typeof(DialogBase)));
-        }
+        static DialogBase() => DefaultStyleKeyProperty.OverrideMetadata(typeof(DialogBase), new FrameworkPropertyMetadata(typeof(DialogBase)));
 
-        public DialogBase()
-        {
-            Loaded += OnLoaded;
-        }
+        public DialogBase() => Loaded += OnLoaded;
 
         public int DialogTitleFontSize
         {

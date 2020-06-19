@@ -69,7 +69,8 @@ namespace Akka.Cluster.Utility
         }
 
         protected override void PreStart() 
-            => _cluster?.Subscribe(Self, typeof(ClusterEvent.MemberUp), typeof(ClusterEvent.ReachableMember), typeof(ClusterEvent.UnreachableMember));
+            => _cluster?.Subscribe(Self, ClusterEvent.SubscriptionInitialStateMode.InitialStateAsEvents, 
+                typeof(ClusterEvent.MemberUp), typeof(ClusterEvent.ReachableMember), typeof(ClusterEvent.UnreachableMember));
 
         protected override void PostStop() 
             => _cluster?.Unsubscribe(Self);

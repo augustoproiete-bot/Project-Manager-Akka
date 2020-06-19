@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Tauron.Application.Localizer.UIModels.Views
+namespace Tauron.Application.Wpf.Dialogs
 {
     public interface IBaseDialog<TData, in TViewData>
     {

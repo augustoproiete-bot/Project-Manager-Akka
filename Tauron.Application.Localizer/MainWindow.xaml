@@ -18,15 +18,15 @@
             TextOptions.TextFormattingMode="Ideal"
             TextOptions.TextRenderingMode="Auto">
     <li:SfBusyIndicator x:Name="SfBusyIndicator" IsBusy="False">
-        <Grid>
-            <Grid.Resources>
+
+        <tau:DialogHost>
+            <tau:DialogHost.Resources>
                 <DataTemplate x:Key="HeaderTemplate">
                     <TextBlock Text="{Binding}" FontSize="14"/>
                 </DataTemplate>
-            </Grid.Resources>
-            <ContentControl Name="DialogContent" IsEnabled="True" Visibility="Collapsed" VerticalAlignment="Center"
-                            HorizontalAlignment="Center" MinWidth="600" />
-            <Grid Name="MainContent">
+            </tau:DialogHost.Resources>
+            
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition />
@@ -114,6 +114,6 @@
                                                  li:DockingManager.HeaderTemplate="{StaticResource HeaderTemplate}"/>
                 </li:DockingManager>
             </Grid>
-        </Grid>
+        </tau:DialogHost>
     </li:SfBusyIndicator>
 </tau:Window>

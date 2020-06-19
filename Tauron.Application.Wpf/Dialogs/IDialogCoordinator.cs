@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Tauron.Application.Localizer.UIModels.Views
+namespace Tauron.Application.Wpf.Dialogs
 {
     public interface IDialogCoordinator
     {
+        public event Action<System.Windows.Window>? OnWindowConstructed;
+
         Task<bool?> ShowMessage(string title, string message, Action<bool?>? result);
 
         void ShowMessage(string title, string message);

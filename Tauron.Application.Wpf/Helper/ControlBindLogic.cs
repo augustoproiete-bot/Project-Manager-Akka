@@ -2,43 +2,95 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
+using System.Windows.Media;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.Helper
 {
-    public sealed class DataContextPromise
+    public abstract class DataContextPromise
+    {
+        public abstract void OnUnload(Action unload);
+
+        public abstract void OnContext(Action<IViewModel, IView> modelAction);
+
+        public abstract void OnNoContext(Action action);
+    }
+
+    public sealed class RootedDataContextPromise : DataContextPromise
     {
         private readonly FrameworkElement _element;
 
-        public DataContextPromise(FrameworkElement element)
-        {
-            _element = element;
-        }
+        private Action? _noContext;
 
-        public void OnUnload(Action unload)
+        public RootedDataContextPromise(FrameworkElement element) => _element = element;
+
+        public override void OnUnload(Action unload)
         {
             if (_element is IView view)
                 view.ControlUnload += unload;
         }
 
-        public void OnContext(Action<IViewModel> modelAction)
+        public override void OnContext(Action<IViewModel, IView> modelAction)
         {
-            if (_element.DataContext is IViewModel model)
+            if (_element is IView view)
             {
-                modelAction(model);
-                return;
+                if (_element.DataContext is IViewModel model)
+                {
+                    modelAction(model, view);
+                    return;
+                }
+
+                void OnElementOnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
+                {
+                    if (args.NewValue is IViewModel localModel)
+                        modelAction(localModel, view);
+                    else
+                        _noContext?.Invoke();
+
+                    _element.DataContextChanged -= OnElementOnDataContextChanged;
+                }
+
+                _element.DataContextChanged += OnElementOnDataContextChanged;
             }
-
-            void OnElementOnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
-            {
-                if (!(args.NewValue is IViewModel localModel)) return;
-
-                modelAction(localModel);
-                _element.DataContextChanged -= OnElementOnDataContextChanged;
-            }
-
-            _element.DataContextChanged += OnElementOnDataContextChanged;
+            else
+                _noContext?.Invoke();
         }
+
+        public override void OnNoContext(Action action) => _noContext = action;
+    }
+
+    public sealed class DisconnectedDataContextRoot : DataContextPromise
+    {
+        private Action? _unload;
+        private Action<IViewModel, IView>? _modelAction;
+        private Action? _noContext;
+
+        public DisconnectedDataContextRoot(FrameworkElement elementBase)
+        {
+            void OnLoad(object sender, RoutedEventArgs args)
+            {
+                elementBase.Loaded -= OnLoad;
+
+                var root = ControlBindLogic.FindRoot(elementBase);
+                if (root is IView control && root is FrameworkElement element && element.DataContext is IViewModel model)
+                {
+                    _modelAction?.Invoke(model, control);
+
+                    if (_unload != null)
+                        control.ControlUnload += _unload;
+                }
+                else
+                    _noContext?.Invoke();
+            }
+
+            elementBase.Loaded += OnLoad;
+        }
+
+        public override void OnUnload(Action unload) => _unload = unload;
+
+        public override void OnContext(Action<IViewModel, IView> modelAction) => _modelAction = modelAction;
+
+        public override void OnNoContext(Action noContext) => _noContext = noContext;
     }
 
     [PublicAPI]
@@ -112,7 +164,7 @@ namespace Tauron.Application.Wpf.Helper
                 // ReSharper disable once SuspiciousTypeConversion.Global
                 if (affected is IBinderControllable binder)
                     return binder;
-                affected = LogicalTreeHelper.GetParent(affected);
+                affected = LogicalTreeHelper.GetParent(affected) ?? VisualTreeHelper.GetParent(affected);
             } while (affected != null);
 
             return null;
@@ -122,7 +174,7 @@ namespace Tauron.Application.Wpf.Helper
         {
             do
             {
-                affected = LogicalTreeHelper.GetParent(affected);
+                affected = LogicalTreeHelper.GetParent(affected) ?? VisualTreeHelper.GetParent(affected);
                 // ReSharper disable once SuspiciousTypeConversion.Global
                 if (affected is IView binder)
                     return binder;
@@ -135,7 +187,7 @@ namespace Tauron.Application.Wpf.Helper
         {
             do
             {
-                affected = LogicalTreeHelper.GetParent(affected);
+                affected = LogicalTreeHelper.GetParent(affected) ?? VisualTreeHelper.GetParent(affected);
                 if (affected is FrameworkElement element && element.DataContext is IViewModel model)
                     return model;
             } while (affected != null);
@@ -148,7 +200,10 @@ namespace Tauron.Application.Wpf.Helper
             promise = null;
             var root = FindRoot(affected);
             if (root is FrameworkElement element)
-                promise = new DataContextPromise(element);
+                promise = new RootedDataContextPromise(element);
+            else if(affected is FrameworkElement affectedElement)
+                promise = new DisconnectedDataContextRoot(affectedElement);
+
 
             return promise != null;
         }

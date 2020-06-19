@@ -1,12 +1,21 @@
-﻿using Amadevus.RecordGenerator;
-
-namespace Tauron.Application.Wpf.ModelMessages
+﻿namespace Tauron.Application.Wpf.ModelMessages
 {
-    [Record]
-    public sealed partial class CommandExecuteEvent
+    public sealed class CommandExecuteEvent
     {
         public string Name { get; }
 
         public object? Parameter { get; }
+
+        public CommandExecuteEvent(string name, object? parameter)
+        {
+            Name = name;
+            Parameter = parameter;
+        }
+
+        public void Deconstruct(out string name, out object? parameter)
+        {
+            name = Name;
+            parameter = Parameter;
+        }
     }
 }

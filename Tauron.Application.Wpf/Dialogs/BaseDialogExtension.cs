@@ -6,7 +6,7 @@ using Autofac.Core;
 using JetBrains.Annotations;
 using Tauron.Application.Wpf.Model;
 
-namespace Tauron.Application.Localizer.UIModels.Views
+namespace Tauron.Application.Wpf.Dialogs
 {
     [PublicAPI]
     public static class BaseDialogExtension

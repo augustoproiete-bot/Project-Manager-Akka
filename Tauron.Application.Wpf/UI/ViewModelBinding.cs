@@ -42,10 +42,10 @@ namespace Tauron.Application.Wpf.UI
                 return "Invalid Target Object: " + _name;
             if (!ControlBindLogic.FindDataContext(target, out var promise))
                 return "No Data Context Found: " + _name;
-            if (!(ControlBindLogic.FindRoot(target) is IView view))
-                return "No View as Root: " + _name;
+            //if (!(ControlBindLogic.FindRoot(target) is IView view))
+            //    return "No View as Root: " + _name;
 
-            var connector = new ViewConnector(_name, promise, view.ViewManager, view, UpdateValue, target.Dispatcher);
+            var connector = new ViewConnector(_name, promise, UpdateValue, target.Dispatcher);
 
             return connector;
         }

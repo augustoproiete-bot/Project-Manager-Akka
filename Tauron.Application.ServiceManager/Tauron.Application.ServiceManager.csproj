@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka.Cluster.Tools" Version="1.4.7" />
+    <PackageReference Include="Akka.Cluster.Tools" Version="1.4.8" />
     <PackageReference Include="Simple.Wpf.Terminal" Version="2.3.15" />
     <PackageReference Include="Syncfusion.SfBusyIndicator.WPF" Version="18.1.0.57" />
     <PackageReference Include="Syncfusion.SfGrid.WPF" Version="18.1.0.57" />
@@ -40,6 +40,15 @@
   <ItemGroup>
     <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="lang\de.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="lang\en.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

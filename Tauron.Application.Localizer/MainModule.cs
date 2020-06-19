@@ -8,6 +8,7 @@ using Tauron.Application.Localizer.UIModels.Services;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Localizer.Views;
 using Tauron.Application.Wpf;
+using Tauron.Application.Wpf.Dialogs;
 
 namespace Tauron.Application.Localizer
 {
@@ -30,7 +31,7 @@ namespace Tauron.Application.Localizer
             builder.RegisterType<LocLocalizer>().AsSelf();
             builder.Register(cc => new ProjectFileWorkspace(cc.Resolve<ActorSystem>())).AsSelf().SingleInstance();
 
-            builder.RegisterType<DialogCoordinator>().As<IDialogCoordinator>();
+            builder.RegisterInstance(DialogCoordinator.Instance).As<IDialogCoordinator>();
         }
     }
 }

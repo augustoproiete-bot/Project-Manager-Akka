@@ -14,15 +14,13 @@ namespace Tauron.Application.Localizer.Views
     /// </summary>
     public partial class OpenFileDialogView : IOpenFileDialog
     {
-        private readonly IDialogCoordinator _coordinator;
         private readonly IDialogFactory _dialogFactory;
         private readonly OpenFileMode _filemode;
         private readonly LocLocalizer _localizer;
         private readonly TaskCompletionSource<string?> _selector = new TaskCompletionSource<string?>();
 
-        public OpenFileDialogView(IDialogCoordinator coordinator, IDialogFactory dialogFactory, LocLocalizer localizer, OpenFileMode filemode)
+        public OpenFileDialogView(IDialogFactory dialogFactory, LocLocalizer localizer, OpenFileMode filemode)
         {
-            _coordinator = coordinator;
             _dialogFactory = dialogFactory;
             _localizer = localizer;
             _filemode = filemode;

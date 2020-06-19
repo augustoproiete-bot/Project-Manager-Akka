@@ -1,13 +1,17 @@
 ﻿using System.Windows;
-using Amadevus.RecordGenerator;
 
 namespace Tauron.Application.Wpf.ModelMessages
 {
-    [Record]
-    public sealed partial class ControlSetEvent
+    public sealed class ControlSetEvent
     {
         public FrameworkElement Element { get; }
 
         public string Name { get; }
+
+        public ControlSetEvent(FrameworkElement element, string name)
+        {
+            Element = element;
+            Name = name;
+        }
     }
 }

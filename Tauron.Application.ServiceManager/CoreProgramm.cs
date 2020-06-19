@@ -3,6 +3,7 @@ using Autofac;
 using Syncfusion.Licensing;
 using Tauron.Application.AkkaNode.Boottrap;
 using Tauron.Host;
+using Tauron.Localization;
 
 namespace Tauron.Application.ServiceManager
 {
@@ -14,7 +15,9 @@ namespace Tauron.Application.ServiceManager
 
             await ActorApplication.Create(args)
                .ConfigurateNode()
+               .ConfigurateAkkaSystem((context, system) => system.RegisterLocalization())
                .ConfigureAutoFac(cb => cb.RegisterModule<CoreModule>())
+               .UseWpf<MainWindow>(configuration => configuration.WithAppFactory(() => new App()))
                .Build().Run();
 
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Tauron.Akka;
@@ -56,6 +57,11 @@ namespace Tauron.Application.Wpf.UI
             if (Equals(_value, msg.Value)) return;
             _value = msg.Value;
             OnPropertyChanged(nameof(Value));
+        }
+
+        protected override void NoDataContextFound()
+        {
+            Debug.Print($"No DataContext Found for {Name}");
         }
 
         protected override void ValidateCompled(ValidatingEvent msg)

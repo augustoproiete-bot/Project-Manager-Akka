@@ -5,16 +5,15 @@ using System.Threading.Tasks;
 using System.Windows;
 using Akka.Actor;
 using Serilog;
-using Syncfusion.UI.Xaml.Grid;
-using Tauron.Application.Localizer.Core.UI;
+using Syncfusion.SfSkinManager;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.DataModel.Workspace;
 using Tauron.Application.Localizer.UIModels;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Services;
-using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.AppCore;
+using Tauron.Application.Wpf.Dialogs;
 using Window = System.Windows.Window;
 
 namespace Tauron.Application.Localizer
@@ -50,25 +49,11 @@ namespace Tauron.Application.Localizer
                 Process.GetCurrentProcess().Kill(false);
             };
 
-            DialogCoordinator.HideDialogEvent += () =>
-            {
-                MainContent.IsEnabled = true;
-                MainContent.Visibility = Visibility.Visible;
-
-                DialogContent.Content = null;
-                DialogContent.IsEnabled = false;
-                DialogContent.Visibility = Visibility.Collapsed;
-            };
-
-            DialogCoordinator.ShowDialogEvent += o =>
-            {
-                MainContent.IsEnabled = false;
-                MainContent.Visibility = Visibility.Collapsed;
-
-                DialogContent.Content = o;
-                DialogContent.IsEnabled = true;
-                DialogContent.Visibility = Visibility.Visible;
-            };
+            _coordinator.OnWindowConstructed
+                += window =>
+                   {
+                       SfSkinManager.SetVisualStyle(window, VisualStyles.Blend);
+                   };
         }
 
         public Window Window => this;

@@ -2,6 +2,7 @@
 using Tauron.Application.ServiceManager.ViewModels;
 using Tauron.Application.ServiceManager.Views;
 using Tauron.Application.Wpf;
+using Tauron.Application.Wpf.Dialogs;
 
 namespace Tauron.Application.ServiceManager
 {
@@ -12,6 +13,8 @@ namespace Tauron.Application.ServiceManager
             builder.RegisterView<MainWindow, MainWindowViewModel>()
                .OnActivated(a => a.Instance.Init("Main-Window"));
             builder.RegisterView<NodeView, NodeViewModel>();
+
+            builder.RegisterInstance(DialogCoordinator.Instance).As<IDialogCoordinator>();
         }
     }
 }

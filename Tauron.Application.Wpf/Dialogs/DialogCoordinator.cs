@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Windows;
-using Syncfusion.SfSkinManager;
-using Tauron.Application.Localizer.UIModels.Views;
 
-namespace Tauron.Application.Localizer.Core.UI
+namespace Tauron.Application.Wpf.Dialogs
 {
     public sealed class DialogCoordinator : IDialogCoordinator
     {
+        internal static readonly DialogCoordinator InternalInstance = new DialogCoordinator();
+
+        public static IDialogCoordinator Instance => InternalInstance;
+
+        public event Action<System.Windows.Window>? OnWindowConstructed;
+
         public Task<bool?> ShowMessage(string title, string message, Action<bool?>? result)
         {
             var resultTask = new TaskCompletionSource<bool?>();
@@ -22,25 +26,15 @@ namespace Tauron.Application.Localizer.Core.UI
             return resultTask.Task;
         }
 
-        public void ShowMessage(string title, string message)
-        {
-            ShowDialog(new MessageDialog(title, message, b => HideDialog(), false));
-        }
+        public void ShowMessage(string title, string message) => ShowDialog(new MessageDialog(title, message, b => HideDialog(), false));
 
-        public void ShowDialog(object dialog)
-        {
-            ShowDialogEvent?.Invoke(dialog);
-        }
+        public void ShowDialog(object dialog) => ShowDialogEvent?.Invoke(dialog);
 
-        public void HideDialog()
-        {
-            HideDialogEvent?.Invoke();
-        }
+        public void HideDialog() => HideDialogEvent?.Invoke();
 
         public bool? ShowModalMessageWindow(string title, string message)
         {
-            var window = new Window();
-            SfSkinManager.SetVisualStyle(window, VisualStyles.Blend);
+            var window = new System.Windows.Window();
             window.Content = new MessageDialog(title, message, b => window.DialogResult = b, true) {Margin = new Thickness(10)};
 
             window.SizeToContent = SizeToContent.WidthAndHeight;
@@ -50,11 +44,13 @@ namespace Tauron.Application.Localizer.Core.UI
             window.WindowStyle = WindowStyle.ToolWindow;
             window.ShowInTaskbar = false;
 
+            OnWindowConstructed?.Invoke(window);
+
             return window.ShowDialog();
         }
 
-        public static event Action<object>? ShowDialogEvent;
+        internal event Action<object>? ShowDialogEvent;
 
-        public static event Action? HideDialogEvent;
+        internal event Action? HideDialogEvent;
     }
 }

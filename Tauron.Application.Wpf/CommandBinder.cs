@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
-using Akka;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Akka;

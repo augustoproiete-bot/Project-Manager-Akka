@@ -4,19 +4,25 @@ using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.ModelMessages
 {
-    [Record]
-    public sealed partial class GetValueRequest
+    public sealed class GetValueRequest
     {
         public string Name { get; }
+
+        public GetValueRequest(string name) => Name = name;
     }
 
-    [Record]
     [PublicAPI]
-    public sealed partial class GetValueResponse
+    public sealed class GetValueResponse
     {
         public string Name { get; }
 
         public object? Value { get; }
+
+        public GetValueResponse(string name, object? value)
+        {
+            Name = name;
+            Value = value;
+        }
 
         [return: MaybeNull]
         public TValue TryCast<TValue>()
