@@ -64,7 +64,7 @@ namespace Tauron.Application.Localizer.UIModels
                 file.Operator.Tell(new SaveProject(operation.Id, file), Self);
             }
 
-            this.Flow<SaveRequest>().To.EventSource(workspace.Source.SaveRequest).ToSelf()
+            this.Flow<SaveRequest>().From.EventSource(workspace.Source.SaveRequest).ToSelf()
                 .Then.Action(SaveRequested)
                 .AndRespondTo<SavedProject>().Action(ProjectSaved).AndReceive();
 
@@ -72,7 +72,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             #region Update Source
 
-            this.Flow<UpdateSource>().To.Mutate(workspace.Source).With(sm => sm.SourceUpdate, sm => us => sm.UpdateSource(us.Name)).ToSelf()
+            this.Flow<UpdateSource>().From.Mutate(workspace.Source).With(sm => sm.SourceUpdate, sm => us => sm.UpdateSource(us.Name)).ToSelf()
                 .Then.Action(su => mainWindow.TitlePostfix = Path.GetFileNameWithoutExtension(su.Source)).AndReceive();
 
             #endregion
@@ -112,7 +112,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty && CurrentProject != null)
-                .ThenFlow(TryGetRemoveProjectName()).To.Mutate(workspace.Projects).With(pm => pm.RemovedProject, pm => RemoveDialog).ToSelf()
+                .ThenFlow(TryGetRemoveProjectName()).From.Mutate(workspace.Projects).With(pm => pm.RemovedProject, pm => RemoveDialog).ToSelf()
                 .Then.Action(rp => RemoveProject(rp.Project))
                 .AndReturn().ThenRegister("RemoveProject");
 
@@ -149,7 +149,7 @@ namespace Tauron.Application.Localizer.UIModels
                 mainWindow.IsBusy = false;
             }
 
-            this.Flow<SupplyNewProjectFile>().To.Mutate(workspace.Source).With(sm => sm.ProjectReset, sm => np => sm.Reset(np.File)).ToSelf()
+            this.Flow<SupplyNewProjectFile>().From.Mutate(workspace.Source).With(sm => sm.ProjectReset, sm => np => sm.Reset(np.File)).ToSelf()
                 .Then.Action(ProjectRest).AndReceive();
 
             #endregion
@@ -176,7 +176,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty)
                 .ThenFlow(this.ShowDialog<IProjectNameDialog, NewProjectDialogResult, string>(() => workspace.ProjectFile.Projects.Select(p => p.ProjectName)))
-                .To.Mutate(workspace.Projects).With(pm => pm.NewProject, pm => result => pm.AddProject(result.Name)).ToSelf()
+                .From.Mutate(workspace.Projects).With(pm => pm.NewProject, pm => result => pm.AddProject(result.Name)).ToSelf()
                 .Then.Action(p => AddProject(p.Project))
                 .AndReturn().ThenRegister("AddNewProject");
 
@@ -186,7 +186,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty)
                 .ThenFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, CultureInfo>(() => workspace.ProjectFile.GlobalLanguages.Select(al => al.ToCulture())))
-                .To.Mutate(workspace.Projects).With(mutator => result => mutator.AddLanguage(result?.CultureInfo))
+                .From.Mutate(workspace.Projects).With(mutator => result => mutator.AddLanguage(result?.CultureInfo))
                 .AndReturn().ThenRegister("AddGlobalLang");
 
             #endregion

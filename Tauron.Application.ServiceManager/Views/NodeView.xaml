@@ -3,11 +3,59 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Tauron.Application.ServiceManager.Views"
              xmlns:tau="http://schemas.TauronWpf.com"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             xmlns:viewModels="clr-namespace:Tauron.Application.ServiceManager.ViewModels"
+             xmlns:converter="clr-namespace:Tauron.Application.ServiceManager.Converter"
+             mc:Ignorable="d" Background="White"
+             d:DesignHeight="450" d:DesignWidth="800" d:DataContext="{d:DesignInstance viewModels:NodeViewModel, IsDesignTimeCreatable=False}">
     <Grid>
-           <TextBlock Text="Hello From Node View "></TextBlock> 
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="{tau:Loc NodeView_Label_Status}" Margin="10"/>
+        <TextBlock Text="{Binding CurrentStatus}" Grid.Row="0" Grid.Column="1" Margin="10"/>
+        <ItemsControl Margin="10, 0" Grid.Column="0" Grid.Row="1" ScrollViewer.CanContentScroll="True" ItemsSource="{tau:ActorBinding Nodes}" Grid.ColumnSpan="2">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="viewModels:ActualNode">
+                    <Border Margin="5" BorderThickness="2" BorderBrush="White">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Name:" Margin="3"/>
+                            <TextBlock Text="{Binding Name}" Margin="3" Grid.Row="0" Grid.Column="1"/>
+                            <TextBlock Text="Status:" Margin="3" Grid.Row="1" Grid.Column="0"/>
+                            <TextBlock Text="{Binding MemberStatus, Converter={converter:MemberStatusConverter}}" Margin="3" Grid.Row="1" Grid.Column="1"/>
+                            <TextBlock Text="URL:" Margin="3" Grid.Row="2" Grid.Column="0"/>
+                            <TextBlock Text="{Binding Url}" Margin="3" Grid.Row="2" Grid.Column="1"/>
+                            <ItemsControl ItemsSource="{Binding Roles}" Margin="3" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Margin="13, 3"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </tau:UserControl>

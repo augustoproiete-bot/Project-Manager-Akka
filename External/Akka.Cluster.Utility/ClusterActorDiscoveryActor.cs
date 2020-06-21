@@ -7,7 +7,24 @@ using JetBrains.Annotations;
 namespace Akka.Cluster.Utility
 {
     [PublicAPI]
-    public class ClusterActorDiscovery : ReceiveActor
+    public sealed class ClusterActorDiscovery : IExtension
+    {
+        public IActorRef Discovery { get; }
+
+        public ClusterActorDiscovery(ExtendedActorSystem system) => Discovery = system.SystemActorOf<ClusterActorDiscoveryActor>(nameof(ClusterActorDiscovery));
+
+        public static ClusterActorDiscovery Get(ActorSystem system)
+            => system.GetExtension<ClusterActorDiscovery>();
+    }
+
+    [PublicAPI]
+    public sealed class ClusterActorDiscoveryId : ExtensionIdProvider<ClusterActorDiscovery>
+    {
+        public override ClusterActorDiscovery CreateExtension(ExtendedActorSystem system) => new ClusterActorDiscovery(system);
+    }
+
+    [PublicAPI]
+    public class ClusterActorDiscoveryActor : ReceiveActor
     {
         private readonly Cluster _cluster;
         private readonly ILoggingAdapter _log;
@@ -47,7 +64,7 @@ namespace Akka.Cluster.Utility
 
         private readonly Dictionary<IActorRef, int[]> _actorWatchCountMap = new Dictionary<IActorRef, int[]>();
 
-        public ClusterActorDiscovery()
+        public ClusterActorDiscoveryActor()
         {
             _cluster = Cluster.Get(Context.System);
             _name = Self.Path.Name;

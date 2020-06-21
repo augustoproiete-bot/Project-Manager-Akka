@@ -56,12 +56,11 @@ namespace Tauron.Application.Workshop
             }
         }
 
-        public sealed class MutateTargetSelector<TNext, TStart, TParent, TRecieve> : AbastractTargetSelector<MutateReceiveBuilder<TNext, TStart, TParent, TRecieve>, TStart, TParent>
+        public sealed class MutateTargetSelector<TNext, TStart, TParent, TRecieve> 
+            : AbastractTargetSelector<MutateReceiveBuilder<TNext, TStart, TParent, TRecieve>, TStart, TParent>
         {
             private readonly IEventSource<TNext> _eventSource;
             private readonly Action<TRecieve> _runner;
-
-            public override AbastractTargetSelector<MutateReceiveBuilder<TNext, TStart, TParent, TRecieve>, TStart, TParent> Forward => throw new NotSupportedException("Forwar not Supportet");
 
             public MutateTargetSelector(ActorFlowBuilder<TStart, TParent> flow, IEventSource<TNext> eventSource, Action<TRecieve> runner) : base(flow)
             {
@@ -110,11 +109,11 @@ namespace Tauron.Application.Workshop
             }
         }
 
-        public sealed class EventSourceTargetSelector<TEvent, TStart, TParent> : AbastractTargetSelector<EventSourceReceiveBuilder<TEvent, TStart, TParent>, TStart, TParent>
+        public sealed class EventSourceTargetSelector<TEvent, TStart, TParent> 
+            : AbastractTargetSelector<EventSourceReceiveBuilder<TEvent, TStart, TParent>, TStart, TParent>
         {
             private readonly IEventSource<TEvent> _source;
 
-            public override AbastractTargetSelector<EventSourceReceiveBuilder<TEvent, TStart, TParent>, TStart, TParent> Forward => throw new NotSupportedException("Forwar not Supportet");
 
             public EventSourceTargetSelector(ActorFlowBuilder<TStart, TParent> flow, IEventSource<TEvent> source)
                 : base(flow)

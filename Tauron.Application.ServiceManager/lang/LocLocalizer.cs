@@ -7,7 +7,7 @@ using Tauron.Localization;
 namespace Tauron.Application.Localizer.Generated
 {
 	[PublicAPI, GeneratedCode("Localizer", "1")]
-	internal sealed class LocLocalizer
+	public sealed partial class LocLocalizer
 	{
 		public sealed class MainWindowRes
 		{
@@ -21,6 +21,47 @@ namespace Tauron.Application.Localizer.Generated
 			}
 			public string LabelTitle => __LabelTitle.Result;
 			public string DockHeaderNodeView => __DockHeaderNodeView.Result;
+		}
+		public sealed class MemberStatusRes
+		{
+			private readonly Task<string> __Joining;
+			private readonly Task<string> __Up;
+			private readonly Task<string> __Leaving;
+			private readonly Task<string> __Exiting;
+			private readonly Task<string> __Down;
+			private readonly Task<string> __WeaklyUp;
+			private readonly Task<string> __SelfOnline;
+			private readonly Task<string> __SelfOffline;
+			public MemberStatusRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__Joining = LocLocalizer.ToString(loc.RequestTask("MemberStatus_Joining"));
+				__Up = LocLocalizer.ToString(loc.RequestTask("MemberStatus_Up"));
+				__Leaving = LocLocalizer.ToString(loc.RequestTask("MemberStatus_Leaving"));
+				__Exiting = LocLocalizer.ToString(loc.RequestTask("MemberStatus_Exiting"));
+				__Down = LocLocalizer.ToString(loc.RequestTask("MemberStatus_Down"));
+				__WeaklyUp = LocLocalizer.ToString(loc.RequestTask("MemberStatus_WeaklyUp"));
+				__SelfOnline = LocLocalizer.ToString(loc.RequestTask("MemberStatus_SelfOnline"));
+				__SelfOffline = LocLocalizer.ToString(loc.RequestTask("MemberStatus_SelfOffline"));
+			}
+			public string Joining => __Joining.Result;
+			public string Up => __Up.Result;
+			public string Leaving => __Leaving.Result;
+			public string Exiting => __Exiting.Result;
+			public string Down => __Down.Result;
+			public string WeaklyUp => __WeaklyUp.Result;
+			public string SelfOnline => __SelfOnline.Result;
+			public string SelfOffline => __SelfOffline.Result;
+		}
+		public sealed class NodeViewRes
+		{
+			private readonly Task<string> __LabelStatus;
+			public NodeViewRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__LabelStatus = LocLocalizer.ToString(loc.RequestTask("NodeView_Label_Status"));
+			}
+			public string LabelStatus => __LabelStatus.Result;
 		}
 		public sealed class CommonRes
 		{
@@ -48,9 +89,13 @@ namespace Tauron.Application.Localizer.Generated
 		{
 			var loc = system.Loc();
 			 MainWindow = new MainWindowRes(system);
+			 MemberStatus = new MemberStatusRes(system);
+			 NodeView = new NodeViewRes(system);
 			 Common = new CommonRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
+		public MemberStatusRes MemberStatus { get; }
+		public NodeViewRes NodeView { get; }
 		public CommonRes Common { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);

@@ -124,7 +124,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             NewCommad.WithCanExecute(() => _loadingOperation == null)
                 .ThenFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenExistingFile)), OpenFileMode.OpenExistingFile))
-                .To.Func(SourceSelectedFunc).ToSelf()
+                .From.Func(SourceSelectedFunc).ToSelf()
                 .Then.Func(ProjectLoaded!).ToModel(CenterView)
                 .Then.Return().ThenRegister("OpenFile");
 

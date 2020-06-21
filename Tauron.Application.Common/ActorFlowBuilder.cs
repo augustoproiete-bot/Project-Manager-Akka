@@ -92,18 +92,8 @@ namespace Tauron
     [PublicAPI]
     public abstract class AbastractTargetSelector<TRespond, TStart, TParent>
     {
-        protected AbastractTargetSelector(ActorFlowBuilder<TStart, TParent> flow) => Flow = flow;
-
-        protected bool ShouldForward { get; private set; }
-
-        public virtual AbastractTargetSelector<TRespond, TStart, TParent> Forward
-        {
-            get
-            {
-                ShouldForward = true;
-                return this;
-            }
-        }
+        protected AbastractTargetSelector(ActorFlowBuilder<TStart, TParent> flow) 
+            => Flow = flow;
 
         public ActorFlowBuilder<TStart, TParent> Flow { get; }
 
@@ -144,7 +134,27 @@ namespace Tauron
     }
 
     [PublicAPI]
-    public sealed class FuncTargetSelector<TRecieve, TNext, TStart, TParent> : AbastractTargetSelector<ReceiveBuilder<TRecieve, TNext, TStart, TParent>, TStart, TParent>
+    public abstract class AbastractTargetSelectorForward<TRespond, TStart, TParent, TSelector> : AbastractTargetSelector<TRespond, TStart, TParent>
+        where TSelector : AbastractTargetSelectorForward<TRespond, TStart, TParent, TSelector>
+    {
+        protected AbastractTargetSelectorForward(ActorFlowBuilder<TStart, TParent> flow)
+            : base(flow){}
+
+        protected bool ShouldForward { get; private set; }
+
+        public virtual TSelector Forward
+        {
+            get
+            {
+                ShouldForward = true;
+                return (TSelector)this;
+            }
+        }
+    }
+
+    [PublicAPI]
+    public sealed class FuncTargetSelector<TRecieve, TNext, TStart, TParent> 
+        : AbastractTargetSelectorForward<ReceiveBuilder<TRecieve, TNext, TStart, TParent>, TStart, TParent, FuncTargetSelector<TRecieve, TNext, TStart, TParent>>
     {
         private readonly Func<TRecieve, TNext> _transformer;
 
@@ -154,10 +164,15 @@ namespace Tauron
 
         public override ReceiveBuilder<TRecieve, TNext, TStart, TParent> ToRef(Func<IActorContext, IActorRef> actorRef) 
             => new ReceiveBuilder<TRecieve, TNext, TStart, TParent>(Flow, actorRef, _transformer, ShouldForward);
+
+        public ReceiveBuilder<TRecieve, TNext, TStart, TParent> ToRefFromMsg(Func<TRecieve, IActorRef> actorRef)
+            => new ReceiveBuilder<TRecieve, TNext, TStart, TParent>(Flow, actorRef, _transformer, ShouldForward);
+
     }
 
     [PublicAPI]
-    public sealed class AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent> : AbastractTargetSelector<AyncReceiveBuilder<TRecieve, TNext, TStart, TParent>, TStart, TParent>
+    public sealed class AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent> 
+        : AbastractTargetSelectorForward<AyncReceiveBuilder<TRecieve, TNext, TStart, TParent>, TStart, TParent, AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent>>
     {
         private readonly Func<TRecieve, Task<TNext>> _transformer;
 
@@ -296,6 +311,12 @@ namespace Tauron
             flow.Register(a => a.Receive<TReceive>(new Receive(target, transformer, shouldForward).Run));
         }
 
+        public ReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, Func<TReceive, IActorRef> target, Func<TReceive, TNext> transformer, bool shouldForward)
+            : base(flow)
+        {
+            flow.Register(a => a.Receive<TReceive>(new ReceiveFromMessage(target, transformer, shouldForward).Run));
+        }
+
         private sealed class Receive
         {
             private readonly Func<IActorContext, IActorRef> _target;
@@ -309,6 +330,7 @@ namespace Tauron
                 _shouldForward = shouldForward;
             }
 
+
             public void Run(TReceive rec, IActorContext context)
             {
                 var result = _transformer(rec);
@@ -317,6 +339,31 @@ namespace Tauron
                     _target(context).Forward(result);
                 else
                     _target(context).Tell(result, context.Self);
+            }
+        }
+
+        private sealed class ReceiveFromMessage
+        {
+            private readonly Func<TReceive, IActorRef> _target;
+            private readonly Func<TReceive, TNext> _transformer;
+            private readonly bool _shouldForward;
+
+            public ReceiveFromMessage(Func<TReceive, IActorRef> target, Func<TReceive, TNext> transformer, bool shouldForward)
+            {
+                _target = target;
+                _transformer = transformer;
+                _shouldForward = shouldForward;
+            }
+
+
+            public void Run(TReceive rec, IActorContext context)
+            {
+                var result = _transformer(rec);
+                if (result == null) return;
+                if (_shouldForward)
+                    _target(rec).Forward(result);
+                else
+                    _target(rec).Tell(result, context.Self);
             }
         }
 
@@ -360,7 +407,8 @@ namespace Tauron
         }
     }
 
-    public class ActorFlowBuilderTarget<TStart, TParent> : AbastractTargetSelector<ActorFlowBuilder<TStart, TParent>, TStart, TParent>
+    public class ActorFlowBuilderTarget<TStart, TParent> 
+        : AbastractTargetSelectorForward<ActorFlowBuilder<TStart, TParent>, TStart, TParent, ActorFlowBuilderTarget<TStart, TParent>>
     {
         private readonly ActorFlowBuilder<TStart, TParent> _flow;
         private readonly Action<bool, IActorRef> _sendTo;
@@ -399,7 +447,7 @@ namespace Tauron
 
         public IExposedReceiveActor Actor { get; }
 
-        public RunSelector<TStart, TStart, TParent> To => new RunSelector<TStart, TStart, TParent>(this);
+        public RunSelector<TStart, TStart, TParent> From => new RunSelector<TStart, TStart, TParent>(this);
 
         public ActorFlowBuilderTarget<TStart, TParent> Send
             => new ActorFlowBuilderTarget<TStart, TParent>(this, (f, reff) => _delgators.Add(() => new Delegator(f, reff).Tell));

@@ -17,7 +17,7 @@ namespace Master.Seed.Node
                .ConfigurateAkkaSystem((context, system) =>
                                       {
                                           var cluster = Cluster.Get(system);
-                                          cluster.RegisterOnMemberUp(() => ServiceRegistry.Start(system));
+                                          cluster.RegisterOnMemberUp(() => ServiceRegistry.Start(system, new RegisterService(context.HostEnvironment.ApplicationName, cluster.SelfUniqueAddress)));
 
                                          var cmd = PetabridgeCmd.Get(system);
                                          cmd.RegisterCommandPalette(Petabridge.Cmd.Cluster.ClusterCommands.Instance);

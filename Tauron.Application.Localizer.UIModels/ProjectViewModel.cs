@@ -93,7 +93,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             NewCommad
                 .ThenFlow(this.ShowDialog<INewEntryDialog, NewEntryDialogResult?, NewEntryInfoBase>(GetEntrys))
-                .To.Mutate(workspace.Entrys).With(em => em.EntryAdd, em => res => em.NewEntry(_project, res!.Name)).ToSelf()
+                .From.Mutate(workspace.Entrys).With(em => em.EntryAdd, em => res => em.NewEntry(_project, res!.Name)).ToSelf()
                 .Then.Action(AddEntry)
                 .AndReturn().ThenRegister("NewEntry");
 
@@ -112,7 +112,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             this.Flow<RemoveRequest>()
-                .To.Mutate(workspace.Entrys).With(em => em.EntryRemove, em => rr => em.RemoveEntry(rr.ProjectName, rr.EntryName)).ToSelf()
+                .From.Mutate(workspace.Entrys).With(em => em.EntryRemove, em => rr => em.RemoveEntry(rr.ProjectName, rr.EntryName)).ToSelf()
                 .Then.Action(RemoveEntry).AndReceive();
 
             #endregion
@@ -128,7 +128,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             this.Flow<UpdateRequest>()
-                .To.Mutate(workspace.Entrys).With(em => em.EntryUpdate, em => ur => em.UpdateEntry(ur.ProjectName, ur.Language, ur.EntryName, ur.Content)).ToSelf()
+                .From.Mutate(workspace.Entrys).With(em => em.EntryUpdate, em => ur => em.UpdateEntry(ur.ProjectName, ur.Language, ur.EntryName, ur.Content)).ToSelf()
                 .Then.Action(UpdateEntry).AndReceive();
 
             #endregion
@@ -152,7 +152,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             NewCommad.WithCanExecute(() => GetImportableProjects().Any())
                 .ThenFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, string>(GetImportableProjects))
-                .To.Mutate(workspace.Projects).With(pm => pm.NewImport, pm => r => pm.AddImport(_project, r!.Project)).ToSelf()
+                .From.Mutate(workspace.Projects).With(pm => pm.NewImport, pm => r => pm.AddImport(_project, r!.Project)).ToSelf()
                 .Then.Action(AddImport)
                 .AndReturn().ThenRegister("AddImport");
 
@@ -165,7 +165,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             NewCommad.WithCanExecute(() => ImportSelectIndex.Value != -1)
                 .ThenFlow(() => new InitImportRemove(ImportetProjects[ImportSelectIndex]))
-                .To.Mutate(workspace.Projects).With(pm => pm.RemoveImport, pm => ir => pm.TryRemoveImport(_project, ir.ToRemove)).ToSelf()
+                .From.Mutate(workspace.Projects).With(pm => pm.RemoveImport, pm => ir => pm.TryRemoveImport(_project, ir.ToRemove)).ToSelf()
                 .Then.Action(RemoveImport)
                 .AndReturn().ThenRegister("RemoveImport");
 
@@ -188,7 +188,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             NewCommad
                 .ThenFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, CultureInfo>(() => workspace.Get(_project).ActiveLanguages.Select(al => al.ToCulture()).ToArray()))
-                .To.Mutate(workspace.Projects).With(pm => pm.NewLanguage, pm => d => pm.AddLanguage(_project, d!.CultureInfo)).ToSelf()
+                .From.Mutate(workspace.Projects).With(pm => pm.NewLanguage, pm => d => pm.AddLanguage(_project, d!.CultureInfo)).ToSelf()
                 .Then.Action(AddActiveLanguage).AndReturn().ThenRegister("AddLanguage");
 
             #endregion

@@ -9,6 +9,28 @@ namespace Akka.Cluster.Utility
     [PublicAPI]
     public class DistributedActorTableContainer<TKey> : ReceiveActor
     {
+        private sealed class SimpleActorFactory : IActorFactory
+        {
+            private object _actor;
+
+            public void Initialize(object[] args)
+            {
+                _actor = args[0];
+            }
+
+            private Props GetProps(object[] args)
+            {
+                return _actor switch
+                {
+                    Props props => props,
+                    Type type => Props.Create(type, args),
+                    _ => null
+                };
+            }
+
+            public IActorRef CreateActor(IActorRefFactory actorRefFactory, object id, object[] args) => actorRefFactory.ActorOf(GetProps(args), id.ToString());
+        }
+
         private readonly string _name;
         private readonly IActorRef _clusterActorDiscovery;
         private readonly IActorFactory _actorFactory;
@@ -23,6 +45,20 @@ namespace Akka.Cluster.Utility
         private readonly Dictionary<TKey, IActorRef> _addingMap = new Dictionary<TKey, IActorRef>();
 
         private bool _stopping;
+
+
+        public DistributedActorTableContainer(string name, ActorSystem system, Type actorType)
+            : this(name, ClusterActorDiscovery.Get(system).Discovery, actorType)
+        {
+
+        }
+
+        public DistributedActorTableContainer(string name, IActorRef clusterActorDiscovery, Type actorType)
+            : this(name, clusterActorDiscovery, typeof(SimpleActorFactory), new object[]{actorType})
+
+        {
+
+        }
 
         public DistributedActorTableContainer(string name, IActorRef clusterActorDiscovery,
                                               Type actorFactoryType, object[] actorFactoryInitalizeArgs,

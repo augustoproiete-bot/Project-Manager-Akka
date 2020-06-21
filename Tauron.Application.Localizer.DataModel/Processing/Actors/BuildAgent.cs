@@ -12,7 +12,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
         public BuildAgent()
         {
             this.Flow<PreparedBuild>()
-                .To.Func(OnBuild).Forward.ToParent()
+                .From.Func(OnBuild).Forward.ToParent()
                .AndReceive();
         }
 
@@ -130,7 +130,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
             file.WriteLine("namespace Tauron.Application.Localizer.Generated");
             file.WriteLine("{");
             file.WriteLine("\t[PublicAPI, GeneratedCode(\"Localizer\", \"1\")]");
-            file.WriteLine("\tinternal sealed class LocLocalizer");
+            file.WriteLine("\tpublic sealed partial class LocLocalizer");
             file.WriteLine("\t{");
 
             var classes = new List<string>();

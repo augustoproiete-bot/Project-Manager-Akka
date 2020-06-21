@@ -31,13 +31,7 @@ namespace Tauron.Application.Master.Commands
             system.ActorOf((dsl, cxt) =>
                            {
                                dsl.Receive<SubscribeAck>((s, c) => { });
-                               dsl.Receive<KillNode>((node, context) =>
-                                                     {
-                                                         var sys = context.System;
-                                                         Cluster.Get(sys)
-                                                            .LeaveAsync()
-                                                            .ContinueWith(t => sys.Terminate());
-                                                     }); 
+                               dsl.Receive<KillNode>((node, context) => Cluster.Get(context.System).LeaveAsync()); 
 
                                Subscripe(system, cxt.Self);
                            }, "Simple-Kill-Switch");

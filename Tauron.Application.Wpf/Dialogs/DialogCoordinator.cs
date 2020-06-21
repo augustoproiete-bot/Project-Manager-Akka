@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Windows;
+using Serilog;
 
 namespace Tauron.Application.Wpf.Dialogs
 {
     public sealed class DialogCoordinator : IDialogCoordinator
     {
         internal static readonly DialogCoordinator InternalInstance = new DialogCoordinator();
+
+        private static ILogger _log = Log.ForContext<DialogCoordinator>();
 
         public static IDialogCoordinator Instance => InternalInstance;
 
@@ -28,7 +31,11 @@ namespace Tauron.Application.Wpf.Dialogs
 
         public void ShowMessage(string title, string message) => ShowDialog(new MessageDialog(title, message, b => HideDialog(), false));
 
-        public void ShowDialog(object dialog) => ShowDialogEvent?.Invoke(dialog);
+        public void ShowDialog(object dialog)
+        {
+            _log.Information("Show Dialog {Type}", dialog.GetType());
+            ShowDialogEvent?.Invoke(dialog);
+        }
 
         public void HideDialog() => HideDialogEvent?.Invoke();
 

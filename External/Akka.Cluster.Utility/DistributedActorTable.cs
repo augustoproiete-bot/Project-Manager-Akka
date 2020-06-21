@@ -49,6 +49,19 @@ namespace Akka.Cluster.Utility
 
         private bool _stopping;
 
+        public DistributedActorTable(string name, ActorSystem system)
+            : this(name, ClusterActorDiscovery.Get(system).Discovery)
+        {
+
+        }
+
+        public DistributedActorTable(string name, IActorRef clusterActorDiscovery)
+            : this(name, clusterActorDiscovery, typeof(IncrementalIntegerIdGenerator), Array.Empty<object>())
+            
+        {
+            
+        }
+
         public DistributedActorTable(string name, IActorRef clusterActorDiscovery,
                                      Type idGeneratorType, object[] idGeneratorInitializeArgs)
         {

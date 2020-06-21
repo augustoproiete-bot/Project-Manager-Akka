@@ -105,7 +105,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             Importintegration = RegisterProperty<bool>(nameof(Importintegration))
                .WithDefaultValue(true).ThenFlow(b => new ChangeIntigrate(b), this)
-               .To.Mutate(workspace.Build).With(bm => bm.Intigrate, bm => ci => bm.SetIntigrate(ci.ToIntigrate)).ToSelf()
+               .From.Mutate(workspace.Build).With(bm => bm.Intigrate, bm => ci => bm.SetIntigrate(ci.ToIntigrate)).ToSelf()
                .Then.Action(ii => Importintegration += ii.IsIntigrated)
                .AndReturn();
 
@@ -116,7 +116,7 @@ namespace Tauron.Application.Localizer.UIModels
             Projects = this.RegisterUiCollection<BuildProjectViewModel>(nameof(Projects)).Async();
 
             var flow = this.Flow<ProjectBuildpathRequest>()
-                .To.Mutate(workspace.Build).With(bm => bm.ProjectPath, bm => r => bm.SetProjectPath(r.Project, r.TargetPath)).ToSelf()
+                .From.Mutate(workspace.Build).With(bm => bm.ProjectPath, bm => r => bm.SetProjectPath(r.Project, r.TargetPath)).ToSelf()
                 .Then.Action(UpdatePath).AndBuild();
 
             BuildProjectViewModel GetBuildModel(Project p, ProjectFile file)
@@ -157,7 +157,7 @@ namespace Tauron.Application.Localizer.UIModels
             TerminalMessages = this.RegisterUiCollection<string>(nameof(TerminalMessages));
             var buildMessageLocalizer = new BuildMessageLocalizer(localizer);
 
-            this.Flow<BuildMessage>().To.Action(AddMessage).AndReceive();
+            this.Flow<BuildMessage>().From.Action(AddMessage).AndReceive();
 
             void ClearTerminal() => UICall(TerminalMessages.Clear);
 
@@ -183,7 +183,7 @@ namespace Tauron.Application.Localizer.UIModels
                                                            CommandChanged();
                                                        })
                .ThenFlow(() => new BuildRequest(manager.StartOperation(localizer.MainWindowodelBuildProjectOperation).Id, workspace.ProjectFile))
-               .To.External<BuildCompled>(() => workspace.ProjectFile.Operator)
+               .From.External<BuildCompled>(() => workspace.ProjectFile.Operator)
                .Then.Action(BuildCompled)
                .AndReturn().ThenRegister("StartBuild");
 

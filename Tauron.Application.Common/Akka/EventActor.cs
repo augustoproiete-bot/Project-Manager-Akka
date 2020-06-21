@@ -57,7 +57,7 @@ namespace Tauron.Akka
                         }
 
                         if (_killOnFirstRespond)
-                            Context.Self.Tell(PoisonPill.Instance);
+                            Context.Stop(Context.Self);
                     }
                     else
                     {
