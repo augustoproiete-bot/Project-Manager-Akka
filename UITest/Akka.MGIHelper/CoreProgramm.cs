@@ -23,7 +23,7 @@ namespace Akka.MGIHelper
                 //               })
                 .ConfigureLogging((context, configuration) => configuration.ConfigDefaultLogging("MGI_Helper").WriteTo.Sink<SeriLogViewerSink>())
                 .ConfigureAutoFac(cb => cb.RegisterModule<MainModule>())
-                .ConfigurateAkkSystem((context, system) => system.RegisterLocalization())
+                .ConfigurateAkkaSystem((context, system) => system.RegisterLocalization())
                 .UseWpf<MainWindow>(c => c.WithAppFactory(() => new App()));
 
             using var app = builder.Build();
