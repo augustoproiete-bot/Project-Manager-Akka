@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Serilog;
 using Serilog.Configuration;
+using Serilog.Core;
 using Serilog.Events;
 using Serilog.Exceptions;
 using Serilog.Formatting.Compact;
@@ -21,6 +22,7 @@ namespace Tauron.Application.Logging
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                 .MinimumLevel.Override("System", LogEventLevel.Warning)
+                .Enrich.With<LogLevelWriter>()
                 .Enrich.WithProperty("ApplicationName", applicationName)
                 .Enrich.FromLogContext()
                 .Enrich.WithExceptionDetails()
@@ -37,6 +39,14 @@ namespace Tauron.Application.Logging
             collection.RegisterGeneric(typeof(SeriLogger<>)).As(typeof(ISLogger<>));
 
             return collection;
+        }
+    }
+
+    public class LogLevelWriter : ILogEventEnricher
+    {
+        public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
+        {
+            logEvent.AddPropertyIfAbsent(new LogEventProperty("Level", new ScalarValue(logEvent.Level)));
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
@@ -24,71 +23,20 @@ namespace Tauron.Application.Wpf
         public static readonly DependencyProperty CustomPropertyNameProperty =
             DependencyProperty.RegisterAttached("CustomPropertyName", typeof(string), typeof(CommandBinder), new UIPropertyMetadata("Command", OnCommandStadeChanged));
 
-        public static readonly DependencyProperty TargetCommandProperty =
-            DependencyProperty.RegisterAttached("TargetCommand", typeof(ICommand), typeof(CommandBinder), new UIPropertyMetadata(null, OnCommandStadeChanged));
-
-        public static readonly DependencyProperty UseDirectProperty = DependencyProperty.RegisterAttached(
-            "UseDirect", typeof(bool), typeof(CommandBinder), new UIPropertyMetadata(false, OnCommandStadeChanged));
-
-        //private static readonly List<RoutedCommand> Commands = new List<RoutedCommand>();
+        private static ILogger _baseLogger = Log.Logger.ForContext(typeof(CommandBinder));
 
         private static bool _isIn;
 
         private static readonly Random Rnd = new Random();
 
-        //public static bool AutoRegister { get; set; } = true;
-
-        public static ICommand? Find(string name)
-        {
-            //var val = Commands.Find(com => com.Name == name);
-            //if (val == null && AutoRegister) val = ThenRegister(name, name);
-
-            //return val;
-
-            return new EventCommand();
-        }
-
-        public static string GetCommand(DependencyObject obj)
-        {
-            return (string) Argument.NotNull(obj, nameof(obj)).GetValue(CommandProperty);
-        }
+        public static string GetCommand(DependencyObject obj) => (string) Argument.NotNull(obj, nameof(obj)).GetValue(CommandProperty);
 
 
-        public static string GetCustomPropertyName(DependencyObject obj)
-        {
-            return (string) Argument.NotNull(obj, nameof(obj)).GetValue(CustomPropertyNameProperty);
-        }
+        public static string GetCustomPropertyName(DependencyObject obj) => (string) Argument.NotNull(obj, nameof(obj)).GetValue(CustomPropertyNameProperty);
+        
+        public static void SetCommand(DependencyObject obj, string value) => Argument.NotNull(obj, nameof(obj)).SetValue(CommandProperty, value);
 
-        public static ICommand? GetTargetCommand(DependencyObject obj)
-        {
-            return (ICommand) Argument.NotNull(obj, nameof(obj)).GetValue(TargetCommandProperty);
-        }
-
-        public static bool GetUseDirect(DependencyObject obj)
-        {
-            return (bool) Argument.NotNull(obj, nameof(obj)).GetValue(UseDirectProperty);
-        }
-
-
-        public static void SetCommand(DependencyObject obj, string value)
-        {
-            Argument.NotNull(obj, nameof(obj)).SetValue(CommandProperty, value);
-        }
-
-        public static void SetCustomPropertyName(DependencyObject obj, string value)
-        {
-            Argument.NotNull(obj, nameof(obj)).SetValue(CustomPropertyNameProperty, value);
-        }
-
-        public static void SetTargetCommand(DependencyObject obj, ICommand value)
-        {
-            Argument.NotNull(obj, nameof(obj)).SetValue(TargetCommandProperty, value);
-        }
-
-        public static void SetUseDirect(DependencyObject obj, bool value)
-        {
-            Argument.NotNull(obj, nameof(obj)).SetValue(UseDirectProperty, value);
-        }
+        public static void SetCustomPropertyName(DependencyObject obj, string value) => Argument.NotNull(obj, nameof(obj)).SetValue(CustomPropertyNameProperty, value);
 
         private static void OnCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -126,28 +74,6 @@ namespace Tauron.Application.Wpf
             if (newValue == null) return;
 
             var name = NamePrefix + newValue + "#" + Rnd.Next();
-            if (newValue != null && newValue.Contains(':'))
-            {
-                var vals = newValue.Split(new[] {':'}, 2);
-                newValue = vals[1];
-
-                var command = Find(vals[0]);
-                if (command != null) SetTargetCommand(affectedPart, command);
-            }
-            else if (GetTargetCommand(affectedPart) == null && newValue != null)
-            {
-                var command = Find(newValue);
-                if (command != null) SetTargetCommand(affectedPart, command);
-            }
-            else
-            {
-                var command = GetTargetCommand(affectedPart);
-                if (command is RoutedCommand routedCommand)
-                    name = NamePrefix + routedCommand.Name + "#" + Rnd.Next();
-                else
-                    name = NamePrefix + command + "#" + Rnd.Next();
-            }
-
             var newlinker = new CommandLinker {CommandTarget = newValue};
             binder.Register(name, newlinker, affectedPart);
             _isIn = false;
@@ -175,25 +101,17 @@ namespace Tauron.Application.Wpf
                 }
 
                 var customProperty = GetCustomPropertyName(AffectedObject);
-                var useDirect = GetUseDirect(AffectedObject);
-                if (!(GetTargetCommand(AffectedObject) is EventCommand targetCommand))
-                {
-                    Log.Logger.Error("CommandBinder: No ICommand: {CommandTarget}", commandTarget);
-                    return;
-                }
+                var targetCommand = new EventCommand();
 
                 if (_factory == null)
                     _factory = new CommandFactory(dataContext as IViewModel);
                 else
                     _factory.DataContext = dataContext as IViewModel;
 
-                if (!useDirect)
-                    _factory.Connect(targetCommand, commandTarget);
+                _factory.Connect(targetCommand, commandTarget);
 
                 if (_searcher == null)
-                {
                     _searcher = new PropertySearcher(AffectedObject, customProperty, targetCommand);
-                }
                 else
                 {
                     _searcher.CustomName = customProperty;
@@ -335,7 +253,7 @@ namespace Tauron.Application.Wpf
                                 var typeName = tarType.ToString();
                                 var propName = _prop == null ? CustomName + "(Not Found)" : _prop.Name;
 
-                                Debug.Print("CommandBinder: FoundetProperty Incompatible: {0}:{1}", typeName, propName);
+                                Log.Logger.Error("CommandBinder: FoundetProperty Incompatible: {0}:{1}", typeName, propName);
                                 _prop = null;
                             }
                             else
