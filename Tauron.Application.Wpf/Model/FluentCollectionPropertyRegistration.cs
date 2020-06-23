@@ -1,4 +1,6 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows.Data;
 using JetBrains.Annotations;
 
@@ -32,6 +34,12 @@ namespace Tauron.Application.Wpf.Model
 
             Property.LockSet();
 
+            return this;
+        }
+
+        public FluentCollectionPropertyRegistration<TData> ConfigurateSource(Action<ICollectionView> view)
+        {
+            view(CollectionViewSource.GetDefaultView(_collection));
             return this;
         }
 

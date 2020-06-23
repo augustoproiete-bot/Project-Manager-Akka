@@ -27,7 +27,7 @@
                 </Style>
             </sync:DockingManager.Resources>
             <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_NodeView}" Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding NodeView}"/>
-            <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_SeedNodeView}" />
+            <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_SeedNodeView}" Style="{StaticResource ButtomStyle}" Content="{tau:ViewModelBinding SeedView}"/>
         </sync:DockingManager>
     </tau:DialogHost>
 </tau:Window>

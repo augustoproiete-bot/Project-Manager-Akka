@@ -1,0 +1,30 @@
+﻿using Akka.Actor;
+using Autofac;
+using Tauron.Application.Wpf.Model;
+
+namespace Tauron.Application.Wpf
+{
+    public sealed class ModelProeprty
+    {
+        public IActorRef Model { get; }
+
+        public UIPropertyBase Property { get; }
+
+        public ModelProeprty(IActorRef model, UIPropertyBase property)
+        {
+            Model = model;
+            Property = property;
+        }
+    }
+
+    public static class UiActorExtensions
+    {
+        public static ModelProeprty RegisterModel<TModel>(this UiActor actor, string propertyName, string actorName)
+        {
+            var model = actor.LifetimeScope.Resolve<IViewModel<TModel>>();
+            model.Init(actorName);
+
+            return new ModelProeprty(model.Actor, actor.RegisterProperty<IViewModel<TModel>>(propertyName).WithDefaultValue(model).Property.LockSet());
+        } 
+    }
+}

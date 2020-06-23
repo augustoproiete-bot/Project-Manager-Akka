@@ -145,8 +145,15 @@ namespace Tauron.Application.Wpf.Model
         }
 
         protected CommandRegistrationBuilder NewCommad
-            => new CommandRegistrationBuilder((
-                key, command, canExecute) => _commandRegistrations.Add(key, new CommandRegistration(command, canExecute)), this);
+            => new CommandRegistrationBuilder(
+                (key, command, canExecute) =>
+                {
+                    _propertys.Add(key, new PropertyData(new UIProperty<ICommand>(key)
+                    {
+                        InternalValue = new ActorCommand(key, Context.Self, canExecute)
+                    }.LockSet()));
+                    _commandRegistrations.Add(key, new CommandRegistration(command, canExecute));
+                }, this);
 
         public void CommandChanged()
         {
@@ -254,7 +261,7 @@ namespace Tauron.Application.Wpf.Model
 
             if (Equals(propertyData.PropertyBase.InternalValue, value)) return;
 
-            propertyData.SetValue(value);
+            propertyData.SetValue(value!);
         }
 
         private void PropertyValueChanged(PropertyData propertyData)
@@ -382,6 +389,24 @@ namespace Tauron.Application.Wpf.Model
             {
                 PropertyBase.SetValue(value);
             }
+        }
+
+        private sealed class ActorCommand : CommandBase
+        {
+            private readonly string _name;
+            private readonly IActorRef _self;
+            private readonly Func<object?, bool> _canExecute;
+
+            public ActorCommand(string name, IActorRef self, Func<object?, bool>? canExecute)
+            {
+                _name = name;
+                _self = self;
+                _canExecute = canExecute ?? (p => true);
+            }
+
+            public override void Execute(object parameter) => _self.Tell(new CommandExecuteEvent(_name, parameter));
+
+            public override bool CanExecute(object parameter) => _canExecute(parameter);
         }
     }
 }

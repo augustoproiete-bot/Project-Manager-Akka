@@ -33,10 +33,10 @@
                 </Grid.RowDefinitions>
                 <Menu Margin="5">
                     <MenuItem Header="{tau:Loc MainWindow_MainMenu_File}">
-                        <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_Open}" tau:CommandBinder.Command="OpenFile" />
-                        <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_New}" tau:CommandBinder.Command="NewFile" />
+                        <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_Open}" Command="{tau:ActorBinding OpenFile}" />
+                        <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_New}" Command="{tau:ActorBinding NewFile}" />
                         <Separator />
-                        <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_SaveAs}" tau:CommandBinder.Command="SaveAs" />
+                        <MenuItem Header="{tau:Loc MainWindow_MainMenu_File_SaveAs}" Command="{tau:ActorBinding SaveAs}" />
                     </MenuItem>
                     <MenuItem Header="{tau:Loc MainWindow_MainMwnu_RenctFile}"
                               ItemsSource="{tau:ActorBinding RenctFiles}">
@@ -92,9 +92,9 @@
                                 Style="{StaticResource ButtomStyle}">
                         <ToolBar>
                             <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete}"
-                                                tau:CommandBinder.Command="ClearOp" />
+                                                Command="{tau:ActorBinding ClearOp}" />
                             <Button Margin="2" Content="{tau:Loc MainWindow_Operation_Delete_All}"
-                                                tau:CommandBinder.Command="ClearAllOp" />
+                                                Command="{tau:ActorBinding ClearAllOp}" />
                         </ToolBar>
                         <ListBox ItemsSource="{tau:ActorBinding RunningOperations}">
                             <ListBox.ItemTemplate>

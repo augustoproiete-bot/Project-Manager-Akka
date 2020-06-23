@@ -20,8 +20,8 @@
         <TextBlock MinWidth="100" Grid.Row="1" Grid.Column="0" Grid.RowSpan="2" Margin="5"
                    Text="{tau:ActorBinding StatusLabel}" VerticalAlignment="Top" />
         <Button Margin="5" Grid.Row="0" Grid.Column="1" Content="{tau:Loc stoplabel}"
-                tau:CommandBinder.Command="TryStop" />
+                Command="{tau:ActorBinding TryStop}" />
         <Button Margin="5" Grid.Row="1" Grid.Column="1" Content="{tau:Loc restartlabel}"
-                tau:CommandBinder.Command="TryStart" />
+                Command="{tau:ActorBinding TryStart}" />
     </Grid>
 </tau:UserControl>

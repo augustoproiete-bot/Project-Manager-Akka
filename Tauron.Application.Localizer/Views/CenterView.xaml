@@ -9,10 +9,10 @@
                  d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel LastChildFill="True">
         <ToolBar DockPanel.Dock="Top">
-            <Button Margin="3" Content="{tau:Loc CenterView_NewProject}" tau:CommandBinder.Command="AddNewProject" />
-            <Button Margin="3" Content="{tau:Loc CenterView_RemoveProject}" tau:CommandBinder.Command="RemoveProject" />
+            <Button Margin="3" Content="{tau:Loc CenterView_NewProject}" Command="{tau:ActorBinding AddNewProject}" />
+            <Button Margin="3" Content="{tau:Loc CenterView_RemoveProject}" Command="{tau:ActorBinding RemoveProject}" />
             <Button Margin="3" Content="{tau:Loc CenterView_AddGlobalLanguage_Label}"
-                    tau:CommandBinder.Command="AddGlobalLang" />
+                    Command="{tau:ActorBinding AddGlobalLang}" />
         </ToolBar>
         <TabControl ItemsSource="{tau:ActorBinding Views}" SelectedIndex="{tau:ActorBinding CurrentProject}" >
             <TabControl.ItemTemplate>

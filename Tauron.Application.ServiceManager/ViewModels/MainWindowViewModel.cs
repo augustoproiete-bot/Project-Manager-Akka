@@ -7,13 +7,15 @@ namespace Tauron.Application.ServiceManager.ViewModels
 {
     public sealed class MainWindowViewModel : UiActor
     {
-        public MainWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IViewModel<NodeViewModel> nodeModel) 
+        public MainWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher) 
             : base(lifetimeScope, dispatcher)
         {
-            nodeModel.Init(Context, "Node-View");
-            NodeView = RegisterProperty<IViewModel<NodeViewModel>>(nameof(NodeView)).WithDefaultValue(nodeModel);
+            NodeView = this.RegisterModel<NodeViewModel>(nameof(NodeView), "Node-View");
+            SeedView = this.RegisterModel<SeedNodeViewModel>(nameof(SeedView), "Seed-View");
         }
 
-        public UIProperty<IViewModel<NodeViewModel>> NodeView { get; }
+        public ModelProeprty NodeView { get; }
+
+        public ModelProeprty SeedView { get; }
     }
 }

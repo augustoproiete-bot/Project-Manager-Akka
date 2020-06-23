@@ -10,6 +10,7 @@
   "MemberStatus_SelfOnline": "Online",
   "MemberStatus_SelfOffline": "Offline",
   "NodeView_Label_Status": "Status:",
+  "MainWindow_DockHeader_SeedNodeView": "Seed Nodes",
   "Common_Error": "Fehler",
   "Common_Warning": "Warnung",
   "Common_Unkowen": "Unbekannt",

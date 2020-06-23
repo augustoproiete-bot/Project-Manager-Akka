@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Windows.Threading;
@@ -30,7 +31,8 @@ namespace Tauron.Application.Localizer.UIModels
 
             IsEnabled = RegisterProperty<bool>(nameof(IsEnabled)).WithDefaultValue(!workspace.ProjectFile.IsEmpty);
 
-            ProjectEntrys = this.RegisterUiCollection<ProjectEntryModel>(nameof(ProjectEntrys)).Async();
+            ProjectEntrys = this.RegisterUiCollection<ProjectEntryModel>(nameof(ProjectEntrys))
+                .Async();
             SelectedIndex = RegisterProperty<int>(nameof(SelectedIndex));
 
             var self = Context.Self;
@@ -56,7 +58,7 @@ namespace Tauron.Application.Localizer.UIModels
                 Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));
                 SelectedIndex += 0;
 
-                foreach (var projectEntry in obj.Project.Entries) 
+                foreach (var projectEntry in obj.Project.Entries.OrderBy(le => le.Key)) 
                     ProjectEntrys.Add(new ProjectEntryModel(obj.Project, projectEntry, TryUpdateEntry, TryRemoveEntry));
 
                 ImportetProjects.AddRange(obj.Project.Imports);

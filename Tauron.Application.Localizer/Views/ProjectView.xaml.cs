@@ -25,7 +25,7 @@ namespace Tauron.Application.Localizer.Views
         private void TextElement_OnContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
             var myTextBox = (TextBox) sender;
-            myTextBox.ContextMenu = new ContextMenu();
+            myTextBox.ContextMenu = new ContextMenu { Background = Brushes.DimGray};
 
             var caretIndex = myTextBox.CaretIndex;
 

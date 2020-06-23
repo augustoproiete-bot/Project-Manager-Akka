@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Wpf;
@@ -20,6 +21,7 @@ namespace Tauron.Application.Localizer.UIModels
             EntryName = target.Key;
             Entries = new UIObservableCollection<ProjectLangEntry>();
             RemoveCommand = new SimpleCommand(() => remove((_projectName, EntryName)));
+            CopyCommand = new SimpleCommand(() => Clipboard.SetText(EntryName));
 
             foreach (var language in project.ActiveLanguages)
                 Entries.Add(target.Values.TryGetValue(language, out var content)
@@ -30,6 +32,8 @@ namespace Tauron.Application.Localizer.UIModels
         public string EntryName { get; }
 
         public UIObservableCollection<ProjectLangEntry> Entries { get; }
+
+        public ICommand CopyCommand { get; }
 
         public ICommand RemoveCommand { get; }
 

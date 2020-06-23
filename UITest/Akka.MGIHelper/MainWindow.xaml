@@ -14,7 +14,7 @@
             Background="{DynamicResource MaterialDesignPaper}"
             FontFamily="{DynamicResource MaterialDesignFont}">
     <DockPanel LastChildFill="True" Margin="5">
-        <Button DockPanel.Dock="Bottom" Margin="5" Content="{tau:Loc showlogs}" tau:CommandBinder.Command="OpenLogs"
+        <Button DockPanel.Dock="Bottom" Margin="5" Content="{tau:Loc showlogs}" Command="{tau:ActorBinding OpenLogs}"
                 Cursor="Hand" />
         <ContentControl Height="130" Content="{tau:ViewModelBinding MgiStarter}" DockPanel.Dock="Top" />
         <ContentControl Content="{tau:ViewModelBinding FanControl}" />

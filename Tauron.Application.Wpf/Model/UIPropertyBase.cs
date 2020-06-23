@@ -20,9 +20,10 @@ namespace Tauron.Application.Wpf.Model
 
         internal event Action? PriorityChanged;
 
-        internal void LockSet()
+        internal UIPropertyBase LockSet()
         {
             _isSetLocked = true;
+            return this;
         }
 
         protected internal void SetValue(object? value)
