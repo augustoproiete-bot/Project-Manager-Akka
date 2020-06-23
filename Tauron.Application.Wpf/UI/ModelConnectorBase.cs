@@ -61,6 +61,8 @@ namespace Tauron.Application.Wpf.UI
         {
             try
             {
+                Log.Debug("Init ModelConnector {Type} -- {Name}", typeof(TDrived), Name);
+
                 if (Model == null) return;
                 OnLoad();
 
@@ -84,15 +86,17 @@ namespace Tauron.Application.Wpf.UI
 
         protected virtual void OnUnload()
         {
+            Log.Debug("Unload ModelConnector {Type} -- {Name}", typeof(TDrived), Name);
         }
 
         protected virtual void OnLoad()
         {
+            Log.Debug("Load ModelConnector {Type} -- {Name}", typeof(TDrived), Name);
         }
 
         protected virtual void OnViewFound(IView view)
         {
-
+            Log.Debug("View Found ModelConnector {Type} -- {Name}", typeof(TDrived), Name);
         }
 
         public void ForceUnload()

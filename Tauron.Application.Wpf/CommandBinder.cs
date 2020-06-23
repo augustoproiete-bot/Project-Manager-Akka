@@ -70,33 +70,43 @@ namespace Tauron.Application.Wpf
             _isIn = true;
 
             if (oldValue != null)
-                binder.CleanUp(NamePrefix + oldValue);
+                binder.CleanUp(NamePrefix + oldValue + affectedPart.GetHashCode());
             if (newValue == null) return;
 
-            var name = NamePrefix + newValue + "#" + Rnd.Next();
-            var newlinker = new CommandLinker {CommandTarget = newValue};
+            var name = NamePrefix + newValue + affectedPart.GetHashCode();
+            var newlinker = new CommandLinker(name) {CommandTarget = newValue};
             binder.Register(name, newlinker, affectedPart);
             _isIn = false;
         }
 
-        private class CommandLinker : ControlBindableBase
+        private sealed class CommandLinker : ControlBindableBase
         {
+            private readonly string _key;
+            private static readonly ILogger Logger = Log.ForContext<CommandLinker>();
+
             private CommandFactory? _factory;
             private PropertySearcher? _searcher;
 
             public string? CommandTarget { get; set; }
 
+            public CommandLinker(string key)
+            {
+                _key = key;
+            }
+
             protected override void CleanUp()
             {
+                Logger.Debug("Clean Up Command {Name}", _key);
                 _factory?.Free();
             }
 
             protected override void Bind(object dataContext)
             {
+                Logger.Debug("Bind Command {Name}", _key);
                 var commandTarget = CommandTarget;
                 if (commandTarget == null)
                 {
-                    Log.Logger.Error("CommandBinder: No Binding: {CommandTarget}", commandTarget);
+                    Log.Logger.Error("CommandBinder: No Binding: {CommandTarget} -- {Name}", commandTarget, _key);
                     return;
                 }
 
@@ -104,16 +114,26 @@ namespace Tauron.Application.Wpf
                 var targetCommand = new EventCommand();
 
                 if (_factory == null)
-                    _factory = new CommandFactory(dataContext as IViewModel);
+                {
+                    Logger.Debug("Create Command Factory {Name}", _key);
+                    _factory = new CommandFactory(dataContext as IViewModel, Logger, _key);
+                }
                 else
+                {
+                    Logger.Debug("Update Command Factory {Name}", _key);
                     _factory.DataContext = dataContext as IViewModel;
+                }
 
                 _factory.Connect(targetCommand, commandTarget);
 
                 if (_searcher == null)
+                {
+                    Logger.Debug("Create Property Searcher {Name}", _key);
                     _searcher = new PropertySearcher(AffectedObject, customProperty, targetCommand);
+                }
                 else
                 {
+                    Logger.Debug("Update Peroperty Sercher {Name}", _key);
                     _searcher.CustomName = customProperty;
                     _searcher.Command = _factory.LastCommand;
                 }
@@ -123,14 +143,16 @@ namespace Tauron.Application.Wpf
 
             private class CommandFactory
             {
+                private readonly ILogger _logger;
+                private readonly string _key;
                 private Func<object?, bool>? _canExecute;
-
                 private Action<object?>? _execute;
-
                 private Func<bool>? _responded;
 
-                public CommandFactory(IViewModel? dataContext)
+                public CommandFactory(IViewModel? dataContext, ILogger logger, string key)
                 {
+                    _logger = logger;
+                    _key = key;
                     DataContext = dataContext;
                 }
 
@@ -140,24 +162,28 @@ namespace Tauron.Application.Wpf
 
                 public void Free()
                 {
+                    _logger.Debug("Remove Event Handler {Name}", _key);
                     _responded = null;
 
                     if (LastCommand == null) return;
 
-                    LastCommand.CanExecuteEvent -= _canExecute;
-                    LastCommand.ExecuteEvent -= _execute;
-
+                    LastCommand.Clear();
                     LastCommand = null;
                 }
 
                 public void Connect(EventCommand command, string commandName)
                 {
+                    _logger.Debug("Add Command Handler {Name}", _key);
                     _responded = null;
                     LastCommand = command;
 
                     if (DataContext == null) return;
 
-                    _execute = parm => DataContext.Tell(new CommandExecuteEvent(commandName, parm));
+                    _execute = parm =>
+                               {
+                                   _logger.Debug("Tell Execute Command {Name}", _key);
+                                   DataContext.Tell(new CommandExecuteEvent(commandName, parm));
+                               };
                     _canExecute = parm =>
                     {
                         try
@@ -166,6 +192,7 @@ namespace Tauron.Application.Wpf
                             {
                                 if (!DataContext.IsInitialized) return false;
 
+                                _logger.Debug("Ask For Can Execute {Name}", _key);
                                 _responded = DataContext
                                     .Ask<CanCommandExecuteRespond>(new CanCommandExecuteRequest(commandName, parm), TimeSpan.FromSeconds(1)).Result.CanExecute;
                             }
@@ -182,6 +209,7 @@ namespace Tauron.Application.Wpf
                         }
                     };
 
+                    _logger.Debug("Attach Command Handler {Name}", _key);
                     LastCommand.Clear();
                     LastCommand.CanExecuteEvent += _canExecute;
                     LastCommand.ExecuteEvent += _execute;

@@ -61,7 +61,7 @@ namespace Tauron.Application.Wpf.UI
 
         protected override void NoDataContextFound()
         {
-            Debug.Print($"No DataContext Found for {Name}");
+            Log.Debug("No DataContext Found for {Name}", Name);
         }
 
         protected override void ValidateCompled(ValidatingEvent msg)

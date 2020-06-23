@@ -15,16 +15,18 @@ namespace Tauron.Application.Wpf.UI
     {
         protected readonly ControlBindLogic BindLogic;
 
-        protected readonly ILogger Logger = Log.ForContext<TControl>();
+        protected readonly ILogger Logger;
         protected readonly IViewModel Model;
         protected readonly TControl UserControl;
 
         protected ControlLogicBase(TControl userControl, IViewModel model)
         {
+            Logger = Log.ForContext(GetType());
+
             UserControl = userControl;
             UserControl.DataContext = model;
             Model = model;
-            BindLogic = new ControlBindLogic(userControl, model);
+            BindLogic = new ControlBindLogic(userControl, model, Logger);
 
             // ReSharper disable once VirtualMemberCallInConstructor
             WireUpLoaded();
@@ -33,6 +35,7 @@ namespace Tauron.Application.Wpf.UI
 
             userControl.DataContextChanged += (sender, args) =>
             {
+                Logger.Debug("DataContext Changed Revert");
                 if (args.NewValue != model)
                     ((FrameworkElement) sender).DataContext = model;
             };
@@ -68,6 +71,7 @@ namespace Tauron.Application.Wpf.UI
         {
             try
             {
+                Logger.Debug("Control Unloaded {Element}", UserControl.GetType());
                 BindLogic.CleanUp();
                 Model.Tell(new UnloadEvent(UserControl.Key));
             }
@@ -79,6 +83,7 @@ namespace Tauron.Application.Wpf.UI
 
         protected virtual void UserControlOnLoaded()
         {
+            Logger.Debug("Control Loaded {Element}", UserControl.GetType());
             ControlUnload?.Invoke();
 
             if (!Model.IsInitialized)

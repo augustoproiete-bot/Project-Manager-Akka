@@ -60,11 +60,13 @@ namespace Tauron.Application.Wpf
         private sealed class EventLinker : ControlBindableBase
         {
             private readonly List<InternalEventLinker> _linkers = new List<InternalEventLinker>();
+            private static readonly ILogger Log = Serilog.Log.ForContext<EventLinker>();
 
             public string? Commands { get; set; }
 
             protected override void CleanUp()
             {
+                Log.Debug("Clean Up Event {Events}", Commands);
                 foreach (var linker in _linkers) linker.Dispose();
                 _linkers.Clear();
             }
@@ -73,10 +75,12 @@ namespace Tauron.Application.Wpf
             {
                 if (Commands == null)
                 {
-                    Log.Logger.Error("EventBinder: No Command Setted: {Context}", context ?? "Unkowen");
+                    Log.Error("EventBinder: No Command Setted: {Context}", context ?? "Unkowen");
 
                     return;
                 }
+
+                Log.Debug("Bind Events {Name}", Commands);
 
                 var vals = Commands.Split(':');
                 var events = new Dictionary<string, string>();
@@ -87,7 +91,7 @@ namespace Tauron.Application.Wpf
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    Log.Logger.Error("EventBinder: EventPairs not Valid: {Commands}", Commands);
+                    Log.Error("EventBinder: EventPairs not Valid: {Commands}", Commands);
                 }
 
                 if (context == null) return;
@@ -98,16 +102,16 @@ namespace Tauron.Application.Wpf
 
                 var hostType = host.GetType();
 
-                foreach (var pair in events)
+                foreach (var (@event, command) in events)
                 {
-                    var info = hostType.GetEvent(pair.Key);
+                    var info = hostType.GetEvent(@event);
                     if (info == null)
                     {
-                        Log.Logger.Error("EventBinder: No event Found: {HostType}|{Key}", hostType, pair.Key);
+                        Log.Error("EventBinder: No event Found: {HostType}|{Key}", hostType, @event);
                         return;
                     }
 
-                    _linkers.Add(new InternalEventLinker(info, dataContext, pair.Value, host));
+                    _linkers.Add(new InternalEventLinker(info, dataContext, command, host));
                 }
             }
 
@@ -116,6 +120,8 @@ namespace Tauron.Application.Wpf
             {
                 private static readonly MethodInfo Method = typeof(InternalEventLinker).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
                     .First(m => m.Name == "Handler");
+
+                private static readonly ILogger InternalLog = Log.ForContext<InternalEventLinker>();
 
                 private readonly IViewModel _dataContext;
 
@@ -140,6 +146,8 @@ namespace Tauron.Application.Wpf
 
                 public void Dispose()
                 {
+                    InternalLog.Debug("Remove Event Handler {Name}", _targetName);
+
                     if (_host == null || _delegate == null) return;
 
                     _event?.RemoveEventHandler(_host, _delegate);
@@ -180,6 +188,8 @@ namespace Tauron.Application.Wpf
 
                 private void Initialize()
                 {
+                    InternalLog.Debug("Initialize Event Handler {Name}", _targetName);
+
                     if (_isDirty || _event == null) return;
 
                     var eventTyp = _event?.EventHandlerType;

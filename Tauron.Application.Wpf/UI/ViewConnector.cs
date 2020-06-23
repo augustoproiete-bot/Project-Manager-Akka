@@ -26,12 +26,16 @@ namespace Tauron.Application.Wpf.UI
             if(View == null) return;
             _manager = View.ViewManager;
             _manager.RegisterConnector(_viewModelKey, this);
+
+            base.OnLoad();
         }
 
         protected override void OnUnload()
         {
             if(View == null) return;
             _manager.UnregisterConnector(_viewModelKey);
+
+            base.OnUnload();
         }
 
         protected override void NoDataContextFound() => _updater($"No Data Context Found for {Name}");

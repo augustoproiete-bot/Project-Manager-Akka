@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Media;
 using JetBrains.Annotations;
+using Serilog;
 
 namespace Tauron.Application.Wpf.Helper
 {
@@ -98,13 +99,15 @@ namespace Tauron.Application.Wpf.Helper
     {
         private readonly Dictionary<string, (IDisposable Disposer, IControlBindable Binder)> _binderList = new Dictionary<string, (IDisposable Disposer, IControlBindable Binder)>();
         private readonly object _dataContext;
+        private readonly ILogger _log;
 
         private readonly DependencyObject _target;
 
-        public ControlBindLogic(DependencyObject target, object dataContext)
+        public ControlBindLogic(DependencyObject target, object dataContext, ILogger log)
         {
             _target = target;
             _dataContext = dataContext;
+            _log = log;
         }
 
         //public void NewDataContext(object? dataContext)
@@ -121,6 +124,8 @@ namespace Tauron.Application.Wpf.Helper
 
         public void CleanUp()
         {
+            _log.Debug("Clean Up Bind Control");
+
             foreach (var pair in _binderList)
                 pair.Value.Disposer.Dispose();
 
@@ -129,6 +134,8 @@ namespace Tauron.Application.Wpf.Helper
 
         public void Register(string key, IControlBindable bindable, DependencyObject affectedPart)
         {
+            Log.Debug("Register Bind Element {Name} -- {LinkElement} -- {Part}", key, bindable.GetType(), affectedPart.GetType());
+
             if (_dataContext == null)
                 return;
 
@@ -151,6 +158,8 @@ namespace Tauron.Application.Wpf.Helper
 
         public void CleanUp(string key)
         {
+            Log.Debug("Clean Up Element {Name}", key);
+
             if (_binderList.TryGetValue(key, out var pair))
                 pair.Disposer.Dispose();
 
@@ -159,39 +168,54 @@ namespace Tauron.Application.Wpf.Helper
 
         public static IBinderControllable? FindRoot(DependencyObject? affected)
         {
+            Log.Debug("Try Find Root for {Element}", affected?.GetType());
+
             do
             {
                 // ReSharper disable once SuspiciousTypeConversion.Global
                 if (affected is IBinderControllable binder)
+                {
+                    Log.Debug("Root Found for {Element}", affected?.GetType());
                     return binder;
+                }
                 affected = LogicalTreeHelper.GetParent(affected) ?? VisualTreeHelper.GetParent(affected);
             } while (affected != null);
 
+            Log.Debug("Root not Found for {Element}", affected?.GetType());
             return null;
         }
 
         public static IView? FindParentView(DependencyObject? affected)
         {
+            Log.Debug("Try Find View for {Element}", affected?.GetType());
             do
             {
                 affected = LogicalTreeHelper.GetParent(affected) ?? VisualTreeHelper.GetParent(affected);
                 // ReSharper disable once SuspiciousTypeConversion.Global
-                if (affected is IView binder)
-                    return binder;
+                if (!(affected is IView binder)) continue;
+
+                Log.Debug("View Found for {Element}", affected?.GetType());
+                return binder;
             } while (affected != null);
 
+            Log.Debug("View Not Found for {Element}", affected?.GetType());
             return null;
         }
 
         public static IViewModel? FindParentDatacontext(DependencyObject? affected)
         {
+            Log.Debug("Try Find DataContext for {Element}", affected?.GetType());
             do
             {
                 affected = LogicalTreeHelper.GetParent(affected) ?? VisualTreeHelper.GetParent(affected);
                 if (affected is FrameworkElement element && element.DataContext is IViewModel model)
+                {
+                    Log.Debug("DataContext Found for {Element}", affected?.GetType());
                     return model;
+                }
             } while (affected != null);
 
+            Log.Debug("DataContext Not Found for {Element}", affected?.GetType());
             return null;
         }
 
