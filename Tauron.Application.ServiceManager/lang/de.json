@@ -12,6 +12,8 @@
   "NodeView_Label_Status": "Status:",
   "MainWindow_DockHeader_SeedNodeView": "Seed Nodes",
   "SeedNodeView_Label_Add": "Hinzufügen",
+  "SeedNodeView_Label_Remove": "Entfernen",
+  "SeedNodeView_Label_CreateShortCut": "Verknüpfung Erstellen",
   "Common_Error": "Fehler",
   "Common_Warning": "Warnung",
   "Common_Unkowen": "Unbekannt",

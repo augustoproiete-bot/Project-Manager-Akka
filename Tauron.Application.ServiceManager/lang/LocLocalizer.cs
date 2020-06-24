@@ -69,12 +69,18 @@ namespace Tauron.Application.Localizer.Generated
 		public sealed class SeedNodeViewRes
 		{
 			private readonly Task<string> __LabelAdd;
+			private readonly Task<string> __LabelRemove;
+			private readonly Task<string> __LabelCreateShortCut;
 			public SeedNodeViewRes(ActorSystem system)
 			{
 				var loc = system.Loc();
 				__LabelAdd = LocLocalizer.ToString(loc.RequestTask("SeedNodeView_Label_Add"));
+				__LabelRemove = LocLocalizer.ToString(loc.RequestTask("SeedNodeView_Label_Remove"));
+				__LabelCreateShortCut = LocLocalizer.ToString(loc.RequestTask("SeedNodeView_Label_CreateShortCut"));
 			}
 			public string LabelAdd => __LabelAdd.Result;
+			public string LabelRemove => __LabelRemove.Result;
+			public string LabelCreateShortCut => __LabelCreateShortCut.Result;
 		}
 		public sealed class CommonRes
 		{

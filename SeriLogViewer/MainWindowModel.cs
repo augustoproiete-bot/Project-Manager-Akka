@@ -48,6 +48,8 @@ namespace SeriLogViewer
         {
             try
             {
+                Application.Current.Dispatcher.Invoke(() => Entrys.Clear());
+
                 List<dynamic> entrys = new List<dynamic>(); 
 
                 Interlocked.Exchange(ref _isLoading, 1);
@@ -90,13 +92,9 @@ namespace SeriLogViewer
                 string msg = obj["@mt"]!.Value<string>();
                 var prov = obj;
 
-                var matches = Regex.Matches(msg, "{.+}");
-
-#pragma warning disable CS8600 // Das NULL-Literal oder ein möglicher NULL-Wert wird in einen Non-Nullable-Typ konvertiert.
-                foreach (Match match in matches)
-#pragma warning restore CS8600 // Das NULL-Literal oder ein möglicher NULL-Wert wird in einen Non-Nullable-Typ konvertiert.
+                foreach (var match in FindComponent(msg))
                 {
-                    msg = msg.Replace(match!.Value, prov[match.Value[1..^1]]?.ToString() ?? string.Empty);
+                    msg = msg.Replace(match, prov[match[1..^1]]?.ToString() ?? string.Empty);
                 }
 
                 obj["@mt"] = JToken.FromObject(msg);
@@ -104,6 +102,27 @@ namespace SeriLogViewer
             catch
             {
                 // ignored
+            }
+        }
+
+        private IEnumerable<string> FindComponent(string msg)
+        {
+            var target = msg;
+            var isIn = false;
+            var start = 0;
+
+            for (var i = 0; i < msg.Length; i++)
+            {
+                if (isIn && target[i] == '}')
+                {
+                    isIn = false;
+                    yield return target.Substring(start, i + 1 - start);
+                }
+                else if (!isIn && msg[i] == '{')
+                {
+                    isIn = true;
+                    start = i;
+                }
             }
         }
 

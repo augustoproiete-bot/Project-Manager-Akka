@@ -22,10 +22,10 @@ namespace Tauron.Application.Wpf.UI
             try
             {
                 if (!TryGetTargetItems(provider, out var dependencyObject, out var prop))
-                    return base.ProvideValue(provider);
+                    return DependencyProperty.UnsetValue;
 
                 if (DesignerProperties.GetIsInDesignMode(dependencyObject))
-                    return prop?.GetMetadata(dependencyObject)?.DefaultValue;
+                    return DependencyProperty.UnsetValue;
 
                 if (!ControlBindLogic.FindDataContext(dependencyObject, out var model)) return null;
 

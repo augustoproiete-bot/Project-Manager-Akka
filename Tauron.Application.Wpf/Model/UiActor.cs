@@ -64,6 +64,7 @@ namespace Tauron.Application.Wpf.Model
 
         protected override void PreRestart(Exception reason, object message)
         {
+            Log.Error(reason, message.ToString());
             Context.System.Terminate();
             base.PreRestart(reason, message);
         }
