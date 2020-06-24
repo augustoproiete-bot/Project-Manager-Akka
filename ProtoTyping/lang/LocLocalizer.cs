@@ -7,7 +7,7 @@ using Tauron.Localization;
 namespace Tauron.Application.Localizer.Generated
 {
 	[PublicAPI, GeneratedCode("Localizer", "1")]
-	internal sealed class LocLocalizer
+	public sealed partial class LocLocalizer
 	{
 		public sealed class TestRes
 		{

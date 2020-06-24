@@ -10,6 +10,11 @@ namespace Tauron.Application.ServiceManager.ViewModels
         public SeedNodeViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher) 
             : base(lifetimeScope, dispatcher)
         {
+            #region Add Seed
+            
+            NewCommad.ThenRegister("AddSeedUrl");
+
+            #endregion
         }
     }
 }

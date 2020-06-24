@@ -16,10 +16,16 @@
             <ColumnDefinition/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Button Grid.Row="0" Grid.Column="0" Content="Hinzufügen" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5"/>
-        <Button Grid.Row="0" Grid.Column="1" Content="Entfernen" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5"/>
-        <ListBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5">
-            <TextBlock Text="Test"></TextBlock>
+        <Button Grid.Row="0" Grid.Column="0" Content="{tau:Loc SeedNodeView_Label_Add}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5" Command="{tau:ActorBinding AddSeedUrl}"/>
+        <Button Grid.Row="0" Grid.Column="1" Content="{tau:Loc SeedNodeView_Label_Remove}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5"/>
+        <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Verknüpfung Erstellen" HorizontalAlignment="Center" Margin="5"/>
+        <ListBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5" HorizontalContentAlignment="Stretch">
+            <Border Margin="1" BorderThickness="1" BorderBrush="Black" CornerRadius="10">
+                <TextBlock Margin="5" Text="http://www.google.de" HorizontalAlignment="Center"/>
+            </Border>
+            <Border Margin="1" BorderThickness="1" BorderBrush="Black" CornerRadius="10">
+                <TextBlock Margin="5" Text="http://www.google.de" HorizontalAlignment="Center"/>
+            </Border>
         </ListBox>
     </Grid>
 </tau:UserControl>

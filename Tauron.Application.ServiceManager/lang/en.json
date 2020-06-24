@@ -11,6 +11,7 @@
   "MemberStatus_SelfOffline": "Offline",
   "NodeView_Label_Status": "Status:",
   "MainWindow_DockHeader_SeedNodeView": "Seed Nodes",
+  "SeedNodeView_Label_Add": "Add",
   "Common_Error": "Error",
   "Common_Warning": "Warning",
   "Common_Unkowen": "Unkowen",

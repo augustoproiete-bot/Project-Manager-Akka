@@ -66,6 +66,16 @@ namespace Tauron.Application.Localizer.Generated
 			}
 			public string LabelStatus => __LabelStatus.Result;
 		}
+		public sealed class SeedNodeViewRes
+		{
+			private readonly Task<string> __LabelAdd;
+			public SeedNodeViewRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__LabelAdd = LocLocalizer.ToString(loc.RequestTask("SeedNodeView_Label_Add"));
+			}
+			public string LabelAdd => __LabelAdd.Result;
+		}
 		public sealed class CommonRes
 		{
 			private readonly Task<string> __Error;
@@ -94,11 +104,13 @@ namespace Tauron.Application.Localizer.Generated
 			 MainWindow = new MainWindowRes(system);
 			 MemberStatus = new MemberStatusRes(system);
 			 NodeView = new NodeViewRes(system);
+			 SeedNodeView = new SeedNodeViewRes(system);
 			 Common = new CommonRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
 		public MemberStatusRes MemberStatus { get; }
 		public NodeViewRes NodeView { get; }
+		public SeedNodeViewRes SeedNodeView { get; }
 		public CommonRes Common { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);
