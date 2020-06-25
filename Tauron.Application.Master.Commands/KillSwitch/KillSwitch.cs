@@ -1,12 +1,10 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.Cluster;
-using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Cluster.Utility;
-using Akka.DistributedData;
 using JetBrains.Annotations;
 using Tauron.Akka;
+using static Akka.Cluster.Utility.ClusterActorDiscoveryMessage;
 
 namespace Tauron.Application.Master.Commands
 {
@@ -15,19 +13,139 @@ namespace Tauron.Application.Master.Commands
     {
         private const string KillSwitchName = "KillSwitch";
 
-        private static IActorRef _nodes;
 
-        private class InternalKillKey
+        private static IActorRef _switch = ActorRefs.Nobody;
+
+        public sealed class KillWatcher : ExposedReceiveActor
         {
-            public UniqueAddress Address { get; }
+            
+            public KillWatcher(KillRecpientType type)
+            {
+                this.Flow<ActorUp>()
+                    .From.Func(au => new ActorUp(Self, "None"))
+                    .ToRefFromMsg(au => au.Actor)
+                    .AndReceive();
 
+                this.Flow<RequestRegistration>()
+                    .From.Func(rr => new RespondRegistration(type)).ToSender()
+                    .AndReceive();
+
+                this.Flow<KillNode>()
+                    .From.Action(kn => Cluster.Get(Context.System).LeaveAsync())
+                    .AndReceive();
+            }
+
+            protected override void PreStart()
+            {
+                ClusterActorDiscovery.Get(Context.System).Discovery.Tell(new MonitorActor(KillSwitchName));
+                base.PreStart();
+            }
+        }
+
+        public sealed class KillSwitchActor : ExposedReceiveActor
+        {
+            private sealed class ActorElement
+            {
+                public KillRecpientType RecpientType { get; set; } = KillRecpientType.Unkowen;
+
+                public IActorRef Target { get; }
+
+                public ActorElement(IActorRef target) => Target = target;
+
+                public static ActorElement New(IActorRef r) 
+                    => new ActorElement(r);
+            }
+
+            private static readonly KillRecpientType[] Order = {KillRecpientType.Unkowen, KillRecpientType.Frontend, KillRecpientType.Host, KillRecpientType.Service, KillRecpientType.Seed};
+
+            private readonly IActorRef _actorDiscovery;
+
+            private readonly List<ActorElement> _actors = new List<ActorElement>();
+
+            public KillSwitchActor(ActorSystem system)
+            {
+                _actorDiscovery = ClusterActorDiscovery.Get(system).Discovery;
+
+                this.Flow<ActorDown>()
+                    .From.Action(ad => 
+                        _actors
+                        .FindIndex(ae => ae.Target.Equals(ad.Actor))
+                        .When(i => i != -1, i => _actors.RemoveAt(i)))
+                    .AndReceive();
+
+                this.Flow<ActorUp>()
+                    .From.Func(au => 
+                        _actors
+                        .AddAnd(ActorElement.New(au.Actor))
+                        .To(_ => new RequestRegistration()))
+                    .ToRefFromMsg(au => au.Actor)
+                    .AndRespondTo<RespondRegistration>().Action(r => 
+                        _actors
+                        .Find(e => e.Target.Equals(Context.Sender))
+                        .When(i => i != null, element => element.RecpientType = r.RecpientType))
+                    .AndReceive();
+
+                this.Flow<RequestRegistration>()
+                    .From.Func(() => new RespondRegistration(KillRecpientType.Seed))
+                    .ToSender()
+                    .AndReceive();
+
+                this.Flow<KillClusterMsg>()
+                    .From.Action(RunKillCluster)
+                    .AndReceive();
+
+                this.Flow<KillNode>()
+                    .From.Action(_ => Cluster.Get(Context.System).LeaveAsync())
+                    .AndReceive();
+
+                this.Flow<ActorUp>()
+                    .From.Action(au => au.When(u => u.Tag == "None", up => Context.Watch(up.Actor)))
+                    .AndRespondTo<Terminated>().Func(t => new ActorDown(t.ActorRef, "None")).ToSelf()
+                    .AndReceive();
+            }
+
+            private void RunKillCluster()
+            {
+                var dic = new GroupDictionary<KillRecpientType, IActorRef>
+                {
+                    KillRecpientType.Unkowen,
+                    KillRecpientType.Frontend,
+                    KillRecpientType.Host,
+                    KillRecpientType.Seed,
+                    KillRecpientType.Service
+                };
+
+                foreach (var element in _actors) 
+                    dic.Add(element.RecpientType, element.Target);
+
+                foreach (var recpientType in Order)
+                {
+                    foreach (var actorRef in dic[recpientType]) 
+                        actorRef.Tell(new KillNode());
+                }
+            }
+
+            protected override void PreStart()
+            {
+                _actorDiscovery.Tell(new RegisterActor(Self, KillSwitchName));
+                _actorDiscovery.Tell(new MonitorActor(KillSwitchName));
+                base.PreStart();
+            }
+        }
+
+        public sealed class RespondRegistration
+        {
             public KillRecpientType RecpientType { get; }
 
-            public InternalKillKey(UniqueAddress address, KillRecpientType recpientType)
+            public RespondRegistration(KillRecpientType recpientType)
             {
-                Address = address;
                 RecpientType = recpientType;
             }
+        }
+
+        public sealed class RequestRegistration
+        {
+            
         }
 
         public sealed class KillNode
@@ -35,37 +153,16 @@ namespace Tauron.Application.Master.Commands
             
         }
 
-        public static void Setup(ActorSystem system)
+        public sealed class KillClusterMsg
         {
-            _nodes = system.ActorOf(() => new DistributedActorTable<UniqueAddress>(KillSwitchName, system), KillSwitchName);
+            
         }
 
-        public static void Subscripe(ActorSystem system, IActorRef recpient)
-        {
-        }
+        public static void Setup(ActorSystem system) => _switch = system.ActorOf(() => new KillSwitchActor(system), KillSwitchName);
+        
+        public static void Subscribe(ActorSystem system, KillRecpientType type) => _switch = system.ActorOf(() => new KillWatcher(type), KillSwitchName);
 
-
-
-        //public static void KillCluster(ActorSystem system)
-        //{
-        //    var cluster = Cluster.Get(system);
-        //    if (!cluster.SelfRoles.Contains("Master"))
-        //        throw new InvalidOperationException("Only Masters able to Kill cluster");
-        //    DistributedPubSub.Get(system).Mediator.Tell(new Publish(nameof(KillNode), new KillNode()));
-        //}
-
-        //public static void Subscripe(ActorSystem system, IActorRef recpient) 
-        //    => DistributedPubSub.Get(system).Mediator.Tell(new Subscribe(nameof(KillNode), recpient));
-
-        //public static void Enable(ActorSystem system)
-        //{
-        //    system.ActorOf((dsl, cxt) =>
-        //                   {
-        //                       dsl.Receive<SubscribeAck>((s, c) => { });
-        //                       dsl.Receive<KillNode>((node, context) => Cluster.Get(context.System).LeaveAsync()); 
-
-        //                       Subscripe(system, cxt.Self);
-        //                   }, "Simple-Kill-Switch");
-        //}
+        public static void KillCluster()
+            => _switch.Tell(new KillClusterMsg());
     }
 }

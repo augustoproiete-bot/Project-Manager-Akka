@@ -9,7 +9,7 @@ namespace Master.Seed.Node.Commands
         public MasterCommandHandlerActor() 
             : base(MasterCommands.MasterPalette)
         {
-            Process("kill", command => KillSwitch.KillCluster(Context.System));
+            Process("kill", command => KillSwitch.KillCluster());
         }
     }
 }

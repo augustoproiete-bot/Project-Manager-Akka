@@ -13,7 +13,7 @@ namespace Master.Seed.Node
         static async Task Main(string[] args)
         {
             await ActorApplication.Create(args)
-               .StartNode()
+               .StartNode(KillRecpientType.Seed)
                .ConfigurateAkkaSystem((context, system) =>
                                       {
                                           var cluster = Cluster.Get(system);

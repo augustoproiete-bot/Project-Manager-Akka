@@ -13,7 +13,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
 {
     public static class Boottrap
     {
-        public static IApplicationBuilder StartNode(this IApplicationBuilder builder)
+        public static IApplicationBuilder StartNode(this IApplicationBuilder builder, KillRecpientType type)
         {
             return builder
                .ConfigureAutoFac(cb => cb.RegisterType<EmptyAppRoute>().Named<IAppRoute>("default"))
@@ -24,7 +24,13 @@ namespace Tauron.Application.AkkaNode.Boottrap
 
                                      configuration.WriteTo.ColoredConsole();
                                  })
-               .ConfigurateAkkaSystem((context, system) => KillSwitch.Enable(system));
+               .ConfigurateAkkaSystem((context, system) =>
+               {
+                   if(type == KillRecpientType.Seed)
+                       KillSwitch.Setup(system);
+                   else
+                       KillSwitch.Subscribe(system, type);
+               });
         }
 
         public static IApplicationBuilder ConfigurateNode(this IApplicationBuilder builder)

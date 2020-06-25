@@ -34,6 +34,21 @@ namespace Tauron
             }
         }
 
+        public static TResult To<TInput, TResult>(this TInput input, Func<TInput, TResult> transformer)
+            => transformer(input);
+
+        public static TType DoAnd<TType>(this TType item, Action<TType> todo)
+        {
+            todo(item);
+            return item;
+        }
+
+        public static void When<TType>(this TType target, Func<TType, bool> when, Action<TType> then)
+        {
+            if (when(target))
+                then(target);
+        }
+
         public static T? As<T>(this object? value) where T : class
         {
             return value as T;

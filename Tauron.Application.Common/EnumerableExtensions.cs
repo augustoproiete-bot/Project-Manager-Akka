@@ -11,6 +11,12 @@ namespace Tauron
     [PublicAPI]
     public static class EnumerableExtensions
     {
+        public static TType AddAnd<TType>(this ICollection<TType> collection, TType item)
+        {
+            collection.Add(item);
+            return item;
+        }
+
         public static void ShiftElements<T>([CanBeNull] this T[] array, int oldIndex, int newIndex)
         {
             if (array == null) return;

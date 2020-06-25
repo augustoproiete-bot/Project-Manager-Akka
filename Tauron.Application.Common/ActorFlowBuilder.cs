@@ -46,11 +46,23 @@ namespace Tauron
         public AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent> Func<TNext>(Func<TRecieve, Task<TNext>> transformer)
             => new AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent>(Flow, transformer);
 
+        public FuncTargetSelector<TRecieve, TNext, TStart, TParent> Func<TNext>(Func<TNext> transformer)
+            => new FuncTargetSelector<TRecieve, TNext, TStart, TParent>(Flow, _ => transformer());
+
+        public AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent> Func<TNext>(Func<Task<TNext>> transformer)
+            => new AsyncFuncTargetSelector<TRecieve, TNext, TStart, TParent>(Flow, _ => transformer());
+
         public ActionFinisher<TRecieve, TStart, TParent> Action(Action<TRecieve> act) 
             => new ActionFinisher<TRecieve, TStart, TParent>(Flow, act);
 
         public ActionFinisher<TRecieve, TStart, TParent> Action(Func<TRecieve, Task> act) 
             => new ActionFinisher<TRecieve, TStart, TParent>(Flow, act);
+
+        public ActionFinisher<TRecieve, TStart, TParent> Action(Action act)
+            => new ActionFinisher<TRecieve, TStart, TParent>(Flow, _ => act());
+
+        public ActionFinisher<TRecieve, TStart, TParent> Action(Func<Task> act)
+            => new ActionFinisher<TRecieve, TStart, TParent>(Flow, _ => act());
 
         public ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve> External<TRespond>(Func<IActorRef> target, bool forward = false)
             => new ExternalActorRecieveBuilder<TRespond, TStart, TParent, TRecieve>(Flow, target, forward);
@@ -300,6 +312,8 @@ namespace Tauron
         public ActorFlowBuilder<TStart, TParent> Flow { get; }
 
         public RunSelector<TNext, TStart, TParent> Then => new RunSelector<TNext, TStart, TParent>(Flow);
+
+        public RunSelector<TReposnd, TStart, TParent> AndRespondTo<TReposnd>() => new RunSelector<TReposnd, TStart, TParent>(Flow);
     }
 
     [PublicAPI]

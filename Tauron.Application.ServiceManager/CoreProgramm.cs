@@ -19,6 +19,7 @@ namespace Tauron.Application.ServiceManager
             await ActorApplication.Create(args)
                .ConfigurateNode()
                .ConfigurateAkkaSystem((context, system) => system.RegisterLocalization())
+               .ConfigurateAkkaSystem((context, system) => KillSwitch.Subscribe(system, KillRecpientType.Frontend))
                .ConfigurateAkkaSystem(
                     (context, system) => Cluster.Get(system).RegisterOnMemberUp(
                                 () => ServiceRegistry.GetRegistry(system).RegisterService(new RegisterService(context.HostEnvironment.ApplicationName, Cluster.Get(system).SelfUniqueAddress))))
