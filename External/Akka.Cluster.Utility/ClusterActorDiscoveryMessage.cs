@@ -64,7 +64,7 @@ namespace Akka.Cluster.Utility
         {
             public IActorRef Actor { get; }
 
-            public ClusterActorDown(IActorRef actor) 
+            public ClusterActorDown(IActorRef actor)
                 => Actor = actor;
         }
 
@@ -112,7 +112,7 @@ namespace Akka.Cluster.Utility
         {
             public IActorRef Actor { get; }
 
-            public UnregisterActor(IActorRef actor) 
+            public UnregisterActor(IActorRef actor)
                 => Actor = actor;
         }
 
@@ -121,7 +121,7 @@ namespace Akka.Cluster.Utility
         {
             public string Tag { get; }
 
-            public MonitorActor(string tag) 
+            public MonitorActor(string tag)
                 => Tag = tag;
         }
 
@@ -130,7 +130,7 @@ namespace Akka.Cluster.Utility
         {
             public string Tag { get; }
 
-            public UnmonitorActor(string tag) 
+            public UnmonitorActor(string tag)
                 => Tag = tag;
         }
     }
