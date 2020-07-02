@@ -113,7 +113,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             #region Projects
 
-            Projects = this.RegisterUiCollection<BuildProjectViewModel>(nameof(Projects)).Async();
+            Projects = this.RegisterUiCollection<BuildProjectViewModel>(nameof(Projects)).AndAsync();
 
             var flow = this.Flow<ProjectBuildpathRequest>()
                 .From.Mutate(workspace.Build).With(bm => bm.ProjectPath, bm => r => bm.SetProjectPath(r.Project, r.TargetPath)).ToSelf()

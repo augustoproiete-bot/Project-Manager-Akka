@@ -3,8 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Tauron.Application.ServiceManager.Views"
              xmlns:tau="http://schemas.TauronWpf.com"
+             xmlns:viewModels="clr-namespace:Tauron.Application.ServiceManager.ViewModels"
+             xmlns:converter="clr-namespace:Tauron.Application.ServiceManager.Converter"
              mc:Ignorable="d" Background="White"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
@@ -17,15 +18,23 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <Button Grid.Row="0" Grid.Column="0" Content="{tau:Loc SeedNodeView_Label_Add}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5" Command="{tau:ActorBinding AddSeedUrl}"/>
-        <Button Grid.Row="0" Grid.Column="1" Content="{tau:Loc SeedNodeView_Label_Remove}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5"/>
+        <Button Grid.Row="0" Grid.Column="1" Content="{tau:Loc SeedNodeView_Label_Remove}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5" Command="{tau:ActorBinding RemoveSeed}"/>
         <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="{tau:Loc SeedNodeView_Label_CreateShortCut}" HorizontalAlignment="Center" Margin="5"/>
-        <ListBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5" HorizontalContentAlignment="Stretch">
-            <Border Margin="1" BorderThickness="1" BorderBrush="Black" CornerRadius="10">
-                <TextBlock Margin="5" Text="http://www.google.de" HorizontalAlignment="Center"/>
-            </Border>
-            <Border Margin="1" BorderThickness="1" BorderBrush="Black" CornerRadius="10">
-                <TextBlock Margin="5" Text="http://www.google.de" HorizontalAlignment="Center"/>
-            </Border>
+        <ListBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5" HorizontalContentAlignment="Stretch" ItemsSource="{tau:ActorBinding Models}">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="viewModels:SeedUrlModel">
+                    <Border Margin="1" BorderThickness="1" BorderBrush="Black" CornerRadius="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Margin="5" Text="{Binding Url}" HorizontalAlignment="Left"/>
+                            <Border Margin="5" BorderThickness="3" BorderBrush="Black" Grid.Column="1" MinWidth="15" CornerRadius="10" Background="{Binding Online, Converter={converter:BoolToBrushConverter}}"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
         </ListBox>
     </Grid>
 </tau:UserControl>

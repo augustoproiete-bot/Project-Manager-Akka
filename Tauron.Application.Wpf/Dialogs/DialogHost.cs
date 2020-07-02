@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using JetBrains.Annotations;
@@ -70,6 +72,15 @@ namespace Tauron.Application.Wpf.Dialogs
         private ContentControl? DialogContent { get; set; }
 
         private ContentControl? MainContent { get; set; }
+
+        public Task<TResult> MakeTask<TResult>(Func<TaskCompletionSource<TResult>, object> factory)
+        {
+            var source = new TaskCompletionSource<TResult>();
+
+            DataContext = factory(source);
+
+            return source.Task;
+        }
 
         public override void OnApplyTemplate()
         {

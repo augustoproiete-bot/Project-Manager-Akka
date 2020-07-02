@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
@@ -23,7 +24,7 @@ namespace Tauron.Application.Wpf.Model
 
         public UIProperty<ObservableCollection<TData>> Property { get; }
 
-        public FluentCollectionPropertyRegistration<TData> Async()
+        public FluentCollectionPropertyRegistration<TData> AndAsync()
         {
             if (_isAsync) return this;
             _isAsync = true;
@@ -37,7 +38,18 @@ namespace Tauron.Application.Wpf.Model
             return this;
         }
 
-        public FluentCollectionPropertyRegistration<TData> ConfigurateSource(Action<ICollectionView> view)
+        public FluentCollectionPropertyRegistration<TData> AndInitialElements(params TData[] elements) 
+            => AndInitialElements((IEnumerable<TData>) elements);
+
+        public FluentCollectionPropertyRegistration<TData> AndInitialElements(IEnumerable<TData> elements)
+        {
+            foreach (var element in elements) 
+                _collection.Add(element);
+
+            return this;
+        }
+
+        public FluentCollectionPropertyRegistration<TData> AndConfigurateSource(Action<ICollectionView> view)
         {
             view(CollectionViewSource.GetDefaultView(_collection));
             return this;

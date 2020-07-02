@@ -14,16 +14,19 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __LabelTitle;
 			private readonly Task<string> __DockHeaderNodeView;
 			private readonly Task<string> __DockHeaderSeedNodeView;
+			private readonly Task<string> __LabelOnlineStatus;
 			public MainWindowRes(ActorSystem system)
 			{
 				var loc = system.Loc();
 				__LabelTitle = LocLocalizer.ToString(loc.RequestTask("MainWindow_Label_Title"));
 				__DockHeaderNodeView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_NodeView"));
 				__DockHeaderSeedNodeView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_SeedNodeView"));
+				__LabelOnlineStatus = LocLocalizer.ToString(loc.RequestTask("MainWindow_Label_OnlineStatus"));
 			}
 			public string LabelTitle => __LabelTitle.Result;
 			public string DockHeaderNodeView => __DockHeaderNodeView.Result;
 			public string DockHeaderSeedNodeView => __DockHeaderSeedNodeView.Result;
+			public string LabelOnlineStatus => __LabelOnlineStatus.Result;
 		}
 		public sealed class MemberStatusRes
 		{

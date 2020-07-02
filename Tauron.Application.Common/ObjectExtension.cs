@@ -49,6 +49,18 @@ namespace Tauron
                 then(target);
         }
 
+        public static void When<TType>(this TType target, Func<TType, bool> when, Action then)
+        {
+            if (when(target))
+                then();
+        }
+
+        public static void WhenNotEmpty(this string target, Action<string> then)
+        {
+            if (string.IsNullOrWhiteSpace(target)) return;
+            then(target);
+        }
+
         public static T? As<T>(this object? value) where T : class
         {
             return value as T;

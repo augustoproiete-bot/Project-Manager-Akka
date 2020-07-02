@@ -19,6 +19,12 @@ namespace Tauron.Application.Wpf.Dialogs
             return ShowDialog<TDialog, TData, TData>(actor, Array.Empty<TData>, parameters);
         }
 
+        public static Func<TData> ShowDialog<TDialog, TData>(this UiActor actor, Func<IEnumerable<TData>> initalData, params Parameter[] parameters)
+            where TDialog : IBaseDialog<TData, TData>
+        {
+            return ShowDialog<TDialog, TData, TData>(actor, initalData, parameters);
+        }
+
         public static Func<TData> ShowDialog<TDialog, TData, TViewData>(this UiActor actor, Func<IEnumerable<TViewData>> initalData, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TViewData>
         {

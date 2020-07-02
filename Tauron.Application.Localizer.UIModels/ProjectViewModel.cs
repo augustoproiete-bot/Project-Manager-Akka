@@ -32,7 +32,7 @@ namespace Tauron.Application.Localizer.UIModels
             IsEnabled = RegisterProperty<bool>(nameof(IsEnabled)).WithDefaultValue(!workspace.ProjectFile.IsEmpty);
 
             ProjectEntrys = this.RegisterUiCollection<ProjectEntryModel>(nameof(ProjectEntrys))
-                .Async();
+                .AndAsync();
             SelectedIndex = RegisterProperty<int>(nameof(SelectedIndex));
 
             var self = Context.Self;
@@ -150,7 +150,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             ImportSelectIndex = RegisterProperty<int>(nameof(ImportSelectIndex)).WithDefaultValue(-1);
-            ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).Async();
+            ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).AndAsync();
 
             NewCommad.WithCanExecute(() => GetImportableProjects().Any())
                 .ThenFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, string>(GetImportableProjects))
@@ -186,7 +186,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
 
-            Languages = this.RegisterUiCollection<ProjectViewLanguageModel>(nameof(Languages)).Async();
+            Languages = this.RegisterUiCollection<ProjectViewLanguageModel>(nameof(Languages)).AndAsync();
 
             NewCommad
                 .ThenFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, CultureInfo>(() => workspace.Get(_project).ActiveLanguages.Select(al => al.ToCulture()).ToArray()))

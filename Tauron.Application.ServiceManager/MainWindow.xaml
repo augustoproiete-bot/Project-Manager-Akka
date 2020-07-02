@@ -3,31 +3,49 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Tauron.Application.ServiceManager"
         xmlns:tau="http://schemas.TauronWpf.com"
         xmlns:sync="http://schemas.syncfusion.com/wpf"
         xmlns:viewModels="clr-namespace:Tauron.Application.ServiceManager.ViewModels"
         xmlns:sfSkinManager="clr-namespace:Syncfusion.SfSkinManager;assembly=Syncfusion.SfSkinManager.WPF"
+        xmlns:converter="clr-namespace:Tauron.Application.ServiceManager.Converter"
         mc:Ignorable="d" d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel, IsDesignTimeCreatable=False}"
         Title="{tau:Loc MainWindow_Label_Title}" Height="450" Width="800" WindowState="Maximized" sfSkinManager:SfSkinManager.VisualStyle="Blend">
     <tau:DialogHost>
-        <sync:DockingManager UseDocumentContainer="True">
-            <sync:DockingManager.Resources>
-                <Style x:Key="DockBase">
-                    <Setter Property="sync:DockingManager.CanClose" Value="False"/>
-                    <Setter Property="sync:DockingManager.DockAbility" Value="All"/>
-                </Style>
-                <Style x:Key="DocumentStyle" BasedOn="{StaticResource DockBase}">
-                    <Setter Property="sync:DockingManager.State" Value="Document"/>
-                </Style>
-                <Style x:Key="ButtomStyle" BasedOn="{StaticResource DockBase}">
-                    <Setter Property="sync:DockingManager.State" Value="AutoHidden"/>
-                    <Setter Property="sync:DockingManager.DesiredHeightInDockedMode" Value="500"/>
-                    <Setter Property="sync:DockingManager.SideInDockedMode" Value="Bottom"/>
-                </Style>
-            </sync:DockingManager.Resources>
-            <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_NodeView}" Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding NodeView}"/>
-            <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_SeedNodeView}" Style="{StaticResource ButtomStyle}" Content="{tau:ViewModelBinding SeedView}"/>
-        </sync:DockingManager>
+        <DockPanel LastChildFill="True">
+            <StatusBar DockPanel.Dock="Bottom">
+                <StatusBar.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <DockPanel LastChildFill="False"/>
+                    </ItemsPanelTemplate>
+                </StatusBar.ItemsPanel>
+                <StatusBarItem DockPanel.Dock="Right" Margin="5,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{tau:Loc MainWindow_Label_OnlineStatus}" Margin="0,0,5,0"/>
+                        <Border BorderThickness="3" MinWidth="15" BorderBrush="Black" CornerRadius="10" 
+                                Background="{tau:ActorBinding AppInfo.ConnectionState, Converter={converter:ConnectionStateConverter}}"/>
+                    </StackPanel>
+                </StatusBarItem>
+            </StatusBar>
+            <sync:DockingManager UseDocumentContainer="True" DockPanel.Dock="Top">
+                <sync:DockingManager.Resources>
+                    <Style x:Key="DockBase">
+                        <Setter Property="sync:DockingManager.CanClose" Value="False" />
+                        <Setter Property="sync:DockingManager.DockAbility" Value="All" />
+                    </Style>
+                    <Style x:Key="DocumentStyle" BasedOn="{StaticResource DockBase}">
+                        <Setter Property="sync:DockingManager.State" Value="Document" />
+                    </Style>
+                    <Style x:Key="ButtomStyle" BasedOn="{StaticResource DockBase}">
+                        <Setter Property="sync:DockingManager.State" Value="AutoHidden" />
+                        <Setter Property="sync:DockingManager.DesiredHeightInDockedMode" Value="500" />
+                        <Setter Property="sync:DockingManager.SideInDockedMode" Value="Bottom" />
+                    </Style>
+                </sync:DockingManager.Resources>
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_NodeView}"
+                                Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding NodeView}" />
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_SeedNodeView}"
+                                Style="{StaticResource ButtomStyle}" Content="{tau:ViewModelBinding SeedView}" />
+            </sync:DockingManager>
+        </DockPanel>
     </tau:DialogHost>
 </tau:Window>

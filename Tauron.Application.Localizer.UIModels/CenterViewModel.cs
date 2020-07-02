@@ -26,7 +26,7 @@ namespace Tauron.Application.Localizer.UIModels
             IMainWindowCoordinator mainWindow, ProjectFileWorkspace workspace)
             : base(lifetimeScope, dispatcher)
         {
-            Views = this.RegisterUiCollection<ProjectViewContainer>(nameof(Views)).Async();
+            Views = this.RegisterUiCollection<ProjectViewContainer>(nameof(Views)).AndAsync();
             CurrentProject = RegisterProperty<int?>(nameof(CurrentProject));
 
             AddProject(new Project().WithProjectName("Dummy"));

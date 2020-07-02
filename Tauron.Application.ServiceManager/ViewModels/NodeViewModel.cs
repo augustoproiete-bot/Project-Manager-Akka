@@ -99,7 +99,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             : base(lifetimeScope, dispatcher)
         {
             _localizer = localizer;
-            Nodes = this.RegisterUiCollection<ActualNode>(nameof(Nodes)).Async();
+            Nodes = this.RegisterUiCollection<ActualNode>(nameof(Nodes)).AndAsync();
             CurrentStatus = RegisterProperty<string>(nameof(CurrentStatus)).WithDefaultValue(localizer.MemberStatus.SelfOffline);
         }
 

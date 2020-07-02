@@ -34,49 +34,39 @@ namespace Tauron.Application.Wpf.Model
             return GetEnumerator();
         }
 
-        public void Add(TData item)
+        public void Add(TData item) => _collection?.Add(item);
+
+        public void Add(TData item, Action<int> then)
         {
+            if (_collection == null) return;
             _collection?.Add(item);
+            then(Count);
         }
 
-        public void Clear()
+        public void Add(TData item, Action<TData> then)
         {
-            _collection?.Clear();
+            if(_collection == null) return;
+            _collection.Add(item);
+            then(item);
         }
 
-        public bool Contains(TData item)
-        {
-            return _collection?.Contains(item) ?? false;
-        }
+        public void Clear() => _collection?.Clear();
 
-        public void CopyTo(TData[] array, int arrayIndex)
-        {
-            _collection?.CopyTo(array, arrayIndex);
-        }
+        public bool Contains(TData item) => _collection?.Contains(item) ?? false;
 
-        public bool Remove(TData item)
-        {
-            return _collection?.Remove(item) ?? false;
-        }
+        public void CopyTo(TData[] array, int arrayIndex) => _collection?.CopyTo(array, arrayIndex);
+
+        public bool Remove(TData item) => _collection?.Remove(item) ?? false;
 
         int ICollection<TData>.Count => _collection?.Count ?? -1;
 
         public bool IsReadOnly => (_collection as IList<TData>)?.IsReadOnly ?? true;
 
-        public int IndexOf(TData item)
-        {
-            return _collection?.IndexOf(item) ?? -1;
-        }
+        public int IndexOf(TData item) => _collection?.IndexOf(item) ?? -1;
 
-        public void Insert(int index, TData item)
-        {
-            _collection?.Insert(index, item);
-        }
+        public void Insert(int index, TData item) => _collection?.Insert(index, item);
 
-        public void RemoveAt(int index)
-        {
-            _collection?.RemoveAt(index);
-        }
+        public void RemoveAt(int index) => _collection?.RemoveAt(index);
 
         public TData this[int index]
         {

@@ -167,7 +167,7 @@ namespace Tauron.Application.Localizer.UIModels
                 AnalyzerEntries.AddRange(obj.Issues.Select(builder.Get));
             }
 
-            AnalyzerEntries = this.RegisterUiCollection<AnalyzerEntry>(nameof(AnalyzerEntries)).Async();
+            AnalyzerEntries = this.RegisterUiCollection<AnalyzerEntry>(nameof(AnalyzerEntries)).AndAsync();
 
             this.RespondOnEventSource(workspace.Analyzer.Issues, IssuesChanged);
 

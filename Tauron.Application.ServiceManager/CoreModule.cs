@@ -2,8 +2,11 @@
 using Autofac;
 using Tauron.Akka;
 using Tauron.Application.ServiceManager.Core.Configuration;
+using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.ServiceManager.ViewModels;
+using Tauron.Application.ServiceManager.ViewModels.Dialogs;
 using Tauron.Application.ServiceManager.Views;
+using Tauron.Application.ServiceManager.Views.Dialogs;
 using Tauron.Application.Settings;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Dialogs;
@@ -14,6 +17,9 @@ namespace Tauron.Application.ServiceManager
     {
         protected override void Load(ContainerBuilder builder)
         {
+            builder.RegisterType<CommonAppInfo>().AsSelf().SingleInstance();
+
+            builder.RegisterType<AddSeedDialog>().As<IAddSeedUrlDialog>();
             builder.RegisterView<MainWindow, MainWindowViewModel>()
                .OnActivated(a => a.Instance.Init("Main-Window"));
             builder.RegisterView<NodeView, NodeViewModel>();
