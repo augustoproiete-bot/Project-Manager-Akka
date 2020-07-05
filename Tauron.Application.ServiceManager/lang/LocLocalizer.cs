@@ -85,6 +85,16 @@ namespace Tauron.Application.Localizer.Generated
 			public string LabelRemove => __LabelRemove.Result;
 			public string LabelCreateShortCut => __LabelCreateShortCut.Result;
 		}
+		public sealed class AddSeedDialogRes
+		{
+			private readonly Task<string> __LabelTitle;
+			public AddSeedDialogRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__LabelTitle = LocLocalizer.ToString(loc.RequestTask("AddSeedDialog_Label_Title"));
+			}
+			public string LabelTitle => __LabelTitle.Result;
+		}
 		public sealed class CommonRes
 		{
 			private readonly Task<string> __Error;
@@ -114,12 +124,14 @@ namespace Tauron.Application.Localizer.Generated
 			 MemberStatus = new MemberStatusRes(system);
 			 NodeView = new NodeViewRes(system);
 			 SeedNodeView = new SeedNodeViewRes(system);
+			 AddSeedDialog = new AddSeedDialogRes(system);
 			 Common = new CommonRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
 		public MemberStatusRes MemberStatus { get; }
 		public NodeViewRes NodeView { get; }
 		public SeedNodeViewRes SeedNodeView { get; }
+		public AddSeedDialogRes AddSeedDialog { get; }
 		public CommonRes Common { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);

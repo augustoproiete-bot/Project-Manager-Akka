@@ -13,7 +13,7 @@ namespace Tauron.Application.ServiceManager.Views
             : base(model)
         {
             InitializeComponent();
-            Background = Brushes.Black;
+            Background = Brushes.Transparent;
         }
     }
 }

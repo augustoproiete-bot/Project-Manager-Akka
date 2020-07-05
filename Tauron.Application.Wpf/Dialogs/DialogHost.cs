@@ -73,15 +73,6 @@ namespace Tauron.Application.Wpf.Dialogs
 
         private ContentControl? MainContent { get; set; }
 
-        public Task<TResult> MakeTask<TResult>(Func<TaskCompletionSource<TResult>, object> factory)
-        {
-            var source = new TaskCompletionSource<TResult>();
-
-            DataContext = factory(source);
-
-            return source.Task;
-        }
-
         public override void OnApplyTemplate()
         {
             MainContent = GetTemplateChild("MainContent") as ContentControl;

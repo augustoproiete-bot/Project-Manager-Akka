@@ -21,7 +21,9 @@ namespace Tauron.Application.ServiceManager
                .ConfigurateAkkaSystem((context, system) => system.RegisterLocalization())
                .ConfigurateAkkaSystem((context, system) => KillSwitch.Subscribe(system, KillRecpientType.Frontend))
                .ConfigurateAkkaSystem(
-                    (context, system) => Cluster.Get(system).RegisterOnMemberUp(
+                    (context, system) => 
+                        Cluster.Get(system)
+                       .RegisterOnMemberUp(
                                 () => ServiceRegistry.GetRegistry(system).RegisterService(new RegisterService(context.HostEnvironment.ApplicationName, Cluster.Get(system).SelfUniqueAddress))))
                .ConfigureAutoFac(cb => cb.RegisterModule<CoreModule>())
                .UseWpf<MainWindow>(configuration => configuration.WithAppFactory(() => new App()))

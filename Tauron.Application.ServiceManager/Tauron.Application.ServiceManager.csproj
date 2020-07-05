@@ -39,6 +39,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\External\BeaconLib\BeaconLib.csproj" />
+    <ProjectReference Include="..\External\LoadingIndicators.WPF\LoadingIndicators.WPF.csproj" />
     <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />
     <ProjectReference Include="..\Tauron.Application.Settings\Tauron.Application.Settings.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
