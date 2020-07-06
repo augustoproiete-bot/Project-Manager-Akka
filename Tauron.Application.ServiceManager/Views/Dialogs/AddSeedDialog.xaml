@@ -7,7 +7,7 @@
              xmlns:tau="http://schemas.TauronWpf.com"
              xmlns:sync="http://schemas.syncfusion.com/wpf"
              xmlns:li="http://github.com/zeluisping/loadingIndicators/xaml/controls"
-             mc:Ignorable="d" Title="{tau:Loc AddSeedDialog_Label_Title}"
+             mc:Ignorable="d" Title="{tau:Loc AddSeedDialog_Label_Title}" TextElement.FontSize="20"
              d:DesignHeight="450" d:DesignWidth="800" d:DataContext="{d:DesignInstance local:AddSeedDialogModel, IsDesignTimeCreatable=False}">
     <Grid>
         <Grid.RowDefinitions>
@@ -19,8 +19,9 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <sync:SfTextBoxExt Text="{Binding NewUrl, UpdateSourceTrigger=PropertyChanged, Delay=100}" AutoCompleteMode="SuggestAppend" AutoCompleteSource="{Binding Suggest}"
-                           Grid.ColumnSpan="2"/>
-        <Button Content="{tau:Loc Common_Ok}" Command="{Binding OkCommand}" Grid.Row="1" Grid.Column="1"/>
-        <li:LoadingIndicator Mode="Ring" Width="30" Height="30" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" IsActive="{Binding Isloading}"/>
+                           Grid.ColumnSpan="2" MinHeight="20" Margin="5"/>
+        <Button Content="{tau:Loc Common_Ok}" Command="{Binding OkCommand}" Grid.Row="1" Grid.Column="1" MinWidth="70" Margin="5"/>
+        <li:LoadingIndicator Mode="Ring" Width="50" Height="50" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" IsActive="{Binding Isloading}"
+                             HorizontalContentAlignment="Left"/>
     </Grid>
 </tau:DialogBase>

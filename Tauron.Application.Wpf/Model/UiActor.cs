@@ -50,7 +50,7 @@ namespace Tauron.Application.Wpf.Model
             Receive<CanCommandExecuteRequest>(CanCommandExecute);
             Receive<CommandExecuteEvent>(CommandExecute);
             Receive<ControlSetEvent>(msg => SetControl(msg.Name, msg.Element));
-            Receive<MakeEventHook>(msg => Context.Sender.Tell(Context.CreateEventActor()));
+            Receive<MakeEventHook>(msg => Context.Sender.Tell(Context.GetOrCreateEventActor(msg.Name + "-EventActor")));
             Receive<ExecuteEventExent>(ExecuteEvent);
             Receive<GetValueRequest>(GetPropertyValue);
             ReceiveAsync<InitEvent>(async evt => await InitializeAsync(evt));

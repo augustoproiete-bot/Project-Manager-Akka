@@ -9,8 +9,8 @@ namespace Tauron.Application.ServiceManager.Core.Configuration
     {
         private ImmutableList<string>? _renctFiles;
 
-        public AppConfig(IDefaultActorRef<SettingsManager> actor, string scope)
-            : base(actor, scope)
+        public AppConfig(IDefaultActorRef<SettingsManager> actor)
+            : base(actor, SettingTypes.AppConfig)
         {
         }
 

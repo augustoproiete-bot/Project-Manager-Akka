@@ -22,7 +22,7 @@ namespace Tauron.Localization.Extension
 
         public void Request(string name, Action<object?> valueResponse, CultureInfo? info = null)
         {
-            var hook = EventActor.Create(_system, true);
+            var hook = EventActor.Create(_system, null, true);
             hook.Register(HookEvent.Create<LocCoordinator.ResponseLocValue>(res => valueResponse(res.Result)));
             hook.Send(_extension.LocCoordinator, new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture));
         }

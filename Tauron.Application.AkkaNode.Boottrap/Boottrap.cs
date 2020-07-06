@@ -3,6 +3,7 @@ using System.IO;
 using Akka.Configuration;
 using Autofac;
 using Serilog;
+using Serilog.Core;
 using Serilog.Events;
 using Serilog.Exceptions;
 using Serilog.Formatting.Compact;
@@ -62,8 +63,17 @@ namespace Tauron.Application.AkkaNode.Boottrap
                                         .Enrich.WithProperty("ApplicationName", context.HostEnvironment.ApplicationName)
                                         .Enrich.FromLogContext()
                                         .Enrich.WithExceptionDetails()
-                                        .Enrich.With<EventTypeEnricher>();
+                                        .Enrich.With<EventTypeEnricher>()
+                                        .Enrich.With<LogLevelWriter>();
                                  });
+        }
+
+        public class LogLevelWriter : ILogEventEnricher
+        {
+            public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
+            {
+                logEvent.AddPropertyIfAbsent(new LogEventProperty("Level", new ScalarValue(logEvent.Level)));
+            }
         }
     }
 }

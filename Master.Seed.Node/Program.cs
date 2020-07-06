@@ -28,10 +28,10 @@ namespace Master.Seed.Node
                                                                              var port = cluster.SelfAddress.Port;
                                                                              if (port != null)
                                                                              {
-                                                                                 beacon = new Beacon(system.Name, (ushort) port)
-                                                                                          {
-                                                                                              BeaconData = cluster.SelfAddress.ToString()
-                                                                                          };
+                                                                                 beacon = new Beacon(system.Name, (ushort)port)
+                                                                                 {
+                                                                                     BeaconData = cluster.SelfAddress.ToString()
+                                                                                 };
                                                                                  beacon.Start();
                                                                              }
                                                                              ServiceRegistry.Start(system, new RegisterService(context.HostEnvironment.ApplicationName, cluster.SelfUniqueAddress));

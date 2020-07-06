@@ -14,19 +14,17 @@ namespace Tauron.Akka
 
         private readonly Dictionary<Type, Delegate> _registrations = new Dictionary<Type, Delegate>();
 
-        public EventActor(bool killOnFirstRespond)
-        {
-            _killOnFirstRespond = killOnFirstRespond;
-        }
+        public EventActor(bool killOnFirstRespond) => _killOnFirstRespond = killOnFirstRespond;
 
-        public static IEventActor Create(IActorRefFactory system, bool killOnFirstResponse = false)
-        {
-            return new HookEventActor(system.ActorOf(Props.Create(() => new EventActor(killOnFirstResponse))));
-        }
+        public static IEventActor From(IActorRef actorRef) 
+            => new HookEventActor(actorRef);
+
+        public static IEventActor Create(IActorRefFactory system, string? name, bool killOnFirstResponse = false) 
+            => new HookEventActor(system.ActorOf(Props.Create(() => new EventActor(killOnFirstResponse)), name));
 
         public static IEventActor Create<TPayload>(IActorRefFactory system, Action<TPayload> handler, bool killOnFirstResponse = false)
         {
-            var temp = Create(system, killOnFirstResponse);
+            var temp = Create(system, null, killOnFirstResponse);
             temp.Register(HookEvent.Create(handler));
             return temp;
         }
@@ -70,22 +68,16 @@ namespace Tauron.Akka
 
         private sealed class HookEventActor : IEventActor
         {
-            public HookEventActor(IActorRef actorRef)
-            {
-                OriginalRef = actorRef;
-            }
+            public HookEventActor(IActorRef actorRef) 
+                => OriginalRef = actorRef;
 
             public IActorRef OriginalRef { get; }
 
             public void Register(HookEvent hookEvent)
-            {
-                OriginalRef.Tell(hookEvent);
-            }
+                => OriginalRef.Tell(hookEvent);
 
-            public void Send(IActorRef actor, object send)
-            {
-                actor.Tell(send, OriginalRef);
-            }
+            public void Send(IActorRef actor, object send) 
+                => actor.Tell(send, OriginalRef);
         }
     }
 }

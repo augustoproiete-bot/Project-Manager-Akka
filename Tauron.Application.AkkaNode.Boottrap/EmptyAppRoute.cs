@@ -8,9 +8,14 @@ namespace Tauron.Application.AkkaNode.Boottrap
 {
     public sealed class EmptyAppRoute : IAppRoute
     {
-        public Task ShutdownTask { get; } = Task.CompletedTask;
+        public Task ShutdownTask { get; private set; } = Task.CompletedTask;
         public Task WaitForStartAsync(ActorSystem actorSystem)
         {
+            var source = new TaskCompletionSource<object>();
+            ShutdownTask = source.Task;
+
+            actorSystem.RegisterOnTermination(() => source.SetResult(new object()));
+
             Maximize();
             return Task.CompletedTask;
         }

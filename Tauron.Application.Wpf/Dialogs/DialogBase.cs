@@ -19,7 +19,7 @@ namespace Tauron.Application.Wpf.Dialogs
     public abstract class DialogBase : Control
     {
         public static readonly DependencyProperty DialogTitleFontSizeProperty = DependencyProperty.Register(
-            "DialogTitleFontSize", typeof(int), typeof(DialogBase), new PropertyMetadata(default(int)));
+            "DialogTitleFontSize", typeof(int), typeof(DialogBase), new PropertyMetadata(25));
 
         public static readonly DependencyProperty ContentProperty = DependencyProperty.Register(
             "Content", typeof(object), typeof(DialogBase), new PropertyMetadata(default,
