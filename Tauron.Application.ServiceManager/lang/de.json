@@ -15,6 +15,7 @@
   "SeedNodeView_Label_Remove": "Entfernen",
   "SeedNodeView_Label_CreateShortCut": "Verknüpfung Erstellen",
   "MainWindow_Label_OnlineStatus": "Online Status:",
+  "AddSeedDialog_Label_Title": "Neuer Seed Node",
   "Common_Error": "Fehler",
   "Common_Warning": "Warnung",
   "Common_Unkowen": "Unbekannt",

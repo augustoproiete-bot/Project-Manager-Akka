@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
@@ -15,7 +16,7 @@ namespace Tauron.Application.Wpf.Dialogs
     [TemplatePart(Name = "PART_Top", Type = typeof(ContentPresenter))]
     [TemplatePart(Name = "PART_Title", Type = typeof(TextBlock))]
     [TemplatePart(Name = "PART_Bottom", Type = typeof(ContentPresenter))]
-    public class DialogBase : Control
+    public abstract class DialogBase : Control
     {
         public static readonly DependencyProperty DialogTitleFontSizeProperty = DependencyProperty.Register(
             "DialogTitleFontSize", typeof(int), typeof(DialogBase), new PropertyMetadata(default(int)));
@@ -141,6 +142,15 @@ namespace Tauron.Application.Wpf.Dialogs
                 _bottom.Content = Bottom;
 
             base.OnApplyTemplate();
+        }
+
+        public Task<TResult> MakeTask<TResult>(Func<TaskCompletionSource<TResult>, object> factory)
+        {
+            var source = new TaskCompletionSource<TResult>();
+
+            DataContext = factory(source);
+
+            return source.Task;
         }
     }
 }

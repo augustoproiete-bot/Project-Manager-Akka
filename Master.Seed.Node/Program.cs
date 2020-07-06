@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Akka.Cluster;
+using BeaconLib;
 using Master.Seed.Node.Commands;
+using Petabridge.Cmd.Cluster;
 using Petabridge.Cmd.Host;
 using Tauron.Application.AkkaNode.Boottrap;
 using Tauron.Application.Master.Commands;
@@ -12,19 +14,40 @@ namespace Master.Seed.Node
     {
         static async Task Main(string[] args)
         {
-            await ActorApplication.Create(args)
-               .StartNode(KillRecpientType.Seed)
-               .ConfigurateAkkaSystem((context, system) =>
-                                      {
-                                          var cluster = Cluster.Get(system);
-                                          cluster.RegisterOnMemberUp(() => ServiceRegistry.Start(system, new RegisterService(context.HostEnvironment.ApplicationName, cluster.SelfUniqueAddress)));
+            Beacon? beacon = null;
 
-                                         var cmd = PetabridgeCmd.Get(system);
-                                         cmd.RegisterCommandPalette(Petabridge.Cmd.Cluster.ClusterCommands.Instance);
-                                         cmd.RegisterCommandPalette(MasterCommand.New);
-                                         cmd.Start();
-                                     })
-               .Build().Run();
+            try
+            {
+                await ActorApplication.Create(args)
+                   .StartNode(KillRecpientType.Seed)
+                   .ConfigurateAkkaSystem((context, system) =>
+                                          {
+                                              var cluster = Cluster.Get(system);
+                                              cluster.RegisterOnMemberUp(() =>
+                                                                         {
+                                                                             var port = cluster.SelfAddress.Port;
+                                                                             if (port != null)
+                                                                             {
+                                                                                 beacon = new Beacon(system.Name, (ushort) port)
+                                                                                          {
+                                                                                              BeaconData = cluster.SelfAddress.ToString()
+                                                                                          };
+                                                                                 beacon.Start();
+                                                                             }
+                                                                             ServiceRegistry.Start(system, new RegisterService(context.HostEnvironment.ApplicationName, cluster.SelfUniqueAddress));
+                                                                         });
+
+                                              var cmd = PetabridgeCmd.Get(system);
+                                              cmd.RegisterCommandPalette(ClusterCommands.Instance);
+                                              cmd.RegisterCommandPalette(MasterCommand.New);
+                                              cmd.Start();
+                                          })
+                   .Build().Run();
+            }
+            finally
+            {
+                beacon?.Dispose();
+            }
         }
     }
 }

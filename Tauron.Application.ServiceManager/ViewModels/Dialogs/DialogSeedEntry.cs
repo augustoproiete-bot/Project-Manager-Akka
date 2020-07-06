@@ -2,8 +2,8 @@
 {
     public sealed class DialogSeedEntry
     {
-        public string Url { get; }
+        public string? Url { get; }
 
-        public DialogSeedEntry(string url) => Url = url;
+        public DialogSeedEntry(string? url) => Url = url;
     }
 }

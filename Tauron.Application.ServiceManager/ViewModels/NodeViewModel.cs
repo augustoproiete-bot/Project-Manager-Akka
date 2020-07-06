@@ -9,6 +9,7 @@ using JetBrains.Annotations;
 using Tauron.Akka;
 using Tauron.Application.Localizer.Generated;
 using Tauron.Application.Master.Commands;
+using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.ServiceManager.ViewModels
@@ -53,7 +54,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             }
         }
 
-        public ObservableCollection<string> Roles { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> Roles { get; } = new UIObservableCollection<string>();
 
         public void UpdateModel(ActorSystem system, Member member, LocLocalizer localizer)
         {
@@ -101,15 +102,6 @@ namespace Tauron.Application.ServiceManager.ViewModels
             _localizer = localizer;
             Nodes = this.RegisterUiCollection<ActualNode>(nameof(Nodes)).AndAsync();
             CurrentStatus = RegisterProperty<string>(nameof(CurrentStatus)).WithDefaultValue(localizer.MemberStatus.SelfOffline);
-        }
-
-        protected override void PreStart()
-        {
-            base.PreStart();
-            var cluster = Cluster.Get(Context.System);
-            
-            cluster.RegisterOnMemberUp(() => CurrentStatus += _localizer.MemberStatus.SelfOnline);
-            cluster.Subscribe(Context.Self, ClusterEvent.SubscriptionInitialStateMode.InitialStateAsEvents, typeof(ClusterEvent.IMemberEvent));
 
             #region MemberEvents
 
@@ -127,6 +119,15 @@ namespace Tauron.Application.ServiceManager.ViewModels
             Receive<ClusterEvent.IMemberEvent>(mem => UpdateNode(mem.Member));
 
             #endregion
+        }
+
+        protected override void PreStart()
+        {
+            base.PreStart();
+            var cluster = Cluster.Get(Context.System);
+            
+            cluster.RegisterOnMemberUp(() => CurrentStatus += _localizer.MemberStatus.SelfOnline);
+            cluster.Subscribe(Context.Self, ClusterEvent.SubscriptionInitialStateMode.InitialStateAsEvents, typeof(ClusterEvent.IMemberEvent));
         }
 
         public UIProperty<string> CurrentStatus { get; set; }

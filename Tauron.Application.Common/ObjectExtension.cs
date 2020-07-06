@@ -55,7 +55,7 @@ namespace Tauron
                 then();
         }
 
-        public static void WhenNotEmpty(this string target, Action<string> then)
+        public static void WhenNotEmpty(this string? target, Action<string> then)
         {
             if (string.IsNullOrWhiteSpace(target)) return;
             then(target);
