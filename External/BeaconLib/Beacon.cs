@@ -30,6 +30,7 @@ namespace BeaconLib
             AdvertisedPort = advertisedPort;
             BeaconData     = "";
             
+            _log.Information("Bind UDP beacon to {Port}", DiscoveryPort);
             _udp = new UdpClient();
             _udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _udp.Client.Bind(new IPEndPoint(IPAddress.Any, DiscoveryPort));
@@ -46,6 +47,7 @@ namespace BeaconLib
 
         public void Start()
         {
+            _log.Information("Starting Beacon");
             Stopped = false;
             _udp.BeginReceive(ProbeReceived, null);
         }
@@ -56,17 +58,21 @@ namespace BeaconLib
         {
             var remote = new IPEndPoint(IPAddress.Any, 0);
             var bytes  = _udp.EndReceive(ar, ref remote);
+            _log.Information("Incoming Probe {Adress}", remote);
 
             // Compare beacon type to probe type
             var typeBytes = Encode(BeaconType);
             if (HasPrefix(bytes, typeBytes))
             {
+                _log.Information("Responding Probe {Adress}", remote);
                 // If true, respond again with our type, port and payload
                 var responseData = Encode(BeaconType)
                     .Concat(BitConverter.GetBytes((ushort)IPAddress.HostToNetworkOrder((short)AdvertisedPort)))
                     .Concat(Encode(BeaconData)).ToArray();
                 _udp.Send(responseData, responseData.Length, remote);
             }
+            else
+                _log.Information("Incompatible Data");
 
             if (!Stopped) _udp.BeginReceive(ProbeReceived, null);
         }

@@ -17,7 +17,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
         public static IApplicationBuilder StartNode(this IApplicationBuilder builder, KillRecpientType type)
         {
             return builder
-               .ConfigureAutoFac(cb => cb.RegisterType<EmptyAppRoute>().Named<IAppRoute>("default"))
+               .ConfigureAutoFac(cb => cb.RegisterType<ConsoleAppRoute>().Named<IAppRoute>("default"))
                .ConfigurateNode()
                .ConfigureLogging((context, configuration) =>
                                  {

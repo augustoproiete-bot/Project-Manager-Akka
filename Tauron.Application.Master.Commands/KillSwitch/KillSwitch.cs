@@ -3,6 +3,7 @@ using Akka.Actor;
 using Akka.Cluster;
 using Akka.Cluster.Utility;
 using JetBrains.Annotations;
+using Serilog;
 using Tauron.Akka;
 using static Akka.Cluster.Utility.ClusterActorDiscoveryMessage;
 
@@ -13,6 +14,7 @@ namespace Tauron.Application.Master.Commands
     {
         private const string KillSwitchName = "KillSwitch";
 
+        private static readonly ILogger Log = Serilog.Log.ForContext(typeof(KillSwitch));
 
         private static IActorRef _switch = ActorRefs.Nobody;
 
@@ -22,16 +24,28 @@ namespace Tauron.Application.Master.Commands
             public KillWatcher(KillRecpientType type)
             {
                 this.Flow<ActorUp>()
-                    .From.Func(au => new ActorUp(Self, "None"))
+                    .From.Func(au =>
+                    {
+                        Log.Info("Send ActorUp Back {Target}", au.Actor.Path);
+                        return new ActorUp(Self, "None");
+                    })
                     .ToRefFromMsg(au => au.Actor)
                     .AndReceive();
 
                 this.Flow<RequestRegistration>()
-                    .From.Func(rr => new RespondRegistration(type)).ToSender()
+                    .From.Func(rr =>
+                    {
+                        Log.Info("Sending Respond {Type}", type);
+                        return new RespondRegistration(type);
+                    }).ToSender()
                     .AndReceive();
 
                 this.Flow<KillNode>()
-                    .From.Action(kn => Cluster.Get(Context.System).LeaveAsync())
+                    .From.Action(kn =>
+                    {
+                        Log.Info("Leaving Cluster");
+                        Cluster.Get(Context.System).LeaveAsync();
+                    })
                     .AndReceive();
             }
 
@@ -62,27 +76,37 @@ namespace Tauron.Application.Master.Commands
 
             private readonly List<ActorElement> _actors = new List<ActorElement>();
 
+
             public KillSwitchActor(ActorSystem system)
             {
                 _actorDiscovery = ClusterActorDiscovery.Get(system).Discovery;
 
                 this.Flow<ActorDown>()
-                    .From.Action(ad => 
+                    .From.Action(ad =>
+                    {
+                        Log.Info("Remove Killswitch Actor {Target}", ad.Actor.Path);
                         _actors
-                        .FindIndex(ae => ae.Target.Equals(ad.Actor))
-                        .When(i => i != -1, i => _actors.RemoveAt(i)))
+                            .FindIndex(ae => ae.Target.Equals(ad.Actor))
+                            .When(i => i != -1, i => _actors.RemoveAt(i));
+                    })
                     .AndReceive();
 
                 this.Flow<ActorUp>()
-                    .From.Func(au => 
-                        _actors
-                        .AddAnd(ActorElement.New(au.Actor))
-                        .To(_ => new RequestRegistration()))
+                    .From.Func(au =>
+                    {
+                        Log.Info("New killswitch Actor {Target}", au.Actor.Path);
+                        return _actors
+                            .AddAnd(ActorElement.New(au.Actor))
+                            .To(_ => new RequestRegistration());
+                    })
                     .ToRefFromMsg(au => au.Actor)
-                    .AndRespondTo<RespondRegistration>().Action(r => 
+                    .AndRespondTo<RespondRegistration>().Action(r =>
+                    {
+                        Log.Info("Set Killswitch Actor Type {Type} {Target}", r.RecpientType, Context.Sender.Path);
                         _actors
-                        .Find(e => e.Target.Equals(Context.Sender))
-                        .When(i => i != null, element => element.RecpientType = r.RecpientType))
+                            .Find(e => e.Target.Equals(Context.Sender))
+                            .When(i => i != null, element => element.RecpientType = r.RecpientType);
+                    })
                     .AndReceive();
 
                 this.Flow<RequestRegistration>()
@@ -95,17 +119,27 @@ namespace Tauron.Application.Master.Commands
                     .AndReceive();
 
                 this.Flow<KillNode>()
-                    .From.Action(_ => Cluster.Get(Context.System).LeaveAsync())
+                    .From.Action(_ =>
+                    {
+                        Log.Info("Leaving Cluster");
+                        Cluster.Get(Context.System).LeaveAsync();
+                    })
                     .AndReceive();
 
                 this.Flow<ActorUp>()
-                    .From.Action(au => au.When(u => u.Tag == "None", up => Context.Watch(up.Actor)))
+                    .From.Action(au => au.When(u => u.Tag == "None", up =>
+                    {
+                        Log.Info("Incoming kill Watcher {Target}", up.Actor.Path);
+                        Context.Watch(up.Actor);
+                    }))
                     .AndRespondTo<Terminated>().Func(t => new ActorDown(t.ActorRef, "None")).ToSelf()
                     .AndReceive();
             }
 
             private void RunKillCluster()
             {
+                Log.Info("Begin Cluster Shutdown");
+
                 var dic = new GroupDictionary<KillRecpientType, IActorRef>
                 {
                     KillRecpientType.Unkowen,
@@ -120,7 +154,9 @@ namespace Tauron.Application.Master.Commands
 
                 foreach (var recpientType in Order)
                 {
-                    foreach (var actorRef in dic[recpientType]) 
+                    var actors = dic[recpientType];
+                    Log.Info("Tell Shutdown {Type} -- {Count}", recpientType, actors.Count);
+                    foreach (var actorRef in actors) 
                         actorRef.Tell(new KillNode());
                 }
             }
@@ -158,9 +194,17 @@ namespace Tauron.Application.Master.Commands
             
         }
 
-        public static void Setup(ActorSystem system) => _switch = system.ActorOf(() => new KillSwitchActor(system), KillSwitchName);
-        
-        public static void Subscribe(ActorSystem system, KillRecpientType type) => _switch = system.ActorOf(() => new KillWatcher(type), KillSwitchName);
+        public static void Setup(ActorSystem system)
+        {
+            Log.Information("Setup Killswitch");
+            _switch = system.ActorOf(() => new KillSwitchActor(system), KillSwitchName);
+        }
+
+        public static void Subscribe(ActorSystem system, KillRecpientType type)
+        {
+            Log.Information("Subscribe Killswitch");
+            _switch = system.ActorOf(() => new KillWatcher(type), KillSwitchName);
+        }
 
         public static void KillCluster()
             => _switch.Tell(new KillClusterMsg());

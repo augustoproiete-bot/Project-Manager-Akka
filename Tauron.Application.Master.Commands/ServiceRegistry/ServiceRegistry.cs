@@ -70,20 +70,41 @@ namespace Tauron.Application.Master.Commands
                 _discovery = ClusterActorDiscovery.Get(Context.System).Discovery;
 
                 this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
-                   .From.Action(au => _serviceRegistrys.Add(au.Actor))
-                   .AndReceive();
-                this.Flow<ClusterActorDiscoveryMessage.ActorDown>()
-                   .From.Action(ad => _serviceRegistrys.Remove(ad.Actor))
+                   .From.Action(au =>
+                   {
+                       Log.Info("New Service Registry {Target}", au.Actor.Path);
+                       _serviceRegistrys.Add(au.Actor);
+                   })
                    .AndReceive();
 
-                Receive<RegisterService>(s => _serviceRegistrys.Foreach(r => r.Tell(s)));
+                this.Flow<ClusterActorDiscoveryMessage.ActorDown>()
+                   .From.Action(ad =>
+                   {
+                       Log.Info("Remove Service Registry {Target}", ad.Actor.Path);
+                       _serviceRegistrys.Remove(ad.Actor);
+                   })
+                   .AndReceive();
+
+                Receive<RegisterService>(s =>
+                {
+                    Log.Info("Register New Service {Name} -- {Adress}", s.Name, s.Address);
+                    _serviceRegistrys.Foreach(r => r.Tell(s));
+                });
+
                 Receive<QueryRegistratedServices>(rs =>
                                                   {
+                                                      Log.Info("Try Query Service");
                                                       var target =_serviceRegistrys.Next();
-                                                      if(target == null)
-                                                          rs.Sender.Tell(new QueryRegistratedServicesResponse(new Dictionary<UniqueAddress, string>()));
-                                                      else
-                                                          target.Tell(rs);
+                                                      switch (target)
+                                                      {
+                                                          case null:
+                                                             Log.Warning("No Service Registry Registrated");
+                                                              rs.Sender.Tell(new QueryRegistratedServicesResponse(new Dictionary<UniqueAddress, string>()));
+                                                              break;
+                                                          default:
+                                                              target.Tell(rs);
+                                                              break;
+                                                      }
                                                   });
             }
 
@@ -111,19 +132,36 @@ namespace Tauron.Application.Master.Commands
                 _discovery = discovery;
                 if (self != null) _services[self.Address] = self.Name;
 
-                Receive<RegisterService>(service => _services[service.Address] = service.Name);
+                Receive<RegisterService>(service =>
+                {
+                    Log.Info("Register Service {Name} -- {Adress}");
+                    _services[service.Address] = service.Name;
+                });
+
                 this.Flow<QueryRegistratedServices>()
-                   .From.Func(qrs => new QueryRegistratedServicesResponse(new Dictionary<UniqueAddress, string>(_services))).ToRefFromMsg(rs => rs.Sender)
+                   .From.Func(qrs =>
+                   {
+                       Log.Info("Return Registrated Services");
+                       return new QueryRegistratedServicesResponse(new Dictionary<UniqueAddress, string>(_services));
+                   }).ToRefFromMsg(rs => rs.Sender)
                    .AndReceive();
 
                 this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
-                   .From.Action(When<ClusterActorDiscoveryMessage.ActorUp>(au => !au.Actor.Equals(Self), au => au.Actor.Tell(new SyncRegistry(_services))))
+                   .From.Action(When<ClusterActorDiscoveryMessage.ActorUp>(au => !au.Actor.Equals(Self), au =>
+                   {
+                       Log.Info("Send Sync New Service registry");
+                       au.Actor.Tell(new SyncRegistry(_services));
+                   }))
                    .AndReceive();
 
                 Receive<ClusterActorDiscoveryMessage.ActorDown>(_ => { });
 
                 this.Flow<SyncRegistry>()
-                   .From.Action(sr => sr.ToSync.Foreach(kp => _services[kp.Key] = kp.Value))
+                   .From.Action(sr =>
+                   {
+                       Log.Info("Sync Services");
+                       sr.ToSync.Foreach(kp => _services[kp.Key] = kp.Value);
+                   })
                    .AndReceive();
             }
 

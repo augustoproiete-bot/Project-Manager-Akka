@@ -7,6 +7,7 @@ using Akka.Actor;
 using Akka.Cluster;
 using Autofac;
 using JetBrains.Annotations;
+using Serilog;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
@@ -38,7 +39,17 @@ namespace Tauron.Application.ServiceManager.ViewModels
             Url = url;
 
             new Ping().SendPingAsync(Url)
-               .ContinueWith(r => Online = r.Result.Status == IPStatus.Success);
+               .ContinueWith(r =>
+               {
+                   try
+                   {
+                       Online = r.Result.Status == IPStatus.Success;
+                   }
+                   catch (Exception e)
+                   {
+                       Log.ForContext<SeedNodeViewModel>().Error(e, "Error on Ping Url");
+                   }
+               });
         }
 
         public static SeedUrlModel New(string url)
@@ -61,7 +72,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
                 if (cluster.State.Members.Count != 0)
                 {
-                    info.ConnectionState = ConnectionState.Offline;
+                    info.ConnectionState = ConnectionState.Online;
                     Log.Info("Cluster Joins is already Compled");
                     return;
                 }

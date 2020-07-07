@@ -6,7 +6,7 @@ using Tauron.Host;
 
 namespace Tauron.Application.AkkaNode.Boottrap
 {
-    public sealed class EmptyAppRoute : IAppRoute
+    public sealed class ConsoleAppRoute : IAppRoute
     {
         public Task ShutdownTask { get; private set; } = Task.CompletedTask;
         public Task WaitForStartAsync(ActorSystem actorSystem)

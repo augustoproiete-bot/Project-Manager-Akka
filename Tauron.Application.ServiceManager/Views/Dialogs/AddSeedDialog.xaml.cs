@@ -36,12 +36,13 @@ namespace Tauron.Application.ServiceManager.Views.Dialogs
     {
         private string? _newUrl;
         private bool _isloading = true;
+        private readonly Probe _probe;
 
         public AddSeedDialogModel(IEnumerable<DialogSeedEntry> knowenUrls, Action<string?> setUrl, string systemName)
         {
-            var probe = new Probe(systemName);
-            probe.BeaconsUpdated += ProbeOnBeaconsUpdated; 
-            probe.Start();
+            _probe = new Probe(systemName);
+            _probe.BeaconsUpdated += ProbeOnBeaconsUpdated; 
+            _probe.Start();
 
             var urls = knowenUrls.Select(se => se.Url).Where(s => !string.IsNullOrWhiteSpace(s)).ToArray()!;
 
@@ -49,27 +50,17 @@ namespace Tauron.Application.ServiceManager.Views.Dialogs
             OkCommand = new SimpleCommand(() => urls.All(s => s != _newUrl),
                 () =>
                 {
-                    probe.Dispose();
+                    _probe.Dispose();
                     setUrl(NewUrl);
                 });
         }
 
         private void ProbeOnBeaconsUpdated(IEnumerable<BeaconLocation> obj)
         {
-            var set = new HashSet<string>(Suggest);
-            var set2 = new HashSet<string>();
+            _probe.Stop();
 
-            foreach (var location in obj)
-            {
-                if(set2.Add(location.Data) && set.Add(location.Data))
-                    Suggest.Add(location.Data);
-            }
-
-            foreach (var sug in Suggest.ToArray())
-            {
-                if (set.Add(sug))
-                    Suggest.Remove(sug);
-            }
+            foreach (var location in obj) 
+                Suggest.Add(location.Data);
 
             Isloading = false;
         }
