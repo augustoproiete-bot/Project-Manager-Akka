@@ -40,7 +40,7 @@ namespace Tauron.Application.Master.Commands
         public static void Init(ActorSystem system)
         {
             lock (Lock)
-                _registry ??= new ServiceRegistry(system.ActorOf(Props.Create(() => new ServiceRegistryClientActor()), nameof(ServiceRegistry)));
+                _registry ??= new ServiceRegistry(system.ActorOf(Props.Create(() => new ServiceRegistryClientActor()), nameof(ServiceRegistry) + "-Client"));
         }
 
         private sealed class ServiceRegistryClientActor : ExposedReceiveActor
