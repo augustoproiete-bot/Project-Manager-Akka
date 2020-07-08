@@ -11,7 +11,7 @@ namespace Akka.Cluster.Utility
     {
         public IActorRef Discovery { get; }
 
-        public ClusterActorDiscovery(ExtendedActorSystem system) => Discovery = system.SystemActorOf<ClusterActorDiscoveryActor>(nameof(ClusterActorDiscovery));
+        public ClusterActorDiscovery(ExtendedActorSystem system) => Discovery = system.ActorOf<ClusterActorDiscoveryActor>(nameof(ClusterActorDiscovery));
 
         public static ClusterActorDiscovery Get(ActorSystem system)
             => system.GetExtension<ClusterActorDiscovery>();

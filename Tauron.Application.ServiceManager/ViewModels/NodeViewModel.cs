@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 using Akka.Actor;
 using Akka.Cluster;
 using Autofac;
 using JetBrains.Annotations;
-using Tauron.Akka;
 using Tauron.Application.Localizer.Generated;
 using Tauron.Application.Master.Commands;
 using Tauron.Application.Wpf;
@@ -16,12 +16,12 @@ namespace Tauron.Application.ServiceManager.ViewModels
 {
     public sealed class ActualNode : ObservableObject
     {
-        private string _url;
-        private string _name;
+        private string? _url;
+        private string? _name;
         private MemberStatus _memberStatus;
-        private UniqueAddress _uniqueAddress;
-
-        public string Name
+        private MemberAddress? _uniqueAddress;
+        private LocLocalizer? _localizer;
+        public string? Name
         {
             get => _name;
             set
@@ -32,7 +32,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             }
         }
 
-        public string Url
+        public string? Url
         {
             get => _url;
             set
@@ -58,7 +58,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
         public void UpdateModel(ActorSystem system, Member member, LocLocalizer localizer)
         {
-            _uniqueAddress = member.UniqueAddress;
+            _uniqueAddress = MemberAddress.From(member.UniqueAddress);
+            _localizer = localizer;
 
             Roles.Clear();
             foreach (var role in member.Roles) 
@@ -68,14 +69,14 @@ namespace Tauron.Application.ServiceManager.ViewModels
             MemberStatus = member.Status;
 
             Name = localizer.Common.Unkowen;
+
             ServiceRegistry.GetRegistry(system)
-               .QueryService(
-                    new QueryRegistratedServices(
-                        EventActor.Create<QueryRegistratedServicesResponse>(system, UpdateName, true).OriginalRef));
+               .QueryService()
+               .ContinueWith(UpdateName);
         }
 
         public bool IsSame(Member mem)
-            => mem.UniqueAddress == _uniqueAddress;
+            => _uniqueAddress?.Equals(mem.UniqueAddress) ?? false;
 
         public static ActualNode New(ActorSystem system, Member mem, LocLocalizer localizer)
         {
@@ -84,10 +85,21 @@ namespace Tauron.Application.ServiceManager.ViewModels
             return node;
         }
 
-        private void UpdateName(QueryRegistratedServicesResponse response)
+        private void UpdateName(Task<QueryRegistratedServicesResponse> taskRsponse)
         {
-            if (response.Services.TryGetValue(_uniqueAddress, out var name)) 
-                Name = name;
+            try
+            {
+                var response = taskRsponse.Result;
+                if (_uniqueAddress == null) return;
+
+                var ent = response.Services.FirstOrDefault(ms => ms.Address == _uniqueAddress);
+                if (ent != null)
+                    Name = ent.Name;
+            }
+            catch (Exception e)
+            {
+                Name = $"{_localizer?.Common.Error} -- {e.Message}";
+            }
         }
     }
 

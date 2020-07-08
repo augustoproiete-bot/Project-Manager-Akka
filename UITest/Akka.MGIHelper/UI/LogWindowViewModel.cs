@@ -12,7 +12,7 @@ namespace Akka.MGIHelper.UI
         public LogWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher)
             : base(lifetimeScope, dispatcher)
         {
-            UnhandledMessages = this.RegisterUiCollection<string>(nameof(UnhandledMessages)).Async();
+            UnhandledMessages = this.RegisterUiCollection<string>(nameof(UnhandledMessages)).AndAsync();
             UnhandledMessages.Add("Start");
 
             Receive<UnhandledMessage>(NewUnhandledMessage);

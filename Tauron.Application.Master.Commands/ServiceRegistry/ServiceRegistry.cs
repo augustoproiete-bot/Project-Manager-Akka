@@ -1,5 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster;
 using Akka.Cluster.Utility;
@@ -18,8 +21,8 @@ namespace Tauron.Application.Master.Commands
         public void RegisterService(RegisterService service)
             => _target.Tell(service);
 
-        public void QueryService(QueryRegistratedServices query)
-            => _target.Tell(query);
+        public Task<QueryRegistratedServicesResponse> QueryService()
+            => _target.Ask<QueryRegistratedServicesResponse>(new QueryRegistratedServices(), TimeSpan.FromMinutes(1));
 
         private static readonly object Lock = new object();
         private static ServiceRegistry? _registry;
@@ -31,6 +34,13 @@ namespace Tauron.Application.Master.Commands
         {
             lock (Lock)
                 return _registry ??= new ServiceRegistry(refFactory.ActorOf(Props.Create(() => new ServiceRegistryClientActor()), nameof(ServiceRegistry)));
+        }
+
+
+        public static void Init(ActorSystem system)
+        {
+            lock (Lock)
+                _registry ??= new ServiceRegistry(system.ActorOf(Props.Create(() => new ServiceRegistryClientActor()), nameof(ServiceRegistry)));
         }
 
         private sealed class ServiceRegistryClientActor : ExposedReceiveActor
@@ -99,10 +109,10 @@ namespace Tauron.Application.Master.Commands
                                                       {
                                                           case null:
                                                              Log.Warning("No Service Registry Registrated");
-                                                              rs.Sender.Tell(new QueryRegistratedServicesResponse(new Dictionary<UniqueAddress, string>()));
+                                                              Sender.Tell(new QueryRegistratedServicesResponse(new List<MemberService>()));
                                                               break;
                                                           default:
-                                                              target.Tell(rs);
+                                                              target.Forward(rs);
                                                               break;
                                                       }
                                                   });
@@ -142,8 +152,14 @@ namespace Tauron.Application.Master.Commands
                    .From.Func(qrs =>
                    {
                        Log.Info("Return Registrated Services");
-                       return new QueryRegistratedServicesResponse(new Dictionary<UniqueAddress, string>(_services));
-                   }).ToRefFromMsg(rs => rs.Sender)
+                       var temp = _services
+                           .ToDictionary(service => MemberAddress.From(service.Key), 
+                               service => service.Value);
+
+                       return new QueryRegistratedServicesResponse(temp
+                           .Select(e => new MemberService(e.Value, e.Key))
+                           .ToList());
+                   }).ToSender()
                    .AndReceive();
 
                 this.Flow<ClusterActorDiscoveryMessage.ActorUp>()

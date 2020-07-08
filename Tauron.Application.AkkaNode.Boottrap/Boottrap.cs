@@ -37,6 +37,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
         public static IApplicationBuilder ConfigurateNode(this IApplicationBuilder builder)
         {
             return builder
+                .ConfigurateAkkaSystem((context, system) => ServiceRegistry.Init(system))
                .ConfigureAkka(hbc =>
                               {
                                   const string main = "akka.conf";
