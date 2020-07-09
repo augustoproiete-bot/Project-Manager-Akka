@@ -6,10 +6,12 @@
     <UseWPF>true</UseWPF>
     <StartupObject>Tauron.Application.ServiceManager.CoreProgramm</StartupObject>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="akka.conf" />
+    <None Remove="app.ico" />
     <None Remove="appsettings.json" />
     <None Remove="seed.conf" />
   </ItemGroup>
@@ -44,6 +46,10 @@
     <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />
     <ProjectReference Include="..\Tauron.Application.Settings\Tauron.Application.Settings.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="app.ico" />
   </ItemGroup>
 
   <ItemGroup>

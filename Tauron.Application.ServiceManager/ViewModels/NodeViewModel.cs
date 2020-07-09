@@ -62,7 +62,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             _localizer = localizer;
 
             Roles.Clear();
-            foreach (var role in member.Roles) 
+            foreach (var role in member.Roles)
                 Roles.Add(role);
 
             Url = $"{member.UniqueAddress.Address} - {member.UniqueAddress.Uid}";
@@ -70,9 +70,11 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
             Name = localizer.Common.Unkowen;
 
+
             ServiceRegistry.GetRegistry(system)
                .QueryService()
                .ContinueWith(UpdateName);
+
         }
 
         public bool IsSame(Member mem)

@@ -118,12 +118,30 @@ namespace Tauron.Application.ServiceManager.ViewModels
             #endregion
 
             #region Remove Seed
-            
-            NewCommad.ThenRegister("RemoveSeed");
+
+            void DoRemove(SeedUrlModel model)
+            {
+                config.SeedUrls = config.SeedUrls.Remove(model.Url);
+                Models.Remove(model);
+
+                if (Models.Count == 0)
+                    Cluster.Get(Context.System).LeaveAsync();
+            }
+
+            SelectIndex = RegisterProperty<int>(nameof(SelectIndex));
+
+            NewCommad
+               .WithCanExecute(() => SelectIndex > -1)
+               .ThenFlow(() => Models.ElementAt(SelectIndex))
+               .From.Action(DoRemove)
+               .AndReturn()
+               .ThenRegister("RemoveSeed");
 
             #endregion
         }
 
         public UICollectionProperty<SeedUrlModel> Models { get; }
+
+        public UIProperty<int> SelectIndex { get; }
     }
 }

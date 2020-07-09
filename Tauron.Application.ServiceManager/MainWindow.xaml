@@ -8,7 +8,7 @@
         xmlns:viewModels="clr-namespace:Tauron.Application.ServiceManager.ViewModels"
         xmlns:sfSkinManager="clr-namespace:Syncfusion.SfSkinManager;assembly=Syncfusion.SfSkinManager.WPF"
         xmlns:converter="clr-namespace:Tauron.Application.ServiceManager.Converter"
-        mc:Ignorable="d" d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel, IsDesignTimeCreatable=False}"
+        mc:Ignorable="d" d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel, IsDesignTimeCreatable=False}" Icon="app.ico"
         Title="{tau:Loc MainWindow_Label_Title}" Height="450" Width="800" WindowState="Maximized" sfSkinManager:SfSkinManager.VisualStyle="Blend">
     <tau:DialogHost>
         <DockPanel LastChildFill="True">

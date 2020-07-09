@@ -28,7 +28,7 @@ namespace Tauron.Application.Master.Commands
         private static ServiceRegistry? _registry;
 
         public static void Start(ActorSystem system, RegisterService? self) 
-            => system.ActorOf(Props.Create(() => new ServiceRegistryServiceActor(ClusterActorDiscovery.Get(system).Discovery, self)), nameof(ServiceRegistry));
+            => _registry = new ServiceRegistry(system.ActorOf(Props.Create(() => new ServiceRegistryServiceActor(ClusterActorDiscovery.Get(system).Discovery, self)), nameof(ServiceRegistry)));
 
         public static ServiceRegistry GetRegistry(ActorSystem refFactory)
         {
@@ -40,10 +40,10 @@ namespace Tauron.Application.Master.Commands
         public static void Init(ActorSystem system)
         {
             lock (Lock)
-                _registry ??= new ServiceRegistry(system.ActorOf(Props.Create(() => new ServiceRegistryClientActor()), nameof(ServiceRegistry) + "-Client"));
+                _registry ??= new ServiceRegistry(system.ActorOf(Props.Create(() => new ServiceRegistryClientActor()), nameof(ServiceRegistry)));
         }
 
-        private sealed class ServiceRegistryClientActor : ExposedReceiveActor
+        private sealed class ServiceRegistryClientActor : ExposedReceiveActor, IWithUnboundedStash
         {
             private class CircularBuffer<T> : IEnumerable<T>
             {
@@ -53,8 +53,11 @@ namespace Tauron.Application.Master.Commands
                 public void Add(T data)
                     => _data.Add(data);
 
-                public void Remove(T data)
-                    => _data.Remove(data);
+                public int Remove(T data)
+                {
+                    _data.Remove(data);
+                    return _data.Count;
+                }
 
                 public T Next()
                 {
@@ -78,37 +81,66 @@ namespace Tauron.Application.Master.Commands
             public ServiceRegistryClientActor()
             {
                 _discovery = ClusterActorDiscovery.Get(Context.System).Discovery;
+                Initializing();
+            }
 
+            private void Initializing()
+            {
                 this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
                    .From.Action(au =>
-                   {
-                       Log.Info("New Service Registry {Target}", au.Actor.Path);
-                       _serviceRegistrys.Add(au.Actor);
-                   })
+                                {
+                                    Log.Info("New Service Registry {Target}", au.Actor.Path);
+                                    _serviceRegistrys.Add(au.Actor);
+                                    Become(Running);
+                                    Stash.UnstashAll();
+                                })
                    .AndReceive();
 
                 this.Flow<ClusterActorDiscoveryMessage.ActorDown>()
                    .From.Action(ad =>
-                   {
-                       Log.Info("Remove Service Registry {Target}", ad.Actor.Path);
-                       _serviceRegistrys.Remove(ad.Actor);
-                   })
+                                {
+                                    Log.Info("Remove Service Registry {Target}", ad.Actor.Path);
+                                    _serviceRegistrys.Remove(ad.Actor);
+                                })
+                   .AndReceive();
+
+                ReceiveAny(m => Stash.Stash());
+            }
+
+            private void Running()
+            {
+                this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
+                   .From.Action(au =>
+                                {
+                                    Log.Info("New Service Registry {Target}", au.Actor.Path);
+                                    _serviceRegistrys.Add(au.Actor);
+                                })
+                   .AndReceive();
+
+                this.Flow<ClusterActorDiscoveryMessage.ActorDown>()
+                   .From.Action(ad =>
+                                {
+                                    Log.Info("Remove Service Registry {Target}", ad.Actor.Path);
+                                    _serviceRegistrys
+                                       .Remove(ad.Actor)
+                                       .When(i => i == 0, () => Become(Initializing));
+                                })
                    .AndReceive();
 
                 Receive<RegisterService>(s =>
-                {
-                    Log.Info("Register New Service {Name} -- {Adress}", s.Name, s.Address);
-                    _serviceRegistrys.Foreach(r => r.Tell(s));
-                });
+                                         {
+                                             Log.Info("Register New Service {Name} -- {Adress}", s.Name, s.Address);
+                                             _serviceRegistrys.Foreach(r => r.Tell(s));
+                                         });
 
                 Receive<QueryRegistratedServices>(rs =>
                                                   {
                                                       Log.Info("Try Query Service");
-                                                      var target =_serviceRegistrys.Next();
+                                                      var target = _serviceRegistrys.Next();
                                                       switch (target)
                                                       {
                                                           case null:
-                                                             Log.Warning("No Service Registry Registrated");
+                                                              Log.Warning("No Service Registry Registrated");
                                                               Sender.Tell(new QueryRegistratedServicesResponse(new List<MemberService>()));
                                                               break;
                                                           default:
@@ -123,6 +155,8 @@ namespace Tauron.Application.Master.Commands
                 _discovery.Tell(new ClusterActorDiscoveryMessage.MonitorActor(nameof(ServiceRegistry)));
                 base.PreStart();
             }
+
+            public IStash Stash { get; set; } = null!;
         }
 
         private sealed class ServiceRegistryServiceActor : ExposedReceiveActor
