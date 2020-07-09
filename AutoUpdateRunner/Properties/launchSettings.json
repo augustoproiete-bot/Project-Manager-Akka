@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AutoUpdateRunner": {
+      "commandName": "Project",
+      "commandLineArgs": "--downloadfile c:\\download.zip --startfile c:\\host.exe --target c:\\target.zip --runningprocess 234423 --killtime 15000"
+    }
+  }
+}

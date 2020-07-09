@@ -27,4 +27,8 @@
     <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="AutoUpdate\" />
+  </ItemGroup>
+
 </Project>
