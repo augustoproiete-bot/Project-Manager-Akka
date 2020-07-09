@@ -16,9 +16,11 @@
   "SeedNodeView_Label_CreateShortCut": "Create Shortcut",
   "MainWindow_Label_OnlineStatus": "Online Status:",
   "AddSeedDialog_Label_Title": "New Seed Node",
+  "MainWindow_DockHeader_LogView": "Log Entrys",
   "Common_Error": "Error",
   "Common_Warning": "Warning",
   "Common_Unkowen": "Unkowen",
   "Common_Cancel": "Cancel",
   "Common_Ok": "OK",
+  "Common_Querying": "Querying",
 }

@@ -26,7 +26,7 @@ namespace ProtoTyping
             var system = ActorSystem.Create("Project-Manager", ConfigurationFactory.ParseString(await File.ReadAllTextAsync("akka.conf")));
 
             var c = Cluster.Get(system);
-            c.RegisterOnMemberUp(() => ServiceRegistry.Init(system));
+            //c.RegisterOnMemberUp(() => ServiceRegistry.Init(system));
 
             await c.JoinSeedNodesAsync(new[] { Address.Parse(url) });
 

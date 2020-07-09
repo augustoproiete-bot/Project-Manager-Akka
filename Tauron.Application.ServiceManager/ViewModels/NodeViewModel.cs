@@ -68,13 +68,15 @@ namespace Tauron.Application.ServiceManager.ViewModels
             Url = $"{member.UniqueAddress.Address} - {member.UniqueAddress.Uid}";
             MemberStatus = member.Status;
 
-            Name = localizer.Common.Unkowen;
+            Name =localizer.Common.Querying;
 
-
-            ServiceRegistry.GetRegistry(system)
-               .QueryService()
-               .ContinueWith(UpdateName);
-
+            Task.Delay(TimeSpan.FromSeconds(5))
+                .ContinueWith(t =>
+                {
+                    ServiceRegistry.GetRegistry(system)
+                        .QueryService()
+                        .ContinueWith(UpdateName);
+                });
         }
 
         public bool IsSame(Member mem)

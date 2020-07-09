@@ -8,6 +8,7 @@
         xmlns:viewModels="clr-namespace:Tauron.Application.ServiceManager.ViewModels"
         xmlns:sfSkinManager="clr-namespace:Syncfusion.SfSkinManager;assembly=Syncfusion.SfSkinManager.WPF"
         xmlns:converter="clr-namespace:Tauron.Application.ServiceManager.Converter"
+        xmlns:serilogViewer="clr-namespace:Tauron.Application.Wpf.SerilogViewer;assembly=Tauron.Application.Wpf.SerilogViewer"
         mc:Ignorable="d" d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel, IsDesignTimeCreatable=False}" Icon="app.ico"
         Title="{tau:Loc MainWindow_Label_Title}" Height="450" Width="800" WindowState="Maximized" sfSkinManager:SfSkinManager.VisualStyle="Blend">
     <tau:DialogHost>
@@ -21,7 +22,7 @@
                 <StatusBarItem DockPanel.Dock="Right" Margin="5,0">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{tau:Loc MainWindow_Label_OnlineStatus}" Margin="0,0,5,0"/>
-                        <Border BorderThickness="3" MinWidth="15" BorderBrush="Black" CornerRadius="10" 
+                        <Border BorderThickness="3" MinWidth="15" BorderBrush="Black" CornerRadius="10"
                                 Background="{tau:ActorBinding AppInfo, Path=ConnectionState, Converter={converter:ConnectionStateConverter}}"/>
                     </StackPanel>
                 </StatusBarItem>
@@ -45,6 +46,10 @@
                                 Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding NodeView}" />
                 <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_SeedNodeView}"
                                 Style="{StaticResource ButtomStyle}" Content="{tau:ViewModelBinding SeedView}" />
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_LogView}"
+                                Style="{StaticResource ButtomStyle}">
+                    <serilogViewer:SerilogViewer/>
+                </ContentControl>
             </sync:DockingManager>
         </DockPanel>
     </tau:DialogHost>

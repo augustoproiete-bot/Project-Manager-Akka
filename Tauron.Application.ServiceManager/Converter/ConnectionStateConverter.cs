@@ -1,5 +1,5 @@
-﻿using System.Drawing;
-using System.Windows.Data;
+﻿using System.Windows.Data;
+using System.Windows.Media;
 using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.Wpf.Converter;
 

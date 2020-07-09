@@ -1,10 +1,10 @@
 ﻿using System.Threading.Tasks;
-using Akka.Actor;
 using Akka.Cluster;
 using Autofac;
 using Syncfusion.Licensing;
 using Tauron.Application.AkkaNode.Boottrap;
 using Tauron.Application.Master.Commands;
+using Tauron.Application.Wpf.SerilogViewer;
 using Tauron.Host;
 using Tauron.Localization;
 
@@ -18,6 +18,7 @@ namespace Tauron.Application.ServiceManager
 
             await ActorApplication.Create(args)
                .ConfigurateNode()
+               .ConfigureLogging((context, configuration) => configuration.WriteTo.Sink<SeriLogViewerSink>())
                .ConfigurateAkkaSystem((context, system) => system.RegisterLocalization())
                .ConfigurateAkkaSystem((context, system) => KillSwitch.Subscribe(system, KillRecpientType.Frontend))
                .ConfigurateAkkaSystem(

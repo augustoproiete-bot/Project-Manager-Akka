@@ -37,7 +37,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
         public static IApplicationBuilder ConfigurateNode(this IApplicationBuilder builder)
         {
             return builder
-                .ConfigurateAkkaSystem((context, system) => ServiceRegistry.Init(system))
+                //.ConfigurateAkkaSystem((context, system) => ServiceRegistry.Init(system))
                .ConfigureAkka(hbc =>
                               {
                                   const string main = "akka.conf";
@@ -69,7 +69,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
                                  });
         }
 
-        public class LogLevelWriter : ILogEventEnricher
+        private class LogLevelWriter : ILogEventEnricher
         {
             public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
             {

@@ -73,6 +73,7 @@ namespace Akka.Cluster.Utility
             Receive<ClusterEvent.MemberUp>(Handle);
             Receive<ClusterEvent.ReachableMember>(Handle);
             Receive<ClusterEvent.UnreachableMember>(Handle);
+            Receive<ClusterEvent.MemberRemoved>(Handle);
             Receive<ClusterActorDiscoveryMessage.RegisterCluster>(Handle);
             Receive<ClusterActorDiscoveryMessage.ResyncCluster>(Handle);
             // Receive<ClusterActorDiscoveryMessage.UnregisterCluster>(m => Handle(m));
@@ -87,7 +88,7 @@ namespace Akka.Cluster.Utility
 
         protected override void PreStart() 
             => _cluster?.Subscribe(Self, ClusterEvent.SubscriptionInitialStateMode.InitialStateAsEvents, 
-                typeof(ClusterEvent.MemberUp), typeof(ClusterEvent.ReachableMember), typeof(ClusterEvent.UnreachableMember));
+                typeof(ClusterEvent.MemberUp), typeof(ClusterEvent.ReachableMember), typeof(ClusterEvent.UnreachableMember), typeof(ClusterEvent.MemberRemoved));
 
         protected override void PostStop() 
             => _cluster?.Unsubscribe(Self);
@@ -136,6 +137,15 @@ namespace Akka.Cluster.Utility
         private void Handle(ClusterEvent.UnreachableMember m)
         {
             _log.Info($"Cluster.Unreachable: {m.Member.Address} Role={string.Join(",", m.Member.Roles)}");
+
+            var (key, _) = _nodeMap.FirstOrDefault(i => i.Value.ClusterAddress == m.Member.UniqueAddress);
+            if (key != null)
+                RemoveNode(key);
+        }
+
+        private void Handle(ClusterEvent.MemberRemoved m)
+        {
+            _log.Info($"Cluster.MemberRemoved: {m.Member.Address} Role={string.Join(",", m.Member.Roles)}");
 
             var (key, _) = _nodeMap.FirstOrDefault(i => i.Value.ClusterAddress == m.Member.UniqueAddress);
             if (key != null)

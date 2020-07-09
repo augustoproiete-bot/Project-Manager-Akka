@@ -27,20 +27,17 @@ namespace Tauron.Application.Master.Commands
         private static readonly object Lock = new object();
         private static ServiceRegistry? _registry;
 
-        public static void Start(ActorSystem system, RegisterService? self) 
-            => _registry = new ServiceRegistry(system.ActorOf(Props.Create(() => new ServiceRegistryServiceActor(ClusterActorDiscovery.Get(system).Discovery, self)), nameof(ServiceRegistry)));
+        public static void Start(ActorSystem system, RegisterService? self)
+        {
+            if(_registry != null)
+                system.Stop(_registry._target);
+            _registry = new ServiceRegistry(system.ActorOf(Props.Create(() => new ServiceRegistryServiceActor(ClusterActorDiscovery.Get(system).Discovery, self)), nameof(ServiceRegistry)));
+        }
 
         public static ServiceRegistry GetRegistry(ActorSystem refFactory)
         {
             lock (Lock)
                 return _registry ??= new ServiceRegistry(refFactory.ActorOf(Props.Create(() => new ServiceRegistryClientActor()), nameof(ServiceRegistry)));
-        }
-
-
-        public static void Init(ActorSystem system)
-        {
-            lock (Lock)
-                _registry ??= new ServiceRegistry(system.ActorOf(Props.Create(() => new ServiceRegistryClientActor()), nameof(ServiceRegistry)));
         }
 
         private sealed class ServiceRegistryClientActor : ExposedReceiveActor, IWithUnboundedStash

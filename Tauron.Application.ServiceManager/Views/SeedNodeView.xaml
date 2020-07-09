@@ -25,14 +25,7 @@
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="viewModels:SeedUrlModel">
                     <Border Margin="1" BorderThickness="1" BorderBrush="Black" CornerRadius="10">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Margin="5" Text="{Binding Url}" HorizontalAlignment="Left"/>
-                            <Border Margin="5" BorderThickness="3" BorderBrush="Black" Grid.Column="1" MinWidth="15" CornerRadius="10" Background="{Binding Online, Converter={converter:BoolToBrushConverter}}"/>
-                        </Grid>
+                        <TextBlock Margin="5" Text="{Binding Url}" HorizontalAlignment="Center"/>
                     </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>

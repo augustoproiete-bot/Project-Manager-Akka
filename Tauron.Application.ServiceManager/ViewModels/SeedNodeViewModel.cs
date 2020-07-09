@@ -19,38 +19,10 @@ namespace Tauron.Application.ServiceManager.ViewModels
 {
     public sealed class SeedUrlModel : ObservableObject
     {
-        private bool _online;
-
         public string Url { get; }
 
-        public bool Online
-        {
-            get => _online;
-            set
-            {
-                if (value == _online) return;
-                _online = value;
-                OnPropertyChanged();
-            }
-        }
 
-        public SeedUrlModel(string url)
-        {
-            Url = url;
-
-            new Ping().SendPingAsync(Url)
-               .ContinueWith(r =>
-               {
-                   try
-                   {
-                       Online = r.Result.Status == IPStatus.Success;
-                   }
-                   catch (Exception e)
-                   {
-                       Log.ForContext<SeedNodeViewModel>().Error(e, "Error on Ping Url");
-                   }
-               });
-        }
+        public SeedUrlModel(string url) => Url = url;
 
         public static SeedUrlModel New(string url)
             => new SeedUrlModel(url);

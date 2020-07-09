@@ -15,6 +15,7 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __DockHeaderNodeView;
 			private readonly Task<string> __DockHeaderSeedNodeView;
 			private readonly Task<string> __LabelOnlineStatus;
+			private readonly Task<string> __DockHeaderLogView;
 			public MainWindowRes(ActorSystem system)
 			{
 				var loc = system.Loc();
@@ -22,11 +23,13 @@ namespace Tauron.Application.Localizer.Generated
 				__DockHeaderNodeView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_NodeView"));
 				__DockHeaderSeedNodeView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_SeedNodeView"));
 				__LabelOnlineStatus = LocLocalizer.ToString(loc.RequestTask("MainWindow_Label_OnlineStatus"));
+				__DockHeaderLogView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_LogView"));
 			}
 			public string LabelTitle => __LabelTitle.Result;
 			public string DockHeaderNodeView => __DockHeaderNodeView.Result;
 			public string DockHeaderSeedNodeView => __DockHeaderSeedNodeView.Result;
 			public string LabelOnlineStatus => __LabelOnlineStatus.Result;
+			public string DockHeaderLogView => __DockHeaderLogView.Result;
 		}
 		public sealed class MemberStatusRes
 		{
@@ -102,6 +105,7 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __Unkowen;
 			private readonly Task<string> __Cancel;
 			private readonly Task<string> __Ok;
+			private readonly Task<string> __Querying;
 			public CommonRes(ActorSystem system)
 			{
 				var loc = system.Loc();
@@ -110,12 +114,14 @@ namespace Tauron.Application.Localizer.Generated
 				__Unkowen = LocLocalizer.ToString(loc.RequestTask("Common_Unkowen"));
 				__Cancel = LocLocalizer.ToString(loc.RequestTask("Common_Cancel"));
 				__Ok = LocLocalizer.ToString(loc.RequestTask("Common_Ok"));
+				__Querying = LocLocalizer.ToString(loc.RequestTask("Common_Querying"));
 			}
 			public string Error => __Error.Result;
 			public string Warning => __Warning.Result;
 			public string Unkowen => __Unkowen.Result;
 			public string Cancel => __Cancel.Result;
 			public string Ok => __Ok.Result;
+			public string Querying => __Querying.Result;
 		}
 		public LocLocalizer(ActorSystem system)
 		{
