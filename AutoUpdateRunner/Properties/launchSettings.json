@@ -2,7 +2,7 @@
   "profiles": {
     "AutoUpdateRunner": {
       "commandName": "Project",
-      "commandLineArgs": "--downloadfile c:\\download.zip --startfile c:\\host.exe --target c:\\target.zip --runningprocess 234423 --killtime 15000"
+      "commandLineArgs": "--downloadfile C:\\Users\\PC\\source\\repos\\Project-Manager-Akka\\ProtoTyping\\bin\\Debug\\netcoreapp3.1.zip --startfile ProtoTyping.exe --target C:\\Users\\PC\\source\\repos\\Project-Manager-Akka\\ProtoTyping\\bin\\Debug\\netcoreapp3.1 --runningprocess 1 --killtime 15000"
     }
   }
 }

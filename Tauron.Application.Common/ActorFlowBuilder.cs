@@ -542,9 +542,7 @@ namespace Tauron
     [PublicAPI]
     public static class ActorFlowExtensions
     {
-        public static ActorFlowBuilder<TStart, object> Flow<TStart>(this IExposedReceiveActor actor)
-        {
-            return new ActorFlowBuilder<TStart, object>(actor, null!, null);
-        }
+        public static ActorFlowBuilder<TStart, object> Flow<TStart>(this IExposedReceiveActor actor) 
+            => new ActorFlowBuilder<TStart, object>(actor, null!, null);
     }
 }

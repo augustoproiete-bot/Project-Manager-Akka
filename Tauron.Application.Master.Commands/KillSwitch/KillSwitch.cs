@@ -202,7 +202,7 @@ namespace Tauron.Application.Master.Commands
 
         public static void Subscribe(ActorSystem system, KillRecpientType type)
         {
-            Log.Information("Subscribe Killswitch");
+            Log.Information("SubscribeToEvent Killswitch");
             _switch = system.ActorOf(() => new KillWatcher(type), KillSwitchName);
         }
 
