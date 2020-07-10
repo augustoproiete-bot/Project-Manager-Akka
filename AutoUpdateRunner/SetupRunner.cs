@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using Serilog;
 
@@ -14,14 +16,20 @@ namespace AutoUpdateRunner
 
         public SetupRunner(SetupInfo info) => _info = info;
 
-        public async Task Run()
+        public void Run()
         {
             var backup = Path.GetFullPath("Backup");
+
             var failed = false;
+            var backUpNeed = false;
 
             try
             {
+                var setup =
 
+                Directory.CreateDirectory(backup);
+
+                backUpNeed = true;
             }
             catch (Exception e)
             {
@@ -30,15 +38,39 @@ namespace AutoUpdateRunner
             }
             finally
             {
-                if(failed)
+                if(failed && backUpNeed)
                     Revert(_info.Target, backup);
+                Directory.Delete(backup, true);
                 StartHost();
             }
         }
 
         private void Revert(string target, string backup)
         {
+            _logger.Information("Replay Backup {Backup} To {Target}", backup, target);
+            ClearDictionary(target);
+            
+            var elements = new Queue<(DirectoryInfo Dic, string Base, string Target)>();
+            elements.Enqueue((new DirectoryInfo(backup), backup, target));
 
+            while (elements.Count != 0)
+            {
+                var currentTarget = elements.Dequeue();
+                foreach (var info in currentTarget.Dic.EnumerateFileSystemInfos())
+                {
+                    switch (info)
+                    {
+                        case FileInfo file:
+                            file.CopyTo(file.FullName.Replace(currentTarget.Base, currentTarget.Target));
+                            break;
+                        case DirectoryInfo dic:
+                            var newPath = dic.FullName.Replace(currentTarget.Base, currentTarget.Target);
+                            Directory.CreateDirectory(newPath);
+                            elements.Enqueue((dic, dic.FullName, newPath));
+                            break;
+                    }
+                }
+            }
         }
 
         private void StartHost()
@@ -49,8 +81,14 @@ namespace AutoUpdateRunner
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                _logger.Error(e, "Error on Starting Host {Path}", _info.StartFile);
             }
+        }
+
+        private static void ClearDictionary(string target)
+        {
+            Directory.Delete(target, true);
+            Directory.CreateDirectory(target);
         }
     }
 }

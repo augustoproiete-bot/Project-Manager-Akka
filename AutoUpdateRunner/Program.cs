@@ -7,7 +7,7 @@ namespace AutoUpdateRunner
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         { 
             Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().Enrich.FromLogContext().CreateLogger();
 
@@ -15,7 +15,7 @@ namespace AutoUpdateRunner
             var setup = new SetupInfo();
             config.Bind(setup);
 
-            await new SetupRunner(setup).Run();
+            new SetupRunner(setup).Run();
         }
     }
 }
