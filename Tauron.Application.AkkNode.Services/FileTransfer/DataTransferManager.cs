@@ -5,9 +5,9 @@ using Tauron.Application.AkkNode.Services.FileTransfer.Operator;
 namespace Tauron.Application.AkkNode.Services.FileTransfer
 {
     [PublicAPI]
-    public static class FileTransferManager
+    public static class DataTransferManager
     {
         public static IActorRef New(IActorRefFactory factory)
-            => factory.ActorOf(Props.Create<FileTransferManagerActor>())
+            => factory.ActorOf(Props.Create<DataTransferManagerActor>());
     }
 }

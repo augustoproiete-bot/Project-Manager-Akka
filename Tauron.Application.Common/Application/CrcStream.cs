@@ -1,8 +1,53 @@
+using System;
+using System.Diagnostics;
 using System.IO;
 using JetBrains.Annotations;
 
 namespace Tauron.Application
 {
+    [PublicAPI]
+    public class Crc32
+    {
+        private readonly uint[] _table;
+
+        [DebuggerStepThrough]
+        public uint ComputeChecksum(byte[] bytes)
+        {
+            var crc = 0xffffffff;
+            foreach (var t in bytes)
+            {
+                var index = (byte)(((crc) & 0xff) ^ t);
+                crc = (crc >> 8) ^ _table[index];
+            }
+            return ~crc;
+        }
+
+        public byte[] ComputeChecksumBytes(byte[] bytes) 
+            => BitConverter.GetBytes(ComputeChecksum(bytes));
+
+        public Crc32()
+        {
+            const uint poly = 0xedb88320;
+            _table = new uint[256];
+            for (uint i = 0; i < _table.Length; ++i)
+            {
+                var temp = i;
+                for (var j = 8; j > 0; --j)
+                {
+                    if ((temp & 1) == 1)
+                    {
+                        temp = (temp >> 1) ^ poly;
+                    }
+                    else
+                    {
+                        temp >>= 1;
+                    }
+                }
+                _table[i] = temp;
+            }
+        }
+    }
+
     /// <summary>
     ///     Encapsulates a <see cref="System.IO.Stream" /> to calculate the CRC32 checksum on-the-fly as data passes through.
     /// </summary>
@@ -19,10 +64,8 @@ namespace Tauron.Application
         ///     Encapsulate a <see cref="System.IO.Stream" />.
         /// </summary>
         /// <param name="stream">The stream to calculate the checksum for.</param>
-        public CrcStream(Stream stream)
-        {
-            Stream = stream;
-        }
+        public CrcStream(Stream stream) 
+            => Stream = stream;
 
         /// <summary>
         ///     Gets the underlying stream.
@@ -82,6 +125,7 @@ namespace Tauron.Application
             _writeCrc = CalculateCrc(_writeCrc, buffer, offset, count);
         }
 
+        [DebuggerStepThrough]
         private uint CalculateCrc(uint crc, byte[] buffer, int offset, int count)
         {
             unchecked

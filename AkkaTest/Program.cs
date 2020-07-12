@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading;
+using System.IO;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Code.Configuration;
@@ -9,10 +9,8 @@ using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Logger.Serilog;
 using Serilog;
-using Tauron.Application.Akka.ServiceResolver;
-using Tauron.Application.Akka.ServiceResolver.Actor;
-using Tauron.Application.Akka.ServiceResolver.Configuration;
-using Tauron.Application.Akka.ServiceResolver.Core;
+using Tauron.Application.AkkNode.Services.FileTransfer;
+using Tauron.Application.Master.Commands.Core;
 
 namespace AkkaTest
 {
@@ -50,44 +48,47 @@ namespace AkkaTest
         }
     }
 
-    public sealed class TestMessage
-    {
-        public TestMessage(string message)
-        {
-            Message = message;
-        }
-
-        public string Message { get; }
-    }
-
-    public sealed class KillService
-    {
-    }
-
-    public sealed class TestService : ReceiveActor
-    {
-        public TestService()
-        {
-            Receive<TestMessage>(TestMessage);
-            Receive<KillService>(KillService);
-        }
-
-        private void KillService(KillService obj)
-        {
-            Context.Self.Tell(PoisonPill.Instance);
-        }
-
-        private void TestMessage(TestMessage obj)
-        {
-            Console.WriteLine();
-            Console.WriteLine(obj.Message);
-            Console.WriteLine();
-        }
-    }
 
     internal class Program
     {
-        private static async Task Main(string[] args)
+        private sealed class StartTest
+        {
+            
+        }
+
+        private sealed class Tester : ReceiveActor
+        {
+            private const string TestFile = @"F:\Test\Syncfusion.Tools.WPF.dll";
+            private const string TestTarget = @"F:\Test\Syncfusion.Tools.WPF-Test.dll";
+
+            public Tester()
+            {
+                Receive<StartTest>(_ => StartTestImpl());
+                Receive<IncomingDataTransfer>(HandleEvent);
+                Receive<TransferFailed>(HandleEvent);
+                Receive<TransferCompled>(HandleEvent);
+            }
+
+            private void HandleEvent(TransferCompled obj) => Console.WriteLine($"Operation Compled Id:{obj.OperationId}");
+
+            private void HandleEvent(TransferFailed obj) => Console.WriteLine($"Tarnsfering Failed Reason:{obj.Reason}  Data:{obj.Data}  Id:{obj.OperationId}");
+
+            private void HandleEvent(IncomingDataTransfer obj) => obj.Accept(() => File.Create(TestTarget));
+
+            private void StartTestImpl()
+            {
+                var sender = DataTransferManager.New(Context);
+                var reciver = DataTransferManager.New(Context);
+
+                sender.SubscribeToEvent<TransferCompled>();
+                sender.SubscribeToEvent<TransferFailed>();
+                reciver.SubscribeToEvent<IncomingDataTransfer>();
+
+                sender.Tell(DataTransferRequest.FromFile(TestFile, reciver, "Test Sending"));
+            }
+        }
+
+        private static async Task Main()
         {
             //ProxyTest.TestProxy();
             //SynchronizationContext.SetSynchronizationContext(new TestSync());
@@ -101,68 +102,31 @@ namespace AkkaTest
 
             configRoot.Akka.Loggers.Add(typeof(SerilogLogger));
 
-            var resolver = configRoot.ServiceResolver();
-            resolver.IsGlobal = false;
-            resolver.ResolverPath = "akka://Test/user/Global";
-            resolver.Name = "Client";
-
             var config = configRoot.CreateConfig();
-            string configString = config.Root.ToString();
 
-            Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File("Log.Log").CreateLogger();
+            Log.Logger = new LoggerConfiguration().WriteTo.File("Log.Log").CreateLogger();
             using var system = ActorSystem.Create("Test", config);
-
-            var globalTemp = system.ActorOf<GlobalResolver>("Global");
-            globalTemp.Tell(new GlobalResolver.Initialize(new ResolverSettings(Config.Empty) {IsGlobal = true}));
-
-            var exz = system.AddServiceResolver();
-
-            exz.RegisterEndpoint(EndpointConfig.New.WithServices((nameof(TestService), Props.Create<TestService>())));
-            var client = system.ActorOf<TestClient>();
-
-            client.Tell("Hallo vom Resolver!");
-            client.Tell(new KillService());
+            
+            system.ActorOf(Props.Create<Tester>()).Tell(new StartTest());
 
             Console.WriteLine("Zum Beenden Taste drücken...");
             Console.ReadKey();
 
-            globalTemp.Tell(PoisonPill.Instance);
-            await system.WhenTerminated;
+            await system.Terminate();
         }
 
-        [DebuggerNonUserCode]
-        private sealed class TestSync : SynchronizationContext
-        {
-            public override void Post(SendOrPostCallback d, object? state)
-            {
-                d(state);
-            }
+        //[DebuggerNonUserCode]
+        //private sealed class TestSync : SynchronizationContext
+        //{
+        //    public override void Post(SendOrPostCallback d, object? state)
+        //    {
+        //        d(state);
+        //    }
 
-            public override void Send(SendOrPostCallback d, object? state)
-            {
-                d(state);
-            }
-        }
-
-        private sealed class TestClient : ReceiveActor
-        {
-            public TestClient()
-            {
-                Receive<string>(SendTest);
-                Receive<KillService>(Kill);
-            }
-
-            private void Kill(KillService obj)
-            {
-                var service = Context.ResolveRemoteService(nameof(TestService));
-                service.Service.Tell(obj);
-            }
-
-            private void SendTest(string obj)
-            {
-                var service = Context.ResolveRemoteService(nameof(TestService));
-                service.Service.Tell(new TestMessage(obj));
-            }
-        }
+        //    public override void Send(SendOrPostCallback d, object? state)
+        //    {
+        //        d(state);
+        //    }
+        //}
     }
 }

@@ -77,6 +77,14 @@ namespace Tauron.Application.Master.Commands.Core
             foreach (var actorRef in coll) actorRef.Tell(payload);
             return payload;
         }
+
+        public TType Send<TType>(TType payload, Type evtType)
+        {
+            if (!_sunscriptions.TryGetValue(evtType, out var coll)) return payload;
+
+            foreach (var actorRef in coll) actorRef.Tell(payload);
+            return payload;
+        }
     }
 
     [PublicAPI]

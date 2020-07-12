@@ -7,21 +7,18 @@ using JetBrains.Annotations;
 namespace Tauron.Application.AkkNode.Services.FileTransfer
 {
     [PublicAPI]
-    public sealed class IncomingFileTransfer : TransferMessages.TransferMessage
+    public sealed class IncomingDataTransfer : TransferMessages.TransferMessage
     {
         private readonly Timer _denyTimer;
 
         public IActorRef Manager { get; }
-
-        public string Name { get; }
-
+        
         public string? Data { get; }
 
-        public IncomingFileTransfer(string operationId, IActorRef manager, string name, string? data) 
+        public IncomingDataTransfer(string operationId, IActorRef manager, string? data) 
             : base(operationId)
         {
             Manager = manager;
-            Name = name;
             Data = data;
 
             _denyTimer = new Timer(s => Deny(), null, TimeSpan.FromMinutes(1), Timeout.InfiniteTimeSpan);
