@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Configuration\defaults.conf" />
+    <None Remove="Configuration\reference.conf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Configuration\defaults.conf" />
+    <EmbeddedResource Include="Configuration\reference.conf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Akka.Persistence.Query" Version="1.4.8" />
+    <PackageReference Include="Cronos" Version="0.7.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
+  </ItemGroup>
+
+</Project>

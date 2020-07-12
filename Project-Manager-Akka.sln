@@ -97,9 +97,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Deployme
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Deployment.Server.Services", "temp\ALt\Tauron.Application.Deployment.Server.Services\Tauron.Application.Deployment.Server.Services.csproj", "{D6DC69A6-91B3-4E57-8DBC-5C91978F33FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeploymentServer", "DeploymentServer\DeploymentServer.csproj", "{8CCD899B-82B6-47CD-BE11-B08DA5D8F0C1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeploymentServer", "DeploymentServer\DeploymentServer.csproj", "{8CCD899B-82B6-47CD-BE11-B08DA5D8F0C1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tauron.Application.AkkNode.Services", "Tauron.Application.AkkNode.Services\Tauron.Application.AkkNode.Services.csproj", "{C20F9C9D-8D96-4801-B7A7-2916A71D6EA1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.AkkNode.Services", "Tauron.Application.AkkNode.Services\Tauron.Application.AkkNode.Services.csproj", "{C20F9C9D-8D96-4801-B7A7-2916A71D6EA1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "External", "External", "{4EF74CCF-9CAB-4C68-AE2E-D07C6112182D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akkatecture", "External\Akkatecture\Akkatecture.csproj", "{10B24AB1-F96E-4FF4-8E37-6995801AE036}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akkatecture.Cluster", "External\Akkatecture.Cluster\Akkatecture.Cluster.csproj", "{DE683D33-3497-414D-95A1-2AC6C54BFF77}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -227,6 +233,14 @@ Global
 		{C20F9C9D-8D96-4801-B7A7-2916A71D6EA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C20F9C9D-8D96-4801-B7A7-2916A71D6EA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C20F9C9D-8D96-4801-B7A7-2916A71D6EA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10B24AB1-F96E-4FF4-8E37-6995801AE036}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10B24AB1-F96E-4FF4-8E37-6995801AE036}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10B24AB1-F96E-4FF4-8E37-6995801AE036}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10B24AB1-F96E-4FF4-8E37-6995801AE036}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE683D33-3497-414D-95A1-2AC6C54BFF77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE683D33-3497-414D-95A1-2AC6C54BFF77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE683D33-3497-414D-95A1-2AC6C54BFF77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE683D33-3497-414D-95A1-2AC6C54BFF77}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -278,6 +292,9 @@ Global
 		{D6DC69A6-91B3-4E57-8DBC-5C91978F33FD} = {23B6B4C8-B3C5-463F-B489-0A0934FA39A4}
 		{8CCD899B-82B6-47CD-BE11-B08DA5D8F0C1} = {EE8DE8C1-44CB-4772-948C-98167B5C7686}
 		{C20F9C9D-8D96-4801-B7A7-2916A71D6EA1} = {31E55A85-34FD-4D8E-8026-D5BF59BC2040}
+		{4EF74CCF-9CAB-4C68-AE2E-D07C6112182D} = {31E55A85-34FD-4D8E-8026-D5BF59BC2040}
+		{10B24AB1-F96E-4FF4-8E37-6995801AE036} = {4EF74CCF-9CAB-4C68-AE2E-D07C6112182D}
+		{DE683D33-3497-414D-95A1-2AC6C54BFF77} = {4EF74CCF-9CAB-4C68-AE2E-D07C6112182D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F63AD2ED-4320-43AB-8761-A3FEBC507539}
