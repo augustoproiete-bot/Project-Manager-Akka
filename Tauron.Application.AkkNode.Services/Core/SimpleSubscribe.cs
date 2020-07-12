@@ -9,7 +9,7 @@ namespace Tauron.Application.Master.Commands.Core
     public static class SimpleSubscribeFlow
     {
         public sealed class EventRecieve<TNew, TStart, TParent> : ReceiveBuilderBase<TNew, TStart, TParent>
-        {
+        { 
             public EventRecieve(ActorFlowBuilder<TStart, TParent> flow, IActorRef target) 
                 : base(flow) =>
                 flow.Register(ad => target.Tell(new Subscribe(typeof(TNew))));
