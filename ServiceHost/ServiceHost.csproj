@@ -24,6 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Akka.Persistence.Query.Sql" Version="1.4.8" />
+    <PackageReference Include="Akka.Persistence.Sqlite" Version="1.4.8" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />
     <ProjectReference Include="..\Tauron.Application.AkkNode.Services\Tauron.Application.AkkNode.Services.csproj" />
   </ItemGroup>

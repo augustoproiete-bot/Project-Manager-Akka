@@ -23,9 +23,11 @@
 
 using Akka.Persistence.Journal;
 using Akkatecture.Extensions;
+using JetBrains.Annotations;
 
 namespace Akkatecture.Events
 {
+    [PublicAPI]
     public class AggregateEventTagger : IWriteEventAdapter
     {
         public string Manifest(object evt) => string.Empty;
