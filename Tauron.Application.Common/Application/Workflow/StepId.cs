@@ -13,7 +13,10 @@ namespace Tauron.Application.Workflow
         public static readonly StepId Finish = new StepId("Finish");
         public static readonly StepId Loop = new StepId("Loop");
         public static readonly StepId LoopEnd = new StepId("LoopEnd");
+        public static readonly StepId LoopContinue = new StepId("LoopContinue");
         public static readonly StepId Skip = new StepId("Skip");
+        public static readonly StepId Start = new StepId("Start");
+        public static readonly StepId Waiting = new StepId("Waiting");
 
         [DebuggerStepThrough]
         public override int GetHashCode()

@@ -12,7 +12,7 @@ namespace Tauron.Application.Workflow
         where TState : IStep<TContext>
 
     {
-        private readonly Dictionary<StepId, StepRev> _states;
+        private readonly Dictionary<StepId, StepRev<TState, TContext>> _states;
 
         private string _errorMessage = string.Empty;
 
@@ -20,7 +20,7 @@ namespace Tauron.Application.Workflow
 
         protected Producer()
         {
-            _states = new Dictionary<StepId, StepRev>();
+            _states = new Dictionary<StepId, StepRev<TState, TContext>>();
         }
 
         public void Begin(StepId id, [NotNull] TContext context)
@@ -49,13 +49,13 @@ namespace Tauron.Application.Workflow
             if (!_states.TryGetValue(id, out var rev))
                 return SetLastId(StepId.Invalid);
 
-            var sId = rev.State.OnExecute(context);
+            var sId = rev.Step.OnExecute(context);
             var result = false;
 
             switch (sId.Name)
             {
                 case "Invalid":
-                    _errorMessage = rev.State.ErrorMessage;
+                    _errorMessage = rev.Step.ErrorMessage;
                     return SetLastId(sId);
                 case "None":
                     result = ProgressConditions(rev, context);
@@ -65,7 +65,7 @@ namespace Tauron.Application.Workflow
 
                     do
                     {
-                        var loopId = rev.State.NextElement(context);
+                        var loopId = rev.Step.NextElement(context);
                         if (loopId.Name == StepId.LoopEnd.Name)
                         {
                             ok = false;
@@ -88,121 +88,121 @@ namespace Tauron.Application.Workflow
             }
 
             if (!result)
-                rev.State.OnExecuteFinish(context);
+                rev.Step.OnExecuteFinish(context);
 
             return result;
         }
 
-        private bool ProgressConditions([NotNull] StepRev rev, TContext context)
+        private bool ProgressConditions([NotNull] StepRev<TState, TContext> rev, TContext context)
         {
             var std = (from con in rev.Conditions
-                let stateId = con.Select(rev.State, context)
+                let stateId = con.Select(rev.Step, context)
                 where stateId.Name != StepId.None.Name
                 select stateId).ToArray();
 
             if (std.Length != 0) return std.Any(id => Process(id, context));
 
             if (rev.GenericCondition == null) return false;
-            var cid = rev.GenericCondition.Select(rev.State, context);
+            var cid = rev.GenericCondition.Select(rev.Step, context);
             return cid.Name != StepId.None.Name && Process(cid, context);
         }
 
         [NotNull]
-        public StepConfiguration SetStep(TState stade)
+        public StepConfiguration<TState, TContext> SetStep(StepId id, TState stade)
         {
             Argument.NotNull(stade, nameof(stade));
 
-            var rev = new StepRev(stade);
-            _states[stade.Id] = rev;
+            var rev = new StepRev<TState, TContext>(stade);
+            _states[id] = rev;
 
-            return new StepConfiguration(rev);
+            return new StepConfiguration<TState, TContext>(rev);
         }
 
         [NotNull]
-        public StepConfiguration GetStateConfiguration(StepId id)
+        public StepConfiguration<TState, TContext> GetStateConfiguration(StepId id)
         {
-            return new StepConfiguration(_states[id]);
+            return new StepConfiguration<TState, TContext>(_states[id]);
+        }
+    }
+
+    [PublicAPI]
+    public class StepConfiguration<TState, TContext>
+    {
+        private readonly StepRev<TState, TContext> _context;
+
+        internal StepConfiguration([NotNull] StepRev<TState, TContext> context)
+        {
+            _context = context;
         }
 
-        [PublicAPI]
-        public class StepConfiguration
+        [NotNull]
+        public StepConfiguration<TState, TContext> WithCondition([NotNull] ICondition<TContext> condition)
         {
-            private readonly StepRev _context;
+            Argument.NotNull(condition, nameof(condition));
 
-            internal StepConfiguration([NotNull] StepRev context)
-            {
-                _context = context;
-            }
-
-            [NotNull]
-            public StepConfiguration AddCondition([NotNull] ICondition<TContext> condition)
-            {
-                Argument.NotNull(condition, nameof(condition));
-
-                _context.Conditions.Add(condition);
-                return this;
-            }
-
-            [NotNull]
-            public ConditionConfiguration AddCondition(Func<TContext, IStep<TContext>, bool>? guard = null)
-            {
-                var con = new SimpleCondition<TContext> {Guard = guard};
-                if (guard != null) return new ConditionConfiguration(AddCondition(con), con);
-
-                _context.GenericCondition = con;
-                return new ConditionConfiguration(this, con);
-            }
+            _context.Conditions.Add(condition);
+            return this;
         }
 
-        [PublicAPI]
-        public class ConditionConfiguration
+        [NotNull]
+        public ConditionConfiguration<TState, TContext> WithCondition(Func<TContext, IStep<TContext>, bool>? guard = null)
         {
-            private readonly SimpleCondition<TContext> _condition;
-            private readonly StepConfiguration _config;
+            var con = new SimpleCondition<TContext> { Guard = guard };
+            if (guard != null) return new ConditionConfiguration<TState, TContext> (WithCondition(con), con);
 
-            public ConditionConfiguration([NotNull] StepConfiguration config, [NotNull] SimpleCondition<TContext> condition)
-            {
-                Argument.NotNull(config, nameof(config));
-                Argument.NotNull(condition, nameof(condition));
+            _context.GenericCondition = con;
+            return new ConditionConfiguration<TState, TContext>(this, con);
+        }
+    }
 
-                _config = config;
-                _condition = condition;
-            }
+    [PublicAPI]
+    public class ConditionConfiguration<TState, TContext>
+    {
+        private readonly SimpleCondition<TContext> _condition;
+        private readonly StepConfiguration<TState, TContext> _config;
 
-            [NotNull]
-            public StepConfiguration GoesTo(StepId id)
-            {
-                _condition.Target = id;
+        public ConditionConfiguration([NotNull] StepConfiguration<TState, TContext> config, [NotNull] SimpleCondition<TContext> condition)
+        {
+            Argument.NotNull(config, nameof(config));
+            Argument.NotNull(condition, nameof(condition));
 
-                return _config;
-            }
+            _config = config;
+            _condition = condition;
         }
 
-        internal class StepRev
+        [NotNull]
+        public StepConfiguration<TState, TContext> GoesTo(StepId id)
         {
-            public StepRev(TState state)
-            {
-                State = state;
-                Conditions = new List<ICondition<TContext>>();
-            }
+            _condition.Target = id;
 
-            public TState State { get; }
+            return _config;
+        }
+    }
 
-            [NotNull] public List<ICondition<TContext>> Conditions { get; }
+    internal class StepRev<TState, TContext>
+    {
+        public StepRev(TState step)
+        {
+            Step = step;
+            Conditions = new List<ICondition<TContext>>();
+        }
 
-            public ICondition<TContext>? GenericCondition { get; set; }
+        public TState Step { get; }
 
-            public override string ToString()
-            {
-                var b = new StringBuilder();
-                b.Append(State);
+        [NotNull] public List<ICondition<TContext>> Conditions { get; }
 
-                foreach (var condition in Conditions) b.AppendLine("->" + condition + ";");
+        public ICondition<TContext>? GenericCondition { get; set; }
 
-                if (GenericCondition != null) b.Append("Generic->" + GenericCondition + ";");
+        public override string ToString()
+        {
+            var b = new StringBuilder();
+            b.Append(Step);
 
-                return b.ToString();
-            }
+            foreach (var condition in Conditions) b.AppendLine("->" + condition + ";");
+
+            if (GenericCondition != null) b.Append("Generic->" + GenericCondition + ";");
+
+            return b.ToString();
         }
     }
 }

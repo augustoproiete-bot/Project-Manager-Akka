@@ -9,8 +9,8 @@ using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Logger.Serilog;
 using Serilog;
-using Tauron.Application.AkkNode.Services.FileTransfer;
-using Tauron.Application.Master.Commands.Core;
+using Tauron.Application.ActorWorkflow;
+using Tauron.Application.Workflow;
 
 namespace AkkaTest
 {
@@ -51,40 +51,84 @@ namespace AkkaTest
 
     internal class Program
     {
+        private class Tester : UntypedActor
+        {
+            private readonly IActorRef _workflow;
+
+            public Tester() => _workflow = Context.ActorOf(Props.Create<WorkFlowTester>());
+
+            protected override void OnReceive(object message)
+            {
+                if(message is StartTest st)
+                    _workflow.Tell(st);
+                else
+                    Console.WriteLine(message.ToString());
+            }
+        }
+
+        private sealed class TestContext : IWorkflowContext
+        {
+            public string Name { get; set; } = "Unbekannt";
+
+            public StepId ReadName()
+            {
+                Name = Console.ReadLine();
+                if(string.IsNullOrWhiteSpace(Name))
+                    return StepId.LoopContinue;
+                return Name == "e" ? StepId.Invalid : StepId.LoopEnd;
+            }
+        }
+
         private sealed class StartTest
         {
             
         }
 
-        private sealed class Tester : ReceiveActor
+        private sealed class WorkFlowTester : LambdaWorkflowActor<TestContext>
         {
-            private const string TestFile = @"F:\Test\Syncfusion.Tools.WPF.dll";
-            private const string TestTarget = @"F:\Test\Syncfusion.Tools.WPF-Test.dll";
+            private static readonly StepId Terminate = new StepId(nameof(Terminate));
+            private static readonly StepId Hallo = new StepId(nameof(Hallo));
+            private static readonly StepId Input = new StepId(nameof(Input));
 
-            public Tester()
+            public WorkFlowTester()
             {
-                Receive<StartTest>(_ => StartTestImpl());
-                Receive<IncomingDataTransfer>(HandleEvent);
-                Receive<TransferFailed>(HandleEvent);
-                Receive<TransferCompled>(HandleEvent);
-            }
+                StartMessage<StartTest>(m => Start(new TestContext()));
 
-            private void HandleEvent(TransferCompled obj) => Console.WriteLine($"Operation Compled Id:{obj.OperationId}");
+                WhenStep(StepId.Start, c => c.OnExecute(_ => Input));
 
-            private void HandleEvent(TransferFailed obj) => Console.WriteLine($"Tarnsfering Failed Reason:{obj.Reason}  Data:{obj.Data}  Id:{obj.OperationId}");
+                WhenStep(Input,
+                    c =>
+                    {
+                        c.OnExecute(_ =>
+                        {
+                            Sender.Tell("Bitte Namen Eingeben:\n");
+                            return StepId.Loop;
+                        });
+                        c.OnNextElement(c => c.ReadName());
+                    },
+                    con => con.WithCondition().GoesTo(Hallo));
 
-            private void HandleEvent(IncomingDataTransfer obj) => obj.Accept(() => File.Create(TestTarget));
+                WhenStep(Hallo,
+                    c =>
+                        c.OnExecute(ctx =>
+                        {
+                            Sender.Tell($"Hallo: {ctx.Name}");
+                            return Terminate;
+                        }));
 
-            private void StartTestImpl()
-            {
-                var sender = DataTransferManager.New(Context);
-                var reciver = DataTransferManager.New(Context);
+                WhenStep(Terminate,
+                    c =>
+                    {
+                        c.OnExecute(_ => StepId.Finish);
+                        c.OnFinish(_ => Context.System.Terminate());
+                    });
 
-                sender.SubscribeToEvent<TransferCompled>();
-                sender.SubscribeToEvent<TransferFailed>();
-                reciver.SubscribeToEvent<IncomingDataTransfer>();
-
-                sender.Tell(DataTransferRequest.FromFile(TestFile, reciver, "Test Sending"));
+                OnFinish(
+                    wr =>
+                    {
+                        if (!wr.Succesfully)
+                            Context.System.Terminate();
+                    });
             }
         }
 
@@ -98,7 +142,7 @@ namespace AkkaTest
             //var config = ConfigurationFactory.ParseString(File.ReadAllText("akka.config.hocon"));
             var configRoot = new AkkaRootConfiguration();
 
-            configRoot.Akka.Actor.DefaultDispatcher<DispatcherConfiguration>().Type = typeof(CallingThreadDispatcherInternalConfigurator);
+            //configRoot.Akka.Actor.DefaultDispatcher<DispatcherConfiguration>().Type = typeof(CallingThreadDispatcherInternalConfigurator);
 
             configRoot.Akka.Loggers.Add(typeof(SerilogLogger));
 
@@ -109,10 +153,10 @@ namespace AkkaTest
             
             system.ActorOf(Props.Create<Tester>()).Tell(new StartTest());
 
-            Console.WriteLine("Zum Beenden Taste drücken...");
-            Console.ReadKey();
+            //Console.WriteLine("Zum Beenden Taste drücken...");
+            //Console.ReadKey();
 
-            await system.Terminate();
+            await system.WhenTerminated;
         }
 
         //[DebuggerNonUserCode]
