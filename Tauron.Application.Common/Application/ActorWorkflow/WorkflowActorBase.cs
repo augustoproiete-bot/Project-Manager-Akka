@@ -29,21 +29,45 @@ namespace Tauron.Application.ActorWorkflow
 
         private readonly Dictionary<StepId, StepRev<TStep, TContext>> _steps = new Dictionary<StepId, StepRev<TStep, TContext>>();
         private readonly Dictionary<Type, Delegate> _starter = new Dictionary<Type, Delegate>();
+        private readonly Dictionary<Type, Delegate> _signals = new Dictionary<Type, Delegate>();
         private Action<WorkflowResult<TContext>>? _onFinish;
         
         private bool _running;
         private bool _waiting;
         private object _timeout = new object();
+        private ChainCall? _lastCall;
+        private IActorRef? _starterSender;
 
         private string _errorMessage = string.Empty;
+
+        protected void SetError(string error)
+            => _errorMessage = error;
 
         protected override bool Receive(object message)
         {
             if (_running)
-               if(_waiting)
-                    return Running(message);
-            else
-                return Initializing(message);
+                return _waiting ? Singnaling(message) : Running(message);
+            return Initializing(message);
+        }
+
+        protected virtual bool Singnaling(object msg)
+        {
+            if (msg is TimeoutMarker)
+            {
+                _errorMessage = "Timeout";
+                Finish(false);
+                return true;
+            }
+
+            if (!_signals.TryGetValue(msg.GetType(), out var del)) return false;
+            Timers.Cancel(_timeout);
+
+            var id = (StepId)del.DynamicInvoke(RunContext, msg);
+            Self.Tell(new ChainCall(id).WithBase(_lastCall), _starterSender);
+
+            _waiting = false;
+            _lastCall = null;
+            return true;
         }
 
         protected virtual bool Initializing(object msg)
@@ -64,7 +88,8 @@ namespace Tauron.Application.ActorWorkflow
 
         }
 
-        protected void Singnal<TMessage>(Func<TContext, TMessage, StepId> signal);
+        protected void Signal<TMessage>(Func<TContext, TMessage, StepId> signal)
+            => _signals[typeof(TMessage)] = signal;
 
         protected void StartMessage<TType>(Action<TType> msg) 
             => _starter[typeof(TType)] = msg;
@@ -78,6 +103,11 @@ namespace Tauron.Application.ActorWorkflow
                     case ChainCall chain:
                     {
                         var id = chain.Id;
+                        if (id == StepId.Fail)
+                        {
+                            Finish(false);
+                            return true;
+                        }
 
                         if (!_steps.TryGetValue(id, out var rev))
                         {
@@ -91,7 +121,7 @@ namespace Tauron.Application.ActorWorkflow
 
                         switch (sId.Name)
                         {
-                            case "Invalid":
+                            case "Fail":
                                 _errorMessage = rev.Step.ErrorMessage;
                                 Finish(false);
                                 break;
@@ -108,7 +138,8 @@ namespace Tauron.Application.ActorWorkflow
                             case "Waiting":
                                 if (rev.Step is IHasTimeout timeout && timeout.Timeout != null) 
                                     Timers.StartSingleTimer(_timeout, new TimeoutMarker(), timeout.Timeout.Value);
-                                break;
+                                _lastCall = chain;
+                                return true;
                             default:
                                 Self.Forward(new ChainCall(sId).WithBase(chain));
                                 return true;
@@ -127,7 +158,7 @@ namespace Tauron.Application.ActorWorkflow
                         if (loopId == StepId.LoopContinue)
                             return true;
 
-                        if (loopId.Name == StepId.Invalid.Name)
+                        if (loopId.Name == StepId.Fail.Name)
                         {
                             Finish(false);
                             return true;
@@ -180,6 +211,7 @@ namespace Tauron.Application.ActorWorkflow
 
         private void Finish(bool isok, StepRev<TStep, TContext>? rev = null)
         {
+            _starterSender = null;
             _running = false;
             if(isok)
                 rev?.Step.OnExecuteFinish(RunContext);
@@ -190,6 +222,7 @@ namespace Tauron.Application.ActorWorkflow
 
         public void Start(TContext context)
         {
+            _starterSender = Sender;
             _running = true;
             RunContext = context;
             Self.Forward(new ChainCall(StepId.Start));
@@ -247,7 +280,7 @@ namespace Tauron.Application.ActorWorkflow
                 Position = 0;
             }
 
-            public StepId Id => Position >= StepIds.Length ? BaseCall?.Id ?? StepId.Invalid : StepIds[Position];
+            public StepId Id => Position >= StepIds.Length ? BaseCall?.Id ?? StepId.Fail : StepIds[Position];
 
             public ChainCall Next()
             {

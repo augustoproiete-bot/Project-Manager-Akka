@@ -29,7 +29,7 @@ namespace Tauron.Application.Workflow
 
             Process(id, context);
 
-            if (_lastId.Name == StepId.Invalid.Name)
+            if (_lastId.Name == StepId.Fail.Name)
                 throw new InvalidOperationException(_errorMessage);
         }
 
@@ -37,7 +37,7 @@ namespace Tauron.Application.Workflow
         protected bool SetLastId(StepId id)
         {
             _lastId = id;
-            return _lastId.Name == StepId.Finish.Name || _lastId.Name == StepId.Invalid.Name;
+            return _lastId.Name == StepId.Finish.Name || _lastId.Name == StepId.Fail.Name;
         }
 
         protected virtual bool Process(StepId id, [NotNull] TContext context)
@@ -47,14 +47,14 @@ namespace Tauron.Application.Workflow
             if (SetLastId(id)) return true;
 
             if (!_states.TryGetValue(id, out var rev))
-                return SetLastId(StepId.Invalid);
+                return SetLastId(StepId.Fail);
 
             var sId = rev.Step.OnExecute(context);
             var result = false;
 
             switch (sId.Name)
             {
-                case "Invalid":
+                case "Fail":
                     _errorMessage = rev.Step.ErrorMessage;
                     return SetLastId(sId);
                 case "None":
@@ -72,8 +72,8 @@ namespace Tauron.Application.Workflow
                             continue;
                         }
 
-                        if (loopId.Name == StepId.Invalid.Name)
-                            return SetLastId(StepId.Invalid);
+                        if (loopId.Name == StepId.Fail.Name)
+                            return SetLastId(StepId.Fail);
 
                         ProgressConditions(rev, context);
                     } while (ok);
@@ -84,7 +84,7 @@ namespace Tauron.Application.Workflow
                     result = true;
                     break;
                 default:
-                    return SetLastId(StepId.Invalid);
+                    return SetLastId(StepId.Fail);
             }
 
             if (!result)

@@ -1,12 +1,15 @@
-﻿using JetBrains.Annotations;
+﻿using System.IO;
 
 namespace ServiceHost.Installer.Impl.Source
 {
-    public sealed class InstallationSourceSelector
+    public static class InstallationSourceSelector
     {
-        public IInstallationSource? Select(InstallerContext context)
+        public static IInstallationSource Select(InstallerContext context)
         {
+            if(File.Exists(context.Path))
+                return new LocalSource();
 
+            return EmptySource.Instnace;
         }
     }
 }

@@ -37,13 +37,14 @@ namespace Tauron
         public static TResult To<TInput, TResult>(this TInput input, Func<TInput, TResult> transformer)
             => transformer(input);
 
-        public static TResult To<TInput, TResult>(this TInput input, Func<TInput, TResult> transformer)
-            where TInput : class where TResult : class
-            => transformer(input);
+        //public static TResult To<TInput, TResult>(this TInput input, Func<TInput, TResult> transformer)
+        //    where TInput : class where TResult : class
+        //    => transformer(input);
 
-        public static TType DoAnd<TType>(this TType item, Action<TType> todo)
+        public static TType DoAnd<TType>(this TType item, params Action<TType>[] todo)
         {
-            todo(item);
+            foreach (var action in todo) 
+                action(item);
             return item;
         }
 
@@ -62,8 +63,8 @@ namespace Tauron
         public static TResult When<TType, TResult>(this TType target, TResult defaultValue, Func<TType, bool> when, Func<TType, TResult> then) 
             => when(target) ? then(target) : defaultValue;
 
-        public static TResult When<TType, TResult>(this TType target, Func<TType, bool> when, Func<TResult> then, TResult defaultValue)
-            => when(target) ? then() : defaultValue;
+        public static TResult When<TType, TResult>(this TType target, Func<TType, bool> when, Func<TResult> then, TResult falseValue)
+            => when(target) ? then() : falseValue;
 
         public static void WhenNotEmpty(this string? target, Action<string> then)
         {

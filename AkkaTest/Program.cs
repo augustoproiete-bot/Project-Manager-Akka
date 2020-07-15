@@ -75,7 +75,7 @@ namespace AkkaTest
                 Name = Console.ReadLine();
                 if(string.IsNullOrWhiteSpace(Name))
                     return StepId.LoopContinue;
-                return Name == "e" ? StepId.Invalid : StepId.LoopEnd;
+                return Name == "e" ? StepId.Fail : StepId.LoopEnd;
             }
         }
 

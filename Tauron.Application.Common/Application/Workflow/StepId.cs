@@ -8,7 +8,7 @@ namespace Tauron.Application.Workflow
     {
         //public static readonly StepId Null = new StepId();
 
-        public static readonly StepId Invalid = new StepId("Invalid");
+        public static readonly StepId Fail = new StepId("Fail");
         public static readonly StepId None = new StepId("None");
         public static readonly StepId Finish = new StepId("Finish");
         public static readonly StepId Loop = new StepId("Loop");

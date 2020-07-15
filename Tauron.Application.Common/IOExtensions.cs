@@ -40,17 +40,18 @@ namespace Tauron
             if (!dic.Exists) return;
 
             foreach (var entry in dic.GetFileSystemInfos())
-                if (entry is FileInfo file)
+            {
+                switch (entry)
                 {
-                    file.Delete();
+                    case FileInfo file:
+                        file.Delete();
+                        break;
+                    case DirectoryInfo dici:
+                        Clear(dici);
+                        dici.Delete();
+                        break;
                 }
-                else
-                {
-                    if (!(entry is DirectoryInfo dici)) continue;
-
-                    Clear(dici);
-                    dici.Delete();
-                }
+            }
         }
 
         public static void ClearDirectory(this string dic)
