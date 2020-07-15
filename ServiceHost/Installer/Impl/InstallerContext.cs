@@ -1,4 +1,6 @@
-﻿using Tauron.Application.ActorWorkflow;
+﻿using System;
+using ServiceHost.Installer.Impl.Source;
+using Tauron.Application.ActorWorkflow;
 
 namespace ServiceHost.Installer.Impl
 {
@@ -10,6 +12,7 @@ namespace ServiceHost.Installer.Impl
 
         public string Path { get; }
 
+        public IInstallationSource? Source { get; set; } 
 
         public bool Override { get; }
 
@@ -19,6 +22,14 @@ namespace ServiceHost.Installer.Impl
             Name = name;
             Path = path;
             Override = @override;
+        }
+
+        public IInstallationSource? SetSource(Func<InstallerContext, IInstallationSource?> source, Action<string> setError)
+        {
+            Source = source(this);
+            if (Source == null)
+                setError(ErrorCodes.NoSourceFound);
+            return Source;
         }
     }
 }

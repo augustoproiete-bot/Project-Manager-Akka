@@ -63,7 +63,9 @@ namespace Tauron.Application.ActorWorkflow
             return true;
 
         }
-        
+
+        protected void Singnal<TMessage>(Func<TContext, TMessage, StepId> signal);
+
         protected void StartMessage<TType>(Action<TType> msg) 
             => _starter[typeof(TType)] = msg;
 

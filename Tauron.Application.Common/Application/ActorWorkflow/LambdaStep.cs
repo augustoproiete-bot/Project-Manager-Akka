@@ -31,6 +31,9 @@ namespace Tauron.Application.ActorWorkflow
 
         public void OnExecuteFinish(TContext context) => _onFinish?.Invoke(context);
         public TimeSpan? Timeout { get; }
+
+        public void SetError(string error)
+            => ErrorMessage = error;
     }
 
     [PublicAPI]
