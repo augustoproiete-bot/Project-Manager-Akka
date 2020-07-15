@@ -26,7 +26,11 @@ namespace ServiceHost.Installer.Impl
                                   {
                                       config.OnExecute((context, step) =>
                                                            context.SetSource(_installationSourceSelector.Select, step.SetError)
-                                                              .When(StepId.Invalid, i => i != null, () => Validation));
+                                                              .When(i => i != null, () =>
+                                                                                    {
+
+                                                                                        return StepId.Waiting;
+                                                                                    }, StepId.Invalid));
                                   });
             
             WhenStep(Validation, confg =>

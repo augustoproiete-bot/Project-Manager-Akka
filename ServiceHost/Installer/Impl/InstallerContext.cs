@@ -1,4 +1,5 @@
 ﻿using System;
+using ServiceHost.ApplicationRegistry;
 using ServiceHost.Installer.Impl.Source;
 using Tauron.Application.ActorWorkflow;
 
@@ -12,7 +13,9 @@ namespace ServiceHost.Installer.Impl
 
         public string Path { get; }
 
-        public IInstallationSource? Source { get; set; } 
+        public IInstallationSource? Source { get; private set; }
+
+        public InstalledApp InstalledApp { get; private set; }
 
         public bool Override { get; }
 
