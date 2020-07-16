@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace ServiceHost.Installer.Impl.Source
 {
@@ -6,7 +7,7 @@ namespace ServiceHost.Installer.Impl.Source
     {
         public static IInstallationSource Select(InstallerContext context)
         {
-            if(File.Exists(context.Path))
+            if(context.SourceLocation is string)
                 return new LocalSource();
 
             return EmptySource.Instnace;

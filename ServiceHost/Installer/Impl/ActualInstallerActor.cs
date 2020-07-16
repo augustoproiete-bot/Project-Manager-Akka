@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using System.IO.Compression;
 using Akka.Actor;
@@ -25,6 +24,8 @@ namespace ServiceHost.Installer.Impl
 
         public ActualInstallerActor(IAppRegistry registry, IConfiguration configuration)
         {
+            string appBaseLocation = configuration["AppsLocation"];
+
             StartMessage<FileInstallationRequest>(HandleFileInstall);
 
             WhenStep(Preperation, config =>
@@ -72,16 +73,12 @@ namespace ServiceHost.Installer.Impl
             {
                 config.OnExecute((context, step) =>
                 {
-                    string targetAppPath = Path.GetFullPath(Path.Combine("Apps", context.Name));
+                    string targetAppPath = Path.GetFullPath(Path.Combine(appBaseLocation, context.Name));
                     try
                     {
-                        if (Directory.Exists(targetAppPath))
-                        {
-                            step.ErrorMessage = ErrorCodes.DirectoryCreation;
-                            return StepId.Fail;
-                        }
+                        if (!Directory.Exists(targetAppPath)) 
+                            Directory.CreateDirectory(targetAppPath);
 
-                        Directory.CreateDirectory(targetAppPath);
                     }
                     catch (Exception e)
                     {
@@ -97,8 +94,18 @@ namespace ServiceHost.Installer.Impl
                         Directory.Delete(targetAppPath, true);
                     });
 
-                    return Copy;
+                    context.Source.PreperforCopy(context)
+                        .PipeTo(Self, success:() => new PreCopyCompled());
+
+                    if (!context.Override) return StepId.Waiting;
+                    
+                    context.Backup.Make(targetAppPath);
+                    context.Recovery.Add(context.Backup.Recover);
+
+                    return StepId.Waiting;
                 });
+
+                Signal<PreCopyCompled>((c, m) => Copy);
             });
 
             WhenStep(Copy, config =>
@@ -113,8 +120,7 @@ namespace ServiceHost.Installer.Impl
 
                     try
                     {
-                        ArrayPool<byte>.Shared.Rent()
-                        using var zip = ZipFile.OpenRead(context.Path);
+                        using var zip = ZipFile.OpenRead(context.SourceLocation);
                         
                     }
                     catch (Exception e)
@@ -149,5 +155,10 @@ namespace ServiceHost.Installer.Impl
 
         private void HandleFileInstall(FileInstallationRequest request) 
             => Start(new InstallerContext(InstallType.Manual, request.Name, request.Path,  request.Override));
+
+        private sealed class PreCopyCompled
+        {
+            
+        }
     }
 }

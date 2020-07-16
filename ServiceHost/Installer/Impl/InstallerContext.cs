@@ -9,11 +9,13 @@ namespace ServiceHost.Installer.Impl
     {
         public Recovery Recovery { get; } = new Recovery();
 
+        public Backup Backup { get; } = new Backup();
+
         public InstallType Manual { get; }
 
         public string Name { get; }
 
-        public string Path { get; }
+        public object SourceLocation { get; }
 
         public IInstallationSource Source { get; private set; } = EmptySource.Instnace;
 
@@ -23,11 +25,11 @@ namespace ServiceHost.Installer.Impl
 
         public string InstallationPath { get; set; } = string.Empty;
 
-        public InstallerContext(InstallType manual, string name, string path, bool @override)
+        public InstallerContext(InstallType manual, string name, string sourceLocation, bool @override)
         {
             Manual = manual;
             Name = name;
-            Path = path;
+            SourceLocation = sourceLocation;
             Override = @override;
         }
 

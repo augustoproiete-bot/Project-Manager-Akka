@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO.Compression;
+using System.Threading.Tasks;
 using Akka.Actor;
 
 namespace ServiceHost.Installer.Impl.Source
@@ -10,7 +11,7 @@ namespace ServiceHost.Installer.Impl.Source
         {
             try
             {
-                ZipFile.OpenRead(context.Path).Dispose();
+                ZipFile.OpenRead((string)context.SourceLocation).Dispose();
                 return new Status.Success(null);
             }
             catch (Exception e)
@@ -18,5 +19,8 @@ namespace ServiceHost.Installer.Impl.Source
                 return new Status.Failure(e);
             }
         }
+
+        public Task<Status> PreperforCopy(InstallerContext context) 
+            => Task.FromResult<Status>(new Status.Success(null));
     }
 }
