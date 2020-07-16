@@ -1,5 +1,4 @@
-﻿using JetBrains.Annotations;
-using Tauron.Akka;
+﻿using Tauron.Akka;
 
 namespace ServiceHost.ApplicationRegistry
 {

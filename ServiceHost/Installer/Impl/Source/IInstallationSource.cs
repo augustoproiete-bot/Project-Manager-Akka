@@ -8,5 +8,11 @@ namespace ServiceHost.Installer.Impl.Source
         Status ValidateInput(InstallerContext context);
 
         Task<Status> PreperforCopy(InstallerContext context);
+
+        Task<Status> CopyTo(InstallerContext context, string target);
+
+        void CleanUp(InstallerContext context);
+
+        int Version { get; }
     }
 }

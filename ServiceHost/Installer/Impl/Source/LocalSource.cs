@@ -22,5 +22,28 @@ namespace ServiceHost.Installer.Impl.Source
 
         public Task<Status> PreperforCopy(InstallerContext context) 
             => Task.FromResult<Status>(new Status.Success(null));
+
+        public Task<Status> CopyTo(InstallerContext context, string target)
+        {
+            return Task.Run<Status>(() =>
+            {
+                try
+                {
+                    ZipFile.ExtractToDirectory((string)context.SourceLocation, target, context.Override);
+                    return new Status.Success(null);
+                }
+                catch (Exception e)
+                {
+                    return new Status.Failure(e);
+                }
+            });
+        }
+
+        public void CleanUp(InstallerContext context)
+        {
+
+        }
+
+        public int Version { get; } = 0;
     }
 }

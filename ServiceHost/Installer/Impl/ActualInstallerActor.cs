@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.IO.Compression;
 using Akka.Actor;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
@@ -34,15 +33,24 @@ namespace ServiceHost.Installer.Impl
                 {
                     Log.Info("Perpering Data for Installation: {Name}", context.Name);
                     return context.SetSource(InstallationSourceSelector.Select, step.SetError)
-                        .When(i => i != EmptySource.Instnace, () =>
+                       .When(i => i != EmptySource.Instnace, () =>
                                 StepId.Waiting.DoAnd(_ =>
                                     registry.Actor
-                                        .Ask<InstalledAppRespond>(new InstalledAppQuery(context.Name), TimeSpan.FromSeconds(5))
-                                        .PipeTo(Self))
-                            , StepId.Fail);
+                                       .Ask<InstalledAppRespond>(new InstalledAppQuery(context.Name), TimeSpan.FromSeconds(5))
+                                       .PipeTo(Self))
+                          , StepId.Fail);
                 });
 
-                Signal<InstalledAppRespond>((context, respond) => Validation.DoAnd(_ => context.SetInstalledApp(respond.App)));
+                Signal<InstalledAppRespond>((context, respond) =>
+                {
+                    if (respond.Fault)
+                    {
+                        SetError(ErrorCodes.QueryAppInfo);
+                        return StepId.Fail;
+                    }
+
+                    return Validation.DoAnd(_ => context.SetInstalledApp(respond.App));
+                });
             });
 
             WhenStep(Validation, confg =>
@@ -73,10 +81,11 @@ namespace ServiceHost.Installer.Impl
             {
                 config.OnExecute((context, step) =>
                 {
+                    Log.Info("Prepare for Copy Data {Name}", context.Name);
                     string targetAppPath = Path.GetFullPath(Path.Combine(appBaseLocation, context.Name));
                     try
                     {
-                        if (!Directory.Exists(targetAppPath)) 
+                        if (!Directory.Exists(targetAppPath))
                             Directory.CreateDirectory(targetAppPath);
 
                     }
@@ -88,19 +97,14 @@ namespace ServiceHost.Installer.Impl
                     }
 
                     context.InstallationPath = targetAppPath;
-                    context.Recovery.Add(log =>
-                    {
-                        log.Info("Delete Insttalation Directory during Recovery {Name}", context.Name);
-                        Directory.Delete(targetAppPath, true);
-                    });
-
                     context.Source.PreperforCopy(context)
-                        .PipeTo(Self, success:() => new PreCopyCompled());
+                       .PipeTo(Self, success: () => new PreCopyCompled());
 
-                    if (!context.Override) return StepId.Waiting;
-                    
-                    context.Backup.Make(targetAppPath);
-                    context.Recovery.Add(context.Backup.Recover);
+                    if (context.Override)
+                    {
+                        context.Backup.Make(targetAppPath);
+                        context.Recovery.Add(context.Backup.Recover);
+                    }
 
                     return StepId.Waiting;
                 });
@@ -112,6 +116,7 @@ namespace ServiceHost.Installer.Impl
             {
                 config.OnExecute((context, step) =>
                 {
+                    Log.Info("Copy Application Data {Name}", context.Name);
                     context.Recovery.Add(log =>
                     {
                         log.Info("Clearing Installation Directory during Recover {Name}", context.Name);
@@ -120,8 +125,8 @@ namespace ServiceHost.Installer.Impl
 
                     try
                     {
-                        using var zip = ZipFile.OpenRead(context.SourceLocation);
-                        
+                        context.Source.CopyTo(context, context.InstallationPath)
+                           .PipeTo(Self, success: () => new CopyCompled());
                     }
                     catch (Exception e)
                     {
@@ -130,7 +135,67 @@ namespace ServiceHost.Installer.Impl
                         return StepId.Fail;
                     }
 
-                    return Registration;
+                    context.Recovery.Add(log =>
+                    {
+                        log.Info("Delete Insttalation Files during Recovery {Name}", context.Name);
+                        context.InstallationPath.ClearDirectory();
+                    });
+
+                    return StepId.Waiting;
+                });
+
+                Signal<CopyCompled>((context, compled) => Registration);
+            });
+
+            WhenStep(Registration, config =>
+            {
+                config.OnExecute((context, step) =>
+                {
+                    Log.Info("Register Application for Host {Name}", context.Name);
+
+                    if (context.InstalledApp.IsEmpty())
+                    {
+                        registry.Actor
+                           .Ask<RegistrationResponse>(new NewRegistrationRequest(context.Name, context.InstallationPath, context.Source.Version), TimeSpan.FromSeconds(15))
+                           .PipeTo(Self);
+                    }
+                    else
+                    {
+                        registry.Actor
+                           .Ask<RegistrationResponse>(new UpdateRegistrationRequest(context.Name), TimeSpan.FromSeconds(15))
+                           .PipeTo(Self);
+                    }
+
+                    return StepId.Waiting;
+                });
+                
+                Signal<RegistrationResponse>((context, response) =>
+                {
+                    if (response.Scceeded)
+                        return Finalization;
+                    SetError(response.Error?.Message ?? "");
+                    return StepId.Fail;
+                });
+            });
+
+            WhenStep(Finalization, config =>
+            {
+                config.OnExecute(context =>
+                {
+                    Log.Info("Clean Up and Compleding {Name}", context.Name);
+
+                    context.Backup.CleanUp();
+
+                    try
+                    {
+                        context.Source.CleanUp(context);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e, "Error on Clean Up {Name}", context.Name);
+                    }
+
+                    return StepId.Finish;
                 });
             });
 
@@ -157,6 +222,11 @@ namespace ServiceHost.Installer.Impl
             => Start(new InstallerContext(InstallType.Manual, request.Name, request.Path,  request.Override));
 
         private sealed class PreCopyCompled
+        {
+            
+        }
+
+        private sealed class CopyCompled
         {
             
         }

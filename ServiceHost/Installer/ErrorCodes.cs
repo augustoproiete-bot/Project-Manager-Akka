@@ -8,6 +8,6 @@
 
         public const string DirectoryCreation = nameof(DirectoryCreation);
 
-        public const string CopyFail = nameof(CopyFail);
+        public const string QueryAppInfo = nameof(QueryAppInfo);
     }
 }
