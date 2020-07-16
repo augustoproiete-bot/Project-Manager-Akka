@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using System.IO.Compression;
 using Akka.Actor;
@@ -112,11 +113,15 @@ namespace ServiceHost.Installer.Impl
 
                     try
                     {
-                        using var zip = ZipFile.OpenRead(context.Path)
+                        ArrayPool<byte>.Shared.Rent()
+                        using var zip = ZipFile.OpenRead(context.Path);
+                        
                     }
                     catch (Exception e)
                     {
                         Log.Error(e, "Error on Extracting Files to Directory {Name}", context.Name);
+                        step.ErrorMessage = e.Message;
+                        return StepId.Fail;
                     }
 
                     return Registration;

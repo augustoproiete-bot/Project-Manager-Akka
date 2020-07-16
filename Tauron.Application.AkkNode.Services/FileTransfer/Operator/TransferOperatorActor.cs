@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using Akka.Actor;
 using Akka.Event;
@@ -174,7 +175,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                     {
                         case SendNextChunk _:
                         case StartTrensfering _:
-                            _outgoningBytes ??= new byte[5 * 1024 * 1024];
+                            _outgoningBytes ??= ArrayPool<byte>.Shared.Rent(1024 * 1024);
                             try
                             {
                                 _sendingAttempts = 0;
@@ -195,6 +196,8 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                             }
                         case SendingCompled _: 
                             state.StateData.TransferStrem.Dispose();
+                            ArrayPool<byte>.Shared.Return(_outgoningBytes);
+                            _outgoningBytes = null;
                             Parent.Tell(new TransferCompled(state.StateData.OperationId));
                             return GoTo(OperatorState.Compled);
                         case RepeadChunk _:
@@ -283,8 +286,12 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
 
             OnTransition((state, nextState) =>
                          {
-                             if(nextState == OperatorState.Failed)
+                             if (nextState == OperatorState.Failed)
+                             {
                                  NextStateData.TransferStrem.Dispose();
+                                 if(_outgoningBytes != null)
+                                     ArrayPool<byte>.Shared.Return(_outgoningBytes);
+                             }
                          });
 
             WhenUnhandled(
