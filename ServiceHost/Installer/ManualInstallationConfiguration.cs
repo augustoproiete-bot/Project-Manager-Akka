@@ -1,4 +1,6 @@
-﻿namespace ServiceHost
+﻿using ServiceHost.ApplicationRegistry;
+
+namespace ServiceHost.Installer
 {
     public sealed class ManualInstallationConfiguration
     {
@@ -9,5 +11,7 @@
         public string AppName { get; set; } = string.Empty;
 
         public bool Override { get; set; } = false;
+
+        public AppType AppType { get; set; } = AppType.StartUp;
     }
 }

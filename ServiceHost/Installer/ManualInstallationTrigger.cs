@@ -1,9 +1,8 @@
 ﻿using Akka.Actor;
 using Microsoft.Extensions.Configuration;
-using ServiceHost.Installer;
 using Tauron.Application.AkkaNode.Boottrap;
 
-namespace ServiceHost
+namespace ServiceHost.Installer
 {
     public sealed class ManualInstallationTrigger : IStartUpAction
     {
@@ -20,7 +19,7 @@ namespace ServiceHost
         {
             if(_trigger.Install != InstallType.Manual) return;
 
-            _installer.Actor.Tell(new FileInstallationRequest(_trigger.AppName, _trigger.ZipFile, _trigger.Override));
+            _installer.Actor.Tell(new FileInstallationRequest(_trigger.AppName, _trigger.ZipFile, _trigger.Override, _trigger.AppType));
         }
     }
 }

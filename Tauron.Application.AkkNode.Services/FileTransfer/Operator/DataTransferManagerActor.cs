@@ -1,8 +1,7 @@
-﻿using System;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Tauron.Akka;
 using Akka.Actor;
-using Tauron.Application.Master.Commands.Core;
+using Tauron.Application.AkkNode.Services.Core;
 
 namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
 {

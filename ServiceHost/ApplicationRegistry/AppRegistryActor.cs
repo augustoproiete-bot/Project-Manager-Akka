@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Tauron;
 using Tauron.Akka;
+using Tauron.Application.AkkNode.Services.Core;
 
 namespace ServiceHost.ApplicationRegistry
 {
@@ -18,9 +19,11 @@ namespace ServiceHost.ApplicationRegistry
 
         private readonly Dictionary<string, string> _apps = new Dictionary<string, string>();
         private readonly string _appsDirectory;
+        private readonly SubscribeAbility _subscribeAbility;
 
         public AppRegistryActor(IConfiguration configuration)
         {
+            _subscribeAbility = new SubscribeAbility(this);
             _appsDirectory = Path.GetFullPath(configuration["AppsLocation"]);
 
             Receive<LoadData>(HandleLoadData);
@@ -29,47 +32,60 @@ namespace ServiceHost.ApplicationRegistry
             Receive<InstalledAppQuery>(HandleQueryApp);
             Receive<NewRegistrationRequest>(HandleNewRegistration);
             Receive<UpdateRegistrationRequest>(HandleUpdateRequest);
+
+            _subscribeAbility.MakeReceive();
         }
 
         private void HandleUpdateRequest(UpdateRegistrationRequest request)
         {
+            RegistrationResponse response;
+            
             try
             {
                 if (!_apps.TryGetValue(request.Name, out var path))
                 {
-                    Sender.Tell(new RegistrationResponse(true, null));
+                    response = new RegistrationResponse(true, null);
                 }
                 else
                 {
                     var newData = JsonConvert.DeserializeObject<InstalledApp>(File.ReadAllText(path)).NewVersion();
                     File.WriteAllText(path, JsonConvert.SerializeObject(newData));
+                    response = new RegistrationResponse(true, null);
                 }
             }
             catch (Exception e)
             {
-                Sender.Tell(new RegistrationResponse(false, e));
+                response = new RegistrationResponse(false, e);
             }
+
+            Sender.Tell(response);
+            _subscribeAbility.Send(response);
         }
 
         private void HandleNewRegistration(NewRegistrationRequest request)
         {
+            RegistrationResponse response;
+
             try
             {
                 if(_apps.ContainsKey(request.Name))
-                    Sender.Tell(new RegistrationResponse(false, new InvalidOperationException("Duplicate")));
+                    response = new RegistrationResponse(false, new InvalidOperationException("Duplicate"));
                 else
                 {
                     string fullPath = Path.GetFullPath(request.Path + AppFileExt);
                     File.WriteAllText(fullPath, JsonConvert.SerializeObject(new InstalledApp(request.Name, request.Path, request.Version, request.AppType, request.SupressWindow)));
 
-                    Sender.Tell(new RegistrationResponse(true, null));
+                    response = new RegistrationResponse(true, null);
                     Self.Tell(new SaveData());
                 }
             }
             catch (Exception e)
             {
-                Sender.Tell(new RegistrationResponse(false, e));
+                response = new RegistrationResponse(false, e);
             }
+
+            Sender.Tell(response);
+            _subscribeAbility.Send(response);
         }
 
         private void HandleQueryApp(InstalledAppQuery request)

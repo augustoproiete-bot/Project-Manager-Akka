@@ -15,6 +15,16 @@ namespace ServiceHost.Installer.Impl.Source
 
         public Status ValidateInput(InstallerContext name) => new Status.Failure(new NotImplementedException());
 
-        public Task<Status> PreperforCopy(InstallerContext context) => Task.FromResult<Status>(new Status.Failure(new NotImplementedException()));
+        public Task<Status> PreperforCopy(InstallerContext context) 
+            => Task.FromResult<Status>(new Status.Failure(new NotImplementedException()));
+        public Task<Status> CopyTo(InstallerContext context, string target) 
+            => Task.FromResult<Status>(new Status.Failure(new NotImplementedException()));
+
+        public void CleanUp(InstallerContext context)
+        {
+            
+        }
+
+        public int Version { get; } = -1;
     }
 }

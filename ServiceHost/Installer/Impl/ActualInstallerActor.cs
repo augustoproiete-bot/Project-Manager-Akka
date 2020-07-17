@@ -156,7 +156,7 @@ namespace ServiceHost.Installer.Impl
                     if (context.InstalledApp.IsEmpty())
                     {
                         registry.Actor
-                           .Ask<RegistrationResponse>(new NewRegistrationRequest(context.Name, context.InstallationPath, context.Source.Version), TimeSpan.FromSeconds(15))
+                           .Ask<RegistrationResponse>(new NewRegistrationRequest(context.Name, context.InstallationPath, context.Source.Version, context.AppType), TimeSpan.FromSeconds(15))
                            .PipeTo(Self);
                     }
                     else
@@ -219,7 +219,7 @@ namespace ServiceHost.Installer.Impl
         }
 
         private void HandleFileInstall(FileInstallationRequest request) 
-            => Start(new InstallerContext(InstallType.Manual, request.Name, request.Path,  request.Override));
+            => Start(new InstallerContext(InstallType.Manual, request.Name, request.Path,  request.Override, request.AppType));
 
         private sealed class PreCopyCompled
         {

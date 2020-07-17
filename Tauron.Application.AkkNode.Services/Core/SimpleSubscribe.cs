@@ -3,7 +3,7 @@ using Akka.Actor;
 using JetBrains.Annotations;
 using Tauron.Akka;
 
-namespace Tauron.Application.Master.Commands.Core
+namespace Tauron.Application.AkkNode.Services.Core
 {
     [PublicAPI]
     public static class SimpleSubscribeFlow
@@ -12,7 +12,7 @@ namespace Tauron.Application.Master.Commands.Core
         { 
             public EventRecieve(ActorFlowBuilder<TStart, TParent> flow, IActorRef target) 
                 : base(flow) =>
-                flow.Register(ad => target.Tell(new Subscribe(typeof(TNew))));
+                flow.Register(ad => target.Tell(new EventSubscribe(typeof(TNew))));
         }
 
         //public sealed class EventSelector<TRecieve, TStart, TParent>
@@ -35,20 +35,20 @@ namespace Tauron.Application.Master.Commands.Core
         public static IEventActor SubscribeToEvent<TEvent>(this IActorRefFactory actor, IActorRef target, bool killOnFirstResponse = false)
         {
             var eventActor = EventActor.Create(actor, null, killOnFirstResponse);
-            eventActor.Send(target, new Subscribe(typeof(TEvent)));
+            eventActor.Send(target, new EventSubscribe(typeof(TEvent)));
             return eventActor;
         }
 
         public static IEventActor SubscribeToEvent<TEvent>(this IActorRefFactory actor, IActorRef target, Action<TEvent> handler, bool killOnFirstResponse = false)
         {
             var eventActor = EventActor.Create(actor, handler, killOnFirstResponse);
-            eventActor.Send(target, new Subscribe(typeof(TEvent)));
+            eventActor.Send(target, new EventSubscribe(typeof(TEvent)));
             return eventActor;
         }
 
         public static EventSubscribtion SubscribeToEvent<TEvent>(this IActorRef eventSource)
         {
-            eventSource.Tell(new Subscribe(typeof(TEvent)));
+            eventSource.Tell(new EventSubscribe(typeof(TEvent)));
             return new EventSubscribtion(typeof(TEvent), eventSource);
         }
     }
@@ -66,6 +66,6 @@ namespace Tauron.Application.Master.Commands.Core
         }
 
         public void Dispose() 
-            => _eventSource.Tell(new UnSubscribe(_event));
+            => _eventSource.Tell(new EventUnSubscribe(_event));
     }
 }

@@ -3,7 +3,7 @@ using Akka.Actor;
 using JetBrains.Annotations;
 using Tauron.Akka;
 
-namespace Tauron.Application.Master.Commands.Core
+namespace Tauron.Application.AkkNode.Services.Core
 {
     [PublicAPI]
     public sealed class SubscribeAbility
@@ -42,7 +42,7 @@ namespace Tauron.Application.Master.Commands.Core
                 .From.Action(kh => _sunscriptions.Remove(kh.Key, kh.Target))
                 .AndReceive();
 
-            _actor.Flow<Subscribe>()
+            _actor.Flow<EventSubscribe>()
                 .From.Action(s =>
                 {
                     _actor.ExposedContext
@@ -56,7 +56,7 @@ namespace Tauron.Application.Master.Commands.Core
                 })
                 .AndReceive();
 
-            _actor.Flow<UnSubscribe>()
+            _actor.Flow<EventUnSubscribe>()
                 .From.Action(s =>
                 {
                     _actor.ExposedContext
@@ -88,27 +88,27 @@ namespace Tauron.Application.Master.Commands.Core
     }
 
     [PublicAPI]
-    public sealed class UnSubscribe
+    public sealed class EventUnSubscribe
     {
         public Type Event { get; }
 
-        public UnSubscribe(Type @event) => Event = @event;
+        public EventUnSubscribe(Type @event) => Event = @event;
     }
 
     [PublicAPI]
-    public sealed class Subscribe
+    public sealed class EventSubscribe
     {
         public bool Watch { get; }
 
         public Type Event { get; }
 
-        public Subscribe(bool watch, Type @event)
+        public EventSubscribe(bool watch, Type @event)
         {
             Watch = watch;
             Event = @event;
         }
 
-        public Subscribe(Type @event)
+        public EventSubscribe(Type @event)
         {
             Event = @event;
             Watch = true;

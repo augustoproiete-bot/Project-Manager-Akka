@@ -24,13 +24,15 @@ namespace ServiceHost.Installer.Impl
         public bool Override { get; }
 
         public string InstallationPath { get; set; } = string.Empty;
+        public AppType AppType { get; }
 
-        public InstallerContext(InstallType manual, string name, string sourceLocation, bool @override)
+        public InstallerContext(InstallType manual, string name, string sourceLocation, bool @override, AppType appType)
         {
             Manual = manual;
             Name = name;
             SourceLocation = sourceLocation;
             Override = @override;
+            AppType = appType;
         }
 
         public IInstallationSource? SetSource(Func<InstallerContext, IInstallationSource> source, Action<string> setError)

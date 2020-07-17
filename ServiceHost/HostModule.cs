@@ -2,6 +2,7 @@
 using ServiceHost.ApplicationRegistry;
 using ServiceHost.AutoUpdate;
 using ServiceHost.Installer;
+using ServiceHost.Services;
 using Tauron.Application.AkkaNode.Boottrap;
 
 namespace ServiceHost
@@ -10,10 +11,13 @@ namespace ServiceHost
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<ManualInstallationTrigger>().As<IStartUpAction>();
+            builder.RegisterType<ServiceManager>().As<IServiceManager>();
             builder.RegisterType<AutoUpdater>().As<IAutoUpdater>();
             builder.RegisterType<Installer.Installer>().As<IInstaller>();
             builder.RegisterType<AppRegistry>().As<IAppRegistry>();
+
+            builder.RegisterType<ManualInstallationTrigger>().As<IStartUpAction>();
+
             base.Load(builder);
         }
     }
