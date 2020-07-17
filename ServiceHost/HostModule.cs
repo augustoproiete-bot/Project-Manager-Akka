@@ -11,7 +11,7 @@ namespace ServiceHost
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<ServiceManager>().As<IServiceManager>();
+            builder.RegisterType<AppManager>().As<IAppManager>();
             builder.RegisterType<AutoUpdater>().As<IAutoUpdater>();
             builder.RegisterType<Installer.Installer>().As<IInstaller>();
             builder.RegisterType<AppRegistry>().As<IAppRegistry>();

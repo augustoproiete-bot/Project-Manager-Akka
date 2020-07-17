@@ -5,19 +5,22 @@ using Akka;
 using Akka.Actor;
 using JetBrains.Annotations;
 using ServiceHost.ApplicationRegistry;
+using Tauron;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services.Core;
 
 namespace ServiceHost.Services.Impl
 {
     [UsedImplicitly]
-    public sealed class ServiceManagerActor : ExposedReceiveActor
+    public sealed class AppManagerActor : ExposedReceiveActor
     {
         private readonly IAppRegistry _appRegistry;
 
-        public ServiceManagerActor(IAppRegistry appRegistry)
+        public AppManagerActor(IAppRegistry appRegistry)
         {
             _appRegistry = appRegistry;
+
+            
         }
 
         protected override void PreStart()
@@ -25,16 +28,17 @@ namespace ServiceHost.Services.Impl
             _appRegistry.Actor.Tell(new EventSubscribe(typeof(RegistrationResponse)));
             CoordinatedShutdown
                .Get(Context.System)
-               .AddTask(CoordinatedShutdown.PhaseBeforeServiceUnbind, "ServiceManagerShutdown", HostShutdown);
+               .AddTask(CoordinatedShutdown.PhaseBeforeServiceUnbind, "AppManagerShutdown", HostShutdown);
 
             base.PreStart();
         }
 
         private Task<Done> HostShutdown()
         {
+            Log.Info("Shutdown All Host Apps");
             return Task.WhenAll(Context
                .GetChildren()
-               .Select(ar => ar.Ask<InternalStopResponse>(new InternalStopService(), TimeSpan.FromMinutes(2)))
+               .Select(ar => ar.Ask<InternalStopResponse>(new InternalStopApp(), TimeSpan.FromMinutes(2)))
                .ToArray()).ContinueWith(_ => Done.Instance);
         }
     }

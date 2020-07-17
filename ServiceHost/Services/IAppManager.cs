@@ -3,7 +3,7 @@ using Tauron.Akka;
 
 namespace ServiceHost.Services
 {
-    public interface IServiceManager : IDefaultActorRef<ServiceManagerActor>
+    public interface IAppManager : IDefaultActorRef<AppManagerActor>
     {
         
     }

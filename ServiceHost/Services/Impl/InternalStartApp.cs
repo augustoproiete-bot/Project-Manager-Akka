@@ -1,7 +1,7 @@
 ﻿namespace ServiceHost.Services.Impl
 {
-    public class InternalStopService
+    public sealed class InternalStartApp
     {
-        
+
     }
 }

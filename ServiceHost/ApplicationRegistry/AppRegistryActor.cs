@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Akka.Actor;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
@@ -26,6 +27,10 @@ namespace ServiceHost.ApplicationRegistry
             _subscribeAbility = new SubscribeAbility(this);
             _appsDirectory = Path.GetFullPath(configuration["AppsLocation"]);
 
+            this.Flow<AllAppsQuery>()
+                .From.Func(_ => new AllAppsResponse(_apps.Keys.ToArray())).ToSender()
+                .AndReceive();
+
             Receive<LoadData>(HandleLoadData);
             Receive<SaveData>(HandleSaveData);
             
@@ -39,11 +44,13 @@ namespace ServiceHost.ApplicationRegistry
         private void HandleUpdateRequest(UpdateRegistrationRequest request)
         {
             RegistrationResponse response;
-            
+            Log.Info("Update Registraion for {Name}", request.Name);
+
             try
             {
                 if (!_apps.TryGetValue(request.Name, out var path))
                 {
+                    Log.Warning("No Registration Found {Name}", request.Name);
                     response = new RegistrationResponse(true, null);
                 }
                 else
@@ -51,10 +58,13 @@ namespace ServiceHost.ApplicationRegistry
                     var newData = JsonConvert.DeserializeObject<InstalledApp>(File.ReadAllText(path)).NewVersion();
                     File.WriteAllText(path, JsonConvert.SerializeObject(newData));
                     response = new RegistrationResponse(true, null);
+
+                    Log.Info("Registration Update Compled {Name}", request.Name);
                 }
             }
             catch (Exception e)
             {
+                Log.Error(e, "Error while Reading or Writing Registration {Name}", request.Name);
                 response = new RegistrationResponse(false, e);
             }
 
@@ -64,12 +74,16 @@ namespace ServiceHost.ApplicationRegistry
 
         private void HandleNewRegistration(NewRegistrationRequest request)
         {
+            Log.Info("Register new Application {Name}", request.Name);
             RegistrationResponse response;
 
             try
             {
-                if(_apps.ContainsKey(request.Name))
+                if (_apps.ContainsKey(request.Name))
+                {
+                    Log.Warning("Attempt to Register Duplicate Application {Name}", request.Name);
                     response = new RegistrationResponse(false, new InvalidOperationException("Duplicate"));
+                }
                 else
                 {
                     string fullPath = Path.GetFullPath(request.Path + AppFileExt);
@@ -77,10 +91,13 @@ namespace ServiceHost.ApplicationRegistry
 
                     response = new RegistrationResponse(true, null);
                     Self.Tell(new SaveData());
+
+                    Log.Info("Registration Compled for {Name}", request.Name);
                 }
             }
             catch (Exception e)
             {
+                Log.Error(e, "Error while registration new Application {Name}", request.Name);
                 response = new RegistrationResponse(false, e);
             }
 
@@ -90,15 +107,20 @@ namespace ServiceHost.ApplicationRegistry
 
         private void HandleQueryApp(InstalledAppQuery request)
         {
+            Log.Info("Query App {Name}", request.Name);
             try
             {
                 if (_apps.TryGetValue(request.Name, out var path) && File.Exists(path))
                 {
                     var data = JsonConvert.DeserializeObject<InstalledApp>(path.ReadTextIfExis());
                     Sender.Tell(new InstalledAppRespond(data));
+                    Log.Info("Auery App Compled {Name}", request.Name);
                 }
                 else
+                {
+                    Log.Info("No App Found {Name}", request.Name);
                     Sender.Tell(new InstalledAppRespond(InstalledApp.Empty));
+                }
             }
             catch (Exception e)
             {

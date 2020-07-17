@@ -4,9 +4,9 @@ using Tauron.Akka;
 
 namespace ServiceHost.Services
 {
-    public sealed class ServiceManager : DefaultActorRef<ServiceManagerActor>, IServiceManager
+    public sealed class AppManager : DefaultActorRef<AppManagerActor>, IAppManager
     {
-        public ServiceManager(ActorRefFactory<ServiceManagerActor> actorBuilder) 
+        public AppManager(ActorRefFactory<AppManagerActor> actorBuilder) 
             : base(actorBuilder)
         {
             Init("Service-Manager");
