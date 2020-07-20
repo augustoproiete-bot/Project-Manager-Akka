@@ -4,7 +4,7 @@ namespace ServiceHost.ApplicationRegistry
 {
     public sealed class InstalledApp : IEquatable<InstalledApp>
     {
-        public static readonly InstalledApp Empty = new InstalledApp(string.Empty, string.Empty, 0, AppType.Cluster, true);
+        public static readonly InstalledApp Empty = new InstalledApp(string.Empty, string.Empty, 0, AppType.Cluster, true, string.Empty);
 
         public string Name { get; }
 
@@ -16,17 +16,20 @@ namespace ServiceHost.ApplicationRegistry
 
         public bool SuressWindow { get; }
 
-        public InstalledApp(string name, string path, int version, AppType appType, bool suressWindow)
+        public string Exe { get; }
+
+        public InstalledApp(string name, string path, int version, AppType appType, bool suressWindow, string exe)
         {
             Name = name;
             Path = path;
             Version = version;
             AppType = appType;
             SuressWindow = suressWindow;
+            Exe = exe;
         }
 
         public InstalledApp NewVersion()
-            => new InstalledApp(Name, Path, Version + 1, AppType, SuressWindow);
+            => new InstalledApp(Name, Path, Version + 1, AppType, SuressWindow, Exe);
 
         public bool Equals(InstalledApp? other)
         {

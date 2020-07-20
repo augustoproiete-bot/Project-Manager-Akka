@@ -52,22 +52,28 @@ namespace Tauron.Application.ActorWorkflow
 
         protected virtual bool Singnaling(object msg)
         {
-            if (msg is TimeoutMarker)
+            try
             {
-                _errorMessage = "Timeout";
-                Finish(false);
+                if (msg is TimeoutMarker)
+                {
+                    _errorMessage = "Timeout";
+                    Finish(false);
+                    return true;
+                }
+
+                if (!_signals.TryGetValue(msg.GetType(), out var del)) return false;
+                Timers.Cancel(_timeout);
+
+                var id = (StepId)del.DynamicInvoke(RunContext, msg);
+                Self.Tell(new ChainCall(id).WithBase(_lastCall), _starterSender);
+
+                _lastCall = null;
                 return true;
             }
-
-            if (!_signals.TryGetValue(msg.GetType(), out var del)) return false;
-            Timers.Cancel(_timeout);
-
-            var id = (StepId)del.DynamicInvoke(RunContext, msg);
-            Self.Tell(new ChainCall(id).WithBase(_lastCall), _starterSender);
-
-            _waiting = false;
-            _lastCall = null;
-            return true;
+            finally
+            {
+                _waiting = false;
+            }
         }
 
         protected virtual bool Initializing(object msg)
@@ -136,6 +142,7 @@ namespace Tauron.Application.ActorWorkflow
                                 Finish(true, rev);
                                 break;
                             case "Waiting":
+                                _waiting = true;
                                 if (rev.Step is IHasTimeout timeout && timeout.Timeout != null) 
                                     Timers.StartSingleTimer(_timeout, new TimeoutMarker(), timeout.Timeout.Value);
                                 _lastCall = chain;

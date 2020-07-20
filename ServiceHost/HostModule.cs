@@ -11,12 +11,13 @@ namespace ServiceHost
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<AppManager>().As<IAppManager>();
-            builder.RegisterType<AutoUpdater>().As<IAutoUpdater>();
-            builder.RegisterType<Installer.Installer>().As<IInstaller>();
-            builder.RegisterType<AppRegistry>().As<IAppRegistry>();
+            builder.RegisterType<AppManager>().As<IAppManager>().SingleInstance();
+            builder.RegisterType<AutoUpdater>().As<IAutoUpdater>().SingleInstance();
+            builder.RegisterType<Installer.Installer>().As<IInstaller>().SingleInstance();
+            builder.RegisterType<AppRegistry>().As<IAppRegistry>().SingleInstance();
 
             builder.RegisterType<ManualInstallationTrigger>().As<IStartUpAction>();
+            builder.RegisterType<ServiceStartupTrigger>().As<IStartUpAction>();
 
             base.Load(builder);
         }

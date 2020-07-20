@@ -2,11 +2,11 @@
 
 namespace ServiceHost.Services
 {
-    public sealed class StartServices
+    public sealed class StartApps
     {
         public AppType AppType { get; }
 
-        public StartServices(AppType appType) 
+        public StartApps(AppType appType) 
             => AppType = appType;
     }
 }

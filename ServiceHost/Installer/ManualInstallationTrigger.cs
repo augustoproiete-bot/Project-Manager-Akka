@@ -1,4 +1,5 @@
-﻿using Akka.Actor;
+﻿using System.IO;
+using Akka.Actor;
 using Microsoft.Extensions.Configuration;
 using Tauron.Application.AkkaNode.Boottrap;
 
@@ -19,7 +20,7 @@ namespace ServiceHost.Installer
         {
             if(_trigger.Install != InstallType.Manual) return;
 
-            _installer.Actor.Tell(new FileInstallationRequest(_trigger.AppName, _trigger.ZipFile, _trigger.Override, _trigger.AppType));
+            _installer.Actor.Tell(new FileInstallationRequest(_trigger.AppName, Path.GetFullPath(_trigger.ZipFile), _trigger.Override, _trigger.AppType, _trigger.Exe));
         }
     }
 }

@@ -1,10 +1,10 @@
 ﻿namespace ServiceHost.Services
 {
-    public sealed class StopService
+    public sealed class StopApp
     {
         public string Name { get; }
 
-        public StopService(string name) 
+        public StopApp(string name) 
             => Name = name;
     }
 }

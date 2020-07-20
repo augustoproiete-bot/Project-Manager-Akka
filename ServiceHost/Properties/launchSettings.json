@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "ServiceHost": {
+      "commandName": "Project"
+    }
+  }
+}

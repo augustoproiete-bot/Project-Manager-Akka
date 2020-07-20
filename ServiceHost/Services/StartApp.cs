@@ -1,10 +1,12 @@
-﻿namespace ServiceHost.Services
+﻿using ServiceHost.ApplicationRegistry;
+
+namespace ServiceHost.Services
 {
     public sealed class StartApp
     {
-        public string Name { get; }
+        public InstalledApp App { get; }
 
-        public StartApp(string name) 
-            => Name = name;
+        public StartApp(InstalledApp app) 
+            => App = app;
     }
 }

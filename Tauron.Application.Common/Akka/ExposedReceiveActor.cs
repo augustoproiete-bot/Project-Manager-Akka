@@ -114,6 +114,42 @@ namespace Tauron.Akka
 
         protected override SupervisorStrategy SupervisorStrategy() => _strategy ?? base.SupervisorStrategy();
 
+        protected bool CallSafe(Action exec, Action<Exception>? catching = null, Action? finalizing = null)
+        {
+            try
+            {
+                exec();
+                return true;
+            }
+            catch (Exception e)
+            {
+                catching?.Invoke(e);
+                return false;
+            }
+            finally
+            {
+                finalizing?.Invoke();
+            }
+        }
+
+        protected bool CallSafe(Action exec, string logMessage, Action? finalizing = null)
+        {
+            try
+            {
+                exec();
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, logMessage);
+                return false;
+            }
+            finally
+            {
+                finalizing?.Invoke();
+            }
+        }
+
         protected static Action<TMsg> When<TMsg>(Func<TMsg, bool> test, Action<TMsg> action)
         {
             return m =>

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
+using System.Text;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Code.Configuration;
@@ -150,7 +152,7 @@ namespace AkkaTest
 
             Log.Logger = new LoggerConfiguration().WriteTo.File("Log.Log").CreateLogger();
             using var system = ActorSystem.Create("Test", config);
-            
+
             system.ActorOf(Props.Create<Tester>()).Tell(new StartTest());
 
             //Console.WriteLine("Zum Beenden Taste drücken...");

@@ -14,12 +14,15 @@ namespace ServiceHost.ApplicationRegistry
 
         public bool SupressWindow { get; }
 
-        public NewRegistrationRequest(string name, string path, int version, AppType appType)
+        public string ExeFile { get; }
+
+        public NewRegistrationRequest(string name, string path, int version, AppType appType, string exeFile)
         {
             Name = name;
             Path = path;
             Version = version;
             AppType = appType;
+            ExeFile = exeFile;
         }
     }
 

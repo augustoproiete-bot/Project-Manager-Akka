@@ -175,7 +175,7 @@ namespace Tauron.Application.Master.Commands
 
                 Receive<RegisterService>(service =>
                 {
-                    Log.Info("Register Service {Name} -- {Adress}");
+                    Log.Info("Register Service {Name} -- {Adress}", service.Name, service.Address);
                     _services[service.Address] = service.Name;
                 });
 

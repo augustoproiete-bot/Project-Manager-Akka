@@ -1,6 +1,6 @@
 ﻿namespace ServiceHost.Services
 {
-    public sealed class StopServices
+    public sealed class StopApps
     {
         
     }

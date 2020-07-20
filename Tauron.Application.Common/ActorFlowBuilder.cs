@@ -179,7 +179,6 @@ namespace Tauron
 
         public ReceiveBuilder<TRecieve, TNext, TStart, TParent> ToRefFromMsg(Func<TRecieve, IActorRef> actorRef)
             => new ReceiveBuilder<TRecieve, TNext, TStart, TParent>(Flow, actorRef, _transformer, ShouldForward);
-
     }
 
     [PublicAPI]
@@ -544,5 +543,7 @@ namespace Tauron
     {
         public static ActorFlowBuilder<TStart, object> Flow<TStart>(this IExposedReceiveActor actor) 
             => new ActorFlowBuilder<TStart, object>(actor, null!, null);
+
+
     }
 }
