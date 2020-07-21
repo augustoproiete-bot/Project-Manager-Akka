@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Windows.Input;
-using SeriLogViewer.Annotations;
+using JetBrains.Annotations;
 
 namespace SeriLogViewer
 {

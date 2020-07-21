@@ -23,22 +23,26 @@
 
 using System;
 using Cronos;
+using JetBrains.Annotations;
 
 namespace Akkatecture.Jobs.Commands
 {
+    [PublicAPI]
     public sealed class ScheduleCron<TJob, TIdentity> : Schedule<TJob, TIdentity>
         where TJob : IJob
         where TIdentity : IJobId
     {
         private readonly CronExpression _expression;
 
+        public string CronExpression { get; }
+
         public ScheduleCron(
             TIdentity jobId,
             TJob job,
             string cronExpression,
             DateTime triggerDate,
-            object ack = null,
-            object nack = null)
+            object? ack = null,
+            object? nack = null)
             : base(jobId, job, triggerDate, ack, nack)
         {
             if (string.IsNullOrWhiteSpace(cronExpression)) throw new ArgumentNullException(nameof(cronExpression));
@@ -47,15 +51,10 @@ namespace Akkatecture.Jobs.Commands
             _expression = Cronos.CronExpression.Parse(cronExpression);
         }
 
-        public string CronExpression { get; }
-
-        public override Schedule<TJob, TIdentity> WithNextTriggerDate(DateTime utcDate)
+        public override Schedule<TJob, TIdentity>? WithNextTriggerDate(DateTime utcDate)
         {
             var next = _expression.GetNextOccurrence(utcDate);
-            if (next.HasValue)
-                return new ScheduleCron<TJob, TIdentity>(JobId, Job, CronExpression, next.Value);
-
-            return null;
+            return next.HasValue ? new ScheduleCron<TJob, TIdentity>(JobId, Job, CronExpression, next.Value) : null;
         }
 
         public override Schedule<TJob, TIdentity> WithAck(object ack) => new ScheduleCron<TJob, TIdentity>(JobId, Job, CronExpression, TriggerDate, ack, Nack);

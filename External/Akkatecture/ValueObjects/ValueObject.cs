@@ -39,7 +39,7 @@ namespace Akkatecture.ValueObjects
     {
         private static readonly ConcurrentDictionary<Type, IReadOnlyCollection<PropertyInfo>> TypeProperties = new ConcurrentDictionary<Type, IReadOnlyCollection<PropertyInfo>>();
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (ReferenceEquals(this, obj)) return true;
             if (ReferenceEquals(null, obj)) return false;
@@ -55,9 +55,9 @@ namespace Akkatecture.ValueObjects
             }
         }
 
-        public static bool operator ==(ValueObject left, ValueObject right) => Equals(left, right);
+        public static bool operator ==(ValueObject? left, ValueObject? right) => Equals(left, right);
 
-        public static bool operator !=(ValueObject left, ValueObject right) => !Equals(left, right);
+        public static bool operator !=(ValueObject? left, ValueObject? right) => !Equals(left, right);
 
         public override string ToString()
         {

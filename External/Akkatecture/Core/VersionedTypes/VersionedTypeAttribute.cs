@@ -31,6 +31,9 @@ namespace Akkatecture.Core.VersionedTypes
 {
     public abstract class VersionedTypeAttribute : Attribute
     {
+        public string Name { get; }
+        public int Version { get; }
+
         protected VersionedTypeAttribute(
             string name,
             int version)
@@ -41,8 +44,5 @@ namespace Akkatecture.Core.VersionedTypes
             Name = name;
             Version = version;
         }
-
-        public string Name { get; }
-        public int Version { get; }
     }
 }

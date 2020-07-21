@@ -29,6 +29,9 @@ namespace Akkatecture.Jobs.Events
         where TJob : IJob
         where TIdentity : IJobId
     {
+        public TIdentity JobId { get; }
+        public DateTime TriggerDate { get; }
+
         public Finished(
             TIdentity jobId,
             DateTime triggerDate)
@@ -39,8 +42,5 @@ namespace Akkatecture.Jobs.Events
             JobId = jobId;
             TriggerDate = triggerDate;
         }
-
-        public TIdentity JobId { get; }
-        public DateTime TriggerDate { get; }
     }
 }

@@ -56,6 +56,14 @@ namespace Akkatecture.Aggregates
         private readonly ISnapshotDefinitionService _snapshotDefinitionService;
         private CircularBuffer<ISourceId> _previousSourceIds = new CircularBuffer<ISourceId>(100);
 
+        private ICommand<TAggregate, TIdentity> PinnedCommand { get; set; }
+        private object? PinnedReply { get; set; }
+        private ISnapshotStrategy SnapshotStrategy { get; set; } = SnapshotNeverStrategy.Instance;
+        public TAggregateState? State { get; }
+        public override string PersistenceId { get; }
+        public override Recovery Recovery => new Recovery(SnapshotSelectionCriteria.Latest);
+        private AggregateRootSettings Settings { get; }
+
         protected AggregateRoot(TIdentity id)
         {
             Settings = new AggregateRootSettings(Context.System.Settings.Config);
@@ -104,13 +112,6 @@ namespace Akkatecture.Aggregates
             Command<ReceiveTimeout>(Timeout);
         }
 
-        private ICommand<TAggregate, TIdentity> PinnedCommand { get; set; }
-        private object? PinnedReply { get; set; }
-        private ISnapshotStrategy SnapshotStrategy { get; set; } = SnapshotNeverStrategy.Instance;
-        public TAggregateState State { get; }
-        public override string PersistenceId { get; }
-        public override Recovery Recovery => new Recovery(SnapshotSelectionCriteria.Latest);
-        private AggregateRootSettings Settings { get; }
         public IAggregateName Name => AggregateName;
         public TIdentity Id { get; }
         public long Version { get; protected set; }
@@ -129,7 +130,7 @@ namespace Akkatecture.Aggregates
             _previousSourceIds = new CircularBuffer<ISourceId>(count);
         }
 
-        public virtual void Emit<TAggregateEvent>(TAggregateEvent aggregateEvent, IMetadata metadata = null)
+        public virtual void Emit<TAggregateEvent>(TAggregateEvent aggregateEvent, IMetadata? metadata = null)
             where TAggregateEvent : class, IAggregateEvent<TAggregate, TIdentity>
         {
             var committedEvent = From(aggregateEvent, Version, metadata);
@@ -153,7 +154,7 @@ namespace Akkatecture.Aggregates
         }
 
 
-        protected virtual object FromObject(object aggregateEvent, long version, IMetadata metadata = null)
+        protected virtual object FromObject(object aggregateEvent, long version, IMetadata? metadata = null)
         {
             if (aggregateEvent is IAggregateEvent)
             {
@@ -196,7 +197,7 @@ namespace Akkatecture.Aggregates
         }
 
         public virtual CommittedEvent<TAggregate, TIdentity, TAggregateEvent> From<TAggregateEvent>(TAggregateEvent aggregateEvent,
-            long version, IMetadata metadata = null)
+            long version, IMetadata? metadata = null)
             where TAggregateEvent : class, IAggregateEvent<TAggregate, TIdentity>
         {
             if (aggregateEvent == null) throw new ArgumentNullException(nameof(aggregateEvent));
@@ -457,7 +458,7 @@ namespace Akkatecture.Aggregates
         }
 
 
-        protected void Command<TCommand, TCommandHandler>(Predicate<TCommand> shouldHandle = null)
+        protected void Command<TCommand, TCommandHandler>(Predicate<TCommand>? shouldHandle = null)
             where TCommand : ICommand<TAggregate, TIdentity>
             where TCommandHandler : CommandHandler<TAggregate, TIdentity, TCommand>
         {
@@ -484,12 +485,12 @@ namespace Akkatecture.Aggregates
                .GetTypeInfo()
                .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                .Where(mi =>
-                      {
-                          if (mi.Name != "Execute") return false;
-                          var parameters = mi.GetParameters();
-                          return
-                              parameters.Length == 1;
-                      })
+                {
+                    if (mi.Name != "Execute") return false;
+                    var parameters = mi.GetParameters();
+                    return
+                        parameters.Length == 1;
+                })
                .ToDictionary(
                     mi => mi.GetParameters()[0].ParameterType,
                     mi => mi);
@@ -498,13 +499,13 @@ namespace Akkatecture.Aggregates
                .GetBaseType("ReceivePersistentActor")
                .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                .Where(mi =>
-                      {
-                          if (mi.Name != "Command") return false;
-                          var parameters = mi.GetParameters();
-                          return
-                              parameters.Length == 1
-                           && parameters[0].ParameterType.Name.Contains("Func");
-                      })
+                {
+                    if (mi.Name != "Command") return false;
+                    var parameters = mi.GetParameters();
+                    return
+                        parameters.Length == 1
+                     && parameters[0].ParameterType.Name.Contains("Func");
+                })
                .First();
 
             foreach (var subscriptionType in subscriptionTypes)

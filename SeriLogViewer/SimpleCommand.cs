@@ -1,5 +1,5 @@
 ﻿using System;
-using SeriLogViewer.Annotations;
+using JetBrains.Annotations;
 
 namespace SeriLogViewer
 {

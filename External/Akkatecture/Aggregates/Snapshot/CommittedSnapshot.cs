@@ -33,6 +33,12 @@ namespace Akkatecture.Aggregates.Snapshot
         where TIdentity : IIdentity
         where TAggregateSnapshot : IAggregateSnapshot<TAggregate, TIdentity>
     {
+        public TIdentity AggregateIdentity { get; }
+        public TAggregateSnapshot AggregateSnapshot { get; }
+        public SnapshotMetadata Metadata { get; }
+        public long AggregateSequenceNumber { get; }
+        public DateTimeOffset Timestamp { get; }
+
         public CommittedSnapshot(
             TIdentity aggregateIdentity,
             TAggregateSnapshot aggregateSnapshot,
@@ -52,11 +58,5 @@ namespace Akkatecture.Aggregates.Snapshot
             Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
             Timestamp = timestamp;
         }
-
-        public TIdentity AggregateIdentity { get; }
-        public TAggregateSnapshot AggregateSnapshot { get; }
-        public SnapshotMetadata Metadata { get; }
-        public long AggregateSequenceNumber { get; }
-        public DateTimeOffset Timestamp { get; }
     }
 }

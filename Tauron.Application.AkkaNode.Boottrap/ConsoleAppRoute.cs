@@ -12,7 +12,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
 {
     public sealed class ConsoleAppRoute : IAppRoute
     {
-        private IStartUpAction[] _actions;
+        private IStartUpAction[]? _actions;
 
         public ConsoleAppRoute(IEnumerable<IStartUpAction> startUpActions)
         {
@@ -30,15 +30,18 @@ namespace Tauron.Application.AkkaNode.Boottrap
             Maximize();
             Task.Run(() =>
             {
-                foreach (var startUpAction in _actions)
+                if (_actions != null)
                 {
-                    try
+                    foreach (var startUpAction in _actions)
                     {
-                        startUpAction.Run();
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Logger.Error(e, "Error on Startup Action");
+                        try
+                        {
+                            startUpAction.Run();
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Logger.Error(e, "Error on Startup Action");
+                        }
                     }
                 }
 

@@ -13,9 +13,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
+using JetBrains.Annotations;
 using Newtonsoft.Json.Linq;
 using Ookii.Dialogs.Wpf;
-using SeriLogViewer.Annotations;
 using Syncfusion.UI.Xaml.Grid;
 
 namespace SeriLogViewer

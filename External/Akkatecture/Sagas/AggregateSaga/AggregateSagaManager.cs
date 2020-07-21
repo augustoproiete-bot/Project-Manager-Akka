@@ -38,6 +38,11 @@ namespace Akkatecture.Sagas.AggregateSaga
         where TIdentity : SagaId<TIdentity>
         where TSagaLocator : class, ISagaLocator<TIdentity>, new()
     {
+        private IReadOnlyList<Type> _subscriptionTypes { get; }
+        protected ILoggingAdapter Logger { get; }
+        protected TSagaLocator SagaLocator { get; }
+        public AggregateSagaManagerSettings Settings { get; }
+
         protected AggregateSagaManager(Expression<Func<TAggregateSaga>> sagaFactory)
         {
             Logger = Context.GetLogger();
@@ -75,10 +80,6 @@ namespace Akkatecture.Sagas.AggregateSaga
             Receive<UnsubscribeFromAll>(Handle);
         }
 
-        private IReadOnlyList<Type> _subscriptionTypes { get; }
-        protected ILoggingAdapter Logger { get; }
-        protected TSagaLocator SagaLocator { get; }
-        public AggregateSagaManagerSettings Settings { get; }
         public Expression<Func<TAggregateSaga>> SagaFactory { get; }
 
         protected virtual bool Handle(UnsubscribeFromAll command)

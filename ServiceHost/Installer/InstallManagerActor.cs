@@ -19,7 +19,7 @@ namespace ServiceHost.Installer
 
             Receive<InstallerationCompled>(ic => ability.Send(ic));
             Receive<InstallRequest>(o => Context.ActorOf(Props.Create<ActualInstallerActor>(registry, configuration)).Forward(o));
-            Receive<UninstallRequest>(o => Context.ActorOf(Props.Create<ActualUninstallationActor>(registry, manager, configuration)).Forward(o));
+            Receive<UninstallRequest>(o => Context.ActorOf(Props.Create<ActualUninstallationActor>(registry, manager)).Forward(o));
         }
     }
 }

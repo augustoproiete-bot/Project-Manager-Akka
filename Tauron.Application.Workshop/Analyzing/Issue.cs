@@ -6,9 +6,9 @@
         {
             private readonly string _type;
             private readonly string _project;
-            private readonly object _data;
+            private readonly object? _data;
 
-            public IssueCompleter(string type, string project, object data)
+            public IssueCompleter(string type, string project, object? data)
             {
                 _type = type;
                 _project = project;
@@ -19,7 +19,7 @@
                 => new Issue(_type, _data, _project, ruleName);
         }
 
-        public Issue(string issueType, object? data, string project, string ruleName)
+        private Issue(string issueType, object? data, string project, string ruleName)
         {
             IssueType = issueType;
             Data = data;

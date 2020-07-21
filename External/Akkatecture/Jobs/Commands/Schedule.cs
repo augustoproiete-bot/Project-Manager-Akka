@@ -22,19 +22,24 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 using System;
+using JetBrains.Annotations;
 
 namespace Akkatecture.Jobs.Commands
 {
+    [PublicAPI]
     public class Schedule<TJob, TIdentity> : SchedulerCommand<TJob, TIdentity>
         where TJob : IJob
         where TIdentity : IJobId
     {
+        public TJob Job { get; }
+        public DateTime TriggerDate { get; }
+
         public Schedule(
             TIdentity jobId,
             TJob job,
             DateTime triggerDate,
-            object ack = null,
-            object nack = null)
+            object? ack = null,
+            object? nack = null)
             : base(jobId, ack, nack)
         {
             if (job         == null) throw new ArgumentNullException(nameof(job));
@@ -44,14 +49,11 @@ namespace Akkatecture.Jobs.Commands
             TriggerDate = triggerDate;
         }
 
-        public TJob Job { get; }
-        public DateTime TriggerDate { get; }
+        public virtual Schedule<TJob, TIdentity>? WithNextTriggerDate(DateTime utcDate) => null;
 
-        public virtual Schedule<TJob, TIdentity> WithNextTriggerDate(DateTime utcDate) => null;
+        public virtual Schedule<TJob, TIdentity> WithAck(object? ack) => new Schedule<TJob, TIdentity>(JobId, Job, TriggerDate, ack, Nack);
 
-        public virtual Schedule<TJob, TIdentity> WithAck(object ack) => new Schedule<TJob, TIdentity>(JobId, Job, TriggerDate, ack, Nack);
-
-        public virtual Schedule<TJob, TIdentity> WithNack(object nack) => new Schedule<TJob, TIdentity>(JobId, Job, TriggerDate, Ack, nack);
+        public virtual Schedule<TJob, TIdentity> WithNack(object? nack) => new Schedule<TJob, TIdentity>(JobId, Job, TriggerDate, Ack, nack);
 
         public virtual Schedule<TJob, TIdentity> WithOutAcks() => WithAck(null).WithNack(null);
     }

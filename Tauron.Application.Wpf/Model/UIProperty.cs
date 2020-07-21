@@ -22,7 +22,7 @@ namespace Tauron.Application.Wpf.Model
             [return: MaybeNull] get => InternalValue is TData data ? data : default!;
         }
 
-        public event Action<TData> PropertyValueChangedFunc;
+        public event Action<TData>? PropertyValueChangedFunc;
 
         public void Set([AllowNull] TData data)
         {

@@ -21,16 +21,19 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+using JetBrains.Annotations;
+
 namespace Akkatecture.Jobs.Commands
 {
+    [PublicAPI]
     public class Cancel<TJob, TIdentity> : SchedulerCommand<TJob, TIdentity>
         where TJob : IJob
         where TIdentity : IJobId
     {
         public Cancel(
             TIdentity jobId,
-            object ack = null,
-            object nack = null)
+            object? ack = null,
+            object? nack = null)
             : base(jobId, ack, nack)
         {
         }

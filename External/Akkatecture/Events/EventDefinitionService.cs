@@ -34,7 +34,7 @@ namespace Akkatecture.Events
 {
     public class EventDefinitionService : VersionedTypeDefinitionService<IAggregateEvent, EventVersionAttribute, EventDefinition>, IEventDefinitionService
     {
-        public EventDefinitionService(ILoggingAdapter logger)
+        public EventDefinitionService(ILoggingAdapter? logger)
             : base(logger)
         {
         }

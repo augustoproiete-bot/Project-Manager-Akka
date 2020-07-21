@@ -38,6 +38,11 @@ namespace Akkatecture.Jobs
     {
         private static readonly IJobName JobName = typeof(TJob).GetJobName();
 
+        public IJobName Name => JobName;
+        protected ILoggingAdapter Log { get; }
+        protected IActorRef JobScheduler { get; }
+        protected IActorRef JobRunner { get; }
+
         public JobManager(
             Expression<Func<TJobScheduler>> jobSchedulerFactory,
             Expression<Func<TJobRunner>> jobRunnerFactory)
@@ -75,11 +80,6 @@ namespace Akkatecture.Jobs
             Receive<TJob>(Forward);
             Receive<SchedulerMessage<TJob, TIdentity>>(Forward);
         }
-
-        public IJobName Name => JobName;
-        protected ILoggingAdapter Log { get; }
-        protected IActorRef JobScheduler { get; }
-        protected IActorRef JobRunner { get; }
 
         private bool Forward(TJob command)
         {

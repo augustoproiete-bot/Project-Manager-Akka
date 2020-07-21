@@ -64,16 +64,12 @@ namespace Akkatecture.Events
         }
 
 
-        public IAggregateEvent<TAggregate, TIdentity> Upcast(
+        public IAggregateEvent<TAggregate, TIdentity>? Upcast(
             IAggregateEvent<TAggregate, TIdentity> aggregateEvent)
         {
             var aggregateEventType = aggregateEvent.GetType();
-            Func<TEventUpcaster, IAggregateEvent, IAggregateEvent> upcaster;
 
-            if (!_upcastFunctions.TryGetValue(aggregateEventType, out upcaster))
-            {
-                throw new ArgumentException(nameof(aggregateEventType));
-            }
+            if (!_upcastFunctions.TryGetValue(aggregateEventType, out var upcaster)) throw new ArgumentException(nameof(aggregateEventType));
 
             var evt = upcaster((TEventUpcaster) (object) this, aggregateEvent) as IAggregateEvent<TAggregate, TIdentity>;
 
@@ -114,10 +110,7 @@ namespace Akkatecture.Events
             {
                 var eventType = type.GenericTypeArguments[2];
 
-                if (_decisionCache.ContainsKey(eventType))
-                {
-                    return true;
-                }
+                if (_decisionCache.ContainsKey(eventType)) return true;
             }
 
             return false;

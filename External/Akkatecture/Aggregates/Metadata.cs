@@ -38,6 +38,15 @@ namespace Akkatecture.Aggregates
     [PublicAPI]
     public class Metadata : MetadataContainer, IMetadata
     {
+        public static IMetadata Empty { get; } = new Metadata();
+
+        [JsonIgnore]
+        public string AggregateName
+        {
+            get => GetMetadataValue(MetadataKeys.AggregateName);
+            set => Add(MetadataKeys.AggregateName, value);
+        }
+
         public Metadata()
         {
             // Empty
@@ -56,15 +65,6 @@ namespace Akkatecture.Aggregates
         public Metadata(params KeyValuePair<string, string>[] keyValuePairs)
             : this((IEnumerable<KeyValuePair<string, string>>) keyValuePairs)
         {
-        }
-
-        public static IMetadata Empty { get; } = new Metadata();
-
-        [JsonIgnore]
-        public string AggregateName
-        {
-            get => GetMetadataValue(MetadataKeys.AggregateName);
-            set => Add(MetadataKeys.AggregateName, value);
         }
 
         public ISourceId SourceId

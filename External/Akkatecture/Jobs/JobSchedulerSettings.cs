@@ -31,6 +31,10 @@ namespace Akkatecture.Jobs
     {
         private static readonly string _section = "akkatecture.job-scheduler";
 
+        public string JournalPluginId { get; }
+        public string SnapshotPluginId { get; }
+        public TimeSpan TickInterval { get; }
+
         public JobSchedulerSettings(Config config)
         {
             var schedulerConfig = config.WithFallback(AkkatectureDefaultSettings.DefaultConfig());
@@ -40,9 +44,5 @@ namespace Akkatecture.Jobs
             SnapshotPluginId = schedulerConfig.GetString("snapshot-plugin-id");
             TickInterval = schedulerConfig.GetTimeSpan("tick-interval");
         }
-
-        public string JournalPluginId { get; }
-        public string SnapshotPluginId { get; }
-        public TimeSpan TickInterval { get; }
     }
 }

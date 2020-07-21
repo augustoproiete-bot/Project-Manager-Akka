@@ -48,15 +48,15 @@ namespace Akkatecture.Jobs
                .GetTypeInfo()
                .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                .Where(mi =>
-                      {
-                          if (mi.Name != "Run")
-                              return false;
+                {
+                    if (mi.Name != "Run")
+                        return false;
 
-                          var parameters = mi.GetParameters();
+                    var parameters = mi.GetParameters();
 
-                          return
-                              parameters.Length == 1;
-                      })
+                    return
+                        parameters.Length == 1;
+                })
                .ToDictionary(
                     mi => mi.GetParameters()[0].ParameterType,
                     mi => mi);
@@ -66,13 +66,13 @@ namespace Akkatecture.Jobs
                .GetBaseType("ReceiveActor")
                .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                .Where(mi =>
-                      {
-                          if (mi.Name != "Receive") return false;
-                          var parameters = mi.GetParameters();
-                          return
-                              parameters.Length == 1
-                           && parameters[0].ParameterType.Name.Contains("Func");
-                      })
+                {
+                    if (mi.Name != "Receive") return false;
+                    var parameters = mi.GetParameters();
+                    return
+                        parameters.Length == 1
+                     && parameters[0].ParameterType.Name.Contains("Func");
+                })
                .First();
 
             foreach (var subscriptionType in subscriptionTypes)

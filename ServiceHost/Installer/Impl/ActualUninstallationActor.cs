@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Akka.Actor;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
@@ -13,18 +14,17 @@ namespace ServiceHost.Installer.Impl
     [UsedImplicitly]
     public sealed class ActualUninstallationActor : LambdaWorkflowActor<UnistallContext>
     {
-        private readonly StepId Stopping = new StepId(nameof(Stopping));
-        private readonly StepId Unistall = new StepId(nameof(Unistall));
-        private readonly StepId Finalization = new StepId(nameof(Finalization));
+        private static readonly StepId Stopping = new StepId(nameof(Stopping));
+        private static readonly StepId Unistall = new StepId(nameof(Unistall));
+        private static readonly StepId Finalization = new StepId(nameof(Finalization));
 
-        public ActualUninstallationActor(IAppRegistry registry, IAppManager manager, IConfiguration configuration)
+        public ActualUninstallationActor(IAppRegistry registry, IAppManager manager)
         {
-            string appBaseLocation = configuration["AppsLocation"];
-
             WhenStep(StepId.Start, config =>
             {
                 config.OnExecute(context =>
                 {
+                    Log.Info("Start Unistall App {Name}", context.Name);
                     registry.Ask<InstalledAppRespond>(new InstalledAppQuery(context.Name), TimeSpan.FromSeconds(15))
                        .PipeTo(Self);
 
@@ -33,8 +33,9 @@ namespace ServiceHost.Installer.Impl
 
                 Signal<InstalledAppRespond>((context, respond) =>
                 {
-                    if (respond.Fault)
+                    if (respond.Fault || respond.App.IsEmpty())
                     {
+                        Log.Warning("Error on Query Application Info {Name}", context.Name);
                         SetError(ErrorCodes.QueryAppInfo);
                         return StepId.Fail;
                     }
@@ -46,8 +47,47 @@ namespace ServiceHost.Installer.Impl
 
             WhenStep(Stopping, config =>
             {
-                Signal<StopResponse>((context, response) =>
+                config.OnExecute(context =>
                 {
+                    Log.Info("Stoping Appliocation {Name}", context.Name);
+                    manager.Actor
+                       .Ask<StopResponse>(new StopApp(context.Name), TimeSpan.FromMinutes(1))
+                       .PipeTo(Self);
+                    return StepId.Waiting;
+                });
+
+                Signal<StopResponse>((context, response) => Unistall);
+            });
+
+            WhenStep(Unistall, config =>
+            {
+                config.OnExecute((context, step) =>
+                {
+                    try
+                    {
+                        Log.Info("Backup Application {Name}", context.Name);
+                        context.Backup.Make(context.App.Path);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, "Error while making Backup");
+                        step.ErrorMessage = e.Message;
+                        return StepId.Fail;
+                    }
+
+                    context.Recovery.Add(context.Backup.Recover);
+
+                    try
+                    {
+                        Log.Info("Delete Application Directory {Name}", context.Name);
+                        Directory.Delete(context.App.Path, true);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e, "Error while Deleting App Directory");
+                    }
+
+                    return Finalization;
                 });
             });
 

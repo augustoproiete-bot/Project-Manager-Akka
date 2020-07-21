@@ -65,10 +65,10 @@ namespace Akkatecture.Core
             foreach (var (key, value) in keyValuePairs) Add(key, value);
         }
 
-        public override string ToString() 
+        public override string ToString()
             => string.Join(Environment.NewLine, this.Select(kv => $"{kv.Key}: {kv.Value}"));
 
-        public string GetMetadataValue(string key) 
+        public string GetMetadataValue(string key)
             => GetMetadataValue(key, s => s);
 
         public T GetMetadataValue<T>(string key, Func<string, T> converter)

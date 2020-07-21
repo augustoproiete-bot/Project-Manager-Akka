@@ -22,28 +22,30 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 using System;
+using JetBrains.Annotations;
 
 namespace Akkatecture.Jobs.Commands
 {
+    [PublicAPI]
     public sealed class ScheduleRepeatedly<TJob, TIdentity> : Schedule<TJob, TIdentity>
         where TJob : IJob
         where TIdentity : IJobId
     {
+        public TimeSpan Interval { get; }
+
         public ScheduleRepeatedly(
             TIdentity jobId,
             TJob job,
             TimeSpan interval,
             DateTime triggerDate,
-            object ack = null,
-            object nack = null)
+            object? ack = null,
+            object? nack = null)
             : base(jobId, job, triggerDate, ack, nack)
         {
             if (interval == default) throw new ArgumentException(nameof(interval));
 
             Interval = interval;
         }
-
-        public TimeSpan Interval { get; }
 
         public override Schedule<TJob, TIdentity> WithNextTriggerDate(DateTime utcDate) => new ScheduleRepeatedly<TJob, TIdentity>(JobId, Job, Interval, TriggerDate + Interval);
 

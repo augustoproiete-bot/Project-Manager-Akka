@@ -12,7 +12,7 @@ namespace ServiceHost.Installer
 
         public bool Override { get; set; } = false;
 
-        public string Exe { get; set; }
+        public string Exe { get; set; } = string.Empty;
 
         public AppType AppType { get; set; } = AppType.StartUp;
     }

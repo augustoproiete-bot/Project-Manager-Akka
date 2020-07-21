@@ -38,6 +38,11 @@ namespace Akkatecture.Aggregates
         where TIdentity : IIdentity
         where TCommand : ICommand<TAggregate, TIdentity>
     {
+        protected ILoggingAdapter Logger { get; set; }
+        protected Func<DeadLetter, bool> DeadLetterHandler => Handle;
+        public AggregateManagerSettings Settings { get; }
+        public string Name { get; }
+
         protected AggregateManager()
         {
             Logger = Context.GetLogger();
@@ -54,11 +59,6 @@ namespace Akkatecture.Aggregates
                 Receive(DeadLetterHandler);
             }
         }
-
-        protected ILoggingAdapter Logger { get; set; }
-        protected Func<DeadLetter, bool> DeadLetterHandler => Handle;
-        public AggregateManagerSettings Settings { get; }
-        public string Name { get; }
 
         protected virtual bool Dispatch(TCommand command)
         {

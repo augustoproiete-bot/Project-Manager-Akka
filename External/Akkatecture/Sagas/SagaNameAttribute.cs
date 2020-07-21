@@ -32,6 +32,8 @@ namespace Akkatecture.Sagas
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class SagaNameAttribute : Attribute
     {
+        public string Name { get; }
+
         public SagaNameAttribute(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -39,7 +41,5 @@ namespace Akkatecture.Sagas
 
             Name = name;
         }
-
-        public string Name { get; }
     }
 }

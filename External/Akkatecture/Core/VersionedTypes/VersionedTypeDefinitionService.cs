@@ -48,15 +48,15 @@ namespace Akkatecture.Core.VersionedTypes
 
         private readonly ConcurrentDictionary<string, Dictionary<int, TDefinition>> _definitionByNameAndVersion = new ConcurrentDictionary<string, Dictionary<int, TDefinition>>();
         private readonly ConcurrentDictionary<Type, List<TDefinition>> _definitionsByType = new ConcurrentDictionary<Type, List<TDefinition>>();
-        private readonly ILoggingAdapter _logger;
+        private readonly ILoggingAdapter? _logger;
 
         private readonly object _syncRoot = new object();
 
         protected VersionedTypeDefinitionService(
-            ILoggingAdapter logger) =>
+            ILoggingAdapter? logger) =>
             _logger = logger;
 
-        public void Load(params Type[] types) 
+        public void Load(params Type[] types)
             => Load((IReadOnlyCollection<Type>) types);
 
         public void Load(IReadOnlyCollection<Type> types)
@@ -121,7 +121,7 @@ namespace Akkatecture.Core.VersionedTypes
                 : Enumerable.Empty<TDefinition>();
         }
 
-        public IEnumerable<TDefinition> GetAllDefinitions() 
+        public IEnumerable<TDefinition> GetAllDefinitions()
             => _definitionByNameAndVersion.SelectMany(kv => kv.Value.Values);
 
         public bool TryGetDefinition(string name, int version, out TDefinition definition)
