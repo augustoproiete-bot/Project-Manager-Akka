@@ -4,10 +4,11 @@ using Akka.Actor;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using ServiceHost.ApplicationRegistry;
+using ServiceHost.AutoUpdate;
 using ServiceHost.Installer.Impl.Source;
 using Tauron;
+using Tauron.Akka;
 using Tauron.Application.ActorWorkflow;
-using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Workflow;
 
 namespace ServiceHost.Installer.Impl
@@ -22,7 +23,7 @@ namespace ServiceHost.Installer.Impl
         private static readonly StepId Registration = new StepId(nameof(Registration));
         private static readonly StepId Finalization = new StepId(nameof(Finalization));
 
-        public ActualInstallerActor(IAppRegistry registry, IConfiguration configuration)
+        public ActualInstallerActor(IAppRegistry registry, IConfiguration configuration, IAutoUpdater autoUpdater)
         {
             string appBaseLocation = configuration["AppsLocation"];
 
@@ -85,27 +86,36 @@ namespace ServiceHost.Installer.Impl
                 {
                     Log.Info("Prepare for Copy Data {App}", context.Name);
                     string targetAppPath = Path.GetFullPath(Path.Combine(appBaseLocation, context.Name));
-                    try
-                    {
-                        if (!Directory.Exists(targetAppPath))
-                            Directory.CreateDirectory(targetAppPath);
 
-                    }
-                    catch (Exception e)
+
+                    if (context.AppType != AppType.Host)
                     {
-                        Log.Warning(e, "Installation Faild during Directory Creation {App}", context.Name);
-                        step.ErrorMessage = ErrorCodes.DirectoryCreation;
-                        return StepId.Fail;
+                        try
+                        {
+                            if (!Directory.Exists(targetAppPath))
+                                Directory.CreateDirectory(targetAppPath);
+
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warning(e, "Installation Faild during Directory Creation {App}", context.Name);
+                            step.ErrorMessage = ErrorCodes.DirectoryCreation;
+                            return StepId.Fail;
+                        }
                     }
 
                     context.InstallationPath = targetAppPath;
                     context.Source.PreperforCopy(context)
                        .PipeTo(Self, success: () => new PreCopyCompled());
 
-                    if (context.Override)
+
+                    if (context.AppType != AppType.Host)
                     {
-                        context.Backup.Make(targetAppPath);
-                        context.Recovery.Add(context.Backup.Recover);
+                        if (context.Override)
+                        {
+                            context.Backup.Make(targetAppPath);
+                            context.Recovery.Add(context.Backup.Recover);
+                        }
                     }
 
                     return StepId.Waiting;
@@ -119,6 +129,14 @@ namespace ServiceHost.Installer.Impl
                 config.OnExecute((context, step) =>
                 {
                     Log.Info("Copy Application Data {App}", context.Name);
+
+
+                    if (context.AppType == AppType.Host)
+                    {
+                        autoUpdater.Tell(new StartAutoUpdate(SetupInfo.New(context.Source.ToZipFile(context))));
+                        return StepId.Finish;
+                    }
+
                     context.Recovery.Add(log =>
                     {
                         log.Info("Clearing Installation Directory during Recover {App}", context.Name);

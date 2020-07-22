@@ -18,6 +18,7 @@ namespace ServiceHost
 
             builder.RegisterType<ManualInstallationTrigger>().As<IStartUpAction>();
             builder.RegisterType<ServiceStartupTrigger>().As<IStartUpAction>();
+            builder.RegisterType<CleanUpDedector>().As<IStartUpAction>();
 
             base.Load(builder);
         }

@@ -45,5 +45,6 @@ namespace ServiceHost.Installer.Impl.Source
         }
 
         public int Version { get; } = 0;
+        public string ToZipFile(InstallerContext context) => (string)context.SourceLocation;
     }
 }

@@ -14,5 +14,7 @@ namespace ServiceHost.Installer.Impl.Source
         void CleanUp(InstallerContext context);
 
         int Version { get; }
+
+        string ToZipFile(InstallerContext context);
     }
 }

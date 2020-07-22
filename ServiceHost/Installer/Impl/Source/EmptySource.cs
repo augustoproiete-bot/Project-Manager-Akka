@@ -26,5 +26,6 @@ namespace ServiceHost.Installer.Impl.Source
         }
 
         public int Version { get; } = -1;
+        public string ToZipFile(InstallerContext context) => throw new NotImplementedException();
     }
 }

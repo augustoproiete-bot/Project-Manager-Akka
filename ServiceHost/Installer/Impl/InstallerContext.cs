@@ -28,6 +28,7 @@ namespace ServiceHost.Installer.Impl
         public bool Override { get; }
 
         public string InstallationPath { get; set; } = string.Empty;
+
         public AppType AppType { get; }
 
         public string Exe { get; set; } = string.Empty;

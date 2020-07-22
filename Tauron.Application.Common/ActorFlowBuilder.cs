@@ -238,11 +238,11 @@ namespace Tauron
             return _flow.Build();
         }
 
-        public void AndReceive()
-        {
-            _flow.Register(e => e.Receive<TStart>(new ReceiveHelper(AndBuild()).Send));
-            _flow.BuildReceive();
-        }
+        //public void AndReceive()
+        //{
+        //    _flow.Register(e => e.Receive<TStart>(new ReceiveHelper(AndBuild()).Send));
+        //    _flow.BuildReceive();
+        //}
 
         public TParent AndReturn()
         {
@@ -380,10 +380,10 @@ namespace Tauron
             }
         }
 
-        public void AndReceive()
-        {
-            Flow.BuildReceive();
-        }
+        //public void AndReceive()
+        //{
+        //    Flow.BuildReceive();
+        //}
     }
 
     [PublicAPI]
@@ -447,7 +447,8 @@ namespace Tauron
         private readonly Action<EnterFlow<TStart>>? _onReturn;
         private readonly TParent _parent;
 
-        private readonly List<Action<IActorDsl>> _recieves = new List<Action<IActorDsl>>();
+        //private readonly List<Action<IActorDsl>> _recieves = new List<Action<IActorDsl>>();
+        private int _recieves;
 
         private bool _buildReceiveCalled;
 
@@ -467,38 +468,38 @@ namespace Tauron
 
         public TParent Return()
         {
-            if (_onReturn != null)
-                _onReturn(Build());
-            else
-                BuildReceive();
+            _onReturn?.Invoke(Build());
+            //else
+            //    BuildReceive();
 
             return _parent;
         }
 
         public void Register(Action<IActorDsl> actorRegister)
         {
-            _recieves.Add(actorRegister);
+            _recieves++;
+            actorRegister(Actor.Exposed);
         }
 
 
         internal EnterFlow<TStart> Build()
         {
-            BuildReceive();
+            //BuildReceive();
             EnterFlow<TStart>? func = null;
-            if (_recieves.Count > 0)
+            if (_recieves > 0)
                 func = new EntryPoint(Actor.ExposedContext.Self).Tell;
 
             return _delgators.Aggregate(func, (current, delgator) => current.Combine(delgator())) ?? (s => { });
         }
 
-        internal void BuildReceive()
-        {
-            if (_buildReceiveCalled) return;
-            _buildReceiveCalled = true;
+        //internal void BuildReceive()
+        //{
+        //    if (_buildReceiveCalled) return;
+        //    _buildReceiveCalled = true;
 
-            foreach (var recieve in _recieves)
-                recieve(Actor.Exposed);
-        }
+        //    foreach (var recieve in _recieves)
+        //        recieve(Actor.Exposed);
+        //}
 
         private sealed class EntryPoint
         {
