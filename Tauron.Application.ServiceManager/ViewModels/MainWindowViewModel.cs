@@ -13,9 +13,12 @@ namespace Tauron.Application.ServiceManager.ViewModels
         {
             NodeView = this.RegisterModel<NodeViewModel>(nameof(NodeView), "Node-View");
             SeedView = this.RegisterModel<SeedNodeViewModel>(nameof(SeedView), "Seed-View");
+            HostView = this.RegisterModel<HostViewModel>(nameof(HostView), "Host-View");
 
             AppInfo = this.RegisterImport<CommonAppInfo>(nameof(AppInfo));
         }
+
+        public ModelProeprty HostView { get; }
 
         public ModelProeprty NodeView { get; }
 

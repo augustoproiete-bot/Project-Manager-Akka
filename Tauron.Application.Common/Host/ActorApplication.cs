@@ -47,8 +47,6 @@ namespace Tauron.Host
                 .Configuration(cb =>
                 {
                     cb.AddEnvironmentVariables("DOTNET_");
-                    if (args != null)
-                        cb.AddCommandLine(args);
                 })
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
@@ -56,6 +54,8 @@ namespace Tauron.Host
                     var value = hostingContext.Configuration.GetValue("hostBuilder:reloadConfigOnChange", true);
                     config.AddJsonFile("appsettings." + hostEnvironment.EnvironmentName + ".json", true, value);
                     config.AddEnvironmentVariables();
+                    if (args != null)
+                        config.AddCommandLine(args);
                 })
                .Configuration(cb => cb.AddJsonFile("appsettings.json", true, true));
 

@@ -17,6 +17,7 @@
   "MainWindow_Label_OnlineStatus": "Online Status:",
   "AddSeedDialog_Label_Title": "New Seed Node",
   "MainWindow_DockHeader_LogView": "Log Entrys",
+  "MainWindow_DockHeader_HostView": "Service Hosts",
   "Common_Error": "Error",
   "Common_Warning": "Warning",
   "Common_Unkowen": "Unkowen",

@@ -42,6 +42,8 @@
                         <Setter Property="sync:DockingManager.SideInDockedMode" Value="Bottom" />
                     </Style>
                 </sync:DockingManager.Resources>
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_HostView}"
+                                Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding HostView}"/>
                 <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_NodeView}"
                                 Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding NodeView}" />
                 <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_SeedNodeView}"

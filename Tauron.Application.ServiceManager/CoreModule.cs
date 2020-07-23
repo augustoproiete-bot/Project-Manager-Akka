@@ -24,6 +24,7 @@ namespace Tauron.Application.ServiceManager
                .OnActivated(a => a.Instance.Init("Main-Window"));
             builder.RegisterView<NodeView, NodeViewModel>();
             builder.RegisterView<SeedNodeView, SeedNodeViewModel>();
+            builder.RegisterView<HostView, HostViewModel>();
 
             builder.RegisterInstance(DialogCoordinator.Instance).As<IDialogCoordinator>();
 
