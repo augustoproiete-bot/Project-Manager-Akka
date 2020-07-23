@@ -26,27 +26,24 @@ namespace Tauron.Application.Master.Commands
                 this.Flow<ActorUp>()
                     .From.Func(au =>
                     {
-                        Log.Info("Send ActorUp Back {Target}", au.Actor.Path);
+                        Log.Info("Send ActorUp Back {Name}", au.Actor.Path);
                         return new ActorUp(Self, "None");
                     })
-                    .ToRefFromMsg(au => au.Actor)
-                    .AndReceive();
+                    .ToRefFromMsg(au => au.Actor);
 
                 this.Flow<RequestRegistration>()
                     .From.Func(rr =>
                     {
                         Log.Info("Sending Respond {Type}", type);
                         return new RespondRegistration(type);
-                    }).ToSender()
-                    .AndReceive();
+                    }).ToSender();
 
                 this.Flow<KillNode>()
                     .From.Action(kn =>
                     {
                         Log.Info("Leaving Cluster");
                         Cluster.Get(Context.System).LeaveAsync();
-                    })
-                    .AndReceive();
+                    });
             }
 
             protected override void PreStart()
@@ -84,17 +81,16 @@ namespace Tauron.Application.Master.Commands
                 this.Flow<ActorDown>()
                     .From.Action(ad =>
                     {
-                        Log.Info("Remove Killswitch Actor {Target}", ad.Actor.Path);
+                        Log.Info("Remove Killswitch Actor {Name}", ad.Actor.Path);
                         _actors
                             .FindIndex(ae => ae.Target.Equals(ad.Actor))
                             .When(i => i != -1, i => _actors.RemoveAt(i));
-                    })
-                    .AndReceive();
+                    });
 
                 this.Flow<ActorUp>()
                     .From.Func(au =>
                     {
-                        Log.Info("New killswitch Actor {Target}", au.Actor.Path);
+                        Log.Info("New killswitch Actor {Name}", au.Actor.Path);
                         return _actors
                             .AddAnd(ActorElement.New(au.Actor))
                             .To(_ => new RequestRegistration());
@@ -102,38 +98,33 @@ namespace Tauron.Application.Master.Commands
                     .ToRefFromMsg(au => au.Actor)
                     .AndRespondTo<RespondRegistration>().Action(r =>
                     {
-                        Log.Info("Set Killswitch Actor Type {Type} {Target}", r.RecpientType, Context.Sender.Path);
+                        Log.Info("Set Killswitch Actor Type {Type} {Name}", r.RecpientType, Context.Sender.Path);
                         _actors
                             .Find(e => e.Target.Equals(Context.Sender))
                             .When(i => i != null, element => element.RecpientType = r.RecpientType);
-                    })
-                    .AndReceive();
+                    });
 
                 this.Flow<RequestRegistration>()
                     .From.Func(() => new RespondRegistration(KillRecpientType.Seed))
-                    .ToSender()
-                    .AndReceive();
+                    .ToSender();
 
                 this.Flow<KillClusterMsg>()
-                    .From.Action(RunKillCluster)
-                    .AndReceive();
+                    .From.Action(RunKillCluster);
 
                 this.Flow<KillNode>()
                     .From.Action(_ =>
                     {
                         Log.Info("Leaving Cluster");
                         Cluster.Get(Context.System).LeaveAsync();
-                    })
-                    .AndReceive();
+                    });
 
                 this.Flow<ActorUp>()
                     .From.Action(au => au.When(u => u.Tag == "None", up =>
                     {
-                        Log.Info("Incoming kill Watcher {Target}", up.Actor.Path);
+                        Log.Info("Incoming kill Watcher {Name}", up.Actor.Path);
                         Context.Watch(up.Actor);
                     }))
-                    .AndRespondTo<Terminated>().Func(t => new ActorDown(t.ActorRef, "None")).ToSelf()
-                    .AndReceive();
+                    .AndRespondTo<Terminated>().Func(t => new ActorDown(t.ActorRef, "None")).ToSelf();
             }
 
             private void RunKillCluster()

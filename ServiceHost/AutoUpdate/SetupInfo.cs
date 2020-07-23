@@ -5,16 +5,6 @@ namespace ServiceHost.AutoUpdate
     [PublicAPI]
     public sealed class SetupInfo
     {
-        public sealed class SetupBuilder
-        {
-            private readonly string _downloadFile;
-
-            public SetupBuilder(string downloadFile) => _downloadFile = downloadFile;
-
-            public SetupInfo ToInfo(string hostExe, string hostPath, int hostProcessHandle)
-                => new SetupInfo(_downloadFile, hostExe, hostPath, hostProcessHandle);
-        }
-
         public string DownloadFile { get; }
 
         public string StartFile { get; }
@@ -33,10 +23,7 @@ namespace ServiceHost.AutoUpdate
             RunningProcess = runningProcess;
             KillTime = killTime;
         }
-
-        public static SetupBuilder New(string downloadFile)
-            => new SetupBuilder(downloadFile);
-
+        
         public string ToCommandLine() 
             => $"--downloadfile {DownloadFile} --startfile {StartFile} --target {Target} --runningprocess {RunningProcess} --killtime {KillTime}";
     }

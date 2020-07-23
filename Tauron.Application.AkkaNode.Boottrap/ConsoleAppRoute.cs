@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Autofac.Features.OwnedInstances;
 using Serilog;
 using Tauron.Host;
 
@@ -12,12 +13,10 @@ namespace Tauron.Application.AkkaNode.Boottrap
 {
     public sealed class ConsoleAppRoute : IAppRoute
     {
-        private IStartUpAction[]? _actions;
+        private Owned<IEnumerable<IStartUpAction>>? _actions;
 
-        public ConsoleAppRoute(IEnumerable<IStartUpAction> startUpActions)
-        {
-            _actions = startUpActions.ToArray();
-        }
+        public ConsoleAppRoute(Owned<IEnumerable<IStartUpAction>> startUpActions) 
+            => _actions = startUpActions;
 
         public Task ShutdownTask { get; private set; } = Task.CompletedTask;
         public Task WaitForStartAsync(ActorSystem actorSystem)
@@ -32,7 +31,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
             {
                 if (_actions != null)
                 {
-                    foreach (var startUpAction in _actions)
+                    foreach (var startUpAction in _actions.Value)
                     {
                         try
                         {
@@ -45,6 +44,7 @@ namespace Tauron.Application.AkkaNode.Boottrap
                     }
                 }
 
+                _actions?.Dispose();
                 _actions = null;
             });
             return Task.CompletedTask;

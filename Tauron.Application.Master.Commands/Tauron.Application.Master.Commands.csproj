@@ -17,7 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Host\" />
     <Folder Include="Projections\" />
   </ItemGroup>
 

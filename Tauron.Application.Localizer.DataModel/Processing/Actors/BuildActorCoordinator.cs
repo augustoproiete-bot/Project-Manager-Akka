@@ -16,12 +16,10 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
         public BuildActorCoordinator()
         {
             this.Flow<BuildRequest>()
-                .From.Action(ProcessRequest)
-                .AndReceive();
+                .From.Action(ProcessRequest);
 
             this.Flow<AgentCompled>()
-                .From.Func(SingleBuildCompled).ToSender()
-                .AndReceive();
+                .From.Func(SingleBuildCompled).ToSender();
         }
 
         private BuildCompled? SingleBuildCompled(AgentCompled arg)

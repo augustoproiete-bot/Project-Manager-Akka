@@ -118,7 +118,7 @@ namespace AutoUpdateRunner
             try
             {
                 Directory.SetCurrentDirectory(_info.Target);
-                Process.Start(Path.Combine(_info.Target, _info.StartFile), "--cleanup true");
+                Process.Start(Path.Combine(_info.Target, _info.StartFile), $"--cleanup true --id {Process.GetCurrentProcess().Id}");
             }
             catch (Exception e)
             {

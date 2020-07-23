@@ -133,7 +133,7 @@ namespace ServiceHost.Installer.Impl
 
                     if (context.AppType == AppType.Host)
                     {
-                        autoUpdater.Tell(new StartAutoUpdate(SetupInfo.New(context.Source.ToZipFile(context))));
+                        autoUpdater.Tell(new StartAutoUpdate(context.Source.ToZipFile(context)));
                         return StepId.Finish;
                     }
 

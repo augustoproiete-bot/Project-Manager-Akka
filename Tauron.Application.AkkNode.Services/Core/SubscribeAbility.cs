@@ -35,12 +35,10 @@ namespace Tauron.Application.AkkNode.Services.Core
         public void MakeReceive()
         { 
             _actor.Flow<Terminated>()
-                .From.Action(t => Terminated?.Invoke(t))
-                .AndReceive();
+                .From.Action(t => Terminated?.Invoke(t));
 
             _actor.Flow<KeyHint>()
-                .From.Action(kh => _sunscriptions.Remove(kh.Key, kh.Target))
-                .AndReceive();
+                .From.Action(kh => _sunscriptions.Remove(kh.Key, kh.Target));
 
             _actor.Flow<EventSubscribe>()
                 .From.Action(s =>
@@ -53,8 +51,7 @@ namespace Tauron.Application.AkkNode.Services.Core
                                     () => ActorContext.WatchWith(sender, new KeyHint(sender, s.Event)));
                                 _sunscriptions.Add(s.Event, sender);
                             });
-                })
-                .AndReceive();
+                });
 
             _actor.Flow<EventUnSubscribe>()
                 .From.Action(s =>
@@ -66,8 +63,7 @@ namespace Tauron.Application.AkkNode.Services.Core
                                 ActorContext.Unwatch(sender);
                                 _sunscriptions.Remove(s.Event, sender);
                             });
-                })
-                .AndReceive();
+                });
         }
 
         public TType Send<TType>(TType payload)

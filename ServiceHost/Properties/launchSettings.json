@@ -1,7 +1,8 @@
 {
   "profiles": {
     "ServiceHost": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "--Install Manual --AppType Host --ZipFile C:\\Users\\user\\Source\\Repos\\Project-Manager-Akka\\ServiceHost\\bin\\Debug\\netcoreapp3.1.zip"
     }
   }
 }

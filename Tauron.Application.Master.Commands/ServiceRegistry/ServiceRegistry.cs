@@ -86,20 +86,18 @@ namespace Tauron.Application.Master.Commands
                 this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
                    .From.Action(au =>
                                 {
-                                    Log.Info("New Service Registry {Target}", au.Actor.Path);
+                                    Log.Info("New Service Registry {Name}", au.Actor.Path);
                                     _serviceRegistrys.Add(au.Actor);
                                     Become(Running);
                                     Stash.UnstashAll();
-                                })
-                   .AndReceive();
+                                });
 
                 this.Flow<ClusterActorDiscoveryMessage.ActorDown>()
                    .From.Action(ad =>
                                 {
-                                    Log.Info("Remove Service Registry {Target}", ad.Actor.Path);
+                                    Log.Info("Remove Service Registry {Name}", ad.Actor.Path);
                                     _serviceRegistrys.Remove(ad.Actor);
-                                })
-                   .AndReceive();
+                                });
 
                 ReceiveAny(m => Stash.Stash());
             }
@@ -109,20 +107,18 @@ namespace Tauron.Application.Master.Commands
                 this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
                    .From.Action(au =>
                                 {
-                                    Log.Info("New Service Registry {Target}", au.Actor.Path);
+                                    Log.Info("New Service Registry {Name}", au.Actor.Path);
                                     _serviceRegistrys.Add(au.Actor);
-                                })
-                   .AndReceive();
+                                });
 
                 this.Flow<ClusterActorDiscoveryMessage.ActorDown>()
                    .From.Action(ad =>
                                 {
-                                    Log.Info("Remove Service Registry {Target}", ad.Actor.Path);
+                                    Log.Info("Remove Service Registry {Name}", ad.Actor.Path);
                                     _serviceRegistrys
                                        .Remove(ad.Actor)
                                        .When(i => i == 0, () => Become(Initializing));
-                                })
-                   .AndReceive();
+                                });
 
                 Receive<RegisterService>(s =>
                                          {
@@ -190,16 +186,14 @@ namespace Tauron.Application.Master.Commands
                        return new QueryRegistratedServicesResponse(temp
                            .Select(e => new MemberService(e.Value, e.Key))
                            .ToList());
-                   }).ToSender()
-                   .AndReceive();
+                   }).ToSender();
 
                 this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
                    .From.Action(When<ClusterActorDiscoveryMessage.ActorUp>(au => !au.Actor.Equals(Self), au =>
                    {
                        Log.Info("Send Sync New Service registry");
                        au.Actor.Tell(new SyncRegistry(_services));
-                   }))
-                   .AndReceive();
+                   }));
 
                 Receive<ClusterActorDiscoveryMessage.ActorDown>(_ => { });
 
@@ -208,8 +202,7 @@ namespace Tauron.Application.Master.Commands
                    {
                        Log.Info("Sync Services");
                        sr.ToSync.Foreach(kp => _services[kp.Key] = kp.Value);
-                   })
-                   .AndReceive();
+                   });
             }
 
             protected override void PreStart()

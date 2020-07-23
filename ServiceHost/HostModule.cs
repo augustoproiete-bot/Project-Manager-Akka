@@ -3,6 +3,7 @@ using ServiceHost.ApplicationRegistry;
 using ServiceHost.AutoUpdate;
 using ServiceHost.Installer;
 using ServiceHost.Services;
+using ServiceHost.SharedApi;
 using Tauron.Application.AkkaNode.Boottrap;
 
 namespace ServiceHost
@@ -19,6 +20,7 @@ namespace ServiceHost
             builder.RegisterType<ManualInstallationTrigger>().As<IStartUpAction>();
             builder.RegisterType<ServiceStartupTrigger>().As<IStartUpAction>();
             builder.RegisterType<CleanUpDedector>().As<IStartUpAction>();
+            builder.RegisterType<ApiDispatcherStartup>().As<IStartUpAction>();
 
             base.Load(builder);
         }

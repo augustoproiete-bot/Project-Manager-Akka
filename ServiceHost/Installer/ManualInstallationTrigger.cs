@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using Akka.Actor;
 using Microsoft.Extensions.Configuration;
+using ServiceHost.ApplicationRegistry;
 using Tauron.Application.AkkaNode.Boottrap;
 
 namespace ServiceHost.Installer
@@ -19,6 +20,9 @@ namespace ServiceHost.Installer
         public void Run()
         {
             if(_trigger.Install != InstallType.Manual) return;
+
+            if (_trigger.AppType == AppType.Host)
+                _trigger.AppName = "Host Self Update";
 
             _installer.Actor.Tell(new FileInstallationRequest(_trigger.AppName, Path.GetFullPath(_trigger.ZipFile), _trigger.Override, _trigger.AppType, _trigger.Exe));
         }

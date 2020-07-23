@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Windows.Input;
 using System.Windows.Threading;
-using Akka.Actor;
 using Autofac;
 using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel;
@@ -157,7 +156,7 @@ namespace Tauron.Application.Localizer.UIModels
             TerminalMessages = this.RegisterUiCollection<string>(nameof(TerminalMessages));
             var buildMessageLocalizer = new BuildMessageLocalizer(localizer);
 
-            this.Flow<BuildMessage>().From.Action(AddMessage).AndReceive();
+            this.Flow<BuildMessage>().From.Action(AddMessage);
 
             void ClearTerminal() => UICall(TerminalMessages.Clear);
 

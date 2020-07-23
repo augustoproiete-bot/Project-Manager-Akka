@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Windows.Threading;
@@ -115,7 +114,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             this.Flow<RemoveRequest>()
                 .From.Mutate(workspace.Entrys).With(em => em.EntryRemove, em => rr => em.RemoveEntry(rr.ProjectName, rr.EntryName)).ToSelf()
-                .Then.Action(RemoveEntry).AndReceive();
+                .Then.Action(RemoveEntry);
 
             #endregion
 
@@ -131,7 +130,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             this.Flow<UpdateRequest>()
                 .From.Mutate(workspace.Entrys).With(em => em.EntryUpdate, em => ur => em.UpdateEntry(ur.ProjectName, ur.Language, ur.EntryName, ur.Content)).ToSelf()
-                .Then.Action(UpdateEntry).AndReceive();
+                .Then.Action(UpdateEntry);
 
             #endregion
 

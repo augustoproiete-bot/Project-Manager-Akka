@@ -28,8 +28,7 @@ namespace ServiceHost.ApplicationRegistry
             _appsDirectory = Path.GetFullPath(configuration["AppsLocation"]);
 
             this.Flow<AllAppsQuery>()
-                .From.Func(_ => new AllAppsResponse(_apps.Keys.ToArray())).ToSender()
-                .AndReceive();
+                .From.Func(_ => new AllAppsResponse(_apps.Keys.ToArray())).ToSender();
 
             Receive<LoadData>(HandleLoadData);
             Receive<SaveData>(HandleSaveData);

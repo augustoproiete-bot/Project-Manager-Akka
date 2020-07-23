@@ -2,8 +2,8 @@
 {
     public sealed class StartAutoUpdate
     {
-        public SetupInfo.SetupBuilder Builder { get; }
+        public string OriginalZip { get; }
 
-        public StartAutoUpdate(SetupInfo.SetupBuilder builder) => Builder = builder;
+        public StartAutoUpdate(string originalZip) => OriginalZip = originalZip;
     }
 }

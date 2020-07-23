@@ -23,12 +23,10 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                                 }
 
                                 Context.ActorOf(Props.Create<TransferOperatorActor>(), r.OperationId).Tell(r);
-                            })
-               .AndReceive();
+                            });
 
             this.Flow<TransferMessages.DataTranfer>()
-               .From.Action(tm => Context.Child(tm.OperationId).Tell(tm))
-               .AndReceive();
+               .From.Action(tm => Context.Child(tm.OperationId).Tell(tm));
 
             this.Flow<DataTransferRequest>()
                .From.Action(r =>
@@ -41,28 +39,24 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                                 }
 
                                 Context.ActorOf(Props.Create<TransferOperatorActor>(), r.OperationId).Tell(r);
-                            })
-               .AndReceive();
+                            });
 
             this.Flow<IncomingDataTransfer>()
-               .From.Action(dt => subscribe.Send(dt))
-               .AndReceive();
+               .From.Action(dt => subscribe.Send(dt));
 
             this.Flow<TransferMessages.TransferCompled>()
                .From.Action(tc =>
                             {
                                 Context.Stop(Context.Child(tc.OperationId));
                                 subscribe.Send(tc, tc.GetType());
-                            })
-               .AndReceive();
+                            });
 
             this.Flow<TransferMessages.TransferMessage>()
                .From.Action(tm =>
                             {
                                 Context.Child(tm.OperationId).Tell(tm);
                                 subscribe.Send(tm, tm.GetType());
-                            })
-               .AndReceive();
+                            });
 
             subscribe.MakeReceive();
         }

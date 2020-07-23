@@ -15,9 +15,11 @@ using Tauron.Application.AkkNode.Services.Core;
 namespace ServiceHost.Services.Impl
 {
     [UsedImplicitly]
-    public sealed class AppManagerActor : ExposedReceiveActor
+    public sealed class AppManagerActor : ExposedReceiveActor, IWithTimers
     {
         private readonly IAppRegistry _appRegistry;
+
+        public ITimerScheduler Timers { get; set; } = null!;
 
         public AppManagerActor(IAppRegistry appRegistry, IInstaller installer)
         {
@@ -26,6 +28,8 @@ namespace ServiceHost.Services.Impl
 
             installer.Actor
                .Tell(new EventSubscribe(typeof(InstallerationCompled)));
+
+            Receive<UpdateTitle>(_ => Console.Title = "Application Host");
 
             Receive<InstallerationCompled>(ic =>
             {
@@ -50,8 +54,7 @@ namespace ServiceHost.Services.Impl
             });
 
             this.Flow<StopApps>()
-               .From.Action(() => Context.GetChildren().Foreach(r => r.Tell(new InternalStopApp())))
-               .AndReceive();
+               .From.Action(() => Context.GetChildren().Foreach(r => r.Tell(new InternalStopApp())));
 
             this.Flow<StopApp>()
                .From.Action(s =>
@@ -61,12 +64,10 @@ namespace ServiceHost.Services.Impl
                         Sender.Tell(new StopResponse(s.Name));
                     else
                         child.Forward(new InternalStopApp());
-                })
-               .AndReceive();
+                });
 
             this.Flow<StopResponse>()
-               .From.Action(r => ability.Send(r))
-               .AndReceive();
+               .From.Action(r => ability.Send(r));
 
             this.Flow<StartApps>()
                .From.Action(sa => 
@@ -95,8 +96,7 @@ namespace ServiceHost.Services.Impl
                         return;
 
                     Context.ActorOf(Props.Create<AppProcessActor>(sa.App)).Tell(new InternalStartApp());
-                })
-               .AndReceive();
+                });
 
             Receive<Status.Failure>(f => Log.Error(f.Cause, "Error while processing message"));
 
@@ -105,6 +105,8 @@ namespace ServiceHost.Services.Impl
 
         protected override void PreStart()
         {
+            Timers.StartPeriodicTimer(new object(), new UpdateTitle(), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+
             _appRegistry.Actor.Tell(new EventSubscribe(typeof(RegistrationResponse)));
             CoordinatedShutdown
                .Get(Context.System)
@@ -158,6 +160,11 @@ namespace ServiceHost.Services.Impl
                    .Select(ar => ar.Ask<StopResponse>(new InternalStopApp(), TimeSpan.FromMinutes(2)))
                    .ToArray()).ContinueWith(_ => Done.Instance);
             }
+        }
+
+        private sealed class UpdateTitle
+        {
+            
         }
     }
 }
