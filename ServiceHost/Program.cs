@@ -116,14 +116,14 @@ namespace ServiceHost
                     {
                         await _reader.WaitForConnectionAsync(_cancellationToken.Token);
 
-                        var buffer = MemoryPool<byte>.Shared.Rent(4);
+                        using var buffer = MemoryPool<byte>.Shared.Rent(4);
                         if (!await TryRead(buffer, 4, _cancellationToken.Token)) continue;
 
                         var count = BitConverter.ToInt32(buffer.Memory.Span);
-                        buffer = MemoryPool<byte>.Shared.Rent(count);
+                        using var dataBuffer = MemoryPool<byte>.Shared.Rent(count);
 
                         if (await TryRead(buffer, count, _cancellationToken.Token)) 
-                            ParseData(Encoding.UTF8.GetString(buffer.Memory.Slice(0, count).Span));
+                            ParseData(Encoding.UTF8.GetString(dataBuffer.Memory.Slice(0, count).Span));
                     }
                 }
                 catch (OperationCanceledException)
