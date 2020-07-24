@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.IO;
 using System.IO.Pipes;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Akka.Actor;
 using Akka.Cluster;
 using Autofac;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +12,6 @@ using Microsoft.Extensions.Configuration.CommandLine;
 using Newtonsoft.Json;
 using Serilog;
 using ServiceHost.Installer;
-using ServiceHost.Services;
 using Tauron.Application.AkkaNode.Boottrap;
 using Tauron.Application.Master.Commands;
 using Tauron.Host;
@@ -62,6 +58,7 @@ namespace ServiceHost
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
+                        Console.ReadKey();
                     }
                 }
             }
@@ -123,7 +120,7 @@ namespace ServiceHost
                         using var dataBuffer = MemoryPool<byte>.Shared.Rent(count);
 
                         if (await TryRead(buffer, count, _cancellationToken.Token)) 
-                            ParseData(Encoding.UTF8.GetString(dataBuffer.Memory.Slice(0, count).Span));
+                            ParseAndRunData(Encoding.UTF8.GetString(dataBuffer.Memory.Slice(0, count).Span));
                     }
                 }
                 catch (OperationCanceledException)
@@ -156,9 +153,12 @@ namespace ServiceHost
                 }
             }
 
-            private void ParseData(string data)
+            private void ParseAndRunData(string rawdata)
             {
+                var data = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawdata);
+                var config = new ConfigurationBuilder().AddInMemoryCollection(data).Build();
 
+                _installTrigger(config).Run();
             }
 
             public void Stop() 

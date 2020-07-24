@@ -6,6 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Projections\**" />
+    <EmbeddedResource Remove="Projections\**" />
+    <None Remove="Projections\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Akka.Cluster.Tools" Version="1.4.8" />
     <PackageReference Include="Akka.DistributedData" Version="1.4.8" />
   </ItemGroup>
@@ -14,10 +20,6 @@
     <ProjectReference Include="..\External\Akka.Cluster.Utility\Akka.Cluster.Utility.csproj" />
     <ProjectReference Include="..\Tauron.Application.AkkNode.Services\Tauron.Application.AkkNode.Services.csproj" />
     <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Projections\" />
   </ItemGroup>
 
 </Project>

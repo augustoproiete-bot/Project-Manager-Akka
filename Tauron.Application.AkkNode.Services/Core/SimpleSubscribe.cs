@@ -56,6 +56,8 @@ namespace Tauron.Application.AkkNode.Services.Core
     [PublicAPI]
     public sealed class EventSubscribtion : IDisposable
     {
+        public static EventSubscribtion Empty { get; } = new EventSubscribtion(typeof(Type), ActorRefs.Nobody);
+
         private readonly Type _event;
         private readonly IActorRef _eventSource;
 
@@ -65,7 +67,10 @@ namespace Tauron.Application.AkkNode.Services.Core
             _eventSource = eventSource;
         }
 
-        public void Dispose() 
-            => _eventSource.Tell(new EventUnSubscribe(_event));
+        public void Dispose()
+        {
+            if(_eventSource.IsNobody()) return;
+            _eventSource.Tell(new EventUnSubscribe(_event));
+        }
     }
 }

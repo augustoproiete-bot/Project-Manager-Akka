@@ -5,9 +5,63 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:tau="http://schemas.TauronWpf.com"
              xmlns:local="clr-namespace:Tauron.Application.ServiceManager.Views"
-             mc:Ignorable="d" 
+             xmlns:viewModels="clr-namespace:Tauron.Application.ServiceManager.ViewModels"
+             mc:Ignorable="d" d:DataContext="{d:DesignInstance viewModels:HostViewModel, IsDesignTimeCreatable=False}"
              d:DesignHeight="450" d:DesignWidth="800">
-    <ListBox Margin="5">
-            <TextBlock Text="Hallo welt"></TextBlock>
+    <ListBox Margin="5" HorizontalContentAlignment="Stretch">
+        <ListBox.ItemTemplate>
+            <DataTemplate DataType="viewModels:UIHostEntry">
+                <Border Margin="5" BorderThickness="1" BorderBrush="White" CornerRadius="12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Margin="5" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Test Host" Margin="5" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="pfad:" Margin="5" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Test Pfad" Margin="5" />
+                        <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Center"
+                                Content="Anwendungen" Padding="5" Margin="5" />
+                        <GroupBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Header="Kommandos" Margin="5">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Row="0" Grid.Column="1" Margin="5,2" Content="Name"
+                                            HorizontalAlignment="Center">
+                                    </Button>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Margin="5,2" Text="Status"
+                                               HorizontalAlignment="Center" />
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Row="0" Grid.Column="1" Margin="5,2" Content="Name"
+                                            HorizontalAlignment="Center">
+                                    </Button>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Margin="5,2" Text="Status"
+                                               HorizontalAlignment="Center" />
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+                    </Grid>
+                </Border>
+            </DataTemplate>
+        </ListBox.ItemTemplate>
     </ListBox>
 </tau:UserControl>

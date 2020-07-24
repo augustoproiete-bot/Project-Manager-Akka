@@ -27,6 +27,8 @@ namespace Tauron.Application.AkkNode.Services.Core
 
         public event Action<Terminated>? Terminated;
 
+        public event Action<InternalEventSubscription>? NewSubscription; 
+
         private GroupDictionary<Type, IActorRef> _sunscriptions = new GroupDictionary<Type, IActorRef>();
 
         public SubscribeAbility(ExposedReceiveActor actor) 
@@ -50,6 +52,7 @@ namespace Tauron.Application.AkkNode.Services.Core
                                 s.When(subscribe => subscribe.Watch,
                                     () => ActorContext.WatchWith(sender, new KeyHint(sender, s.Event)));
                                 _sunscriptions.Add(s.Event, sender);
+                                NewSubscription?.Invoke(new InternalEventSubscription(sender, s.Event));
                             });
                 });
 
@@ -80,6 +83,19 @@ namespace Tauron.Application.AkkNode.Services.Core
 
             foreach (var actorRef in coll) actorRef.Tell(payload);
             return payload;
+        }
+
+        public sealed class InternalEventSubscription
+        {
+            public IActorRef intrest { get; }
+
+            public Type Type { get; }
+
+            public InternalEventSubscription(IActorRef intrest, Type type)
+            {
+                this.intrest = intrest;
+                Type = type;
+            }
         }
     }
 
