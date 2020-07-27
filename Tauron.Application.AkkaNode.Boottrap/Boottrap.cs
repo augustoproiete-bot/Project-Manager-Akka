@@ -13,6 +13,7 @@ using Serilog.Core;
 using Serilog.Events;
 using Serilog.Exceptions;
 using Serilog.Formatting.Compact;
+using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Master.Commands;
 using Tauron.Host;
 
@@ -47,6 +48,10 @@ namespace Tauron.Application.AkkaNode.Boottrap
         public static IApplicationBuilder ConfigurateNode(this IApplicationBuilder builder)
         {
             return builder
+                .ConfigurateAkkaSystem((context, system) =>
+                {
+                    system.Serialization.AddSerializationMap(typeof(IInternalSerializable), new InternalSerializer((ExtendedActorSystem)system));
+                })
                 //.ConfigurateAkkaSystem((context, system) => ServiceRegistry.Init(system))
                .ConfigureAkka(hbc =>
                               {

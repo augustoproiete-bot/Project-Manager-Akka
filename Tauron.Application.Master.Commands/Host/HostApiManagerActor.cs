@@ -9,9 +9,11 @@ using static Akka.Cluster.Utility.ClusterActorDiscoveryMessage;
 
 namespace Tauron.Application.Master.Commands.Host
 {
-    public sealed class HostApiManagerActor : ExposedReceiveActor
+    public sealed class HostApiManagerActor : ExposedReceiveActor, IWithTimers
     {
         private readonly Dictionary<ActorPath, HostEntry> _entries = new Dictionary<ActorPath, HostEntry>();
+
+        public ITimerScheduler Timers { get; set; } = null!;
 
         public HostApiManagerActor()
         {
@@ -23,7 +25,14 @@ namespace Tauron.Application.Master.Commands.Host
             };
 
             this.Flow<ActorDown>()
-               .From.Func(ad => _entries.Remove(ad.Actor.Path) ? new NotifyChange(ad.Actor.Path) : null).ToSelf();
+               .From.Func(ad =>
+               {
+                   if (!_entries.Remove(ad.Actor.Path, out var entry)) return null;
+
+                   Timers.Cancel(entry);
+                   return new NotifyChange(ad.Actor.Path);
+
+               }).ToSelf();
 
             this.Flow<ActorUp>()
                 .From.Func(au =>
@@ -67,6 +76,11 @@ namespace Tauron.Application.Master.Commands.Host
                .Discovery.Tell(new MonitorActor(HostApi.ApiKey));
 
             base.PreStart();
+        }
+
+        public sealed class CacheTimeout
+        {
+            
         }
 
         private sealed class NotifyChange

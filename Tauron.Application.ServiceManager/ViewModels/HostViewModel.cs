@@ -54,7 +54,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
         protected override void PreStart()
         {
-            _eventSubscribtion = _hostConnector.SubscribeToEvent<HostEntryChanged>();
+            _eventSubscribtion = _hostConnector.Event<HostEntryChanged>();
             base.PreStart();
         }
 
@@ -71,7 +71,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
     {
         private string? _name;
         private readonly LocLocalizer _localizer;
-        private readonly IActorRef _hostApi;
+        private readonly HostApi _hostApi;
 
         public string Name
         {
@@ -90,10 +90,10 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
         public ICollection<HostCommand> HostCommands { get; }
 
-        public UIHostEntry(ActorPath actorPath, string name, ICommand applications, LocLocalizer localizer, IActorRef hostApi, IActorRef comandExecute, Action commandFinish)
+        public UIHostEntry(ActorPath actorPath, string name, ICommand applications, LocLocalizer localizer, HostApi hostApi, IActorRef comandExecute, Action commandFinish)
         {
             HostCommand BuildCommand(string commandName, Func<Task<bool>> exec) 
-                => new HostCommand(Name, localizer, exec, comandExecute, commandFinish);
+                => new HostCommand(commandName, localizer, exec, comandExecute, commandFinish);
 
             ActorPath = actorPath;
             _name = name;
@@ -110,10 +110,10 @@ namespace Tauron.Application.ServiceManager.ViewModels
                            };
         }
 
-        private async Task<bool> RunCommand(object msg, Func<Task<bool>> confirm)
+        private async Task<bool> RunCommand(InternalHostMessages.CommandBase msg, Func<Task<bool>> confirm)
         {
             if(await confirm())
-                return (await _hostApi.Ask<OperationResponse>(msg, TimeSpan.FromMinutes(2))).Success;
+                return (await _hostApi.ExecuteCommand(msg)).Success;
             return false;
         }
 

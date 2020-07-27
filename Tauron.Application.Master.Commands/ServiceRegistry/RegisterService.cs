@@ -1,4 +1,8 @@
-﻿using Akka.Cluster;
+﻿using System.IO;
+using Akka.Actor;
+using Akka.Cluster;
+using Google.Protobuf;
+using Google.Protobuf.Reflection;
 
 namespace Tauron.Application.Master.Commands
 {
@@ -12,6 +16,11 @@ namespace Tauron.Application.Master.Commands
         {
             Name = name;
             Address = address;
+        }
+
+        public RegisterService(BinaryReader reader, ExtendedActorSystem system)
+        {
+            
         }
     }
 }
