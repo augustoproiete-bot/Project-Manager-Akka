@@ -101,6 +101,44 @@ namespace Tauron.Application.Localizer.Generated
 			}
 			public string LabelTitle => __LabelTitle.Result;
 		}
+		public sealed class HostViewRes
+		{
+			private readonly Task<string> __LabelName;
+			private readonly Task<string> __LabelHostPath;
+			private readonly Task<string> __ButtonApplications;
+			private readonly Task<string> __GroupBoxCommands;
+			private readonly Task<string> __HostCommandStopAll;
+			public HostViewRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__LabelName = LocLocalizer.ToString(loc.RequestTask("HostView_Label_Name"));
+				__LabelHostPath = LocLocalizer.ToString(loc.RequestTask("HostView_Label_HostPath"));
+				__ButtonApplications = LocLocalizer.ToString(loc.RequestTask("HostView_Button_Applications"));
+				__GroupBoxCommands = LocLocalizer.ToString(loc.RequestTask("HostView_GroupBox_Commands"));
+				__HostCommandStopAll = LocLocalizer.ToString(loc.RequestTask("HostView_HostCommand_StopAll"));
+			}
+			public string LabelName => __LabelName.Result;
+			public string LabelHostPath => __LabelHostPath.Result;
+			public string ButtonApplications => __ButtonApplications.Result;
+			public string GroupBoxCommands => __GroupBoxCommands.Result;
+			public string HostCommandStopAll => __HostCommandStopAll.Result;
+		}
+		public sealed class HostCommandRes
+		{
+			private readonly Task<string> __Running;
+			private readonly Task<string> __Finish;
+			private readonly Task<string> __UnkowenError;
+			public HostCommandRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__Running = LocLocalizer.ToString(loc.RequestTask("HostCommand_Running"));
+				__Finish = LocLocalizer.ToString(loc.RequestTask("HostCommand_Finish"));
+				__UnkowenError = LocLocalizer.ToString(loc.RequestTask("HostCommand_UnkowenError"));
+			}
+			public string Running => __Running.Result;
+			public string Finish => __Finish.Result;
+			public string UnkowenError => __UnkowenError.Result;
+		}
 		public sealed class CommonRes
 		{
 			private readonly Task<string> __Error;
@@ -134,6 +172,8 @@ namespace Tauron.Application.Localizer.Generated
 			 NodeView = new NodeViewRes(system);
 			 SeedNodeView = new SeedNodeViewRes(system);
 			 AddSeedDialog = new AddSeedDialogRes(system);
+			 HostView = new HostViewRes(system);
+			 HostCommand = new HostCommandRes(system);
 			 Common = new CommonRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
@@ -141,6 +181,8 @@ namespace Tauron.Application.Localizer.Generated
 		public NodeViewRes NodeView { get; }
 		public SeedNodeViewRes SeedNodeView { get; }
 		public AddSeedDialogRes AddSeedDialog { get; }
+		public HostViewRes HostView { get; }
+		public HostCommandRes HostCommand { get; }
 		public CommonRes Common { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);

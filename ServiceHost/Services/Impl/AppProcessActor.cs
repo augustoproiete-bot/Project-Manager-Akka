@@ -93,11 +93,12 @@ namespace ServiceHost.Services.Impl
                     }
                 },
                 "Error while Stopping App",
-                () =>
+                e =>
                 {
                     _process?.Dispose();
-                    Sender.Tell(new StopResponse(_app.Name));
-                    Context.Parent.Tell(new StopResponse(_app.Name));
+                    if(!Sender.Equals(Context.Parent))
+                        Sender.Tell(new StopResponse(_app.Name, e));
+                    Context.Parent.Tell(new StopResponse(_app.Name, e));
                     Context.Stop(Self);
                 });
         }

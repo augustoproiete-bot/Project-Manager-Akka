@@ -112,7 +112,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty && CurrentProject != null)
-                .ThenFlow(TryGetRemoveProjectName()).From.Mutate(workspace.Projects).With(pm => pm.RemovedProject, pm => RemoveDialog).ToSelf()
+                .ThenFlow(TryGetRemoveProjectName).From.Mutate(workspace.Projects).With(pm => pm.RemovedProject, pm => RemoveDialog).ToSelf()
                 .Then.Action(rp => RemoveProject(rp.Project))
                 .AndReturn().ThenRegister("RemoveProject");
 

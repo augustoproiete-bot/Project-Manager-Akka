@@ -26,6 +26,7 @@ namespace ServiceHost.SharedApi
             this.Flow<CommandBase>()
                .From.Action(cb =>
                 {
+                    // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
                     switch (cb.Type)
                     {
                         case CommandType.AppManager:

@@ -11,6 +11,7 @@ using ServiceHost.Installer;
 using Tauron;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services.Core;
+using Tauron.Application.Master.Commands.Host;
 
 namespace ServiceHost.Services.Impl
 {
@@ -42,6 +43,7 @@ namespace ServiceHost.Services.Impl
 
                 if(ic.InstallAction != InstallationAction.Install || !ic.Succesfull) return;
 
+                // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
                 switch (ic.Type)
                 {
                     case AppType.Cluster:
@@ -99,6 +101,18 @@ namespace ServiceHost.Services.Impl
                 });
 
             Receive<Status.Failure>(f => Log.Error(f.Cause, "Error while processing message"));
+
+            #region SharedApi
+
+            Receive<StopAllApps>(_ =>
+            {
+                Task.WhenAll(Context.GetChildren()
+                       .Select(ar => ar.Ask<StopResponse>(new InternalStopApp())))
+                   .ContinueWith(t => new OperationResponse(t.IsCompletedSuccessfully && t.Result.All(s => !s.Error)))
+                   .PipeTo(Sender);
+            });
+
+            #endregion
 
             ability.MakeReceive();
         }

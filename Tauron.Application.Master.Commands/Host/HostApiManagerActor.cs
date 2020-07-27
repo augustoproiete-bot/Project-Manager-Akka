@@ -49,7 +49,11 @@ namespace Tauron.Application.Master.Commands.Host
             Receive<CommandBase>(c =>
             {
                 var he = _entries.Values.FirstOrDefault(e => e.Name == c.Target);
-                if(he == null) return;
+                if (he == null)
+                {
+                    Sender.Tell(new OperationResponse(false));
+                    return;
+                }
 
                 he.Actor.Forward(c);
             });

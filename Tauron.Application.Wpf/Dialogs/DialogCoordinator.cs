@@ -9,7 +9,7 @@ namespace Tauron.Application.Wpf.Dialogs
     {
         internal static readonly DialogCoordinator InternalInstance = new DialogCoordinator();
 
-        private static ILogger _log = Log.ForContext<DialogCoordinator>();
+        private static readonly ILogger _log = Log.ForContext<DialogCoordinator>();
 
         public static IDialogCoordinator Instance => InternalInstance;
 

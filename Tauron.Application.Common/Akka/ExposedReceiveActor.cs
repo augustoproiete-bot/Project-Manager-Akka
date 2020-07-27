@@ -150,6 +150,24 @@ namespace Tauron.Akka
             }
         }
 
+        protected void CallSafe(Action exec, string logMessage, Action<bool>? finalizing = null)
+        {
+            var error = false;
+            try
+            {
+                exec();
+            }
+            catch (Exception e)
+            {
+                error = true;
+                Log.Error(e, logMessage);
+            }
+            finally
+            {
+                finalizing?.Invoke(error);
+            }
+        }
+
         protected static Action<TMsg> When<TMsg>(Func<TMsg, bool> test, Action<TMsg> action)
         {
             return m =>
