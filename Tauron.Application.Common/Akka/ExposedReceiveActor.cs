@@ -150,6 +150,20 @@ namespace Tauron.Akka
             }
         }
 
+        protected bool CallSafe(Action exec, string logMessage)
+        {
+            try
+            {
+                exec();
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, logMessage);
+                return false;
+            }
+        }
+
         protected void CallSafe(Action exec, string logMessage, Action<bool>? finalizing = null)
         {
             var error = false;

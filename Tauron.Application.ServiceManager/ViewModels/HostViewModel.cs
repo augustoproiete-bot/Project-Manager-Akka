@@ -12,6 +12,7 @@ using Tauron.Application.Localizer.Generated;
 using Tauron.Application.Master.Commands.Host;
 using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.Wpf.Commands;
+using Tauron.Application.Wpf.Dialogs;
 using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.ServiceManager.ViewModels
@@ -19,7 +20,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
     [UsedImplicitly]
     public sealed class HostViewModel : UiActor
     {
-        private readonly IActorRef _hostConnector;
+        private readonly HostApi _hostConnector;
 
         private EventSubscribtion _eventSubscribtion = EventSubscribtion.Empty;
 
@@ -69,6 +70,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
     public sealed class UIHostEntry : ObservableObject
     {
         private string? _name;
+        private readonly LocLocalizer _localizer;
         private readonly IActorRef _hostApi;
 
         public string Name
@@ -90,21 +92,40 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
         public UIHostEntry(ActorPath actorPath, string name, ICommand applications, LocLocalizer localizer, IActorRef hostApi, IActorRef comandExecute, Action commandFinish)
         {
+            HostCommand BuildCommand(string commandName, Func<Task<bool>> exec) 
+                => new HostCommand(Name, localizer, exec, comandExecute, commandFinish);
+
             ActorPath = actorPath;
             _name = name;
+            _localizer = localizer;
             _hostApi = hostApi;
             Applications = applications;
 
+            var commandLocal = localizer.HostCommand;
+
             HostCommands = new List<HostCommand>
                            {
-                                new HostCommand(localizer.HostView.HostCommandStopAll, localizer,
-                                    async () => await RunCommand(new StopAllApps(Name)), 
-                                    comandExecute, commandFinish)
+                                BuildCommand(commandLocal.CommandNameStopAll, async () => await RunCommand(new StopAllApps(Name), () => ConfirmAll(true))),
+                                BuildCommand(commandLocal.CommandNameStartAll, async () => await RunCommand(new StartAllApps(Name), () => ConfirmAll(false)))
                            };
         }
 
-        private async Task<bool> RunCommand(object msg)
-            => (await _hostApi.Ask<OperationResponse>(msg, TimeSpan.FromMinutes(2))).Success;
+        private async Task<bool> RunCommand(object msg, Func<Task<bool>> confirm)
+        {
+            if(await confirm())
+                return (await _hostApi.Ask<OperationResponse>(msg, TimeSpan.FromMinutes(2))).Success;
+            return false;
+        }
+
+        private async Task<bool> ConfirmAll(bool stop)
+        {
+            var coordinator = DialogCoordinator.Instance;
+            if (stop)
+                return await coordinator.ShowMessage(_localizer.HostCommand.DialogCommandTitle, _localizer.HostCommand.DiaologCommandStopAll, null) == true;
+            return await coordinator.ShowMessage(_localizer.HostCommand.DialogCommandTitle, _localizer.HostCommand.DialogCommandStartAll, null) == true;
+        }
+
+
     }
 
     public sealed class HostCommand : ObservableObject, ICommandTask

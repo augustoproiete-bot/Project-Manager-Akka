@@ -63,7 +63,7 @@ namespace ServiceHost.Services.Impl
                 {
                     var child = Context.Child(s.Name);
                     if (child.IsNobody())
-                        Sender.Tell(new StopResponse(s.Name));
+                        Sender.Tell(new StopResponse(s.Name, false));
                     else
                         child.Forward(new InternalStopApp());
                 });
@@ -107,10 +107,17 @@ namespace ServiceHost.Services.Impl
             Receive<StopAllApps>(_ =>
             {
                 Task.WhenAll(Context.GetChildren()
-                       .Select(ar => ar.Ask<StopResponse>(new InternalStopApp())))
+                       .Select(ar => ar.Ask<StopResponse>(new InternalStopApp(), TimeSpan.FromMinutes(0.7))))
                    .ContinueWith(t => new OperationResponse(t.IsCompletedSuccessfully && t.Result.All(s => !s.Error)))
                    .PipeTo(Sender);
             });
+
+            this.Flow<StartAllApps>()
+                .From.Func(_ =>
+                {
+                    Self.Tell(new StartApps(AppType.Cluster));
+                    return new OperationResponse(true);
+                }).ToSender();
 
             #endregion
 

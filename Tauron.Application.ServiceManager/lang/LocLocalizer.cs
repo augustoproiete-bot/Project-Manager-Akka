@@ -128,16 +128,34 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __Running;
 			private readonly Task<string> __Finish;
 			private readonly Task<string> __UnkowenError;
+			private readonly Task<string> __DialogCommandTitle;
+			private readonly Task<string> __DiaologCommandStopAll;
+			private readonly Task<string> __DialogCommandStartAll;
+			private readonly Task<string> __CommandNameStartAll;
+			private readonly Task<string> __CommandNameStopAll;
+			private readonly Task<string> __CommandNameStartApp;
 			public HostCommandRes(ActorSystem system)
 			{
 				var loc = system.Loc();
 				__Running = LocLocalizer.ToString(loc.RequestTask("HostCommand_Running"));
 				__Finish = LocLocalizer.ToString(loc.RequestTask("HostCommand_Finish"));
 				__UnkowenError = LocLocalizer.ToString(loc.RequestTask("HostCommand_UnkowenError"));
+				__DialogCommandTitle = LocLocalizer.ToString(loc.RequestTask("HostCommand_Dialog_CommandTitle"));
+				__DiaologCommandStopAll = LocLocalizer.ToString(loc.RequestTask("HostCommand_DiaologCommand_StopAll"));
+				__DialogCommandStartAll = LocLocalizer.ToString(loc.RequestTask("HostCommand_Dialog_CommandStartAll"));
+				__CommandNameStartAll = LocLocalizer.ToString(loc.RequestTask("HostCommand_CommandName_StartAll"));
+				__CommandNameStopAll = LocLocalizer.ToString(loc.RequestTask("HostCommand_CommandName_StopAll"));
+				__CommandNameStartApp = LocLocalizer.ToString(loc.RequestTask("HostCommand_CommandName_StartApp"));
 			}
 			public string Running => __Running.Result;
 			public string Finish => __Finish.Result;
 			public string UnkowenError => __UnkowenError.Result;
+			public string DialogCommandTitle => __DialogCommandTitle.Result;
+			public string DiaologCommandStopAll => __DiaologCommandStopAll.Result;
+			public string DialogCommandStartAll => __DialogCommandStartAll.Result;
+			public string CommandNameStartAll => __CommandNameStartAll.Result;
+			public string CommandNameStopAll => __CommandNameStopAll.Result;
+			public string CommandNameStartApp => __CommandNameStartApp.Result;
 		}
 		public sealed class CommonRes
 		{
