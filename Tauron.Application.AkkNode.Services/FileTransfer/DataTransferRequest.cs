@@ -2,6 +2,7 @@
 using System.IO;
 using Akka.Actor;
 using JetBrains.Annotations;
+using Tauron.Application.AkkNode.Services.Core;
 
 namespace Tauron.Application.AkkNode.Services.FileTransfer
 {
@@ -42,6 +43,10 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             }
 
             public override Func<Stream> Source { get; }
+
+            protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();
+
+            protected override void WriteInternal(ActorBinaryWriter writer) => throw new NotSupportedException();
         }
 
         public sealed class DataStreamTranferRequest : DataTransferRequest
@@ -53,6 +58,10 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             }
 
             public override Func<Stream> Source { get; }
+
+            protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();
+
+            protected override void WriteInternal(ActorBinaryWriter writer) => throw new NotSupportedException();
         }
     }
 }

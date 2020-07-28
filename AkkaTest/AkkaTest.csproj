@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Akka.Code.Configuration\Akka.Code.Configuration.csproj" />
     <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
+    <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
   </ItemGroup>
 

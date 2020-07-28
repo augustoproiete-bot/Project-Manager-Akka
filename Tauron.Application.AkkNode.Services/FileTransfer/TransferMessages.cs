@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Akka.Actor;
+using Akka.Serialization;
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 
@@ -8,30 +9,38 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 {
     public static class TransferMessages
     {
+        [PublicAPI]
         public abstract class TransferMessage : IInternalSerializable
         {
+            protected virtual int Version => 1;
+
             public string OperationId { get; }
 
-            protected TransferMessage(string operationId) => OperationId = operationId;
-
-            protected TransferMessage(BinaryReader reader, int version)
+            protected TransferMessage(string operationId)
             {
-                var manifest = BinaryManifest.Read(reader, GetType().Name, version);
+                OperationId = operationId;
+            }
+
+            protected TransferMessage(BinaryReader reader)
+            {
+                // ReSharper disable once VirtualMemberCallInConstructor
+                var manifest = BinaryManifest.Read(reader, GetType().Name, Version);
                 OperationId = reader.ReadString();
 
                 // ReSharper disable once VirtualMemberCallInConstructor
                 ReadInternal(reader, manifest);
             }
 
-            protected abstract void ReadInternal(BinaryReader reader, BinaryManifest manifest);
+            protected virtual void ReadInternal(BinaryReader reader, BinaryManifest manifest){}
 
-            public void Write(BinaryWriter writer)
+            public void Write(ActorBinaryWriter writer)
             {
+                BinaryManifest.Write(writer, GetType().Name, Version);
                 writer.Write(OperationId);
                 WriteInternal(writer);
             }
 
-            protected abstract void WriteInternal(BinaryWriter writer);
+            protected virtual void WriteInternal(ActorBinaryWriter writer){}
         }
 
         public abstract class TransferCompled : TransferMessage
@@ -40,7 +49,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             {
             }
 
-            protected TransferCompled(BinaryReader reader, int version) : base(reader, version)
+            protected TransferCompled(BinaryReader reader) : base(reader)
             {
             }
         }
@@ -51,7 +60,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             {
             }
 
-            protected DataTranfer(BinaryReader reader, int version) : base(reader, version)
+            protected DataTranfer(BinaryReader reader) : base(reader)
             {
             }
         }
@@ -71,7 +80,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             
             [UsedImplicitly]
             public TransferError(BinaryReader reader)
-                : base(reader, 1) { }
+                : base(reader) { }
 
 
             public TransferFailed ToFailed()
@@ -87,7 +96,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
                 }
             }
 
-            protected override void WriteInternal(BinaryWriter writer)
+            protected override void WriteInternal(ActorBinaryWriter writer)
             {
                 writer.Write((int)FailReason);
                 if (Data != null)
@@ -123,7 +132,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
             [UsedImplicitly]
             public NextChunk(BinaryReader reader)
-                : base(reader, 1)
+                : base(reader)
             {
                 
             }
@@ -140,7 +149,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
                 }
             }
 
-            protected override void WriteInternal(BinaryWriter writer)
+            protected override void WriteInternal(ActorBinaryWriter writer)
             {
                 writer.Write(Data.Length);
                 writer.Write(Data);
@@ -153,8 +162,16 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
         public sealed class SendNextChunk : DataTranfer
         {
-            public SendNextChunk([NotNull] string operationId) : base(operationId)
+            public SendNextChunk(string operationId) : base(operationId)
             { }
+
+            [UsedImplicitly]
+            public SendNextChunk(BinaryReader reader)
+                : base(reader)
+            {
+                
+            }
+
         }
 
         public sealed class SendingCompled : DataTranfer
@@ -162,6 +179,13 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             public SendingCompled(string operationId) 
                 : base(operationId)
             {
+            }
+
+            [UsedImplicitly]
+            public SendingCompled(BinaryReader reader)
+                : base(reader)
+            {
+
             }
         }
 
@@ -171,6 +195,13 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
                 : base(operationId)
             {
             }
+
+            [UsedImplicitly]
+            public RepeadChunk(BinaryReader reader)
+                : base(reader)
+            {
+
+            }
         }
 
         public sealed class StartTrensfering : DataTranfer
@@ -178,6 +209,13 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             public StartTrensfering(string operationId) 
                 : base(operationId)
             {
+            }
+
+            [UsedImplicitly]
+            public StartTrensfering(BinaryReader reader)
+                : base(reader)
+            {
+
             }
         }
 
@@ -187,18 +225,51 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
                 : base(operationId)
             {
             }
+
+            [UsedImplicitly]
+            public BeginTransfering(BinaryReader reader)
+                : base(reader)
+            {
+
+            }
         }
 
         public sealed class TransmitRequest : DataTranfer
         {
-            public IActorRef From { get; }
+            private ExtendedActorSystem? _system;
 
-            public string? Data { get; }
+            public IActorRef From { get; private set; } = ActorRefs.Nobody;
 
-            public TransmitRequest([NotNull] string operationId, IActorRef @from, string? data) : base(operationId)
+            public string? Data { get; private set; }
+
+            public TransmitRequest(string operationId, IActorRef from, string? data) : base(operationId)
             {
-                From = @from;
+                From = from;
                 Data = data;
+            }
+
+            [UsedImplicitly]
+            public TransmitRequest(BinaryReader reader, ExtendedActorSystem system)
+                : base(reader) => _system = system;
+
+            protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
+            {
+                if(_system == null)
+                    throw new InvalidOperationException();
+
+                if (manifest.WhenVersion(1))
+                {
+                    From = _system.Provider.ResolveActorRef(reader.ReadString());
+                    Data = BinaryHelper.ReadNull(reader, r => r.ReadString());
+                }
+
+                _system = null!;
+            }
+
+            protected override void WriteInternal(ActorBinaryWriter writer)
+            {
+                writer.Write(Serialization.SerializedActorPath(From));
+                BinaryHelper.WriteNull(Data, writer, writer.Write);
             }
         }
 
@@ -211,6 +282,10 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             {
                 Target = target;
             }
+
+            protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();
+
+            protected override void WriteInternal(ActorBinaryWriter writer) => throw new NotSupportedException();
         }
 
         public sealed class RequestDeny : DataTranfer

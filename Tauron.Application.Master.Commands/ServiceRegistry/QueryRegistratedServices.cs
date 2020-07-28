@@ -18,7 +18,7 @@ namespace Tauron.Application.Master.Commands
         public QueryRegistratedServices(BinaryReader reader) 
             => BinaryManifest.Read(reader).Verify(nameof(QueryRegistratedServices), 0);
 
-        public void Write(BinaryWriter writer) 
+        public void Write(ActorBinaryWriter writer) 
             => BinaryManifest.Write(writer, nameof(QueryRegistratedServices), 1);
     }
 
@@ -66,7 +66,7 @@ namespace Tauron.Application.Master.Commands
             }
         }
 
-        public void Write(BinaryWriter writer)
+        public void Write(ActorBinaryWriter writer)
         {
             BinaryManifest.Write(writer, nameof(MemberAddress), 1);
             
@@ -135,7 +135,7 @@ namespace Tauron.Application.Master.Commands
             }
         }
 
-        public void Write(BinaryWriter writer)
+        public void Write(ActorBinaryWriter writer)
         {
             BinaryManifest.Write(writer, nameof(MemberService), 1);
 
@@ -161,7 +161,7 @@ namespace Tauron.Application.Master.Commands
                 Services = BinaryHelper.Read(reader, r => new MemberService(r));
         }
 
-        public void Write(BinaryWriter writer)
+        public void Write(ActorBinaryWriter writer)
         {
             BinaryManifest.Write(writer, nameof(QueryRegistratedServicesResponse), 1);
 

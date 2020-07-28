@@ -181,7 +181,7 @@ namespace Tauron.Application.Master.Commands
                     RecpientType = (KillRecpientType) reader.ReadInt32();
             }
 
-            public void Write(BinaryWriter writer)
+            public void Write(ActorBinaryWriter writer)
             {
                 BinaryManifest.Write(writer, nameof(RespondRegistration), 1);
                 writer.Write((int)RecpientType);
@@ -196,7 +196,7 @@ namespace Tauron.Application.Master.Commands
             }
 
             public RequestRegistration(BinaryReader reader) => BinaryManifest.VerifiyEmpty<RequestRegistration>(reader);
-            public void Write(BinaryWriter writer) => BinaryManifest.WriteEmpty<RequestRegistration>(writer);
+            public void Write(ActorBinaryWriter writer) => BinaryManifest.WriteEmpty<RequestRegistration>(writer);
         }
 
         public sealed class KillNode : IInternalSerializable
@@ -206,7 +206,7 @@ namespace Tauron.Application.Master.Commands
                 
             }
             public KillNode(BinaryReader reader) => BinaryManifest.VerifiyEmpty<KillNode>(reader);
-            public void Write(BinaryWriter writer) => BinaryManifest.WriteEmpty<KillNode>(writer);
+            public void Write(ActorBinaryWriter writer) => BinaryManifest.WriteEmpty<KillNode>(writer);
         }
 
         public sealed class KillClusterMsg : IInternalSerializable
@@ -216,7 +216,7 @@ namespace Tauron.Application.Master.Commands
                 
             }
             public KillClusterMsg(BinaryReader reader) => BinaryManifest.VerifiyEmpty<KillClusterMsg>(reader);
-            public void Write(BinaryWriter writer) => BinaryManifest.WriteEmpty<KillClusterMsg>(writer);
+            public void Write(ActorBinaryWriter writer) => BinaryManifest.WriteEmpty<KillClusterMsg>(writer);
         }
 
         public static void Setup(ActorSystem system)

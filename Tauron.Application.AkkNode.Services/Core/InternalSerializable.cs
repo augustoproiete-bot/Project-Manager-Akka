@@ -23,8 +23,9 @@ namespace Tauron.Application.AkkNode.Services.Core
             if (obj is IInternalSerializable serializable)
             {
                 using var mem = new MemoryStream();
-                using var writer = new BinaryWriter(mem);
+                using var writer = new ActorBinaryWriter(mem, system);
                 serializable.Write(writer);
+                writer.Flush();
                 mem.Position = 0;
                 return mem.ToArray();
             }
@@ -45,7 +46,7 @@ namespace Tauron.Application.AkkNode.Services.Core
 
                     if(param.Length == 0)
                         continue;
-                    if (param.Length == 1 && param[0] == typeof(BinaryReader))
+                    if (param.Length == 1 && param[0].IsAssignableFrom(typeof(BinaryReader)))
                     {
                         fac = (binaryReader, actorSystem) => constructor.FastCreate(binaryReader);
                         break;
@@ -79,6 +80,6 @@ namespace Tauron.Application.AkkNode.Services.Core
 
     public interface IInternalSerializable
     {
-        void Write(BinaryWriter writer);
+        void Write(ActorBinaryWriter writer);
     }
 }

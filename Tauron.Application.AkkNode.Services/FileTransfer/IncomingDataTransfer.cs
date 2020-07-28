@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using Akka.Actor;
 using JetBrains.Annotations;
+using Tauron.Application.AkkNode.Services.Core;
 
 namespace Tauron.Application.AkkNode.Services.FileTransfer
 {
@@ -35,5 +36,8 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             _denyTimer.Dispose();
             Manager.Tell(new TransferMessages.RequestAccept(OperationId, to));
         }
+        protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();
+
+        protected override void WriteInternal(ActorBinaryWriter writer) => throw new NotSupportedException();
     }
 }

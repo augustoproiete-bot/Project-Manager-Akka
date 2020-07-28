@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Cluster;
 using Akka.Code.Configuration;
 using Akka.Code.Configuration.Elements;
 using Akka.Configuration;
@@ -12,6 +14,9 @@ using Akka.Dispatch;
 using Akka.Logger.Serilog;
 using Serilog;
 using Tauron.Application.ActorWorkflow;
+using Tauron.Application.AkkNode.Services.Core;
+using Tauron.Application.Master.Commands;
+using Tauron.Application.Master.Commands.Host;
 using Tauron.Application.Workflow;
 
 namespace AkkaTest
@@ -153,10 +158,16 @@ namespace AkkaTest
             Log.Logger = new LoggerConfiguration().WriteTo.File("Log.Log").CreateLogger();
             using var system = ActorSystem.Create("Test", config);
 
-            system.ActorOf(Props.Create<Tester>()).Tell(new StartTest());
+            var test = new InternalHostMessages.GetHostNameResult("Test");
 
-            //Console.WriteLine("Zum Beenden Taste drücken...");
-            //Console.ReadKey();
+            var ser = new InternalSerializer((ExtendedActorSystem)system);
+
+            var test2 = ser.FromBinary<InternalHostMessages.GetHostNameResult>(ser.ToBinary(test));
+
+            //system.ActorOf(Props.Create<Tester>()).Tell(new StartTest());
+
+            Console.WriteLine("Zum Beenden Taste drücken...");
+            Console.ReadKey();
 
             await system.WhenTerminated;
         }

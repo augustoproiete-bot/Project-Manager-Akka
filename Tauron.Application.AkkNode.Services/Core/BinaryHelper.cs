@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using JetBrains.Annotations;
 
 namespace Tauron.Application.AkkNode.Services.Core
 {
+    [PublicAPI]
     public static class BinaryHelper
     {
         public static ImmutableDictionary<TKey, TValue> Read<TKey, TValue>(BinaryReader reader, Func<BinaryReader, TKey> keyConversion, Func<BinaryReader, TValue> valueConversion)
@@ -27,7 +30,7 @@ namespace Tauron.Application.AkkNode.Services.Core
             }
         }
 
-        public static void WriteDic<TKey>(ImmutableDictionary<TKey, string> dic, BinaryWriter writer)
+        public static void WriteDic<TKey>(ImmutableDictionary<TKey, string> dic, ActorBinaryWriter writer)
             where TKey : IInternalSerializable
         {
             writer.Write(dic.Count);
@@ -53,7 +56,7 @@ namespace Tauron.Application.AkkNode.Services.Core
             return Read(reader, binaryReader => binaryReader.ReadString());
         }
 
-        public static void WriteList<TType>(ImmutableList<TType> list, BinaryWriter writer)
+        public static void WriteList<TType>(ImmutableList<TType> list, ActorBinaryWriter writer)
             where TType : IInternalSerializable
         {
             writer.Write(list.Count);
@@ -67,5 +70,21 @@ namespace Tauron.Application.AkkNode.Services.Core
             foreach (var writeable in list)
                 writer.Write(writeable);
         }
+
+
+        public static void WriteNull<TValue>([AllowNull] TValue value, BinaryWriter writer, Action<TValue> action)
+        {
+            if(Equals(value, null))
+                writer.Write(false);
+            else
+            {
+                writer.Write(true);
+                action(value);
+            }
+        }
+
+        [return:MaybeNull]
+        public static TType ReadNull<TType>(BinaryReader reader, Func<BinaryReader, TType> builder) 
+            => reader.ReadBoolean() ? builder(reader) : default;
     }
 }

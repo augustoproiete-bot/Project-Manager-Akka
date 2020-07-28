@@ -36,7 +36,7 @@ namespace Tauron.Application.Master.Commands
             }
         }
 
-        public void Write(BinaryWriter writer)
+        public void Write(ActorBinaryWriter writer)
         {
             BinaryManifest.Write(writer, nameof(RegisterService), 1);
             writer.Write(Name);
