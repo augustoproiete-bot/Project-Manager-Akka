@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -134,7 +135,7 @@ namespace Tauron.Application.Master.Commands
                                                       {
                                                           case null:
                                                               Log.Warning("No Service Registry Registrated");
-                                                              Sender.Tell(new QueryRegistratedServicesResponse(new List<MemberService>()));
+                                                              Sender.Tell(new QueryRegistratedServicesResponse(ImmutableList<MemberService>.Empty));
                                                               break;
                                                           default:
                                                               target.Forward(rs);
@@ -185,7 +186,7 @@ namespace Tauron.Application.Master.Commands
 
                        return new QueryRegistratedServicesResponse(temp
                            .Select(e => new MemberService(e.Value, e.Key))
-                           .ToList());
+                           .ToImmutableList());
                    }).ToSender();
 
                 this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
