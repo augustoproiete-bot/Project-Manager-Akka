@@ -141,6 +141,14 @@ namespace AkkaTest
 
         private static async Task Main()
         {
+            //var test1 = new QueryRegistratedServicesResponse(ImmutableList<MemberService>.Empty
+            //   .Add(new MemberService("Test",
+            //        MemberAddress.From(
+            //            new UniqueAddress(
+            //                new Address("akka.tcp", "Project-Manager", "192.178.192.89", 89), 123456)))));
+
+            
+
             //ProxyTest.TestProxy();
             //SynchronizationContext.SetSynchronizationContext(new TestSync());
             //AutoFacTest.TestAutofac();
