@@ -1,11 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using Tauron.Application.Wpf.Dialogs;
 
 namespace Tauron.Application.ServiceManager.ViewModels.Dialogs
 {
-    public interface IAddSeedUrlDialog : IBaseDialog<DialogSeedEntry, DialogSeedEntry>
+
+    public interface IAddSeedUrlDialog : IBaseDialog<DialogSeedEntry, IEnumerable<DialogSeedEntry>>
     {
-        Task<TResult> MakeTask<TResult>(Func<TaskCompletionSource<TResult>, object> factory);
     }
 }

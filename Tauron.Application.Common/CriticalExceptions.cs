@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -30,6 +31,7 @@ namespace Tauron
         public static Exception Unwrap([NotNull] this Exception ex)
         {
             while (ex.InnerException != null && ex is TargetInvocationException) ex = ex.InnerException;
+            if (ex is AggregateException ex2) return ex2.Flatten().InnerExceptions[0];
 
             return ex;
         }

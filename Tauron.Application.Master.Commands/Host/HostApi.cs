@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Akka.Actor;
 using JetBrains.Annotations;
@@ -21,6 +22,11 @@ namespace Tauron.Application.Master.Commands.Host
 
         public Task<OperationResponse> ExecuteCommand(InternalHostMessages.CommandBase command)
             => _actorRef.Ask<OperationResponse>(command, TimeSpan.FromMinutes(2));
+
+        public Task<ImmutableList<HostApp>> QueryApps(string name)
+            => _actorRef
+               .Ask<HostAppsResponse>(new QueryHostApps(name), TimeSpan.FromSeconds(30))
+               .ContinueWith(t => t.Result.Apps);
 
         public EventSubscribtion Event<T>() => _actorRef.SubscribeToEvent<T>();
     }

@@ -134,6 +134,7 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __CommandNameStartAll;
 			private readonly Task<string> __CommandNameStopAll;
 			private readonly Task<string> __CommandNameStartApp;
+			private readonly Task<string> __CommandNameStopApp;
 			public HostCommandRes(ActorSystem system)
 			{
 				var loc = system.Loc();
@@ -146,6 +147,7 @@ namespace Tauron.Application.Localizer.Generated
 				__CommandNameStartAll = LocLocalizer.ToString(loc.RequestTask("HostCommand_CommandName_StartAll"));
 				__CommandNameStopAll = LocLocalizer.ToString(loc.RequestTask("HostCommand_CommandName_StopAll"));
 				__CommandNameStartApp = LocLocalizer.ToString(loc.RequestTask("HostCommand_CommandName_StartApp"));
+				__CommandNameStopApp = LocLocalizer.ToString(loc.RequestTask("HostCommand_CommandName_StopApp"));
 			}
 			public string Running => __Running.Result;
 			public string Finish => __Finish.Result;
@@ -156,6 +158,17 @@ namespace Tauron.Application.Localizer.Generated
 			public string CommandNameStartAll => __CommandNameStartAll.Result;
 			public string CommandNameStopAll => __CommandNameStopAll.Result;
 			public string CommandNameStartApp => __CommandNameStartApp.Result;
+			public string CommandNameStopApp => __CommandNameStopApp.Result;
+		}
+		public sealed class SelectHostAppDialogRes
+		{
+			private readonly Task<string> __LabelTitle;
+			public SelectHostAppDialogRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__LabelTitle = LocLocalizer.ToString(loc.RequestTask("SelectHostAppDialog_Label_Title"));
+			}
+			public string LabelTitle => __LabelTitle.Result;
 		}
 		public sealed class CommonRes
 		{
@@ -192,6 +205,7 @@ namespace Tauron.Application.Localizer.Generated
 			 AddSeedDialog = new AddSeedDialogRes(system);
 			 HostView = new HostViewRes(system);
 			 HostCommand = new HostCommandRes(system);
+			 SelectHostAppDialog = new SelectHostAppDialogRes(system);
 			 Common = new CommonRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
@@ -201,6 +215,7 @@ namespace Tauron.Application.Localizer.Generated
 		public AddSeedDialogRes AddSeedDialog { get; }
 		public HostViewRes HostView { get; }
 		public HostCommandRes HostCommand { get; }
+		public SelectHostAppDialogRes SelectHostAppDialog { get; }
 		public CommonRes Common { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);

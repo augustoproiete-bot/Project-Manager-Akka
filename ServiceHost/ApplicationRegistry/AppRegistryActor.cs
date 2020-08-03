@@ -6,9 +6,11 @@ using Akka.Actor;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using ServiceHost.Services;
 using Tauron;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services.Core;
+using Tauron.Application.Master.Commands.Host;
 
 namespace ServiceHost.ApplicationRegistry
 {
@@ -22,8 +24,12 @@ namespace ServiceHost.ApplicationRegistry
         private readonly string _appsDirectory;
         private readonly SubscribeAbility _subscribeAbility;
 
-        public AppRegistryActor(IConfiguration configuration)
+        private readonly Dictionary<Guid, IActorRef> _ongoingQuerys = new Dictionary<Guid, IActorRef>();
+        private readonly IAppManager _appManager;
+
+        public AppRegistryActor(IConfiguration configuration, IAppManager appManager)
         {
+            _appManager = appManager;
             _subscribeAbility = new SubscribeAbility(this);
             _appsDirectory = Path.GetFullPath(configuration["AppsLocation"]);
 
@@ -37,8 +43,47 @@ namespace ServiceHost.ApplicationRegistry
             Receive<NewRegistrationRequest>(HandleNewRegistration);
             Receive<UpdateRegistrationRequest>(HandleUpdateRequest);
 
+            Receive<QueryHostApps>(ProcessQuery);
+            Receive<AppStatusResponse>(FinishQuery);
+
             _subscribeAbility.MakeReceive();
         }
+
+        #region SharedApi
+
+        private void FinishQuery(AppStatusResponse msg)
+        {
+            if (_ongoingQuerys.Remove(msg.OpId, out var sender))
+            {
+                var apps = System.Collections.Immutable.ImmutableList<HostApp>.Empty.ToBuilder();
+
+                foreach (var appsKey in _apps.Keys)
+                {
+                    try
+                    {
+                        var app = LoadApp(appsKey);
+                        if(app == null) continue;
+
+                        apps.Add(new HostApp(app.Name, app.Path, app.Version, app.AppType, app.SuressWindow, app.Exe, msg.Apps.GetValueOrDefault(appsKey, false)));
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, "Error on Load Installed App");
+                    }
+                }
+
+                sender.Tell(new HostAppsResponse(apps.ToImmutable()));
+            }
+        }
+
+        private void ProcessQuery(QueryHostApps obj)
+        {
+            var id = Guid.NewGuid();
+            _ongoingQuerys[id] = Sender;
+            _appManager.Actor.Tell(new QueryAppStaus(id));
+        }
+
+        #endregion
 
         private void HandleUpdateRequest(UpdateRegistrationRequest request)
         {
@@ -111,23 +156,26 @@ namespace ServiceHost.ApplicationRegistry
             Log.Info("Query App {App}", request.Name);
             try
             {
-                if (_apps.TryGetValue(request.Name, out var path) && File.Exists(path))
-                {
-                    var data = JsonConvert.DeserializeObject<InstalledApp>(path.ReadTextIfExis());
-                    Sender.Tell(new InstalledAppRespond(data));
-                    Log.Info("Query App Compled {App}", request.Name);
-                }
-                else
-                {
-                    Log.Info("No App Found {App}", request.Name);
-                    Sender.Tell(new InstalledAppRespond(InstalledApp.Empty));
-                }
+                Sender.Tell(new InstalledAppRespond(LoadApp(request.Name) ?? InstalledApp.Empty));
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error While Querining App Data");
                 Sender.Tell(new InstalledAppRespond(InstalledApp.Empty) { Fault = true } );
             }
+        }
+
+        private InstalledApp? LoadApp(string name)
+        {
+            if (_apps.TryGetValue(name, out var path) && File.Exists(path))
+            {
+                var data = JsonConvert.DeserializeObject<InstalledApp>(path.ReadTextIfExis());
+                Log.Info("Load App Data Compled {App}", name);
+                return data;
+            }
+
+            Log.Info("No App Found {App}", name);
+            return null;
         }
 
         private void HandleSaveData(SaveData unused)

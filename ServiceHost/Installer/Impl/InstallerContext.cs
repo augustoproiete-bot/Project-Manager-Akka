@@ -6,6 +6,7 @@ using ServiceHost.ApplicationRegistry;
 using ServiceHost.Installer.Impl.Source;
 using Tauron;
 using Tauron.Application.ActorWorkflow;
+using Tauron.Application.Master.Commands.Host;
 
 namespace ServiceHost.Installer.Impl
 {

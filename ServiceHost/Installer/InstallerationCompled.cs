@@ -1,4 +1,5 @@
 ﻿using ServiceHost.ApplicationRegistry;
+using Tauron.Application.Master.Commands.Host;
 
 namespace ServiceHost.Installer
 {

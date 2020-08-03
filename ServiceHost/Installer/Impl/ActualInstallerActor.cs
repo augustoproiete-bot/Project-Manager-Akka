@@ -9,6 +9,7 @@ using ServiceHost.Installer.Impl.Source;
 using Tauron;
 using Tauron.Akka;
 using Tauron.Application.ActorWorkflow;
+using Tauron.Application.Master.Commands.Host;
 using Tauron.Application.Workflow;
 
 namespace ServiceHost.Installer.Impl

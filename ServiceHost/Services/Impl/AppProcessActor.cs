@@ -46,13 +46,15 @@ namespace ServiceHost.Services.Impl
                 _process.Dispose();
                 _process = null;
 
-                Log.Info("Process killed Restrting {Name}", _app.Name);
+                Log.Info("Process killed Restarting {Name}", _app.Name);
                 Self.Tell(new InternalStartApp());
 
             });
 
             Receive<InternalStartApp>(StartApp);
             Receive<InternalStopApp>(StopApp);
+
+            Receive<GetName>(_ => Sender.Tell(new GetNameResponse(_app.Name, _isProcesRunning)));
         }
 
         private void StopApp(InternalStopApp obj)
@@ -108,6 +110,7 @@ namespace ServiceHost.Services.Impl
             CallSafe(
                 () =>
                 {
+                    if(_isProcesRunning) return;
                     Log.Info("Start App {Name}", _app.Name);
                     _process = Process.Start(new ProcessStartInfo(Path.Combine(_app.Path, _app.Exe), $"--ComHandle {_serviceComName}")
                                              {
@@ -138,5 +141,23 @@ namespace ServiceHost.Services.Impl
         }
 
         private sealed class CheckProcess { }
+
+        public sealed class GetName
+        {
+            
+        }
+
+        public sealed class GetNameResponse
+        {
+            public string Name { get; }
+
+            public bool Running { get; }
+
+            public GetNameResponse(string name, bool running)
+            {
+                Name = name;
+                Running = running;
+            }
+        }
     }
 }

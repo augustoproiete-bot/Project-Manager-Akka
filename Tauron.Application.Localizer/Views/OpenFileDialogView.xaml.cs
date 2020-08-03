@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -30,7 +29,7 @@ namespace Tauron.Application.Localizer.Views
                 Title += _localizer.OpenFileDialogViewHeaderNewPrefix;
         }
 
-        public Task<string?> Init(IEnumerable<string?> initalData)
+        public Task<string?> Init(string? initalData)
         {
             return _selector.Task;
         }

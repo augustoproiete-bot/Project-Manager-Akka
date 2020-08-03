@@ -48,11 +48,14 @@ namespace Tauron.Application.AkkaNode.Boottrap
         public static IApplicationBuilder ConfigurateNode(this IApplicationBuilder builder)
         {
             return builder
-                .ConfigurateAkkaSystem((context, system) =>
-                {
-                    system.Serialization.AddSerializationMap(typeof(IInternalSerializable), new InternalSerializer((ExtendedActorSystem)system));
-                })
-                //.ConfigurateAkkaSystem((context, system) => ServiceRegistry.Init(system))
+                //.ConfigurateAkkaSystem((context, system) =>
+                //{
+                //    var serializer = new InternalSerializer((ExtendedActorSystem)system);
+
+                //    system.Serialization.AddSerializer(nameof(InternalSerializer), serializer);
+                //    system.Serialization.AddSerializationMap(typeof(IInternalSerializable), serializer);
+                //})
+               //.ConfigurateAkkaSystem((context, system) => ServiceRegistry.Init(system))
                .ConfigureAkka(hbc =>
                               {
                                   const string main = "akka.conf";

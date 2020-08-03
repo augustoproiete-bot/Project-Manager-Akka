@@ -93,7 +93,7 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad
-                .ThenFlow(this.ShowDialog<INewEntryDialog, NewEntryDialogResult?, NewEntryInfoBase>(GetEntrys))
+                .ThenFlow(this.ShowDialog<INewEntryDialog, NewEntryDialogResult?, IEnumerable<NewEntryInfoBase>>(GetEntrys))
                 .From.Mutate(workspace.Entrys).With(em => em.EntryAdd, em => res => em.NewEntry(_project, res!.Name)).ToSelf()
                 .Then.Action(AddEntry)
                 .AndReturn().ThenRegister("NewEntry");
@@ -129,7 +129,9 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             this.Flow<UpdateRequest>()
-                .From.Mutate(workspace.Entrys).With(em => em.EntryUpdate, em => ur => em.UpdateEntry(ur.ProjectName, ur.Language, ur.EntryName, ur.Content)).ToSelf()
+                .From.Mutate(workspace.Entrys).With(
+                    em => em.EntryUpdate, 
+                    em => ur => em.UpdateEntry(ur.ProjectName, ur.Language, ur.EntryName, ur.Content)).ToSelf()
                 .Then.Action(UpdateEntry);
 
             #endregion
@@ -152,7 +154,7 @@ namespace Tauron.Application.Localizer.UIModels
             ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).AndAsync();
 
             NewCommad.WithCanExecute(() => GetImportableProjects().Any())
-                .ThenFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, string>(GetImportableProjects))
+                .ThenFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, IEnumerable<string>>(GetImportableProjects))
                 .From.Mutate(workspace.Projects).With(pm => pm.NewImport, pm => r => pm.AddImport(_project, r!.Project)).ToSelf()
                 .Then.Action(AddImport)
                 .AndReturn().ThenRegister("AddImport");
@@ -188,7 +190,8 @@ namespace Tauron.Application.Localizer.UIModels
             Languages = this.RegisterUiCollection<ProjectViewLanguageModel>(nameof(Languages)).AndAsync();
 
             NewCommad
-                .ThenFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, CultureInfo>(() => workspace.Get(_project).ActiveLanguages.Select(al => al.ToCulture()).ToArray()))
+                .ThenFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, IEnumerable<CultureInfo>>(
+                    () => workspace.Get(_project).ActiveLanguages.Select(al => al.ToCulture()).ToArray()))
                 .From.Mutate(workspace.Projects).With(pm => pm.NewLanguage, pm => d => pm.AddLanguage(_project, d!.CultureInfo)).ToSelf()
                 .Then.Action(AddActiveLanguage).AndReturn().ThenRegister("AddLanguage");
 

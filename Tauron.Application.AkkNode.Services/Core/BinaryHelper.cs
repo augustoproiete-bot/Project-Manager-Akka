@@ -9,7 +9,7 @@ namespace Tauron.Application.AkkNode.Services.Core
     [PublicAPI]
     public static class BinaryHelper
     {
-        public static ImmutableDictionary<TKey, TValue> Read<TKey, TValue>(BinaryReader reader, Func<BinaryReader, TKey> keyConversion, Func<BinaryReader, TValue> valueConversion)
+        public static ImmutableDictionary<TKey, TValue> List<TKey, TValue>(BinaryReader reader, Func<BinaryReader, TKey> keyConversion, Func<BinaryReader, TValue> valueConversion)
         {
             var count = reader.ReadInt32();
             var builder = ImmutableDictionary.CreateBuilder<TKey, TValue>();

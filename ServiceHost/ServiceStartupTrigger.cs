@@ -1,9 +1,9 @@
 ﻿using Akka.Actor;
 using Akka.Cluster;
-using ServiceHost.ApplicationRegistry;
 using ServiceHost.Services;
 using Tauron.Akka;
 using Tauron.Application.AkkaNode.Boottrap;
+using Tauron.Application.Master.Commands.Host;
 
 namespace ServiceHost
 {

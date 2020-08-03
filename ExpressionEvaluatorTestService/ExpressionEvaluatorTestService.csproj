@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AssemblyName>ExpressionEvaluatorTestService</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="akka.conf" />
+    <None Remove="appsettings.json" />
+    <None Remove="seed.conf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="akka.conf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="seed.conf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Akka.Cluster.Sharding" Version="1.4.9" />
+    <PackageReference Include="CodingSeb.ExpressionEvaluator" Version="1.4.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ExpressionEvaluatorTestService.Api\ExpressionEvaluatorTestService.Api.csproj" />
+    <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />
+  </ItemGroup>
+
+</Project>

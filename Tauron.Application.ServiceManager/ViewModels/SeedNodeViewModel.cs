@@ -1,13 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Threading;
 using System.Windows.Threading;
 using Akka.Actor;
 using Akka.Cluster;
 using Autofac;
 using JetBrains.Annotations;
-using Serilog;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
@@ -78,12 +77,12 @@ namespace Tauron.Application.ServiceManager.ViewModels
                                            Models.Add(
                                                new SeedUrlModel(s),
                                                c => c.When(c => c == 1, TryJoin));
-                                           ;
                                        });
             }
 
             NewCommad
-               .ThenFlow(this.ShowDialog<IAddSeedUrlDialog, DialogSeedEntry>(() => Models.Select(m => new DialogSeedEntry(m.Url))))
+               .ThenFlow(this.ShowDialog<IAddSeedUrlDialog, DialogSeedEntry,  IEnumerable<DialogSeedEntry>>(
+                    () => Models.Select(m => new DialogSeedEntry(m.Url))))
                .From.Action(AddSeedEntry)
                .AndReturn().ThenRegister("AddSeedUrl");
 

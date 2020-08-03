@@ -11,6 +11,7 @@ using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Localizer.Generated;
 using Tauron.Application.Master.Commands.Host;
 using Tauron.Application.ServiceManager.Core.Model;
+using Tauron.Application.ServiceManager.ViewModels.Dialogs;
 using Tauron.Application.Wpf.Commands;
 using Tauron.Application.Wpf.Dialogs;
 using Tauron.Application.Wpf.Model;
@@ -45,7 +46,10 @@ namespace Tauron.Application.ServiceManager.ViewModels
                     else
                     {
                         if (entry == null)
-                            HostEntries.Add(new UIHostEntry(he.Path, he.Name, SimpleCommand.Empty, localizer, _hostConnector, commandExecutor, CommandChanged));
+                        {
+                            HostEntries.Add(new UIHostEntry(he.Path, he.Name, SimpleCommand.Empty, localizer, _hostConnector, commandExecutor, 
+                                CommandChanged, this, _hostConnector));
+                        }
                         else
                             entry.Name = he.Name;
                     }
@@ -72,6 +76,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
         private string? _name;
         private readonly LocLocalizer _localizer;
         private readonly HostApi _hostApi;
+        private readonly UiActor _actor;
+        private readonly HostApi _api;
 
         public string Name
         {
@@ -90,7 +96,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
         public ICollection<HostCommand> HostCommands { get; }
 
-        public UIHostEntry(ActorPath actorPath, string name, ICommand applications, LocLocalizer localizer, HostApi hostApi, IActorRef comandExecute, Action commandFinish)
+        public UIHostEntry(ActorPath actorPath, string name, ICommand applications, LocLocalizer localizer, HostApi hostApi, 
+            IActorRef comandExecute, Action commandFinish, UiActor actor, HostApi api)
         {
             HostCommand BuildCommand(string commandName, Func<Task<bool>> exec) 
                 => new HostCommand(commandName, localizer, exec, comandExecute, commandFinish);
@@ -99,6 +106,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
             _name = name;
             _localizer = localizer;
             _hostApi = hostApi;
+            _actor = actor;
+            _api = api;
             Applications = applications;
 
             var commandLocal = localizer.HostCommand;
@@ -106,13 +115,25 @@ namespace Tauron.Application.ServiceManager.ViewModels
             HostCommands = new List<HostCommand>
                            {
                                 BuildCommand(commandLocal.CommandNameStopAll, async () => await RunCommand(new StopAllApps(Name), () => ConfirmAll(true))),
-                                BuildCommand(commandLocal.CommandNameStartAll, async () => await RunCommand(new StartAllApps(Name), () => ConfirmAll(false)))
+                                BuildCommand(commandLocal.CommandNameStopApp, async () => await SelectName(true, async s => await RunCommand(new StopHostApp(Name, s)))),
+                                BuildCommand(commandLocal.CommandNameStartAll, async () => await RunCommand(new StartAllApps(Name), () => ConfirmAll(false))),
+                                BuildCommand(commandLocal.CommandNameStartApp, async () => await SelectName(false, async s => await RunCommand(new StartHostApp(Name, s))))
                            };
         }
 
-        private async Task<bool> RunCommand(InternalHostMessages.CommandBase msg, Func<Task<bool>> confirm)
+        private async Task<bool> SelectName(bool stop, Func<string, Task<bool>> continueWhith)
         {
-            if(await confirm())
+            var app = _actor.ShowDialog<ISelectHostAppDialog, HostApp?, Task<HostApp[]>>(() =>
+                _api.QueryApps(Name)
+                   .ContinueWith(t => t.Result.Where(e => e.Running != stop).ToArray()))();
+
+            if (app == null) return false;
+            return await continueWhith(app.Name);
+        }
+
+        private async Task<bool> RunCommand(InternalHostMessages.CommandBase msg, Func<Task<bool>>? confirm = null)
+        {
+            if(confirm == null || await confirm())
                 return (await _hostApi.ExecuteCommand(msg)).Success;
             return false;
         }

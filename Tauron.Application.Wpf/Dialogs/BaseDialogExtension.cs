@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Core;
@@ -16,16 +15,16 @@ namespace Tauron.Application.Wpf.Dialogs
         public static Func<TData> ShowDialog<TDialog, TData>(this UiActor actor, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TData>
         {
-            return ShowDialog<TDialog, TData, TData>(actor, Array.Empty<TData>, parameters);
+            return ShowDialog<TDialog, TData, TData>(actor, () => default!, parameters);
         }
 
-        public static Func<TData> ShowDialog<TDialog, TData>(this UiActor actor, Func<IEnumerable<TData>> initalData, params Parameter[] parameters)
+        public static Func<TData> ShowDialog<TDialog, TData>(this UiActor actor, Func<TData> initalData, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TData>
         {
             return ShowDialog<TDialog, TData, TData>(actor, initalData, parameters);
         }
 
-        public static Func<TData> ShowDialog<TDialog, TData, TViewData>(this UiActor actor, Func<IEnumerable<TViewData>> initalData, params Parameter[] parameters)
+        public static Func<TData> ShowDialog<TDialog, TData, TViewData>(this UiActor actor, Func<TViewData> initalData, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TViewData>
         {
             _dialogCoordinator ??= actor.LifetimeScope.Resolve<IDialogCoordinator>();

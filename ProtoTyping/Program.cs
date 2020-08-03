@@ -16,6 +16,8 @@ namespace ProtoTyping
     {
         private static async Task Main(string[] args)
         {
+            var test = ConfigurationFactory.ParseString(await File.ReadAllTextAsync("akka.conf"));
+
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.ColoredConsole()
                 .Enrich.FromLogContext()

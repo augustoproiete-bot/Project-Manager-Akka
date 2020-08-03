@@ -1,0 +1,38 @@
+﻿<tau:DialogBase x:Class="Tauron.Application.ServiceManager.Views.Dialogs.SelectHostAppDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Tauron.Application.ServiceManager.Views.Dialogs"
+             xmlns:tau="http://schemas.TauronWpf.com"
+             xmlns:sync="http://schemas.syncfusion.com/wpf"
+             xmlns:host="clr-namespace:Tauron.Application.Master.Commands.Host;assembly=Tauron.Application.Master.Commands"
+             mc:Ignorable="d" Title="{tau:Loc AddSeedDialog_Label_Title}"
+             d:DesignHeight="450" d:DesignWidth="800" d:DataContext="{d:DesignInstance local:SelectHostAppViewModel, IsDesignTimeCreatable=True}">
+    <sync:SfBusyIndicator IsBusy="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" MouseDoubleClick="Control_OnMouseDoubleClick" ItemsSource="{Binding Apps}" SelectedItem="{Binding Selectted}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="host:HostApp">
+                        <Border Margin="5" CornerRadius="15" BorderThickness="2" BorderBrush="White">
+                            <TextBlock Text="{Binding Name}"/>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>   
+            <TextBlock Margin="5" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding Info}"/>
+            <Button Content="{tau:Loc Common_Ok}" Margin="5" Grid.Row="2" Grid.Column="2" Command="{Binding Select}"/>
+            <Button Content="{tau:Loc Common_Cancel}" Margin="5" Grid.Row="2" Grid.Column="1" Command="{Binding Cancel}"/>
+        </Grid>
+    </sync:SfBusyIndicator>
+</tau:DialogBase>

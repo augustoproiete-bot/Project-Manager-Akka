@@ -30,7 +30,7 @@ namespace Tauron.Application.Localizer.Views
         {
             var result = new TaskCompletionSource<AddLanguageDialogResult?>();
 
-            DataContext = new LanguageSelectorDialogViewModel(c => result.SetResult(c == null ? null : new AddLanguageDialogResult(c)), info => initalData.Contains(info), Dispatcher);
+            DataContext = new LanguageSelectorDialogViewModel(c => result.SetResult(c == null ? null : new AddLanguageDialogResult(c)), initalData.Contains!, Dispatcher);
 
             return result.Task;
         }

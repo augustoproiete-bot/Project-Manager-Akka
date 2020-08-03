@@ -32,6 +32,8 @@
   "HostCommand_CommandName_StartAll": "Start All",
   "HostCommand_CommandName_StopAll": "Stop All",
   "HostCommand_CommandName_StartApp": "Start App",
+  "HostCommand_CommandName_StopApp": "Stop App",
+  "SelectHostAppDialog_Label_Title": "Select App",
   "Common_Error": "Error",
   "Common_Warning": "Warning",
   "Common_Unkowen": "Unkowen",
