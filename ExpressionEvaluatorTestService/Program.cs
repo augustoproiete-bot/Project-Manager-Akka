@@ -1,9 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Autofac;
 using Tauron.Application.AkkaNode.Boottrap;
 using Tauron.Application.Master.Commands;
-using Tauron.Host;
 
 namespace ExpressionEvaluatorTestService
 {
@@ -11,12 +9,11 @@ namespace ExpressionEvaluatorTestService
     {
         static async Task Main(string[] args)
         {
-            await ActorApplication.Create(args)
+            await Boottrap.StartNode(args, KillRecpientType.Service)
                .ConfigureAutoFac(b =>
                 {
                     b.RegisterType<StartExpressionService>().As<IStartUpAction>();
                 })
-               .StartNode(KillRecpientType.Service)
                .Build().Run();
         }
     }

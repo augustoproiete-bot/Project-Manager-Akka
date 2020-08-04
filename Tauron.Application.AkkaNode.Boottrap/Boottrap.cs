@@ -4,7 +4,6 @@ using System.IO.Pipes;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
-using Akka.Streams.Dsl;
 using Autofac;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +12,7 @@ using Serilog.Core;
 using Serilog.Events;
 using Serilog.Exceptions;
 using Serilog.Formatting.Compact;
-using Tauron.Application.AkkNode.Services.Core;
+using Tauron.Application.AkkNode.Services.Configuration;
 using Tauron.Application.Master.Commands;
 using Tauron.Host;
 
@@ -21,9 +20,10 @@ namespace Tauron.Application.AkkaNode.Boottrap
 {
     public static class Boottrap
     {
-        public static IApplicationBuilder StartNode(this IApplicationBuilder builder, KillRecpientType type)
+        public static IApplicationBuilder StartNode(string[] args, KillRecpientType type)
         {
-            return builder
+            Assemblys.WireUp();
+            return ActorApplication.Create(args)
                .ConfigureAutoFac(cb =>
                 {
                     cb.RegisterType<ConsoleAppRoute>().Named<IAppRoute>("default");

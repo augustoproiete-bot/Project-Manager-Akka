@@ -29,8 +29,7 @@ namespace ServiceHost
             {
                 if (createdNew)
                 {
-                    await ActorApplication.Create(args)
-                        .StartNode(KillRecpientType.Host)
+                    await Boottrap.StartNode(args, KillRecpientType.Host)
                         .ConfigureAutoFac(cb =>
                         {
                             cb.RegisterType<CommandHandlerStartUp>().As<IStartUpAction>();

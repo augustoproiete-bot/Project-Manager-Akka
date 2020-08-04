@@ -18,8 +18,7 @@ namespace Master.Seed.Node
 
             try
             {
-                await ActorApplication.Create(args)
-                   .StartNode(KillRecpientType.Seed)
+                await Boottrap.StartNode(args, KillRecpientType.Seed)
                    .ConfigurateAkkaSystem((context, system) =>
                                           {
                                               var cluster = Cluster.Get(system);

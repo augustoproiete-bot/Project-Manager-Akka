@@ -149,12 +149,14 @@ namespace AkkaTest
             {
                 if (name.Name?.StartsWith("Akka") == true)
                 {
-
+                    var path = Path.GetFullPath("akka.bin");
+                    var asm = context.LoadFromAssemblyPath(path);
+                    return asm;
                 }
                 return null;
             };
 
-            var test3 = Type.GetType("Akka.Configuration.ConfigurationFactory, Akka2, Version=1.4.9.0, Culture=neutral, PublicKeyToken=null");
+            var test3 = Type.GetType("Akka.Configuration.ConfigurationFactory, Akka, Version=1.4.9.0, Culture=neutral, PublicKeyToken=null");
 
             var one = ConfigurationFactory.ParseString("akka1.Test=1");
             var two = ConfigurationFactory.ParseString("akka2.Test=2");
