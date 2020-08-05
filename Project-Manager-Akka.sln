@@ -111,9 +111,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{52782757-E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestService", "TestService", "{7CE7EEA5-EAA5-4FE9-914B-799CB2E3E13A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExpressionEvaluatorTestService", "ExpressionEvaluatorTestService\ExpressionEvaluatorTestService.csproj", "{07C87529-D0F6-43E8-A76A-6243F288DECC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExpressionEvaluatorTestService", "ExpressionEvaluatorTestService\ExpressionEvaluatorTestService.csproj", "{07C87529-D0F6-43E8-A76A-6243F288DECC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExpressionEvaluatorTestService.Api", "ExpressionEvaluatorTestService.Api\ExpressionEvaluatorTestService.Api.csproj", "{D08E99E0-E410-4AC3-8170-8B5EEBB81AB1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExpressionEvaluatorTestService.Api", "ExpressionEvaluatorTestService.Api\ExpressionEvaluatorTestService.Api.csproj", "{D08E99E0-E410-4AC3-8170-8B5EEBB81AB1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Setup", "Setup", "{FD0317B1-5DDC-4191-9EE2-8BEDDCA547E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleHostSetup", "SimpleHostSetup\SimpleHostSetup.csproj", "{46549F11-2ABF-4955-9F3A-866A3123D5F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -257,6 +261,10 @@ Global
 		{D08E99E0-E410-4AC3-8170-8B5EEBB81AB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D08E99E0-E410-4AC3-8170-8B5EEBB81AB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D08E99E0-E410-4AC3-8170-8B5EEBB81AB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46549F11-2ABF-4955-9F3A-866A3123D5F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46549F11-2ABF-4955-9F3A-866A3123D5F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46549F11-2ABF-4955-9F3A-866A3123D5F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46549F11-2ABF-4955-9F3A-866A3123D5F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -315,6 +323,8 @@ Global
 		{7CE7EEA5-EAA5-4FE9-914B-799CB2E3E13A} = {52782757-EC7C-42FD-85C9-17566C9FAD7F}
 		{07C87529-D0F6-43E8-A76A-6243F288DECC} = {7CE7EEA5-EAA5-4FE9-914B-799CB2E3E13A}
 		{D08E99E0-E410-4AC3-8170-8B5EEBB81AB1} = {7CE7EEA5-EAA5-4FE9-914B-799CB2E3E13A}
+		{FD0317B1-5DDC-4191-9EE2-8BEDDCA547E8} = {FF793DD2-60AE-4BCB-9146-D164EE1D2829}
+		{46549F11-2ABF-4955-9F3A-866A3123D5F3} = {FD0317B1-5DDC-4191-9EE2-8BEDDCA547E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F63AD2ED-4320-43AB-8761-A3FEBC507539}

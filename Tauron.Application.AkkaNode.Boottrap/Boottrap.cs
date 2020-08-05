@@ -7,6 +7,7 @@ using Akka.Configuration;
 using Autofac;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -22,7 +23,8 @@ namespace Tauron.Application.AkkaNode.Boottrap
     {
         public static IApplicationBuilder StartNode(string[] args, KillRecpientType type)
         {
-            Assemblys.WireUp();
+
+            //Assemblys.WireUp();
             return ActorApplication.Create(args)
                .ConfigureAutoFac(cb =>
                 {
@@ -31,60 +33,65 @@ namespace Tauron.Application.AkkaNode.Boottrap
                 })
                .ConfigurateNode()
                .ConfigureLogging((context, configuration) =>
-                                 {
-                                     Console.Title = context.HostEnvironment.ApplicationName;
+                {
+                    Console.Title = context.HostEnvironment.ApplicationName;
 
-                                     configuration.WriteTo.ColoredConsole();
-                                 })
+                    configuration.WriteTo.ColoredConsole();
+                })
                .ConfigurateAkkaSystem((context, system) =>
-               {
-                   if(type == KillRecpientType.Seed)
-                       KillSwitch.Setup(system);
-                   else
-                       KillSwitch.Subscribe(system, type);
-               });
+                {
+                    if (type == KillRecpientType.Seed)
+                        KillSwitch.Setup(system);
+                    else
+                        KillSwitch.Subscribe(system, type);
+                });
         }
 
         public static IApplicationBuilder ConfigurateNode(this IApplicationBuilder builder)
         {
+            var config = GetConfig();
+
             return builder
-                //.ConfigurateAkkaSystem((context, system) =>
-                //{
-                //    var serializer = new InternalSerializer((ExtendedActorSystem)system);
-
-                //    system.Serialization.AddSerializer(nameof(InternalSerializer), serializer);
-                //    system.Serialization.AddSerializationMap(typeof(IInternalSerializable), serializer);
-                //})
-               //.ConfigurateAkkaSystem((context, system) => ServiceRegistry.Init(system))
-               .ConfigureAkka(hbc =>
-                              {
-                                  const string main = "akka.conf";
-                                  const string seed = "seed.conf";
-
-                                  var config = ConfigurationFactory.Empty;
-
-                                  if (File.Exists(main))
-                                      config = ConfigurationFactory.ParseString(File.ReadAllText(main)).WithFallback(config);
-
-                                  if (File.Exists(seed))
-                                      config = ConfigurationFactory.ParseString(File.ReadAllText(seed)).WithFallback(config);
-
-                                  return config;
-                              })
+               .ConfigureAppConfiguration((context, configurationBuilder) => configurationBuilder.Add(
+                    new HoconConfigurationSource(() => config, 
+                        ("akka.appinfo.applicationName", "applicationName"),
+                        ("akka.appinfo.actorsystem", "actorsystem"),
+                        ("akka.appinfo.appslocation", "AppsLocation"))))
+               .ConfigureAkka(hbc => config)
                .ConfigureLogging((context, configuration) =>
-                                 {
-                                     configuration.WriteTo.RollingFile(new CompactJsonFormatter(), "Logs\\Log.log", fileSizeLimitBytes: 5_242_880, retainedFileCountLimit: 2);
+                {
+                    configuration.WriteTo.RollingFile(new CompactJsonFormatter(), "Logs\\Log.log", fileSizeLimitBytes: 5_242_880, retainedFileCountLimit: 2);
 
-                                     configuration
-                                        .MinimumLevel.Debug()
-                                        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                                        .MinimumLevel.Override("System", LogEventLevel.Warning)
-                                        .Enrich.WithProperty("ApplicationName", context.HostEnvironment.ApplicationName)
-                                        .Enrich.FromLogContext()
-                                        .Enrich.WithExceptionDetails()
-                                        .Enrich.With<EventTypeEnricher>()
-                                        .Enrich.With<LogLevelWriter>();
-                                 });
+                    configuration
+                       .MinimumLevel.Debug()
+                       .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                       .MinimumLevel.Override("System", LogEventLevel.Warning)
+                       .Enrich.WithProperty("ApplicationName", context.HostEnvironment.ApplicationName)
+                       .Enrich.FromLogContext()
+                       .Enrich.WithExceptionDetails()
+                       .Enrich.With<EventTypeEnricher>()
+                       .Enrich.With<LogLevelWriter>();
+                });
+        }
+
+        private static Config GetConfig()
+        {
+            const string baseconf = "base.conf";
+            const string main = "akka.conf";
+            const string seed = "seed.conf";
+
+            var config = Config.Empty;
+
+            if (File.Exists(baseconf))
+                config = ConfigurationFactory.ParseString(File.ReadAllText(baseconf)).WithFallback(config);
+
+            if (File.Exists(main))
+                config = ConfigurationFactory.ParseString(File.ReadAllText(main)).WithFallback(config);
+
+            if (File.Exists(seed))
+                config = ConfigurationFactory.ParseString(File.ReadAllText(seed)).WithFallback(config);
+
+            return config;
         }
 
         private class LogLevelWriter : ILogEventEnricher

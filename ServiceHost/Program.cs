@@ -29,19 +29,7 @@ namespace ServiceHost
             {
                 if (createdNew)
                 {
-                    await Boottrap.StartNode(args, KillRecpientType.Host)
-                        .ConfigureAutoFac(cb =>
-                        {
-                            cb.RegisterType<CommandHandlerStartUp>().As<IStartUpAction>();
-                            cb.RegisterModule<HostModule>();
-                        })
-                        .ConfigurateAkkaSystem((context, system) =>
-                        {
-                            var cluster = Cluster.Get(system);
-                            cluster.RegisterOnMemberUp(()
-                                => ServiceRegistry.GetRegistry(system).RegisterService(new RegisterService(context.HostEnvironment.ApplicationName, cluster.SelfUniqueAddress)));
-                        })
-                        .Build().Run();
+                    await StartApp(args);
                 }
                 else
                 {
@@ -67,6 +55,23 @@ namespace ServiceHost
                     m.ReleaseMutex();
                 IncomingCommandHandler.Handler?.Stop();
             }
+        }
+
+        private static async Task StartApp(string[] args)
+        {
+            await Boottrap.StartNode(args, KillRecpientType.Host)
+               .ConfigureAutoFac(cb =>
+                {
+                    cb.RegisterType<CommandHandlerStartUp>().As<IStartUpAction>();
+                    cb.RegisterModule<HostModule>();
+                })
+               .ConfigurateAkkaSystem((context, system) =>
+                {
+                    var cluster = Cluster.Get(system);
+                    cluster.RegisterOnMemberUp(()
+                        => ServiceRegistry.GetRegistry(system).RegisterService(new RegisterService(context.HostEnvironment.ApplicationName, cluster.SelfUniqueAddress)));
+                })
+               .Build().Run();
         }
 
         private sealed class ExposedCommandLineProvider : CommandLineConfigurationProvider
