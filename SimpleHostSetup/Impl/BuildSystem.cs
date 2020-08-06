@@ -10,12 +10,12 @@ namespace SimpleHostSetup.Impl
     {
         private readonly ILogger _logger = Log.ForContext<BuildSystem>();
 
-        public async Task Run()
+        public async Task Run(BuildSystemConfiguration config)
         {
             
             try
             {
-                var finder = new ProjectFinder(Path.GetDirectoryName(Assembly.GetEntryAssembly()?.CodeBase));
+                var finder = new ProjectFinder(config.SearchStart, config.SearchRootFile);
             }
             catch (Exception e)
             {

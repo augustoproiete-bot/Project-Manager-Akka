@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Serilog;
 using SimpleHostSetup.Impl;
@@ -27,6 +29,9 @@ namespace SimpleHostSetup
             Console.Title = "Simple Setup Builder";
 
             Log.Logger = new LoggerConfiguration().ConfigDefaultLogging("Simple Setup Builder", true).WriteTo.ColoredConsole().CreateLogger();
+
+            string searchStart = Path.GetFullPath(Path.GetDirectoryName(Assembly.GetEntryAssembly()?.CodeBase) ?? string.Empty);
+
 
             var system = new BuildSystem();
             await system.Run();
