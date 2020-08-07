@@ -16,6 +16,7 @@ using Akka.Configuration;
 using Akka.Configuration.Hocon;
 using Akka.Dispatch;
 using Akka.Logger.Serilog;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using Tauron.Application.ActorWorkflow;
 using Tauron.Application.AkkNode.Services.Core;
@@ -143,46 +144,10 @@ namespace AkkaTest
             }
         }
 
-        private static async Task Main()
+        private static async Task Main(string[] args)
         {
-            AssemblyLoadContext.Default.Resolving += (context, name) =>
-            {
-                if (name.Name?.StartsWith("Akka") == true)
-                {
-                    var path = Path.GetFullPath("akka.bin");
-                    var asm = context.LoadFromAssemblyPath(path);
-                    return asm;
-                }
-                return null;
-            };
-
-            var test3 = Type.GetType("Akka.Configuration.ConfigurationFactory, Akka, Version=1.4.9.0, Culture=neutral, PublicKeyToken=null");
-
-            var one = ConfigurationFactory.ParseString("akka1.Test=1");
-            var two = ConfigurationFactory.ParseString("akka2.Test=2");
-            var three = ConfigurationFactory.ParseString("akka3.Test=3");
-            var four = ConfigurationFactory.ParseString("akka4.Test=4");
-
-            two = two.WithFallback(one);
-            three = three.WithFallback(two);
-            four = four.WithFallback(three);
-
-            foreach (var element in four.Root.Values)
-            {
-                switch (element)
-                {
-                    case HoconArray array:
-                        break;
-                    case HoconLiteral literal:
-                        break;
-                    case HoconObject obj:
-                        break;
-                    case HoconSubstitution substitution:
-                        break;
-                }
-            }
-
-            var testres = four.GetInt("akka1.Test", -1);
+            var conf = new ConfigurationBuilder().AddCommandLine(args).Build();
+            var test3 = conf.GetValue<bool>("Test");
 
             Console.ReadLine();
 

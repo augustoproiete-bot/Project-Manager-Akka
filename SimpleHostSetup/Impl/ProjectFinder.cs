@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Serilog;
@@ -25,14 +26,36 @@ namespace SimpleHostSetup.Impl
             _rootFile = rootFile;
         }
 
-        public FileInfo Search(string name)
+        public FileInfo? Search(string name)
         {
             _logger.Information("Try Find Project {Name}", name);
 
-            if (_root == null)
+            if (_root == null) 
                 SeekRoot();
 
-            
+            var directorys = new Queue<DirectoryInfo>();
+
+            var current = _root;
+
+            while (current != null)
+            {
+                foreach (var file in current.EnumerateFiles("*.*"))
+                {
+                    if (file.Name.Contains(name))
+                        return file;
+                }
+
+                foreach (var directory in current.EnumerateDirectories()) 
+                    directorys.Enqueue(directory);
+
+
+                if (directorys.Count == 0)
+                    break;
+                
+                current = directorys.Dequeue();
+            }
+
+            return null;
         }
 
         private void SeekRoot()

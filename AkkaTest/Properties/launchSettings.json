@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AkkaTest": {
+      "commandName": "Project",
+      "commandLineArgs": "--Test True"
+    }
+  }
+}
