@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Serilog;
@@ -10,11 +11,11 @@ namespace SimpleHostSetup.DotnetBuilder
     {
         private readonly ILogger _log = Log.ForContext<DotNetBuilder>();
 
-        public async Task<bool> BuildApplication(string project, string output)
+        public async Task<bool> BuildApplication(FileInfo project, string output)
         {
             var arguments = new StringBuilder()
                .Append(" publish ")
-               .Append($"\"{project}\"")
+               .Append($"\"{project.FullName}\"")
                .Append($" -o \"{output}\"")
                .Append(" -c Release")
                .Append(" -v d");

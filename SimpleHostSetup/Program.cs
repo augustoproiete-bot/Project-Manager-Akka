@@ -32,14 +32,25 @@ namespace SimpleHostSetup
         {
             Console.Title = "Simple Setup Builder";
 
-            Log.Logger = new LoggerConfiguration().ConfigDefaultLogging("Simple Setup Builder", true).WriteTo.ColoredConsole().CreateLogger();
+            try
+            {
+                Log.Logger = new LoggerConfiguration().ConfigDefaultLogging("Simple Setup Builder", true).WriteTo.ColoredConsole().CreateLogger();
 
-            string searchStart = Path.GetFullPath(Path.GetDirectoryName(Assembly.GetEntryAssembly()?.CodeBase) ?? string.Empty);
-             var config = new BuildSystemConfiguration(searchStart, "Project-Manager-Akka.sln", new Program(), () => new DotNetBuilder(), 
-                 ImmutableDictionary<string, AppInfo>.Empty.Add("Seed", new AppInfo(AppType.StartUp, "Master.Seed.Node.csproj")), "ServiceHost.csproj");
+                string searchStart = Path.GetFullPath(Path.GetDirectoryName(Assembly.GetEntryAssembly()?.CodeBase) ?? string.Empty);
+                var config = new BuildSystemConfiguration(searchStart, "Project-Manager-Akka.sln", new Program(), () => new DotNetBuilder(), 
+                    ImmutableDictionary<string, AppInfo>.Empty.Add("Seed", new AppInfo(AppType.StartUp, "Master.Seed.Node.csproj")), "ServiceHost.csproj");
 
-            var system = new BuildSystem();
-            await system.Run(config);
+                var system = new BuildSystem();
+                await system.Run(config);
+            }
+            finally
+            {
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine("Press Key to Close...");
+                Console.ReadKey();
+            }
         }
 
         public string GetIp()
