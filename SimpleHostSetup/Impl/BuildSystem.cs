@@ -8,11 +8,17 @@ namespace SimpleHostSetup.Impl
     public sealed class BuildSystem
     {
         private readonly ILogger _logger = Log.ForContext<BuildSystem>();
+        private readonly AppPacker _appPacker = new AppPacker();
 
         public async Task Run(BuildSystemConfiguration config)
         {
             _logger.Information("Begin Building Host Setup");
-            string basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tauron", "SimpleHostSetup");
+            string setupPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tauron", "SimpleHostSetup");
+
+            if(Directory.Exists(setupPath))
+                Directory.Delete(setupPath, true);
+
+            string basePath = Path.Combine(setupPath, "Build");
             try
             {
 
@@ -28,8 +34,6 @@ namespace SimpleHostSetup.Impl
                 var builder = config.BuilderFactory();
                 string hostOutput = Path.Combine(basePath, "Host");
 
-                if(Directory.Exists(hostOutput))
-                    Directory.Delete(hostOutput, true);
                 Directory.CreateDirectory(hostOutput);
 
                 var result = await builder.BuildApplication(hostProject, hostOutput);
@@ -39,8 +43,7 @@ namespace SimpleHostSetup.Impl
                     return;
                 }
 
-                
-
+                _appPacker.MakeZip(basePath, Path.Combine(setupPath, "HostSetup.zip"));
             }
             catch (Exception e)
             {

@@ -1,6 +1,4 @@
-﻿using Tauron.Application.Master.Commands.Host;
-
-namespace SimpleHostSetup.Impl
+﻿namespace SimpleHostSetup.Impl
 {
     public sealed class AppInfo
     {

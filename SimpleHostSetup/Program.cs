@@ -8,7 +8,6 @@ using Serilog;
 using SimpleHostSetup.DotnetBuilder;
 using SimpleHostSetup.Impl;
 using Tauron.Application.Logging;
-using Tauron.Application.Master.Commands.Host;
 
 namespace SimpleHostSetup
 {
@@ -58,7 +57,7 @@ namespace SimpleHostSetup
             Console.WriteLine();
             Console.Write("Host Ip: ");
 
-            return Console.ReadLine();
+            return Console.ReadLine() ?? throw new InvalidOperationException("It was no Ip Read");
         }
 
         public string GetName(string @for)
@@ -66,7 +65,7 @@ namespace SimpleHostSetup
             Console.WriteLine();
             Console.Write($"Application Name {@for}: ");
 
-            return Console.ReadLine();
+            return Console.ReadLine() ?? throw new InvalidOperationException($"No Application Name for {@for}");
         }
 
         public IEnumerable<string> GetAppsToInstall(IEnumerable<string> apps) => apps;

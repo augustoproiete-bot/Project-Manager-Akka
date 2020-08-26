@@ -18,7 +18,8 @@ namespace SimpleHostSetup.DotnetBuilder
                .Append($"\"{project.FullName}\"")
                .Append($" -o \"{output}\"")
                .Append(" -c Release")
-               .Append(" -v d");
+               .Append(" -v m")
+               .Append(" --no-self-contained");
 
             using var process = new Process {StartInfo = new ProcessStartInfo(@"C:\Program Files\dotnet\dotnet.exe", arguments.ToString())
                                                          {
@@ -35,12 +36,12 @@ namespace SimpleHostSetup.DotnetBuilder
             _log.Information("Wait For Exit");
             if (!process.WaitForExit(30000))
             {
-                Log.Information("Killing Process");
+                _log.Information("Killing Process");
                 process.Kill(true);
             }
 
             _log.Information("Build Compled");
-            return process.ExitCode != 0;
+            return process.ExitCode == 0;
         }
     }
 }
