@@ -42,6 +42,11 @@ namespace SimpleHostSetup.Impl
                     _logger.Error("Host Project Build Failed");
                     return;
                 }
+                var hostConfig = new Configurator(hostOutput);
+                string hostIp = config.Input.GetIp();
+
+                hostConfig.SetIp(hostIp);
+
 
                 _appPacker.MakeZip(basePath, Path.Combine(setupPath, "HostSetup.zip"));
             }

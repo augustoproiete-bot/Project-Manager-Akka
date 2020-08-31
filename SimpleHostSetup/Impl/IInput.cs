@@ -6,6 +6,8 @@ namespace SimpleHostSetup.Impl
     {
         string GetIp();
 
+        string GetSeed();
+
         string GetName(string @for);
 
         IEnumerable<string> GetAppsToInstall(IEnumerable<string> apps);
