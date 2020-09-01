@@ -11,6 +11,7 @@ using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Localizer.Generated;
 using Tauron.Application.Master.Commands.Host;
 using Tauron.Application.ServiceManager.Core.Model;
+using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
 using Tauron.Application.Wpf.Commands;
 using Tauron.Application.Wpf.Dialogs;
@@ -28,6 +29,13 @@ namespace Tauron.Application.ServiceManager.ViewModels
         public HostViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, LocLocalizer localizer) 
             : base(lifetimeScope, dispatcher)
         {
+            var eventSystem = Context.System.EventStream;
+            var showApps = new SimpleCommand(o =>
+            {
+                if (o != null) 
+                    eventSystem.Publish(new DisplayApplications((string) o));
+            });
+
             _hostConnector = HostApi.Create(Context);
 
             var commandExecutor = Context.ActorOf(Props.Create<CommandExutor>(), "HostCommand-Executor");
@@ -47,7 +55,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
                     {
                         if (entry == null)
                         {
-                            HostEntries.Add(new UIHostEntry(he.Path, he.Name, SimpleCommand.Empty, localizer, _hostConnector, commandExecutor, 
+                            HostEntries.Add(new UIHostEntry(he.Path, he.Name, showApps, localizer, _hostConnector, commandExecutor, 
                                 CommandChanged, this, _hostConnector));
                         }
                         else

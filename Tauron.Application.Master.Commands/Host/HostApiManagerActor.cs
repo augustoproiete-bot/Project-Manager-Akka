@@ -9,11 +9,11 @@ using static Akka.Cluster.Utility.ClusterActorDiscoveryMessage;
 
 namespace Tauron.Application.Master.Commands.Host
 {
-    public sealed class HostApiManagerActor : ExposedReceiveActor, IWithTimers
+    public sealed class HostApiManagerActor : ExposedReceiveActor//, IWithTimers
     {
         private readonly Dictionary<ActorPath, HostEntry> _entries = new Dictionary<ActorPath, HostEntry>();
 
-        public ITimerScheduler Timers { get; set; } = null!;
+        //public ITimerScheduler Timers { get; set; } = null!;
 
         public HostApiManagerActor()
         {
@@ -25,35 +25,26 @@ namespace Tauron.Application.Master.Commands.Host
             };
 
             this.Flow<ActorDown>()
-               .From.Func(ad =>
-               {
-                   if (!_entries.Remove(ad.Actor.Path, out var entry)) return null;
-
-                   Timers.Cancel(entry);
-                   return new NotifyChange(ad.Actor.Path);
-
-               }).ToSelf();
+                .From.Action(ad =>
+                {
+                    if (_entries.Remove(ad.Actor.Path, out var entry))
+                        subscribeAbility.Send(new HostEntryChanged(entry.Name, entry.Actor.Path, true));
+                });
 
             this.Flow<ActorUp>()
                 .From.Func(au =>
                 {
                     _entries[au.Actor.Path] = new HostEntry(string.Empty, au.Actor);
-                    Self.Tell(new NotifyChange(au.Actor.Path));
+                    subscribeAbility.Send(new HostEntryChanged(string.Empty, au.Actor.Path, false));
                     return new GetHostName();
                 }).ToRefFromMsg(au => au.Actor)
-                .AndRespondTo<GetHostNameResult>().Func(r =>
+                .AndRespondTo<GetHostNameResult>().Action(r =>
                 {
-                    if (!_entries.TryGetValue(Sender.Path, out var entry)) return null;
+                    if (!_entries.TryGetValue(Sender.Path, out var entry)) return;
 
                     entry.Name = r.Name;
-                    return new NotifyChange(Sender.Path);
-
-                }).ToSelf()
-                .Then.Action(nc =>
-                    subscribeAbility.Send(
-                        _entries.TryGetValue(nc!.Key, out var entry)
-                            ? new HostEntryChanged(entry.Name, nc.Key, false)
-                            : new HostEntryChanged(string.Empty, nc.Key, true)));
+                    subscribeAbility.Send(new HostEntryChanged(entry.Name, entry.Actor.Path, false));
+                });
 
             Receive<CommandBase>(c =>
             {
@@ -78,17 +69,17 @@ namespace Tauron.Application.Master.Commands.Host
             base.PreStart();
         }
 
-        public sealed class CacheTimeout
-        {
-            
-        }
+        //public sealed class CacheTimeout
+        //{
 
-        private sealed class NotifyChange
-        {
-            public ActorPath Key { get; }
+        //}
 
-            public NotifyChange(ActorPath key) => Key = key;
-        }
+        //private sealed class NotifyChange
+        //{
+        //    public ActorPath Key { get; }
+
+        //    public NotifyChange(ActorPath key) => Key = key;
+        //}
 
         private sealed class HostEntry
         {

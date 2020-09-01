@@ -7,7 +7,7 @@
              xmlns:viewModels="clr-namespace:Tauron.Application.ServiceManager.ViewModels"
              mc:Ignorable="d" d:DataContext="{d:DesignInstance viewModels:HostViewModel, IsDesignTimeCreatable=False}"
              d:DesignHeight="450" d:DesignWidth="800">
-    <ListBox Margin="5" HorizontalContentAlignment="Stretch">
+    <ListBox Margin="5" HorizontalContentAlignment="Stretch" ItemsSource="{tau:ActorBinding HostEntries}">
         <ListBox.ItemTemplate>
             <DataTemplate DataType="viewModels:UIHostEntry">
                 <Border Margin="5" BorderThickness="1" BorderBrush="White" CornerRadius="12">
@@ -30,6 +30,11 @@
                                 Content="{tau:Loc HostView_Button_Applications}" Padding="5" Margin="5" Command="{Binding Applications}"/>
                         <GroupBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Header="{tau:Loc HostView_GroupBox_Commands}" Margin="5">
                             <ItemsControl ItemsSource="{Binding HostCommands}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="viewModels:HostCommand">
                                         <Grid>

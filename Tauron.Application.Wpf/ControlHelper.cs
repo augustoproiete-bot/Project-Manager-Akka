@@ -62,8 +62,18 @@ namespace Tauron.Application.Wpf
             if (DesignerProperties.GetIsInDesignMode(obj)) return;
 
             var root = ControlBindLogic.FindRoot(obj);
-            if (root == null) return;
+            if (root == null)
+            {
+                ControlBindLogic.MakeLazy((FrameworkElement) obj, newName, oldName, 
+                    (name, old, controllable, dependencyObject) => SetLinker(old, name, controllable, dependencyObject, factory));
+                return;
+            }
 
+            SetLinker(newName, oldName, root, obj, factory);
+        }
+
+        private static void SetLinker(string? newName, string? oldName, IBinderControllable root, DependencyObject obj, Func<LinkerBase> factory)
+        {
             if (oldName != null)
                 root.CleanUp(ControlHelperPrefix + oldName);
 

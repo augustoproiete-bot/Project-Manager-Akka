@@ -27,7 +27,7 @@
                     </StackPanel>
                 </StatusBarItem>
             </StatusBar>
-            <sync:DockingManager UseDocumentContainer="True" DockPanel.Dock="Top">
+            <sync:DockingManager UseDocumentContainer="True" DockPanel.Dock="Top" tau:ControlHelper.MarkControl="DockingManager">
                 <sync:DockingManager.Resources>
                     <Style x:Key="DockBase">
                         <Setter Property="sync:DockingManager.CanClose" Value="False" />
@@ -42,13 +42,15 @@
                         <Setter Property="sync:DockingManager.SideInDockedMode" Value="Bottom" />
                     </Style>
                 </sync:DockingManager.Resources>
-                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_HostView}"
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_ApplicationsView}" Name="ApplicationsView"
+                                Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding ApplicationsView}"/>
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_HostView}" Name="HostView"
                                 Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding HostView}"/>
-                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_NodeView}"
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_NodeView}" Name="NodeView"
                                 Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding NodeView}" />
-                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_SeedNodeView}"
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_SeedNodeView}" Name="SeedNodeView"
                                 Style="{StaticResource ButtomStyle}" Content="{tau:ViewModelBinding SeedView}" />
-                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_LogView}"
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_LogView}" Name="LogView"
                                 Style="{StaticResource ButtomStyle}">
                     <serilogViewer:SerilogViewer/>
                 </ContentControl>

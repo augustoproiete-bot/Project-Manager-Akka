@@ -17,6 +17,7 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __LabelOnlineStatus;
 			private readonly Task<string> __DockHeaderLogView;
 			private readonly Task<string> __DockHeaderHostView;
+			private readonly Task<string> __DockHeaderApplicationsView;
 			public MainWindowRes(ActorSystem system)
 			{
 				var loc = system.Loc();
@@ -26,6 +27,7 @@ namespace Tauron.Application.Localizer.Generated
 				__LabelOnlineStatus = LocLocalizer.ToString(loc.RequestTask("MainWindow_Label_OnlineStatus"));
 				__DockHeaderLogView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_LogView"));
 				__DockHeaderHostView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_HostView"));
+				__DockHeaderApplicationsView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_ApplicationsView"));
 			}
 			public string LabelTitle => __LabelTitle.Result;
 			public string DockHeaderNodeView => __DockHeaderNodeView.Result;
@@ -33,6 +35,7 @@ namespace Tauron.Application.Localizer.Generated
 			public string LabelOnlineStatus => __LabelOnlineStatus.Result;
 			public string DockHeaderLogView => __DockHeaderLogView.Result;
 			public string DockHeaderHostView => __DockHeaderHostView.Result;
+			public string DockHeaderApplicationsView => __DockHeaderApplicationsView.Result;
 		}
 		public sealed class MemberStatusRes
 		{

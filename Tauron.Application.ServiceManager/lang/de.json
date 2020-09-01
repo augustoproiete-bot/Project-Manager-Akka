@@ -34,6 +34,7 @@
   "HostCommand_CommandName_StartApp": "App Starten",
   "HostCommand_CommandName_StopApp": "App Stoppen",
   "SelectHostAppDialog_Label_Title": "App Auswählen",
+  "MainWindow_DockHeader_ApplicationsView": "Anwendungen",
   "Common_Error": "Fehler",
   "Common_Warning": "Warnung",
   "Common_Unkowen": "Unbekannt",
