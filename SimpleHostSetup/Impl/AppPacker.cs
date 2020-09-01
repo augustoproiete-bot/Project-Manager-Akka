@@ -7,9 +7,9 @@ namespace SimpleHostSetup.Impl
     {
         private static ILogger _log = Log.ForContext<AppPacker>();
 
-        public void MakeZip(string root, string targetFile)
+        public void MakeZip(string root, string targetFile, string appName)
         {
-            _log.Information("Creating Zip File");
+            _log.Information("Creating Zip File: {AppName}", appName);
             ZipFile.CreateFromDirectory(root, targetFile);
         }
     }

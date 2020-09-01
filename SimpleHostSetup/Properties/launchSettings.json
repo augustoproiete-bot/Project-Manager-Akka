@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SimpleHostSetup": {
+      "commandName": "Project",
+      "commandLineArgs": "--ip workhost --seed seedworkhost --seed-app Master-Seed-Node --host-app Master-Host"
+    }
+  }
+}

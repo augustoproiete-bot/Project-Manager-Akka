@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace SimpleHostSetup.DotnetBuilder
 
         public async Task<bool> BuildApplication(FileInfo project, string output)
         {
+            Console.WriteLine();
+
             var arguments = new StringBuilder()
                .Append(" publish ")
                .Append($"\"{project.FullName}\"")
@@ -33,12 +36,14 @@ namespace SimpleHostSetup.DotnetBuilder
 
             await Task.Delay(1000);
 
-            _log.Information("Wait For Exit");
+            //_log.Information("Wait For Exit");
             if (!process.WaitForExit(30000))
             {
                 _log.Information("Killing Process");
                 process.Kill(true);
             }
+
+            Console.WriteLine();
 
             _log.Information("Build Compled");
             return process.ExitCode == 0;

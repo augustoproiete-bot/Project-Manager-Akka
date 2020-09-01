@@ -22,6 +22,8 @@ namespace ServiceHost
             builder.RegisterType<CleanUpDedector>().As<IStartUpAction>();
             builder.RegisterType<ApiDispatcherStartup>().As<IStartUpAction>();
 
+            builder.RegisterType<InstallChecker>().AsSelf();
+
             base.Load(builder);
         }
     }

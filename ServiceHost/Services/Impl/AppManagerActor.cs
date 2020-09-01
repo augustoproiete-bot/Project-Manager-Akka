@@ -24,7 +24,7 @@ namespace ServiceHost.Services.Impl
 
         public ITimerScheduler Timers { get; set; } = null!;
 
-        public AppManagerActor(IAppRegistry appRegistry, IInstaller installer)
+        public AppManagerActor(IAppRegistry appRegistry, IInstaller installer, InstallChecker checker)
         {
             _appRegistry = appRegistry;
             var ability = new SubscribeAbility(this);
@@ -36,6 +36,9 @@ namespace ServiceHost.Services.Impl
 
             Receive<InstallerationCompled>(ic =>
             {
+                if (checker.IsInstallationStart) 
+                    Context.System.Terminate();
+
                 void PipeToSelf(string name)
                 {
                     appRegistry.Actor

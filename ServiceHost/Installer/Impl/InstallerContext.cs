@@ -55,6 +55,6 @@ namespace ServiceHost.Installer.Impl
             => InstalledApp = app;
 
         public string GetExe() 
-            => !string.IsNullOrWhiteSpace(Exe) ? Exe : Path.GetFileName(InstallationPath.EnumerateFiles().FirstOrDefault(s => s.Trim().EndsWith(".exe")));
+            => !string.IsNullOrWhiteSpace(Exe) ? Exe : Path.GetFileName(InstallationPath.EnumerateFiles().First(s => s.Trim().EndsWith(".exe")));
     }
 }

@@ -8,11 +8,18 @@
 
   <ItemGroup>
     <PackageReference Include="Akka" Version="1.4.10" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="3.1.7" />
     <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Tauron.Application.Logging\Tauron.Application.Logging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="preset.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
