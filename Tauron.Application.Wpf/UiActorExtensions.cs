@@ -4,13 +4,13 @@ using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.Wpf
 {
-    public sealed class ModelProeprty
+    public sealed class ModelProperty
     {
         public IActorRef Model { get; }
 
         public UIPropertyBase Property { get; }
 
-        public ModelProeprty(IActorRef model, UIPropertyBase property)
+        public ModelProperty(IActorRef model, UIPropertyBase property)
         {
             Model = model;
             Property = property;
@@ -19,12 +19,12 @@ namespace Tauron.Application.Wpf
 
     public static class UiActorExtensions
     {
-        public static ModelProeprty RegisterModel<TModel>(this UiActor actor, string propertyName, string actorName)
+        public static ModelProperty RegisterModel<TModel>(this UiActor actor, string propertyName, string actorName)
         {
             var model = actor.LifetimeScope.Resolve<IViewModel<TModel>>();
             model.Init(actorName);
 
-            return new ModelProeprty(model.Actor, actor.RegisterProperty<IViewModel<TModel>>(propertyName).WithDefaultValue(model).Property.LockSet());
+            return new ModelProperty(model.Actor, actor.RegisterProperty<IViewModel<TModel>>(propertyName).WithDefaultValue(model).Property.LockSet());
         }
 
         public static UIProperty<TData> RegisterImport<TData>(this UiActor actor, string propertyName)

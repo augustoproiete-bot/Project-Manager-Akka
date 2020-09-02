@@ -18,6 +18,7 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __DockHeaderLogView;
 			private readonly Task<string> __DockHeaderHostView;
 			private readonly Task<string> __DockHeaderApplicationsView;
+			private readonly Task<string> __DockHeaderConfigurationView;
 			public MainWindowRes(ActorSystem system)
 			{
 				var loc = system.Loc();
@@ -28,6 +29,7 @@ namespace Tauron.Application.Localizer.Generated
 				__DockHeaderLogView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_LogView"));
 				__DockHeaderHostView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_HostView"));
 				__DockHeaderApplicationsView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_ApplicationsView"));
+				__DockHeaderConfigurationView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_ConfigurationView"));
 			}
 			public string LabelTitle => __LabelTitle.Result;
 			public string DockHeaderNodeView => __DockHeaderNodeView.Result;
@@ -36,6 +38,7 @@ namespace Tauron.Application.Localizer.Generated
 			public string DockHeaderLogView => __DockHeaderLogView.Result;
 			public string DockHeaderHostView => __DockHeaderHostView.Result;
 			public string DockHeaderApplicationsView => __DockHeaderApplicationsView.Result;
+			public string DockHeaderConfigurationView => __DockHeaderConfigurationView.Result;
 		}
 		public sealed class MemberStatusRes
 		{

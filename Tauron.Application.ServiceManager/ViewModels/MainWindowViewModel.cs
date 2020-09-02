@@ -28,6 +28,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             SeedView = this.RegisterModel<SeedNodeViewModel>(nameof(SeedView), "Seed-View");
             HostView = this.RegisterModel<HostViewModel>(nameof(HostView), "Host-View");
             ApplicationsView = this.RegisterModel<ApplicationsViewModel>(nameof(ApplicationsView), "Applications-View");
+            ConfigurationView = this.RegisterModel<ConfigurationView>(nameof(ConfigurationView), "Configuration-View");
 
             AppInfo = this.RegisterImport<CommonAppInfo>(nameof(AppInfo));
 
@@ -50,7 +51,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
                     switch (result)
                     {
                         case "Setup":
-                            MessageBox.Show("Setup Triggered");
+                            UICall(() => _dockingManager.ActivateWindow("ConfigurationView"));
+                            Context.System.EventStream.Publish(new StartConfigurationSetup());
                             break;
                     }
                 });
@@ -73,13 +75,15 @@ namespace Tauron.Application.ServiceManager.ViewModels
             }
         }
 
-        public ModelProeprty ApplicationsView { get; }
+        public ModelProperty ConfigurationView { get; }
 
-        public ModelProeprty HostView { get; }
+        public ModelProperty ApplicationsView { get; }
 
-        public ModelProeprty NodeView { get; }
+        public ModelProperty HostView { get; }
 
-        public ModelProeprty SeedView { get; }
+        public ModelProperty NodeView { get; }
+
+        public ModelProperty SeedView { get; }
 
         public UIProperty<CommonAppInfo> AppInfo { get; }
     }

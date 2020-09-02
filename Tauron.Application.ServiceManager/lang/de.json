@@ -42,6 +42,7 @@
 Für einen Ersten host empfiehlt es sich einen Seed festzulegen.
 
 Um die IP Adresse des Host pc herauszufinden steht ein Programm mit dem Namen IP Probe zur Verfügung.",
+  "MainWindow_DockHeader_ConfigurationView": "Service Einstellungen",
   "Common_Error": "Fehler",
   "Common_Warning": "Warnung",
   "Common_Unkowen": "Unbekannt",

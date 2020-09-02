@@ -42,6 +42,8 @@
                         <Setter Property="sync:DockingManager.SideInDockedMode" Value="Bottom" />
                     </Style>
                 </sync:DockingManager.Resources>
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_ConfigurationView}" Name="ConfigurationView"
+                                Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding ConfigurationView}"/>
                 <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_ApplicationsView}" Name="ApplicationsView"
                                 Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding ApplicationsView}"/>
                 <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_HostView}" Name="HostView"

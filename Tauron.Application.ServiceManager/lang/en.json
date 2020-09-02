@@ -42,6 +42,7 @@
 For a first host it is recommended to define a seed.
 
 To find out the IP address of the host pc a program called IP Probe is available.",
+  "MainWindow_DockHeader_ConfigurationView": "Service Configurations",
   "Common_Error": "Error",
   "Common_Warning": "Warning",
   "Common_Unkowen": "Unkowen",
