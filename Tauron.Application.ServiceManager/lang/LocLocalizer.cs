@@ -173,6 +173,22 @@ namespace Tauron.Application.Localizer.Generated
 			}
 			public string LabelTitle => __LabelTitle.Result;
 		}
+		public sealed class InitialDialogRes
+		{
+			private readonly Task<string> __Title;
+			private readonly Task<string> __MainTextOne;
+			private readonly Task<string> __MainTextTwo;
+			public InitialDialogRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__Title = LocLocalizer.ToString(loc.RequestTask("InitialDialog_Title"));
+				__MainTextOne = LocLocalizer.ToString(loc.RequestTask("InitialDialog_MainText_One"));
+				__MainTextTwo = LocLocalizer.ToString(loc.RequestTask("InitialDialog_MainText_Two"));
+			}
+			public string Title => __Title.Result;
+			public string MainTextOne => __MainTextOne.Result;
+			public string MainTextTwo => __MainTextTwo.Result;
+		}
 		public sealed class CommonRes
 		{
 			private readonly Task<string> __Error;
@@ -181,6 +197,8 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __Cancel;
 			private readonly Task<string> __Ok;
 			private readonly Task<string> __Querying;
+			private readonly Task<string> __Back;
+			private readonly Task<string> __Next;
 			public CommonRes(ActorSystem system)
 			{
 				var loc = system.Loc();
@@ -190,6 +208,8 @@ namespace Tauron.Application.Localizer.Generated
 				__Cancel = LocLocalizer.ToString(loc.RequestTask("Common_Cancel"));
 				__Ok = LocLocalizer.ToString(loc.RequestTask("Common_Ok"));
 				__Querying = LocLocalizer.ToString(loc.RequestTask("Common_Querying"));
+				__Back = LocLocalizer.ToString(loc.RequestTask("Common_Back"));
+				__Next = LocLocalizer.ToString(loc.RequestTask("Common_Next"));
 			}
 			public string Error => __Error.Result;
 			public string Warning => __Warning.Result;
@@ -197,6 +217,8 @@ namespace Tauron.Application.Localizer.Generated
 			public string Cancel => __Cancel.Result;
 			public string Ok => __Ok.Result;
 			public string Querying => __Querying.Result;
+			public string Back => __Back.Result;
+			public string Next => __Next.Result;
 		}
 		public LocLocalizer(ActorSystem system)
 		{
@@ -209,6 +231,7 @@ namespace Tauron.Application.Localizer.Generated
 			 HostView = new HostViewRes(system);
 			 HostCommand = new HostCommandRes(system);
 			 SelectHostAppDialog = new SelectHostAppDialogRes(system);
+			 InitialDialog = new InitialDialogRes(system);
 			 Common = new CommonRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
@@ -219,6 +242,7 @@ namespace Tauron.Application.Localizer.Generated
 		public HostViewRes HostView { get; }
 		public HostCommandRes HostCommand { get; }
 		public SelectHostAppDialogRes SelectHostAppDialog { get; }
+		public InitialDialogRes InitialDialog { get; }
 		public CommonRes Common { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);

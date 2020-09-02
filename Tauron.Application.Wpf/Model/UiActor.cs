@@ -350,12 +350,12 @@ namespace Tauron.Application.Wpf.Model
                 if (method.GetParameters()[0].ParameterType != typeof(EventData)) _methodType = MethodType.EventArgs;
             }
 
-            public void Execute(EventData parameter)
+            public void Execute(EventData? parameter)
             {
                 var args = _methodType switch
                 {
                     MethodType.Zero => new object[0],
-                    MethodType.One => new object[] { parameter },
+                    MethodType.One => new object[] { parameter! },
                     MethodType.Two => new[] { parameter?.Sender, parameter?.EventArgs },
                     MethodType.EventArgs => new[] { parameter?.EventArgs },
                     _ => new object[0]

@@ -35,10 +35,19 @@
   "HostCommand_CommandName_StopApp": "App Stoppen",
   "SelectHostAppDialog_Label_Title": "App Auswählen",
   "MainWindow_DockHeader_ApplicationsView": "Anwendungen",
+  "InitialDialog_Title": "Cluster Setup",
+  "InitialDialog_MainText_One": "Ist das ein neuer Cluster. Wenn ja, auf weiter Klicken für das Setup.",
+  "InitialDialog_MainText_Two": "Bevor das Erste Host Setup erstellt wird sollte eine Basis Konfiguration für Services angelegt werden.
+
+Für einen Ersten host empfiehlt es sich einen Seed festzulegen.
+
+Um die IP Adresse des Host pc herauszufinden steht ein Programm mit dem Namen IP Probe zur Verfügung.",
   "Common_Error": "Fehler",
   "Common_Warning": "Warnung",
   "Common_Unkowen": "Unbekannt",
   "Common_Cancel": "Abbrechen",
   "Common_Ok": "OK",
   "Common_Querying": "Abrufen",
+  "Common_Back": "Zurück",
+  "Common_Next": "Weiter",
 }

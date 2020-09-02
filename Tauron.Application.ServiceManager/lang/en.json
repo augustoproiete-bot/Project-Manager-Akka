@@ -35,10 +35,19 @@
   "HostCommand_CommandName_StopApp": "Stop App",
   "SelectHostAppDialog_Label_Title": "Select App",
   "MainWindow_DockHeader_ApplicationsView": "Applications",
+  "InitialDialog_Title": "Cluster Setup",
+  "InitialDialog_MainText_One": "Is this a new cluster. If yes, click on continue for setup",
+  "InitialDialog_MainText_Two": "Before the initial host setup is created, a basic configuration for services should be created.
+
+For a first host it is recommended to define a seed.
+
+To find out the IP address of the host pc a program called IP Probe is available.",
   "Common_Error": "Error",
   "Common_Warning": "Warning",
   "Common_Unkowen": "Unkowen",
   "Common_Cancel": "Cancel",
   "Common_Ok": "OK",
   "Common_Querying": "Querying",
+  "Common_Back": "back",
+  "Common_Next": "Next",
 }

@@ -63,6 +63,7 @@ namespace Tauron.Akka
 
         protected void ResetInternal()
         {
+            Actor.Tell(PoisonPill.Instance);
             Actor = ActorRefs.Nobody;
             IsInitialized = false;
         }
