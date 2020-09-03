@@ -55,7 +55,7 @@ namespace Tauron.Application.Wpf.Model
             Receive<GetValueRequest>(GetPropertyValue);
             ReceiveAsync<InitEvent>(async evt => await InitializeAsync(evt));
             Receive<SetValue>(SetPropertyValue);
-            Receive<TrackPropertyEvent>(TrckProperty);
+            Receive<TrackPropertyEvent>(TrackProperty);
             Receive<Terminated>(ActorTermination);
             Receive<PropertyTermination>(PropertyTerminationHandler);
             Receive<UnloadEvent>(ControlUnload);
@@ -275,10 +275,12 @@ namespace Tauron.Application.Wpf.Model
             foreach (var actorRef in propertyData.Subscriptors)
                 actorRef.Tell(new ValidatingEvent(propertyData.Error, propertyData.PropertyBase.Name));
 
+            propertyData.PropertyBase.IsValid = string.IsNullOrWhiteSpace(propertyData.Error);
+
             CommandChanged();
         }
 
-        private void TrckProperty(TrackPropertyEvent obj)
+        private void TrackProperty(TrackPropertyEvent obj)
         {
             Log.Info("Track Property {Name}", obj.Name);
 

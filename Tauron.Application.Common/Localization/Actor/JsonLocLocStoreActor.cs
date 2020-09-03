@@ -60,7 +60,11 @@ namespace Tauron.Localization.Actor
 
             if (_files.TryGetValue(language, out var entrys) &&
                 entrys.TryGetValue(name, out var entry) && entry is JValue value)
+            {
+                if (value.Type == JTokenType.String)
+                    return EscapeHelper.Decode(value.Value<string>());
                 return value.Value;
+            }
 
             return null;
         }

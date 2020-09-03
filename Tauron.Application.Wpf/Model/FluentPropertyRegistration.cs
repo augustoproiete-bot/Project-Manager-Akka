@@ -14,7 +14,7 @@ namespace Tauron.Application.Wpf.Model
 
         public UIProperty<TData> Property { get; }
 
-        public FluentPropertyRegistration<TData> WithValidator(string name, Func<TData, string> validator)
+        public FluentPropertyRegistration<TData> WithValidator(Func<TData, string?> validator)
         {
             Property.Validator = o =>
             {

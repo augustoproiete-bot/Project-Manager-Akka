@@ -16,16 +16,14 @@ using Tauron.Application.Wpf;
 namespace Tauron.Application.ServiceManager.Views
 {
     /// <summary>
-    /// Interaktionslogik für ConfigurationView.xaml
+    /// Interaktionslogik für SetupBuilderView.xaml
     /// </summary>
-    public partial class ConfigurationView
+    public partial class SetupBuilderView
     {
-        public ConfigurationView(IViewModel<ConfigurationViewModel> model)
+        public SetupBuilderView(IViewModel<SetupBuilderViewModel> model)
             : base(model)
         {
             InitializeComponent();
-
-            Background = Brushes.Transparent;
         }
     }
 }

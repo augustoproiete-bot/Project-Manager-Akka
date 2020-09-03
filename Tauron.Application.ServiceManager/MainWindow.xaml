@@ -41,7 +41,14 @@
                         <Setter Property="sync:DockingManager.DesiredHeightInDockedMode" Value="500" />
                         <Setter Property="sync:DockingManager.SideInDockedMode" Value="Bottom" />
                     </Style>
+                    <Style x:Key="LeftStyle" BasedOn="{StaticResource DockBase}">
+                        <Setter Property="sync:DockingManager.State" Value="AutoHidden" />
+                        <Setter Property="sync:DockingManager.DesiredWidthInDockedMode" Value="500" />
+                        <Setter Property="sync:DockingManager.SideInDockedMode" Value="Left" />
+                    </Style>
                 </sync:DockingManager.Resources>
+                <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_SetupBuilderView}" Name="SetupBuilder" 
+                                Style="{StaticResource LeftStyle}" Content="{tau:ViewModelBinding SetupBuilderView}"/>
                 <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_ConfigurationView}" Name="ConfigurationView"
                                 Style="{StaticResource DocumentStyle}" Content="{tau:ViewModelBinding ConfigurationView}"/>
                 <ContentControl sync:DockingManager.Header="{tau:Loc MainWindow_DockHeader_ApplicationsView}" Name="ApplicationsView"

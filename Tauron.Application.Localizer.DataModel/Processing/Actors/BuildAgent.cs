@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Tauron.Akka;
+using Tauron.Localization;
 
 namespace Tauron.Application.Localizer.DataModel.Processing.Actors
 {
@@ -88,7 +89,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
                     foreach (var (id, content) in entrys)
                     {
                         if(tester.Add(id))
-                            writer.WriteLine($"  \"{id}\": \"{content}\",");
+                            writer.WriteLine($"  \"{id}\": \"{EscapeHelper.Ecode(content)}\",");
                     }
 
                     writer.WriteLine("}");

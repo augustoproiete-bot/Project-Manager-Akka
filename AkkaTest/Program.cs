@@ -1,10 +1,13 @@
 ﻿using System;
 using System.CodeDom;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +19,7 @@ using Akka.Configuration;
 using Akka.Configuration.Hocon;
 using Akka.Dispatch;
 using Akka.Logger.Serilog;
+using DotNetty.Transport.Channels.Local;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Tauron.Application.ActorWorkflow;
@@ -23,6 +27,7 @@ using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Master.Commands;
 using Tauron.Application.Master.Commands.Host;
 using Tauron.Application.Workflow;
+using Tauron.Localization;
 
 namespace AkkaTest
 {
@@ -146,9 +151,13 @@ namespace AkkaTest
 
         private static async Task Main(string[] args)
         {
-            var conf = new ConfigurationBuilder().AddCommandLine(args).Build();
-            var test3 = conf.GetValue<bool>("Test");
 
+            using var testSocked = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            testSocked.Bind(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0));
+
+            testSocked.Receive(new List<ArraySegment<byte>>(){new ArraySegment<byte>(new byte[10])}, SocketFlags.None, out var error);
+
+            return;
             Console.ReadLine();
 
             //var test1 = new QueryRegistratedServicesResponse(ImmutableList<MemberService>.Empty

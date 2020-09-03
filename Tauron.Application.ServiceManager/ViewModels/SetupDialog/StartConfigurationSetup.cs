@@ -2,6 +2,11 @@
 {
     public sealed class StartConfigurationSetup
     {
-        
+        public static StartConfigurationSetup Get { get; } = new StartConfigurationSetup(); 
+
+        private StartConfigurationSetup()
+        {
+            
+        }
     }
 }

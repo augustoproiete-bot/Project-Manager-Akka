@@ -19,6 +19,7 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __DockHeaderHostView;
 			private readonly Task<string> __DockHeaderApplicationsView;
 			private readonly Task<string> __DockHeaderConfigurationView;
+			private readonly Task<string> __DockHeaderSetupBuilderView;
 			public MainWindowRes(ActorSystem system)
 			{
 				var loc = system.Loc();
@@ -30,6 +31,7 @@ namespace Tauron.Application.Localizer.Generated
 				__DockHeaderHostView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_HostView"));
 				__DockHeaderApplicationsView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_ApplicationsView"));
 				__DockHeaderConfigurationView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_ConfigurationView"));
+				__DockHeaderSetupBuilderView = LocLocalizer.ToString(loc.RequestTask("MainWindow_DockHeader_SetupBuilderView"));
 			}
 			public string LabelTitle => __LabelTitle.Result;
 			public string DockHeaderNodeView => __DockHeaderNodeView.Result;
@@ -39,6 +41,7 @@ namespace Tauron.Application.Localizer.Generated
 			public string DockHeaderHostView => __DockHeaderHostView.Result;
 			public string DockHeaderApplicationsView => __DockHeaderApplicationsView.Result;
 			public string DockHeaderConfigurationView => __DockHeaderConfigurationView.Result;
+			public string DockHeaderSetupBuilderView => __DockHeaderSetupBuilderView.Result;
 		}
 		public sealed class MemberStatusRes
 		{
@@ -192,6 +195,28 @@ namespace Tauron.Application.Localizer.Generated
 			public string MainTextOne => __MainTextOne.Result;
 			public string MainTextTwo => __MainTextTwo.Result;
 		}
+		public sealed class ConfigurationViewRes
+		{
+			private readonly Task<string> __SetupGroupBoxHeader;
+			private readonly Task<string> __SetupGroupBoxInfoText;
+			private readonly Task<string> __TextboxDatabaseInfo;
+			private readonly Task<string> __TextBlockConnectionString;
+			private readonly Task<string> __ValidateMongoUrlButton;
+			public ConfigurationViewRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__SetupGroupBoxHeader = LocLocalizer.ToString(loc.RequestTask("ConfigurationView_SetupGroupBox_Header"));
+				__SetupGroupBoxInfoText = LocLocalizer.ToString(loc.RequestTask("ConfigurationView_SetupGroupBox_InfoText"));
+				__TextboxDatabaseInfo = LocLocalizer.ToString(loc.RequestTask("ConfigurationView_Textbox_DatabaseInfo"));
+				__TextBlockConnectionString = LocLocalizer.ToString(loc.RequestTask("ConfigurationView_TextBlock_ConnectionString"));
+				__ValidateMongoUrlButton = LocLocalizer.ToString(loc.RequestTask("ConfigurationView_ValidateMongoUrl_Button"));
+			}
+			public string SetupGroupBoxHeader => __SetupGroupBoxHeader.Result;
+			public string SetupGroupBoxInfoText => __SetupGroupBoxInfoText.Result;
+			public string TextboxDatabaseInfo => __TextboxDatabaseInfo.Result;
+			public string TextBlockConnectionString => __TextBlockConnectionString.Result;
+			public string ValidateMongoUrlButton => __ValidateMongoUrlButton.Result;
+		}
 		public sealed class CommonRes
 		{
 			private readonly Task<string> __Error;
@@ -202,6 +227,7 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __Querying;
 			private readonly Task<string> __Back;
 			private readonly Task<string> __Next;
+			private readonly Task<string> __Apply;
 			public CommonRes(ActorSystem system)
 			{
 				var loc = system.Loc();
@@ -213,6 +239,7 @@ namespace Tauron.Application.Localizer.Generated
 				__Querying = LocLocalizer.ToString(loc.RequestTask("Common_Querying"));
 				__Back = LocLocalizer.ToString(loc.RequestTask("Common_Back"));
 				__Next = LocLocalizer.ToString(loc.RequestTask("Common_Next"));
+				__Apply = LocLocalizer.ToString(loc.RequestTask("Common_Apply"));
 			}
 			public string Error => __Error.Result;
 			public string Warning => __Warning.Result;
@@ -222,6 +249,7 @@ namespace Tauron.Application.Localizer.Generated
 			public string Querying => __Querying.Result;
 			public string Back => __Back.Result;
 			public string Next => __Next.Result;
+			public string Apply => __Apply.Result;
 		}
 		public LocLocalizer(ActorSystem system)
 		{
@@ -235,6 +263,7 @@ namespace Tauron.Application.Localizer.Generated
 			 HostCommand = new HostCommandRes(system);
 			 SelectHostAppDialog = new SelectHostAppDialogRes(system);
 			 InitialDialog = new InitialDialogRes(system);
+			 ConfigurationView = new ConfigurationViewRes(system);
 			 Common = new CommonRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
@@ -246,6 +275,7 @@ namespace Tauron.Application.Localizer.Generated
 		public HostCommandRes HostCommand { get; }
 		public SelectHostAppDialogRes SelectHostAppDialog { get; }
 		public InitialDialogRes InitialDialog { get; }
+		public ConfigurationViewRes ConfigurationView { get; }
 		public CommonRes Common { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);

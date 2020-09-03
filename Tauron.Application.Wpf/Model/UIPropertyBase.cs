@@ -13,6 +13,8 @@ namespace Tauron.Application.Wpf.Model
 
         public string Name { get; }
 
+        public bool IsValid { get; internal set; }
+
         protected internal object? InternalValue { get; internal set; }
         internal Func<object?, string?>? Validator { get; set; }
 

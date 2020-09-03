@@ -10,7 +10,12 @@ namespace Tauron.Application.Settings.Provider
 
         public JsonProvider(string fileName)
         {
-            _fileName = fileName;
+            var dic = Path.GetDirectoryName(Path.GetFullPath(fileName));
+            if (!string.IsNullOrWhiteSpace(dic) && !Directory.Exists(dic))
+                Directory.CreateDirectory(dic);
+
+
+            _fileName = Path.GetFullPath(fileName);
         }
 
         public ImmutableDictionary<string, string> Load()

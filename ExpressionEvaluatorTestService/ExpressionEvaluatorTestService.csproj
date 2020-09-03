@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka.Cluster.Sharding" Version="1.4.9" />
-    <PackageReference Include="CodingSeb.ExpressionEvaluator" Version="1.4.13" />
+    <PackageReference Include="Akka.Cluster.Sharding" Version="1.4.10" />
+    <PackageReference Include="CodingSeb.ExpressionEvaluator" Version="1.4.15" />
   </ItemGroup>
 
   <ItemGroup>
