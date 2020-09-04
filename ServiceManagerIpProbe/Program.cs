@@ -2,8 +2,10 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using Newtonsoft.Json;
+using ServiceManagerIpProbe.Server;
 using SimpleTcp;
 
 namespace ServiceManagerIpProbe
