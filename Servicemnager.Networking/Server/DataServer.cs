@@ -26,7 +26,7 @@ namespace Servicemnager.Networking.Server
         private EndPoint _endPoint;
 
         public EndPoint EndPoint 
-            => _endPoint ?? (_endPoint = ((TcpListener) _server.GetType().GetField("_Listener", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(_server))?.LocalEndpoint);
+            => _endPoint ??= ((TcpListener) _server.GetType().GetField("_Listener", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(_server))?.LocalEndpoint;
 
         public DataServer(string host, int port = 0)
         {

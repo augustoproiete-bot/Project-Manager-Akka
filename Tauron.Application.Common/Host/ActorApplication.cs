@@ -74,6 +74,7 @@ namespace Tauron.Host
                 ActorSystem.RegisterOnTermination(hostAppLifetime.NotifyStopped);
                 await lifeTime.ShutdownTask;
                 await Task.WhenAny(ActorSystem.WhenTerminated, Task.Delay(TimeSpan.FromSeconds(60)));
+                Log.CloseAndFlush();
             }
         }
 

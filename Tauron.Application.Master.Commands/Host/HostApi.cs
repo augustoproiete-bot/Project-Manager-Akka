@@ -12,8 +12,15 @@ namespace Tauron.Application.Master.Commands.Host
     {
         public const string ApiKey = "HostApi";
 
-        public static HostApi Create(IActorRefFactory actorRefFactory)
-            => new HostApi(actorRefFactory.ActorOf(Props.Create(() => new HostApiManagerActor())));
+        private static object _lock = new object();
+
+        private static HostApi? _hostApi;
+
+        public static HostApi CreateOrGet(IActorRefFactory actorRefFactory)
+        {
+            lock (_lock)
+                return _hostApi ??= new HostApi(actorRefFactory.ActorOf(Props.Create(() => new HostApiManagerActor())));
+        }
 
         private readonly IActorRef _actorRef;
         

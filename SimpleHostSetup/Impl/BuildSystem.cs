@@ -98,8 +98,8 @@ namespace SimpleHostSetup.Impl
 
                     await File.WriteAllTextAsync(Path.Combine(basePath, $"Install{installApp}.bat"), "cd %~dp0\\Host\n" +
                                                                                           $"ServiceHost.exe --Install Manual --ZipFile ..\\{installApp}.zip --AppName {appName} --AppType {installAppData.AppType}\n" +
-                                                                                          $"del ..\\{installApp}.zip" +
-                                                                                          $"del ..\\Install{installApp}.bat" +
+                                                                                          //$"del ..\\{installApp}.zip" +
+                                                                                          //$"del ..\\Install{installApp}.bat" +
                                                                                           "pause");
                 }
 

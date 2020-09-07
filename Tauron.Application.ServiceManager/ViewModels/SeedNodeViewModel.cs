@@ -92,6 +92,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
             void DoRemove(SeedUrlModel model)
             {
+                Log.Info("Removing Seed {URL}", model.Url);
                 config.SeedUrls = config.SeedUrls.Remove(model.Url);
                 Models.Remove(model);
 

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media;
 using Akka.Actor;
-using BeaconLib;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Commands;
@@ -35,14 +34,14 @@ namespace Tauron.Application.ServiceManager.Views.Dialogs
     public sealed class AddSeedDialogModel : ObservableObject
     {
         private string? _newUrl;
-        private bool _isloading = true;
-        private readonly Probe _probe;
+        private bool _isloading;
+        //private readonly Probe _probe;
 
         public AddSeedDialogModel(IEnumerable<DialogSeedEntry> knowenUrls, Action<string?> setUrl, string systemName)
         {
-            _probe = new Probe(systemName);
-            _probe.BeaconsUpdated += ProbeOnBeaconsUpdated; 
-            _probe.Start();
+            //_probe = new Probe(systemName);
+            //_probe.BeaconsUpdated += ProbeOnBeaconsUpdated; 
+            //_probe.Start();
 
             var urls = knowenUrls.Select(se => se.Url).Where(s => !string.IsNullOrWhiteSpace(s)).ToArray()!;
 
@@ -50,20 +49,20 @@ namespace Tauron.Application.ServiceManager.Views.Dialogs
             OkCommand = new SimpleCommand(() => urls.All(s => s != _newUrl),
                 () =>
                 {
-                    _probe.Dispose();
+                    //_probe.Dispose();
                     setUrl(NewUrl);
                 });
         }
 
-        private void ProbeOnBeaconsUpdated(IEnumerable<BeaconLocation> obj)
-        {
-            _probe.Stop();
+        //private void ProbeOnBeaconsUpdated(IEnumerable<BeaconLocation> obj)
+        //{
+        //    _probe.Stop();
 
-            foreach (var location in obj) 
-                Suggest.Add(location.Data);
+        //    foreach (var location in obj) 
+        //        Suggest.Add(location.Data);
 
-            Isloading = false;
-        }
+        //    Isloading = false;
+        //}
 
         public bool Isloading
         {

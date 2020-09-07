@@ -125,11 +125,20 @@ namespace Tauron.Application.ServiceManager.ViewModels
             {
                 var node = Nodes.FirstOrDefault(an => an.IsSame(mem));
                 if (node == null)
+                {
+                    Log.Info("Add Node {Member}", mem);
                     Nodes.Add(ActualNode.New(Context.System, mem, LocLocalizer.Inst));
+                }
                 else if (mem.Status == MemberStatus.Removed)
+                {
+                    Log.Info("Remove Node {Member}", mem);
                     Nodes.Remove(node);
+                }
                 else
+                {
+                    Log.Info("Update Node {Member}", mem);
                     node.UpdateModel(Context.System, mem, LocLocalizer.Inst);
+                }
             }
 
             Receive<ClusterEvent.IMemberEvent>(mem => UpdateNode(mem.Member));

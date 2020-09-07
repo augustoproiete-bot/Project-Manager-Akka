@@ -89,16 +89,19 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __LabelAdd;
 			private readonly Task<string> __LabelRemove;
 			private readonly Task<string> __LabelCreateShortCut;
+			private readonly Task<string> __ErrorEmptyHostName;
 			public SeedNodeViewRes(ActorSystem system)
 			{
 				var loc = system.Loc();
 				__LabelAdd = LocLocalizer.ToString(loc.RequestTask("SeedNodeView_Label_Add"));
 				__LabelRemove = LocLocalizer.ToString(loc.RequestTask("SeedNodeView_Label_Remove"));
 				__LabelCreateShortCut = LocLocalizer.ToString(loc.RequestTask("SeedNodeView_Label_CreateShortCut"));
+				__ErrorEmptyHostName = LocLocalizer.ToString(loc.RequestTask("SeedNodeView_Error_EmptyHostName"));
 			}
 			public string LabelAdd => __LabelAdd.Result;
 			public string LabelRemove => __LabelRemove.Result;
 			public string LabelCreateShortCut => __LabelCreateShortCut.Result;
+			public string ErrorEmptyHostName => __ErrorEmptyHostName.Result;
 		}
 		public sealed class AddSeedDialogRes
 		{
@@ -217,6 +220,34 @@ namespace Tauron.Application.Localizer.Generated
 			public string TextBlockConnectionString => __TextBlockConnectionString.Result;
 			public string ValidateMongoUrlButton => __ValidateMongoUrlButton.Result;
 		}
+		public sealed class SetupBuilderViewRes
+		{
+			private readonly Task<string> __Title;
+			private readonly Task<string> __HostName;
+			private readonly Task<string> __AddSeed;
+			private readonly Task<string> __Create;
+			private readonly Task<string> __Applications;
+			private readonly Task<string> __ErrorDuplicateHostName;
+			private readonly Task<string> __ErrorEmptyHostName;
+			public SetupBuilderViewRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__Title = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_Title"));
+				__HostName = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_HostName"));
+				__AddSeed = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_AddSeed"));
+				__Create = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_Create"));
+				__Applications = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_Applications"));
+				__ErrorDuplicateHostName = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_Error_DuplicateHostName"));
+				__ErrorEmptyHostName = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_Error_EmptyHostName"));
+			}
+			public string Title => __Title.Result;
+			public string HostName => __HostName.Result;
+			public string AddSeed => __AddSeed.Result;
+			public string Create => __Create.Result;
+			public string Applications => __Applications.Result;
+			public string ErrorDuplicateHostName => __ErrorDuplicateHostName.Result;
+			public string ErrorEmptyHostName => __ErrorEmptyHostName.Result;
+		}
 		public sealed class CommonRes
 		{
 			private readonly Task<string> __Error;
@@ -264,6 +295,7 @@ namespace Tauron.Application.Localizer.Generated
 			 SelectHostAppDialog = new SelectHostAppDialogRes(system);
 			 InitialDialog = new InitialDialogRes(system);
 			 ConfigurationView = new ConfigurationViewRes(system);
+			 SetupBuilderView = new SetupBuilderViewRes(system);
 			 Common = new CommonRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
@@ -276,6 +308,7 @@ namespace Tauron.Application.Localizer.Generated
 		public SelectHostAppDialogRes SelectHostAppDialog { get; }
 		public InitialDialogRes InitialDialog { get; }
 		public ConfigurationViewRes ConfigurationView { get; }
+		public SetupBuilderViewRes SetupBuilderView { get; }
 		public CommonRes Common { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);
