@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Media;
 using JetBrains.Annotations;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.UI;
@@ -19,6 +20,12 @@ namespace Tauron.Application.Wpf
         public void Register(string key, IControlBindable bindable, DependencyObject affectedPart)
         {
             _controlLogic.Register(key, bindable, affectedPart);
+        }
+
+        protected override void OnInitialized(EventArgs e)
+        {
+            Background = Brushes.Transparent;
+            base.OnInitialized(e);
         }
 
         public void CleanUp(string key)

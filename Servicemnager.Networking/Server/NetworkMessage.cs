@@ -3,10 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
-using SimpleTcp;
 
-namespace ServiceManagerIpProbe.Server
+namespace Servicemnager.Networking.Server
 {
     public class NetworkMessage
     {
@@ -40,26 +38,24 @@ namespace ServiceManagerIpProbe.Server
 
         private static readonly byte[] End = Encoding.ASCII.GetBytes("ENDING");
         
-        public static void SendMessage(NetworkMessage msg, Action<byte[]> sender)
+        public static byte[] WriteMessage(NetworkMessage msg)
         {
-            using (var message = DataPool.Rent())
-            {
-                int typeLenght = Encoding.UTF8.GetByteCount(msg.Type);
-                int lenght = Head.Length + End.Length + msg.Data.Length + typeLenght  + 12;
+            using var message = DataPool.Rent();
+            var typeLenght = Encoding.UTF8.GetByteCount(msg.Type);
+            var lenght = Head.Length + End.Length + msg.Data.Length + typeLenght + 12;
                 
-                message.Data.AddRange(Head);
-                message.Data.AddRange(BitConverter.GetBytes(lenght));
+            message.Data.AddRange(Head);
+            message.Data.AddRange(BitConverter.GetBytes(lenght));
 
-                message.Data.AddRange(BitConverter.GetBytes(typeLenght));
-                message.Data.AddRange(Encoding.UTF8.GetBytes(msg.Type));
+            message.Data.AddRange(BitConverter.GetBytes(typeLenght));
+            message.Data.AddRange(Encoding.UTF8.GetBytes(msg.Type));
 
-                message.Data.AddRange(BitConverter.GetBytes(msg.Data.Length));
-                message.Data.AddRange(msg.Data);
+            message.Data.AddRange(BitConverter.GetBytes(msg.Data.Length));
+            message.Data.AddRange(msg.Data);
 
-                message.Data.AddRange(End);
+            message.Data.AddRange(End);
 
-                sender(message.Data.ToArray());
-            }
+            return message.Data.ToArray();
         }
 
         public static NetworkMessage ReadMessage(byte[] buffer)
@@ -87,6 +83,8 @@ namespace ServiceManagerIpProbe.Server
             return new NetworkMessage(type, data);
         }
 
+        public static NetworkMessage Create(string type, byte[] data) => new NetworkMessage(type, data);
+
         private static int ReadInt(byte[] buffer, ref int pos)
         {
             int int32 = BitConverter.ToInt32(buffer, pos);
@@ -112,7 +110,7 @@ namespace ServiceManagerIpProbe.Server
 
         public byte[] Data { get; }
 
-        public NetworkMessage(string type, byte[] data)
+        private NetworkMessage(string type, byte[] data)
         {
             Type = type;
             Data = data;

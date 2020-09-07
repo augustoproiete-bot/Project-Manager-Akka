@@ -48,18 +48,25 @@ namespace Tauron.Application.ServiceManager.ViewModels
                     var entry = HostEntries.FirstOrDefault(e => e.ActorPath == he.Path);
                     if (he.Removed)
                     {
-                        if(entry != null)
+                        if (entry != null)
+                        {
+                            Log.Info("Removing Host Entry {Name}", entry.Name);
                             HostEntries.Remove(entry);
+                        }
                     }
                     else
                     {
                         if (entry == null)
                         {
+                            Log.Info("Addinf Host Entry {Path}", he.Path);
                             HostEntries.Add(new UIHostEntry(he.Path, he.Name, showApps, localizer, _hostConnector, commandExecutor, 
                                 CommandChanged, this, _hostConnector));
                         }
                         else
+                        {
+                            Log.Info("Changing Host Name {Name} {Path}", he.Name, he.Path);
                             entry.Name = he.Name;
+                        }
                     }
                 });
         }

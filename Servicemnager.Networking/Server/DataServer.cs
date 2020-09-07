@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using SimpleTcp;
 
-namespace ServiceManagerIpProbe.Server
+namespace Servicemnager.Networking.Server
 {
     public sealed class MessageFromClientEventArgs : EventArgs
     {
@@ -55,7 +55,7 @@ namespace ServiceManagerIpProbe.Server
 
         public void Start() => _server.Start();
 
-        public void Send(string client, NetworkMessage message) => NetworkMessage.SendMessage(message, bytes => _server.Send(client, bytes));
+        public void Send(string client, NetworkMessage message) => _server.Send(client, NetworkMessage.WriteMessage(message));
 
         public void Dispose() => _server?.Dispose();
     }

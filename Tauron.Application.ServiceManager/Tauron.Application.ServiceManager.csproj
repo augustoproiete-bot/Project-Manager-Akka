@@ -66,6 +66,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="HostInstaller\Installer.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="lang\de.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

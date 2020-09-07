@@ -62,6 +62,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
                 Task.Run(() =>
                 {
+                    Log.Info("No Cluster Found Run Setup");
                     var result = this.ShowDialog<IInitialDialog, string?>()();
 
                     switch (result)

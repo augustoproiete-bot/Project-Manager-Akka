@@ -16,21 +16,25 @@ namespace Tauron.Application.ServiceManager.ViewModels
 {
     public sealed class ConfigurationViewModel : UiActor
     {
+        
+
         public ConfigurationViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig appConfig) 
             : base(lifetimeScope, dispatcher)
         {
             void ConfigurationChanged(string text)
             {
                 if(text == appConfig.CurrentConfig) return;
-
+                
                 try
                 {
+                    Log.Info("Update Configuration");
                     ConfigurationFactory.ParseString(text);
                     appConfig.CurrentConfig = text;
                     ErrorText += string.Empty;
                 }
                 catch(Exception e)
                 {
+                    Log.Info(e, "Configuration Update Invalid");
                     ErrorText += e.Message;
                 }
             }
@@ -39,22 +43,25 @@ namespace Tauron.Application.ServiceManager.ViewModels
             {
                 try
                 {
+                    Log.Info("Check Mongo Url {URL}", url);
+
                     var mongoUrl = MongoUrl.Create(url);
                     var client = new MongoClient(mongoUrl);
                     client.ListDatabases().MoveNext();
-                    if (client.Cluster.Description.State == ClusterState.Connected)
-                        return null;
-
-                    return "Cluster Disconnected";
+                    return client.Cluster.Description.State == ClusterState.Connected ? null : "Cluster Disconnected";
                 }
                 catch (Exception e)
                 {
+                    Log.Warning(e, "Mongo URL Invalid {URL}", url);
+
                     return e.Message;
                 }
             }
 
             void ApplyConfiguration(string connectionUrl)
             {
+                Log.Info("Update AppBase Configuration");
+
                 const string snapshot = "akka.persistence.snapshot-store.plugin = \"akka.persistence.snapshot-store.mongodb\"";
                 const string journal = "akka.persistence.journal.plugin = \"akka.persistence.journal.mongodb\"";
                 
@@ -67,7 +74,10 @@ namespace Tauron.Application.ServiceManager.ViewModels
                                 || currentConfiguration.HasPath("akka.persistence.snapshot-store.mongodb.connection-string");
 
                 if (!hasBase)
+                {
+                    Log.Info("Apply Default Configuration");
                     currentConfiguration = ConfigurationFactory.ParseString(Resources.BaseConfig).WithFallback(currentConfiguration);
+                }
 
                 var builder = new StringBuilder();
 
@@ -80,6 +90,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
                 currentConfiguration = ConfigurationFactory.ParseString(builder.ToString()).WithFallback(currentConfiguration);
 
                 ConfigText += currentConfiguration.ToString(true);
+                Log.Info("AppBase Configuration Updated");
             }
 
             ErrorText = RegisterProperty<string>(nameof(ErrorText));
@@ -137,11 +148,14 @@ namespace Tauron.Application.ServiceManager.ViewModels
                 {
                     try
                     {
+                        Log.Info("Apply Connection");
                         ValidateMongoConnection(ConnectionString);
                         ApplyConfiguration(ConnectionString);
+                        Log.Info("Apply Connection Compled");
                     }
                     catch (Exception e)
                     {
+                        Log.Info(e, "Apply Connection Failed");
                         ErrorText += e.Message;
                     }
                 })
