@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using ServiceManagerIpProbe.Phases;
+using Servicemnager.Networking;
 using Servicemnager.Networking.Server;
 
 namespace ServiceManagerIpProbe.Phase
@@ -15,7 +16,7 @@ namespace ServiceManagerIpProbe.Phase
 
             context.TargetFile = Path.GetTempFileName();
 
-            var id = NetworkMessage.Create(Operation.Identifer, Encoding.UTF8.GetBytes(context.Configuration.Identifer));
+            var id = NetworkMessage.Create(NetworkOperation.Identifer, Encoding.UTF8.GetBytes(context.Configuration.Identifer));
             Stream dataStream = null;
 
 
@@ -25,17 +26,22 @@ namespace ServiceManagerIpProbe.Phase
                 {
                     switch (args.Message.Type)
                     {
-                        case Operation.Deny:
+                        case NetworkOperation.Deny:
                             deny = true;
+                            dataStream?.Dispose();
+                            
+                            if(File.Exists(context.TargetFile))
+                                File.Delete(context.TargetFile);
+
                             context.PhaseLock.Set();
                             break;
-                        case Operation.Compled:
+                        case NetworkOperation.Compled:
                             context.PhaseLock.Set();
                             break;
-                        case Operation.Accept:
+                        case NetworkOperation.Accept:
                             dataStream = File.Open(context.TargetFile, FileMode.Open);
                             break;
-                        case Operation.Data:
+                        case NetworkOperation.Data:
                             // ReSharper disable once AccessToDisposedClosure
                             dataStream?.Write(args.Message.Data, 0, args.Message.Data.Length);
                             break;

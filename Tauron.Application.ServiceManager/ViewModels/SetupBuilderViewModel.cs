@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
@@ -26,7 +24,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
         public SetupBuilderViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher) 
             : base(lifetimeScope, dispatcher)
         {
-            _server = new SetupServer(s => TerminalLines.Add(s));
+            _server = new SetupServer(s => TerminalLines.Add(s), Context.System.Settings.Config);
 
             CurrentError = RegisterProperty<string>(nameof(CurrentError));
             AddSeed = RegisterProperty<bool>(nameof(AddSeed));
@@ -79,14 +77,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
                 var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, s => TerminalLines.Add(s));
                 var id = Guid.NewGuid().ToString();
-
-                var zip = builder.Run(id);
-                if(string.IsNullOrWhiteSpace(zip))
-                    return;
                 
-                _server.AddPendingInstallations(id, zip);
-
-                Process.Start("explorer.exe", Path.GetDirectoryName(zip));
+                _server.AddPendingInstallations(id, builder.Run);
             }).ContinueWith(t =>
             {
                 Interlocked.Decrement(ref _buildRunning);

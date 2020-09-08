@@ -50,8 +50,16 @@ namespace Servicemnager.Networking.Server
             message.Data.AddRange(BitConverter.GetBytes(typeLenght));
             message.Data.AddRange(Encoding.UTF8.GetBytes(msg.Type));
 
-            message.Data.AddRange(BitConverter.GetBytes(msg.Data.Length));
-            message.Data.AddRange(msg.Data);
+            if (msg.Lenght == -1)
+            {
+                message.Data.AddRange(BitConverter.GetBytes(msg.Data.Length));
+                message.Data.AddRange(msg.Data);
+            }
+            else
+            {
+                message.Data.AddRange(BitConverter.GetBytes(msg.Lenght));
+                message.Data.AddRange(msg.Data.Take(msg.Lenght));
+            }
 
             message.Data.AddRange(End);
 
@@ -80,10 +88,10 @@ namespace Servicemnager.Networking.Server
             if (!CheckPresence(buffer, End, ref bufferPos) || buffer.Length != bufferPos)
                 throw new InvalidOperationException("Invalid Message Format");
 
-            return new NetworkMessage(type, data);
+            return new NetworkMessage(type, data, -1);
         }
 
-        public static NetworkMessage Create(string type, byte[] data) => new NetworkMessage(type, data);
+        public static NetworkMessage Create(string type, byte[] data, int lenght = -1) => new NetworkMessage(type, data, lenght);
 
         private static int ReadInt(byte[] buffer, ref int pos)
         {
@@ -110,10 +118,13 @@ namespace Servicemnager.Networking.Server
 
         public byte[] Data { get; }
 
-        private NetworkMessage(string type, byte[] data)
+        public int Lenght { get; }
+
+        private NetworkMessage(string type, byte[] data, int lenght)
         {
             Type = type;
             Data = data;
+            Lenght = lenght;
         }
     }
 }
