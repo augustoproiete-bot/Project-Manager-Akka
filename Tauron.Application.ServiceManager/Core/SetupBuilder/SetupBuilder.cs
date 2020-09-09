@@ -52,7 +52,11 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         {
             try
             {
-                UpdateGitRepo();    
+                using (UnpackRepo())
+                {
+                    _context.GitRepo = UpdateGitRepo();
+                    _context.ProjectFinder.Init(_context.GitRepo, "Project-Manager-Akka.sln", LogMessage);
+                }
             }
             catch (Exception e)
             {
@@ -90,19 +94,18 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             });
         }
 
-        private void UpdateGitRepo()
+        private string UpdateGitRepo()
         {
             using var repo = new GitUpdater(_context.GitRepo);
 
             if (repo.NeedDownload)
             {
                 LogMessage("Download Project Repository");
-                repo.Download();
+                return repo.Download();
             }
-            else
-            {
-                repo.Update();
-            }
+
+            LogMessage("Update Project Repository");
+            return repo.Update();
         }
 
         private sealed class RunContext
@@ -110,6 +113,8 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             public string GitRepo { get; set; } = string.Empty;
             public string HostName { get; set; } = string.Empty;
             public string? SeedHostName { get; set; }
+
+            public ProjectFinder ProjectFinder { get; } = new ProjectFinder();
         }
     }
 }
