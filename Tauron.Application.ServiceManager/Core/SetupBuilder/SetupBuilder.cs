@@ -52,7 +52,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         {
             try
             {
-                using (UnpackRepo())
+                using (UnpackManager.UnpackRepo(s => LogMessage(s), _context))
                 {
                     _context.GitRepo = UpdateGitRepo();
                     _context.ProjectFinder.Init(_context.GitRepo, "Project-Manager-Akka.sln", LogMessage);
@@ -65,33 +65,9 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             }
         }
 
-        private IDisposable UnpackRepo()
+        private void BuildHost()
         {
-            string targetPath = Path.Combine(Env.Path, "Git\\Repo");
-            targetPath.CreateDirectoryIfNotExis();
-            _context.GitRepo = targetPath;
 
-            var zip = Path.Combine(Env.Path, "Git\\Pack.tip");
-
-            // ReSharper disable once InvertIf
-            if (File.Exists(zip))
-            {
-                LogMessage("Upacking Git Repository");
-                ZipFile.ExtractToDirectory(zip, targetPath);
-            }
-
-            return new ActionDispose(() =>
-            {
-                LogMessage("Packing Git Repository");
-
-                using var clean = Process.Start(DotNetPath, $"clean {Path.Combine(targetPath, Soloution)} -c Release");
-                clean?.WaitForExit();
-
-                zip.DeleteFile();
-
-                ZipFile.CreateFromDirectory(targetPath, zip);
-                targetPath.DeleteDirectory(true);
-            });
         }
 
         private string UpdateGitRepo()
@@ -115,6 +91,59 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             public string? SeedHostName { get; set; }
 
             public ProjectFinder ProjectFinder { get; } = new ProjectFinder();
+        }
+
+        private static class UnpackManager
+        {
+            private static readonly object Lock = new object();
+            private static int _count;
+
+            public static IDisposable UnpackRepo(Action<string> logMessage, RunContext context)
+            {
+                lock (Lock)
+                {
+                    string targetPath = Path.Combine(Env.Path, "Git\\Repo");
+                    targetPath.CreateDirectoryIfNotExis();
+                    context.GitRepo = targetPath;
+
+                    var zip = Path.Combine(Env.Path, "Git\\Pack.tip");
+
+
+                    if (_count == 0)
+                    {
+                        // ReSharper disable once InvertIf
+                        if (File.Exists(zip))
+                        {
+                            logMessage("Upacking Git Repository");
+                            ZipFile.ExtractToDirectory(zip, targetPath);
+                        }
+                    }
+                    else
+                        logMessage("Repository is Upacked");
+
+                    _count++;
+
+                    return new ActionDispose(() =>
+                    {
+                        lock (Lock)
+                        {
+                            _count--;
+
+                            if (_count != 0) return;
+                            
+                            logMessage("Packing Git Repository");
+
+                            using var clean = Process.Start(DotNetPath, $"clean {Path.Combine(targetPath, Soloution)} -c Release");
+                            clean?.WaitForExit();
+
+                            zip.DeleteFile();
+
+                            ZipFile.CreateFromDirectory(targetPath, zip);
+                            targetPath.DeleteDirectory(true);
+                        }
+                    });
+                }
+            }
         }
     }
 }

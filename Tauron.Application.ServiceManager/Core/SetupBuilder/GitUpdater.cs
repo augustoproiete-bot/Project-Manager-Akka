@@ -6,10 +6,12 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 {
     public sealed class GitUpdater : IDisposable
     {
+
+
         private readonly string _sourceDic;
         private Repository? _repository;
 
-        public GitUpdater(string sourceDic)
+        private GitUpdater(string sourceDic)
         {
             _sourceDic = sourceDic;
             if (Directory.Exists(sourceDic))
