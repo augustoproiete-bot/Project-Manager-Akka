@@ -26,7 +26,9 @@ namespace ServiceManagerIpProbe.Phase
                                          "SimpleTcp.dll",
                                          "Servicemnager.Networking.dll",
                                          "Servicemnager.Networking.pdb",
-                                         "Interop.IWshRuntimeLibrary.dll"
+                                         "Interop.IWshRuntimeLibrary.dll",
+                                         "Seed.zip",
+                                         "InstallSeed.bat"
                                      };
 
             batchCommands += "del /Q /F "; // Delete the executeable

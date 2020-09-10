@@ -51,6 +51,8 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         {
             _log = log;
 
+            SetupBuilder.BuildRoot.DeleteDirectory(true);
+
             _dataServer = new Lazy<DataServer>(() =>
             {
                 var serv = new DataServer(settings.GetString("akka.remote.dot-netty.tcp.hostname"));
@@ -106,29 +108,26 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         {
             try
             {
-                var file = operation.Builder(id);
-                if(string.IsNullOrWhiteSpace(file))
+                using var file = operation.Builder(s => _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Message, Encoding.UTF8.GetBytes(s))), 
+                    id, operation.EndpointId);
+                if (file == null || string.IsNullOrWhiteSpace(file.Zip))
                     SendDeny(operation.EndpointId);
 
                 LogMessage("Transmiting Data {Id}", id);
 
-                using (var dataStream = File.OpenRead(file))
+                using var dataStream = File.OpenRead(file.Zip);
+                var buffer = ArrayPool<byte>.Shared.Rent(2097152);
+
+                while (true)
                 {
-                    var buffer = ArrayPool<byte>.Shared.Rent(2097152);
+                    var count = dataStream.Read(buffer, 0, buffer.Length);
+                    _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Data, buffer, count));
 
-                    while (true)
-                    {
-                        var count = dataStream.Read(buffer, 0, buffer.Length);
-                        _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Data, buffer, count));
+                    if (dataStream.Position != dataStream.Length) continue;
 
-                        if (dataStream.Position != dataStream.Length) continue;
-                        
-                        _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Compled, Array.Empty<byte>()));
-                        break;
-                    }
+                    _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Compled, Array.Empty<byte>()));
+                    break;
                 }
-
-                File.Delete(file);
             }
             catch (Exception e)
             {
@@ -138,7 +137,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             }
         }
 
-        public void AddPendingInstallations(string id, Func<string, string?> builder)
+        public void AddPendingInstallations(string id, Func<Action<string>, string, string, BuildResult?> builder)
         {
             if(!_dataServer.IsValueCreated)
                 _dataServer.Value.Start();
@@ -168,13 +167,13 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
         private sealed class InstallerOperation : IDisposable
         {
-            public Func<string, string?> Builder { get; }
+            public Func<Action<string>, string, string, BuildResult?> Builder { get; }
 
             public string EndpointId { get; set; } = string.Empty;
 
             private Timer Timeout { get; }
 
-            public InstallerOperation(Func<string, string?> builder, Action remove)
+            public InstallerOperation(Func<Action<string>, string, string, BuildResult?> builder, Action remove)
             {
                 Builder = builder;
                 Timeout = new Timer(_ => remove(), null, TimeSpan.FromMinutes(30), System.Threading.Timeout.InfiniteTimeSpan);

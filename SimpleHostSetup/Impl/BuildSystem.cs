@@ -22,8 +22,6 @@ namespace SimpleHostSetup.Impl
             string basePath = Path.Combine(setupPath, "Build");
             try
             {
-
-
                 _logger.Information("Select Apps");
                 var finder = new ProjectFinder(config.SearchStart, config.SearchRootFile);
 

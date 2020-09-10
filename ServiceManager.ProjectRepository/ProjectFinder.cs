@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Serilog;
 
-namespace Tauron.Application.ServiceManager.Core.SetupBuilder
+namespace ServiceManager.ProjectRepository
 {
     public sealed class ProjectFinder
     {

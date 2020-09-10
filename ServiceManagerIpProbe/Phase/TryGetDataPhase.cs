@@ -11,7 +11,7 @@ namespace ServiceManagerIpProbe.Phase
     {
         public override void Run(OperationContext context, PhaseManager<OperationContext> manager)
         {
-            Console.Write("Downloading Host Data: ");
+            Console.WriteLine("Downloading Host Data: ");
             var deny = false;
 
             context.TargetFile = Path.GetTempFileName();
@@ -26,6 +26,9 @@ namespace ServiceManagerIpProbe.Phase
                 {
                     switch (args.Message.Type)
                     {
+                        case NetworkOperation.Message:
+                            Console.WriteLine(Encoding.UTF8.GetString(args.Message.Data));
+                            break;
                         case NetworkOperation.Deny:
                             deny = true;
                             dataStream?.Dispose();

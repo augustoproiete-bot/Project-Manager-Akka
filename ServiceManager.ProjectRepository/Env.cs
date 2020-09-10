@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Tauron.Application.ServiceManager.Core
+namespace ServiceManager.ProjectRepository
 {
     public static class Env
     {

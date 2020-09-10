@@ -11,5 +11,7 @@
         public const string Data = nameof(Data);
 
         public const string Compled = nameof(Compled);
+
+        public const string Message = nameof(Message);
     }
 }

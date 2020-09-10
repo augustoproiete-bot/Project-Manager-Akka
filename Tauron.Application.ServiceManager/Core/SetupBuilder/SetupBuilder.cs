@@ -1,22 +1,23 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Net;
 using System.Text;
 using Serilog;
 using Serilog.Parsing;
+using ServiceManager.ProjectRepository;
+using Tauron.Application.Master.Commands.Host;
 
 namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 {
     public sealed class SetupBuilder
     {
-        private const string DotNetPath = @"C:\Program Files (x86)\dotnet\dotnet.exe";
-        private const string Soloution = "Project-Manager-Akka.sln";
+        public static readonly string BuildRoot = Path.Combine(Env.Path, "Build");
+
 
         private static readonly ILogger Logger = Log.ForContext<SetupBuilder>();
-        private readonly Action<string> _log;
         private readonly RunContext _context;
+
+        private Action<string> _log;
 
         private void LogMessage(string template, params object[] args)
         {
@@ -40,7 +41,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
         public SetupBuilder(string hostName, string? seedHostName, Action<string> log)
         {
-            _context = new RunContext
+            _context = new RunContext(new RepositoryConfiguration(LogMessage))
             {
                 HostName = hostName,
                 SeedHostName = seedHostName
@@ -48,14 +49,31 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             _log = log;
         }
 
-        public string? Run(string identifer)
+        public BuildResult? Run(Action<string> log, string identifer, string endPoint)
         {
+            _log = _log.Combine(log) ?? (s => { });
+
+            var buildPath = Path.Combine(BuildRoot, identifer, "Binary");
+            buildPath.CreateDirectoryIfNotExis();
+
+            var split = endPoint.Split(':', 2, StringSplitOptions.RemoveEmptyEntries);
+
             try
             {
-                using (UnpackManager.UnpackRepo(s => LogMessage(s), _context))
+                using (_context.Repository)
                 {
-                    _context.GitRepo = UpdateGitRepo();
-                    _context.ProjectFinder.Init(_context.GitRepo, "Project-Manager-Akka.sln", LogMessage);
+                    _context.GitRepo = _context.Repository.PrepareRepository(identifer);
+                    BuildHost(buildPath, identifer, split[0]);
+
+                    if (_context.SeedHostName != null) 
+                        BuildSeed(buildPath, identifer, split[0], _context.SeedHostName);
+
+                    var buildRoot = Path.Combine(BuildRoot, identifer);
+                    var zip = Path.Combine(buildRoot, "binary.zip");
+
+                    LogMessage("Create Host Zip {Id}", identifer);
+
+                    return new BuildResult(zip, buildRoot);
                 }
             }
             catch (Exception e)
@@ -65,23 +83,87 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             }
         }
 
-        private void BuildHost()
+        private void BuildSeed(string basePath, string id, string ip, string name)
         {
+            var appProject = _context.Finder.Search("Master.Seed.Node.csproj");
+            if (appProject == null)
+                throw new InvalidOperationException($"App Project Not Found: Master.Seed.Node.csproj");
 
+            LogMessage("Building Seed Node {Id}", id);
+            string appOutput = Path.Combine(basePath, "Seed");
+
+            try
+            {
+                Directory.CreateDirectory(appOutput);
+
+                var appResult = DotNetBuilder.BuildApplication(appProject, appOutput, s => LogMessage(s, id), _context.Configuration);
+                if (!appResult)
+                {
+                    LogMessage("Seed Project Build Failed {Id}", id);
+                    return;
+                }
+
+                var appConfig = new Configurator(appOutput);
+
+                appConfig.SetSeed($"akka.tcp://Project-Manager@{ip}:8081");
+                appConfig.SetIp(ip);
+                appConfig.SetAppName(name);
+
+                appConfig.Save();
+
+                LogMessage("Create Zip for Seed {Id}", id);
+                ZipFile.CreateFromDirectory(appOutput, Path.Combine(basePath, "Seed.zip"));
+
+                //InstallSeed.bat
+                //cd %~dp0\TestHost
+                //ServiceHost.exe --Install Manual --ZipFile..\Seed.zip --AppName Master-Seed --AppType StartUp
+                //pause
+                //
+
+                File.WriteAllText(Path.Combine(basePath, "InstallSeed.bat"), "cd %~dp0\\Host\n" +
+                                                                             $"ServiceHost.exe --Install Manual --ZipFile ..\\Seed.zip --AppName {name} --AppType {AppType.StartUp}\n" +
+                                                                             //$"del ..\\{installApp}.zip" +
+                                                                             //$"del ..\\Install{installApp}.bat" +
+                                                                             "pause");
+            }
+            finally
+            {
+                appOutput.DeleteDirectory(true);
+            }
         }
 
-        private string UpdateGitRepo()
+        private void BuildHost(string basePath, string id, string ip)
         {
-            using var repo = new GitUpdater(_context.GitRepo);
 
-            if (repo.NeedDownload)
+            var hostProject = _context.Finder.Search("ServiceHost.csproj");
+            if (hostProject == null)
+                throw new InvalidOperationException("Host Project Not Found");
+
+            LogMessage("Building Host Application {Id}", id);
+            string hostOutput = Path.Combine(basePath, "Host");
+
+            Directory.CreateDirectory(hostOutput);
+
+            var result = DotNetBuilder.BuildApplication(hostProject, hostOutput, s => LogMessage(s, id), _context.Configuration);
+            if (!result)
             {
-                LogMessage("Download Project Repository");
-                return repo.Download();
+                LogMessage("Host Project Build Failed {Id}", id);
+                return;
             }
 
-            LogMessage("Update Project Repository");
-            return repo.Update();
+            var hostConfig = new Configurator(hostOutput);
+            string hostIp = ip;
+            string seedIp = $"akka.tcp://Project-Manager@{ip}:8081";
+
+            hostConfig.SetSeed(seedIp);
+            hostConfig.SetIp(hostIp);
+            hostConfig.SetAppName(_context.HostName);
+
+            hostConfig.Save();
+
+            File.WriteAllText(Path.Combine(basePath, "StartHost.bat"), "cd %~dp0\\Host\n" +
+                                                                       "ServiceHost.exe\n" +
+                                                                       "pause");
         }
 
         private sealed class RunContext
@@ -90,60 +172,13 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             public string HostName { get; set; } = string.Empty;
             public string? SeedHostName { get; set; }
 
-            public ProjectFinder ProjectFinder { get; } = new ProjectFinder();
-        }
+            public RepositoryConfiguration Configuration { get; }
 
-        private static class UnpackManager
-        {
-            private static readonly object Lock = new object();
-            private static int _count;
+            public ProjectFinder Finder => Repository.ProjectFinder;
 
-            public static IDisposable UnpackRepo(Action<string> logMessage, RunContext context)
-            {
-                lock (Lock)
-                {
-                    string targetPath = Path.Combine(Env.Path, "Git\\Repo");
-                    targetPath.CreateDirectoryIfNotExis();
-                    context.GitRepo = targetPath;
+            public ProjectManagerRepository Repository => ProjectManagerRepository.GatOrNew(Configuration);
 
-                    var zip = Path.Combine(Env.Path, "Git\\Pack.tip");
-
-
-                    if (_count == 0)
-                    {
-                        // ReSharper disable once InvertIf
-                        if (File.Exists(zip))
-                        {
-                            logMessage("Upacking Git Repository");
-                            ZipFile.ExtractToDirectory(zip, targetPath);
-                        }
-                    }
-                    else
-                        logMessage("Repository is Upacked");
-
-                    _count++;
-
-                    return new ActionDispose(() =>
-                    {
-                        lock (Lock)
-                        {
-                            _count--;
-
-                            if (_count != 0) return;
-                            
-                            logMessage("Packing Git Repository");
-
-                            using var clean = Process.Start(DotNetPath, $"clean {Path.Combine(targetPath, Soloution)} -c Release");
-                            clean?.WaitForExit();
-
-                            zip.DeleteFile();
-
-                            ZipFile.CreateFromDirectory(targetPath, zip);
-                            targetPath.DeleteDirectory(true);
-                        }
-                    });
-                }
-            }
+            public RunContext(RepositoryConfiguration configuration) => Configuration = configuration;
         }
     }
 }

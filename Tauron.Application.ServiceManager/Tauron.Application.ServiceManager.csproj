@@ -26,7 +26,6 @@
 
   <ItemGroup>
     <PackageReference Include="Akka.Cluster.Tools" Version="1.4.10" />
-    <PackageReference Include="LibGit2Sharp" Version="0.26.2" />
     <PackageReference Include="MongoDB.Driver" Version="2.11.1" />
     <PackageReference Include="Simple.Wpf.Terminal" Version="2.3.15" />
     <PackageReference Include="Syncfusion.SfBusyIndicator.WPF" Version="18.1.0.57" />
@@ -40,6 +39,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\External\LoadingIndicators.WPF\LoadingIndicators.WPF.csproj" />
+    <ProjectReference Include="..\ServiceManager.ProjectRepository\ServiceManager.ProjectRepository.csproj" />
     <ProjectReference Include="..\Servicemnager.Networking\Servicemnager.Networking.csproj" />
     <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />
     <ProjectReference Include="..\Tauron.Application.Settings\Tauron.Application.Settings.csproj" />
