@@ -6,6 +6,7 @@ using Serilog;
 using Serilog.Parsing;
 using ServiceManager.ProjectRepository;
 using Tauron.Application.Master.Commands.Host;
+using Tauron.Application.ServiceManager.Core.Configuration;
 
 namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 {
@@ -17,6 +18,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         private static readonly ILogger Logger = Log.ForContext<SetupBuilder>();
         private readonly RunContext _context;
 
+        private readonly AppConfig _config;
         private Action<string> _log;
 
         private void LogMessage(string template, params object[] args)
@@ -39,13 +41,14 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             _log(string.Format(netStyle, args));
         }
 
-        public SetupBuilder(string hostName, string? seedHostName, Action<string> log)
+        public SetupBuilder(string hostName, string? seedHostName, AppConfig config, Action<string> log)
         {
             _context = new RunContext(new RepositoryConfiguration(LogMessage))
             {
                 HostName = hostName,
                 SeedHostName = seedHostName
             };
+            _config = config;
             _log = log;
         }
 

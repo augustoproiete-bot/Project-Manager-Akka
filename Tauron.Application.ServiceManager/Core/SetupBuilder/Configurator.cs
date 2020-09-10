@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Akka.Configuration;
@@ -23,8 +25,8 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         public void SetIp(string ip) 
             => _config.AppendLine($"akka.remote.dot-netty.tcp.hostname = \"{ip}\"");
 
-        public void SetSeed(string ip) 
-            => _config.AppendLine($"akka.cluster.seed-nodes = [\"{ip}\"]");
+        public void SetSeed(IEnumerable<string> ips) 
+            => _config.AppendLine($"akka.cluster.seed-nodes = [{string.Join(',', ips.Select(s => "\"{s}\""))}]");
 
         public void SetAppName(string name)
             => _config.AppendLine($"akka.appinfo.applicationName: \"{name}\"");
