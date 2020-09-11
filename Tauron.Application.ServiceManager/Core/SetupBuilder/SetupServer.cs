@@ -114,7 +114,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                 LogMessage("Transmiting Data {Id}", id);
 
                 using var dataStream = File.OpenRead(file.Zip);
-                var buffer = ArrayPool<byte>.Shared.Rent(5000);
+                var buffer = ArrayPool<byte>.Shared.Rent(50000);
 
                 while (true)
                 {
