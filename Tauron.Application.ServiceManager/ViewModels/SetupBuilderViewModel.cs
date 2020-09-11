@@ -55,7 +55,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
             }
 
             HostName = RegisterProperty<string>(nameof(HostName))
-                .WithValidator(SetError(HostNameValidator(() => SeedHostName)));
+                .WithValidator(SetError(HostNameValidator(() => SeedHostName)))
+                .OnChange(s => SeedHostName += s + "_Seed");
 
             SeedHostName = RegisterProperty<string>(nameof(SeedHostName))
                 .WithValidator(SetError(HostNameValidator(() => HostName)));

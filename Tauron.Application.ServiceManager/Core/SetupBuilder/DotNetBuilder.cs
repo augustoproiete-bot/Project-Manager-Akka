@@ -21,7 +21,8 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
             using var process = new Process {StartInfo = new ProcessStartInfo(configuration.DotNetPath, arguments.ToString())
                                                          {
-                                                             UseShellExecute = false
+                                                             UseShellExecute = false,
+                                                             CreateNoWindow = true
                                                          }};
 
 
