@@ -151,8 +151,6 @@ namespace AkkaTest
 
         private static async Task Main(string[] args)
         {
-            var testResult = Test(2, 3);
-
             using var testSocked = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             testSocked.Bind(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0));
 
@@ -198,16 +196,6 @@ namespace AkkaTest
             Console.ReadKey();
 
             await system.WhenTerminated;
-        }
-
-        private static int Test(int basis, int exponent)
-        {
-            int value = basis;
-
-            for (int i = 0; i < exponent - 1; i++) 
-                value *= basis;
-
-            return value;
         }
 
         //[DebuggerNonUserCode]
