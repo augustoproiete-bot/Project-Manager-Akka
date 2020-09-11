@@ -20,7 +20,7 @@ namespace ServiceManagerIpProbe.Phase
             string[] filesToDelete = {
                                          exeFileName,
                                          HostConfiguration.DefaultFileName,
-                                         "Newtonsoft.Json.dll",
+                                         //"Newtonsoft.Json.dll",
                                          "HostInstaller.exe.config",
                                          "HostInstaller.pdb",
                                          "SimpleTcp.dll",

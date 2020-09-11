@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Localizer.Generated;
 using Tauron.Application.Master.Commands.Host;
+using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.SetupBuilder;
 using Tauron.Application.Wpf.Model;
 
@@ -16,15 +17,17 @@ namespace Tauron.Application.ServiceManager.ViewModels
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedWithFixedConstructorSignature)]
     public sealed class SetupBuilderViewModel : UiActor
     {
+        private readonly AppConfig _config;
         private readonly HostApi _api;
         private readonly SetupServer _server;
 
         private EventSubscribtion? _subscribtion;
 
-        public SetupBuilderViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher) 
+        public SetupBuilderViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config) 
             : base(lifetimeScope, dispatcher)
         {
-            _server = new SetupServer(s => TerminalLines.Add(s), Context.System.Settings.Config);
+            _config = config;
+            _server = new SetupServer(s => UICall(() => TerminalLines.Add(s)), Context.System.Settings.Config);
 
             CurrentError = RegisterProperty<string>(nameof(CurrentError));
             AddSeed = RegisterProperty<bool>(nameof(AddSeed));
@@ -68,15 +71,17 @@ namespace Tauron.Application.ServiceManager.ViewModels
             Interlocked.Increment(ref _buildRunning);
             CommandChanged();
 
+            var stream = Context.System.EventStream;
+
             Task.Run(() =>
             {
                 string hostName = HostName.Value;
                 string seedHostName = SeedHostName.Value;
 
-                TerminalLines.Clear();
+                UICall(TerminalLines.Clear);
 
-                var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, s => TerminalLines.Add(s));
-                var id = Guid.NewGuid().ToString();
+                var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, _config, s => UICall(() => TerminalLines.Add(s)), stream);
+                var id = Guid.NewGuid().ToString().Substring(0, 5);
                 
                 _server.AddPendingInstallations(id, builder.Run);
             }).ContinueWith(t =>

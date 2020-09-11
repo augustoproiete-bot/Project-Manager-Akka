@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -15,6 +16,7 @@ namespace Tauron.Application.Wpf.SerilogViewer
 
         public LimitedList<LogEvent> Logs { get; } = new LimitedList<LogEvent>(150);
 
+        [DebuggerHidden]
         public void Emit(LogEvent logEvent)
         {
             Logs.Add(logEvent);

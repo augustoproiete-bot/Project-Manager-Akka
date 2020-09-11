@@ -35,8 +35,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ServiceManager.ProjectRepository\ServiceManager.ProjectRepository.csproj" />
     <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
     <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
+    <ProjectReference Include="..\Tauron.Application.ServiceManager\Tauron.Application.ServiceManager.csproj" />
   </ItemGroup>
 
   <ItemGroup>

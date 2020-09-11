@@ -1,12 +1,16 @@
 ﻿using System;
+using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Text;
+using Akka.Event;
 using Serilog;
-using Serilog.Parsing;
+using Serilog.Core;
 using ServiceManager.ProjectRepository;
 using Tauron.Application.Master.Commands.Host;
 using Tauron.Application.ServiceManager.Core.Configuration;
+using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
+using LogEvent = Serilog.Events.LogEvent;
 
 namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 {
@@ -15,34 +19,21 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         public static readonly string BuildRoot = Path.Combine(Env.Path, "Build");
 
 
-        private static readonly ILogger Logger = Log.ForContext<SetupBuilder>();
+        private readonly Logger _logger;
         private readonly RunContext _context;
-
         private readonly AppConfig _config;
+        private readonly EventStream? _stream;
+
         private Action<string> _log;
+        private ImmutableList<string> _seeds = ImmutableList<string>.Empty;
 
-        private void LogMessage(string template, params object[] args)
+        private void LogMessage(string template, params object[] args) 
+            => _logger.Information(template, args);
+
+        public SetupBuilder(string hostName, string? seedHostName, AppConfig config, Action<string> log, EventStream? stream)
         {
-            Logger.Information(template, args);
+            _logger = new LoggerConfiguration().WriteTo.Logger(Log.ForContext<SetupBuilder>()).WriteTo.Sink(new DelegateSink(s => _log(s))).CreateLogger();
 
-            var parser = new MessageTemplateParser();
-            var template2 = parser.Parse(template);
-            var format = new StringBuilder();
-            var index = 0;
-            foreach (var tok in template2.Tokens)
-            {
-                if (tok is TextToken)
-                    format.Append(tok);
-                else
-                    format.Append("{" + index++ + "}");
-            }
-            var netStyle = format.ToString();
-
-            _log(string.Format(netStyle, args));
-        }
-
-        public SetupBuilder(string hostName, string? seedHostName, AppConfig config, Action<string> log)
-        {
             _context = new RunContext(new RepositoryConfiguration(LogMessage))
             {
                 HostName = hostName,
@@ -50,6 +41,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             };
             _config = config;
             _log = log;
+            _stream = stream;
         }
 
         public BuildResult? Run(Action<string> log, string identifer, string endPoint)
@@ -60,23 +52,32 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             buildPath.CreateDirectoryIfNotExis();
 
             var split = endPoint.Split(':', 2, StringSplitOptions.RemoveEmptyEntries);
+            string? seedUrl = null;
 
             try
             {
                 using (_context.Repository)
                 {
-                    _context.GitRepo = _context.Repository.PrepareRepository(identifer);
+                    _seeds = ImmutableList<string>.Empty.AddRange(_config.SeedUrls);
+                    if (!string.IsNullOrWhiteSpace(_context.SeedHostName))
+                    {
+                        seedUrl = $"akka.tcp://Project-Manager@{split[0]}:8081";
+                        _seeds = _seeds.Add(seedUrl);
+                    }
+
+                    _context.Repository.PrepareRepository(identifer);
                     BuildHost(buildPath, identifer, split[0]);
 
-                    if (_context.SeedHostName != null) 
+                    if (_context.SeedHostName != null)
                         BuildSeed(buildPath, identifer, split[0], _context.SeedHostName);
 
                     var buildRoot = Path.Combine(BuildRoot, identifer);
-                    var zip = Path.Combine(buildRoot, "binary.zip");
+                    var zip = Path.Combine(buildRoot, "data.zip");
 
                     LogMessage("Create Host Zip {Id}", identifer);
+                    ZipFile.CreateFromDirectory(buildPath, zip);
 
-                    return new BuildResult(zip, buildRoot);
+                    return new BuildResult(zip, buildRoot, () => seedUrl.When(s => !string.IsNullOrWhiteSpace(s), s => _stream?.Publish(new AddSeedUrl(s!))));
                 }
             }
             catch (Exception e)
@@ -84,13 +85,17 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                 LogMessage("Error: {Error}", e.Message);
                 return null;
             }
+            finally
+            {
+                _logger.Dispose();
+            }
         }
 
         private void BuildSeed(string basePath, string id, string ip, string name)
         {
             var appProject = _context.Finder.Search("Master.Seed.Node.csproj");
             if (appProject == null)
-                throw new InvalidOperationException($"App Project Not Found: Master.Seed.Node.csproj");
+                throw new InvalidOperationException("App Project Not Found: Master.Seed.Node.csproj");
 
             LogMessage("Building Seed Node {Id}", id);
             string appOutput = Path.Combine(basePath, "Seed");
@@ -108,7 +113,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
                 var appConfig = new Configurator(appOutput);
 
-                appConfig.SetSeed($"akka.tcp://Project-Manager@{ip}:8081");
+                appConfig.SetSeed(_seeds);
                 appConfig.SetIp(ip);
                 appConfig.SetAppName(name);
 
@@ -156,9 +161,8 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
             var hostConfig = new Configurator(hostOutput);
             string hostIp = ip;
-            string seedIp = $"akka.tcp://Project-Manager@{ip}:8081";
 
-            hostConfig.SetSeed(seedIp);
+            hostConfig.SetSeed(_seeds);
             hostConfig.SetIp(hostIp);
             hostConfig.SetAppName(_context.HostName);
 
@@ -171,7 +175,6 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
         private sealed class RunContext
         {
-            public string GitRepo { get; set; } = string.Empty;
             public string HostName { get; set; } = string.Empty;
             public string? SeedHostName { get; set; }
 
@@ -179,9 +182,21 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
             public ProjectFinder Finder => Repository.ProjectFinder;
 
-            public ProjectManagerRepository Repository => ProjectManagerRepository.GatOrNew(Configuration);
+            private ProjectManagerRepository? _repository;
+
+            public ProjectManagerRepository Repository => _repository ??= ProjectManagerRepository.GatOrNew(Configuration);
 
             public RunContext(RepositoryConfiguration configuration) => Configuration = configuration;
+        }
+
+        private sealed class DelegateSink : ILogEventSink
+        {
+            private readonly Action<string> _log;
+
+            public DelegateSink(Action<string> log) => _log = log;
+
+            [DebuggerHidden]
+            public void Emit(LogEvent logEvent) => _log(logEvent.RenderMessage());
         }
     }
 }

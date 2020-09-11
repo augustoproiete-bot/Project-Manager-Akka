@@ -46,13 +46,13 @@ namespace ServiceManager.ProjectRepository
                 throw new InvalidOperationException("Not Repository Set");
 
             Commands.Pull(_repository, new Signature("ServiceManager", "Service@Manager.com", DateTimeOffset.Now), new PullOptions()); 
-            return _repository.Info.Path;
+            return _repository.Info.WorkingDirectory;
         }
 
         private string Download(string source)
         {
             _repository =new Repository(Repository.Clone(Configuration.CloneUrl, source));
-            return _repository.Info.Path;
+            return _repository.Info.WorkingDirectory;
         }
 
         protected override void InternalDispose()

@@ -23,8 +23,17 @@ namespace Tauron.Application.Settings
         protected ConfigurationBase(IDefaultActorRef<SettingsManager> actor, string scope)
         {
             _actor = actor;
-            _scope = scope;
-            _loader = Task.Run(async () => await LoadValues());
+
+            if (actor is EmptyActor<SettingsManager>)
+            {
+                _scope = string.Empty;
+                _loader = Task.CompletedTask;
+            }
+            else
+            {
+                _scope = scope;
+                _loader = Task.Run(async () => await LoadValues());
+            }
         }
 
         public IDisposable BlockSet()

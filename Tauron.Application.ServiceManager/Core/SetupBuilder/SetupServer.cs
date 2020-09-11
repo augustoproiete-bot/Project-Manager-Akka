@@ -67,8 +67,6 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         {
             try
             {
-
-
                 switch (e.Message.Type)
                 {
                     case NetworkOperation.Identifer:
@@ -128,12 +126,13 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                     _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Compled, Array.Empty<byte>()));
                     break;
                 }
+
+                file.Compled();
             }
             catch (Exception e)
             {
                 LogMessage("Error on Transmiting Data {Id} {Error}", id, e.Message);
                 SendDeny(operation.EndpointId);
-
             }
         }
 
@@ -146,7 +145,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                 throw new InvalidOperationException("Adding to Pending Operations Failed");
             
             var number = Interlocked.Increment(ref _installerCount);
-            var installerFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments), $"HostInstaller{number}.zip");
+            var installerFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), $"HostInstaller{number}.zip");
             if (File.Exists(installerFile))
                 File.Delete(installerFile);
 

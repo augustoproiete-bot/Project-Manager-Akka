@@ -59,6 +59,10 @@ namespace ServiceManagerIpProbe.Phase
 
                 //Create Desktop Shortcut for Application Settings
                 var startLink = Path.Combine(startFolder, "AppHost.lnk");
+
+                if(File.Exists(startLink))
+                    File.Delete(startLink);
+
                 var shortcut = (IWshShortcut)shellClass.CreateShortcut(startLink);
                 shortcut.TargetPath = Path.Combine(appDic, "Host", "ServiceHost.exe");
                 //shortcut.IconLocation = @"C:\Program FilesMorganTechSpacesettings.ico";

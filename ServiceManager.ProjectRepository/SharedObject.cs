@@ -66,12 +66,13 @@ namespace ServiceManager.ProjectRepository
             if(_disposed) return;
             lock (Lock)
             {
-                _disposed = true;
+
                 var target = SharedObjects[Configuration];
                 target.Count--;
 
                 if(target.Count != 0) return;
 
+                _disposed = true;
                 SharedObjects.Remove(Configuration);
                 InternalDispose();
                 GC.SuppressFinalize(this);

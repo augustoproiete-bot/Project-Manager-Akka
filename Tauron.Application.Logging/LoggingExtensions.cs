@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using System.Diagnostics;
+using Autofac;
 using JetBrains.Annotations;
 using Serilog;
 using Serilog.Configuration;
@@ -44,6 +45,7 @@ namespace Tauron.Application.Logging
 
     public class LogLevelWriter : ILogEventEnricher
     {
+        [DebuggerHidden]
         public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
         {
             logEvent.AddPropertyIfAbsent(new LogEventProperty("Level", new ScalarValue(logEvent.Level)));

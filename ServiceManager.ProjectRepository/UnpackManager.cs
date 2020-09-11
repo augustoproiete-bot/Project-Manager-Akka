@@ -16,10 +16,10 @@ namespace ServiceManager.ProjectRepository
         {
             lock (Lock)
             {
-                _targetPath = Path.Combine(Env.Path, "Git\\Repo");
+                _targetPath = Path.Combine(Configuration.SourcePath, "Repo");
                 _targetPath.CreateDirectoryIfNotExis();
 
-                _zip = Path.Combine(Env.Path, "Git\\Pack.tip");
+                _zip = Path.Combine(Configuration.SourcePath, "Pack.zip");
 
 
                 if (!_isUnpacked)
@@ -44,12 +44,16 @@ namespace ServiceManager.ProjectRepository
         {
             LogMessage("Packing Git Repository");
 
-            using var clean = Process.Start(Configuration.DotNetPath, $"clean {Path.Combine(_targetPath, Configuration.Solotion)} -c Release");
+            using var clean = Process.Start(Configuration.DotNetPath, $"clean {Path.Combine(_targetPath, Configuration.Solotion)}");
             clean?.WaitForExit();
 
             _zip.DeleteFile();
 
             ZipFile.CreateFromDirectory(_targetPath, _zip);
+
+            foreach (var file in _targetPath.EnumerateAllFiles()) 
+                File.SetAttributes(file, File.GetAttributes(file) & ~FileAttributes.ReadOnly);
+
             _targetPath.DeleteDirectory(true);
         }
     }

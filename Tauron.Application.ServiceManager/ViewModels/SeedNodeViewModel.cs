@@ -7,8 +7,10 @@ using Akka.Actor;
 using Akka.Cluster;
 using Autofac;
 using JetBrains.Annotations;
+using Tauron.Akka;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.Model;
+using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Dialogs;
@@ -79,6 +81,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
                                                c => c.When(c => c == 1, TryJoin));
                                        });
             }
+
+            this.SubscribeToEvent<AddSeedUrl>(e => AddSeedEntry(new DialogSeedEntry(e.Url)));
 
             NewCommad
                .ThenFlow(this.ShowDialog<IAddSeedUrlDialog, DialogSeedEntry,  IEnumerable<DialogSeedEntry>>(

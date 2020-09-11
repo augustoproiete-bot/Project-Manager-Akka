@@ -9,7 +9,7 @@ namespace ServiceManager.ProjectRepository
     {
         public const string RepositoryLockName = "{01324768-0950-49F9-AB39-CA94E4252C55}-ServiceManager-ProjectManagerRepository";
 
-        private const string DefaultDotNetPath = @"C:\Program Files (x86)\dotnet\dotnet.exe";
+        private const string DefaultDotNetPath = @"C:\Program Files\dotnet\dotnet.exe";
         private const string DefaultSoloution = "Project-Manager-Akka.sln";
         private const string DefaultUrl = "https://github.com/Tauron1990/Project-Manager-Akka.git";
 

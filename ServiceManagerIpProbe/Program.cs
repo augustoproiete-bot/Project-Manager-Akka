@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 
 namespace ServiceManagerIpProbe
@@ -26,6 +27,9 @@ namespace ServiceManagerIpProbe
             {
                 Console.WriteLine("Error:");
                 Console.WriteLine(e);
+
+                using (var stream = new StreamWriter(new FileStream("errors.txt", FileMode.OpenOrCreate, FileAccess.Write))) 
+                    stream.WriteLine(e.ToString());
             }
             
             Thread.Sleep(4000);

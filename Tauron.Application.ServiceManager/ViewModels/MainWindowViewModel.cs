@@ -38,7 +38,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             : base(lifetimeScope, dispatcher)
         {
             _config = config;
-            SetupBuilderView = this.RegisterModel<SetupBuilderViewModel>(nameof(SetupBuilderViewModel), "Setup-Builder");
+            SetupBuilderView = this.RegisterModel<SetupBuilderViewModel>(nameof(SetupBuilderView), "Setup-Builder");
             NodeView = this.RegisterModel<NodeViewModel>(nameof(NodeView), "Node-View");
             SeedView = this.RegisterModel<SeedNodeViewModel>(nameof(SeedView), "Seed-View");
             HostView = this.RegisterModel<HostViewModel>(nameof(HostView), "Host-View");

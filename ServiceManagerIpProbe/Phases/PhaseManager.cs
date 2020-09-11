@@ -15,8 +15,9 @@
             if(context is IHasTimeout timeout && timeout.IsTimeedOut)
                 return;
 
-                _phases[Pos].Run(context, this);
+            var phase = _phases[Pos];
             Pos++;
+            phase.Run(context, this);
         }
     }
 }

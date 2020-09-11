@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using JetBrains.Annotations;
 
@@ -16,7 +17,7 @@ namespace ServiceManager.ProjectRepository
 
         protected override void Init(RepositoryConfiguration configuration)
         {
-            string mutexId = RepositoryConfiguration.RepositoryLockName + configuration.SourcePath;
+            string mutexId = RepositoryConfiguration.RepositoryLockName + configuration.SourcePath.Replace(Path.DirectorySeparatorChar, '_');
 
             _lock = new Mutex(false, mutexId);
 

@@ -65,7 +65,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
                 const string snapshot = "akka.persistence.snapshot-store.plugin = \"akka.persistence.snapshot-store.mongodb\"";
                 const string journal = "akka.persistence.journal.plugin = \"akka.persistence.journal.mongodb\"";
                 
-                const string connectionSnapshot = "akka.persistence.snapshot-stor.mongodb.connection-string = \"{0}\"";
+                const string connectionSnapshot = "akka.persistence.snapshot-store.mongodb.connection-string = \"{0}\"";
                 const string connectionJournal = "akka.persistence.journal.mongodb.connection-string = \"{0}\"";
 
                 var currentConfiguration = ConfigurationFactory.ParseString(appConfig.CurrentConfig);

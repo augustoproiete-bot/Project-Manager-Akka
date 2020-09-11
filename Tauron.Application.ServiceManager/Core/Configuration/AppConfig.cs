@@ -16,8 +16,6 @@ namespace Tauron.Application.ServiceManager.Core.Configuration
         {
         }
 
-
-
         public ImmutableList<string> SeedUrls
         {
             get { return _renctFiles ??= ImmutableList<string>.Empty.AddRange(GetValue(s => s.Split(new[] {';'}, StringSplitOptions.RemoveEmptyEntries), Array.Empty<string>())); }

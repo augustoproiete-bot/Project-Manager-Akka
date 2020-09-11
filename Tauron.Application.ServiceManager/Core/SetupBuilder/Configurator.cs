@@ -26,7 +26,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             => _config.AppendLine($"akka.remote.dot-netty.tcp.hostname = \"{ip}\"");
 
         public void SetSeed(IEnumerable<string> ips) 
-            => _config.AppendLine($"akka.cluster.seed-nodes = [{string.Join(',', ips.Select(s => "\"{s}\""))}]");
+            => _config.AppendLine($"akka.cluster.seed-nodes = [{string.Join(',', ips.Select(s => $"\"{s}\""))}]");
 
         public void SetAppName(string name)
             => _config.AppendLine($"akka.appinfo.applicationName: \"{name}\"");

@@ -30,6 +30,8 @@ namespace ServiceManagerIpProbe.Phase
                             Console.WriteLine(Encoding.UTF8.GetString(args.Message.Data));
                             break;
                         case NetworkOperation.Deny:
+                            Console.WriteLine("Request Deny");
+
                             deny = true;
                             dataStream?.Dispose();
                             
@@ -42,6 +44,7 @@ namespace ServiceManagerIpProbe.Phase
                             context.PhaseLock.Set();
                             break;
                         case NetworkOperation.Accept:
+                            Console.WriteLine("Request Accept");
                             dataStream = File.Open(context.TargetFile, FileMode.Open);
                             break;
                         case NetworkOperation.Data:

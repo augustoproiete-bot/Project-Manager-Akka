@@ -6,9 +6,14 @@ using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Cluster;
 using Akka.Configuration;
+using Akka.Event;
 using Serilog;
+using ServiceManager.ProjectRepository;
 using Tauron.Akka;
 using Tauron.Application.Master.Commands;
+using Tauron.Application.ServiceManager.Core.Configuration;
+using Tauron.Application.ServiceManager.Core.SetupBuilder;
+using Tauron.Application.Settings;
 
 namespace ProtoTyping
 {
@@ -16,7 +21,13 @@ namespace ProtoTyping
     {
         private static async Task Main(string[] args)
         {
-            var test = ConfigurationFactory.ParseString(await File.ReadAllTextAsync("akka.conf"));
+            var builder = new SetupBuilder("Main-Processor", "Main-Processor", new AppConfig(new EmptyActor<SettingsManager>()), Console.WriteLine, null);
+
+            var result = builder.Run(null!, "12345", "127.0.0.1:85");
+
+            result?.Dispose();
+
+            return;
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.ColoredConsole()
