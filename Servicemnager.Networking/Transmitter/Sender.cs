@@ -4,7 +4,7 @@ using Servicemnager.Networking.Server;
 
 namespace Servicemnager.Networking.Transmitter
 {
-    public sealed class Sender
+    public sealed class Sender : IDisposable
     {
         private readonly Stream _toSend;
         private readonly string _client;
@@ -74,5 +74,7 @@ namespace Servicemnager.Networking.Transmitter
                 return false;
             }
         }
+
+        public void Dispose() => _toSend?.Dispose();
     }
 }

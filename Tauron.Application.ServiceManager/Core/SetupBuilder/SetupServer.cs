@@ -3,7 +3,6 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +11,7 @@ using Serilog;
 using Serilog.Parsing;
 using Servicemnager.Networking;
 using Servicemnager.Networking.Server;
+using Servicemnager.Networking.Transmitter;
 
 namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 {
@@ -19,9 +19,11 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
     {
         private static readonly ILogger Logger = Log.ForContext<SetupServer>();
 
-        private static int _installerCount = 0;
+        private static int _installerCount;
 
         private readonly ConcurrentDictionary<string, InstallerOperation> _pendingOperations = new ConcurrentDictionary<string, InstallerOperation>();
+
+        private readonly ConcurrentDictionary<string, InstallerOperation> _runningOperations = new ConcurrentDictionary<string, InstallerOperation>();
 
         private readonly Lazy<DataServer> _dataServer;
 
@@ -77,18 +79,52 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                         {
                             LogMessage("Id Accepted {Id}", id);
                             op.EndpointId = e.Client;
-                            Task.Run(() =>
+
+
+                            LogMessage("Bind {Id} To {Client}", id, e.Client);
+                            if (!_runningOperations.TryAdd(e.Client, op))
                             {
-                                _dataServer.Value.Send(e.Client, NetworkMessage.Create(NetworkOperation.Accept, Array.Empty<byte>()));
-                                TransmitData(id, op);
-                            });
+                                SendDeny(e.Client);
+                                op.Dispose();
+                            }
+                            else
+                            {
+                                var result = BuildData(id, op);
+                                if (result == null)
+                                {
+                                    SendDeny(e.Client);
+                                    op.Dispose();
+                                }
+                                else
+                                {
+                                    var pool = ArrayPool<byte>.Shared;
+                                    op.Sender = new Sender(File.OpenRead(result.Zip), e.Client, _dataServer.Value,
+                                        () => pool.Rent(50_000), bytes => pool.Return(bytes, true),
+                                        exception => LogMessage("Error on Processing Message \"{Message}\" {Id}", exception.Message, id));
+
+                                    op.Result = result;
+                                }
+                            }
+
+                            _pendingOperations.TryRemove(id, out _);
                         }
                         else
                         {
                             LogMessage("No Operation Found {Id}", id);
                             SendDeny(e.Client);
                         }
-
+                        break;
+                    default:
+                        if (_runningOperations.TryGetValue(e.Client, out var running) && running.Sender != null && running.Result != null)
+                        {
+                            if (!running.Sender.ProcessMessage(e.Message))
+                            {
+                                LogMessage("Transmission Compled {Client}", e.Client);
+                                running.Dispose();
+                            }
+                        }
+                        else
+                            SendDeny(e.Client);
                         break;
                 }
             }
@@ -102,38 +138,24 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         private void SendDeny(string client) 
             => Task.Run(() => _dataServer.Value.Send(client, NetworkMessage.Create(NetworkOperation.Deny, Array.Empty<byte>())));
 
-        private void TransmitData(string id, InstallerOperation operation)
+        private BuildResult? BuildData(string id, InstallerOperation operation)
         {
             try
             {
-                using var file = operation.Builder(s => _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Message, Encoding.UTF8.GetBytes(s))), 
+                var file = operation.Builder(s => _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Message, Encoding.UTF8.GetBytes(s))),
                     id, operation.EndpointId);
                 if (file == null || string.IsNullOrWhiteSpace(file.Zip))
                     SendDeny(operation.EndpointId);
 
-                LogMessage("Transmiting Data {Id}", id);
-
-                using var dataStream = File.OpenRead(file.Zip);
-                var buffer = ArrayPool<byte>.Shared.Rent(50000);
-
-                while (true)
-                {
-                    var count = dataStream.Read(buffer, 0, buffer.Length);
-                    _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Data, buffer, count));
-
-                    if (dataStream.Position != dataStream.Length) continue;
-
-                    _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Compled, Array.Empty<byte>()));
-                    break;
-                }
-
-                file.Compled();
+                return file;
             }
             catch (Exception e)
             {
                 LogMessage("Error on Transmiting Data {Id} {Error}", id, e.Message);
                 SendDeny(operation.EndpointId);
             }
+
+            return null;
         }
 
         public void AddPendingInstallations(string id, Func<Action<string>, string, string, BuildResult?> builder)
@@ -172,13 +194,28 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
             private Timer Timeout { get; }
 
+            public Sender? Sender { get; set; }
+
+            public BuildResult? Result { get; set; }
+
             public InstallerOperation(Func<Action<string>, string, string, BuildResult?> builder, Action remove)
             {
                 Builder = builder;
-                Timeout = new Timer(_ => remove(), null, TimeSpan.FromMinutes(30), System.Threading.Timeout.InfiniteTimeSpan);
+                Timeout = new Timer(_ =>
+                {
+                    Sender?.Dispose();
+                    Sender = null;
+                    Result?.Dispose();
+                    Result = null;
+                    remove();
+                }, null, TimeSpan.FromMinutes(30), System.Threading.Timeout.InfiniteTimeSpan);
             }
 
-            public void Dispose() => Timeout.Dispose();
+            public void Dispose()
+            {
+                Timeout.Dispose();
+                Result?.Dispose();
+            }
         }
     }
 }

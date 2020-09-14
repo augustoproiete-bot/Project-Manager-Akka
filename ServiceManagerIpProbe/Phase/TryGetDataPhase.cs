@@ -4,6 +4,7 @@ using System.Text;
 using ServiceManagerIpProbe.Phases;
 using Servicemnager.Networking;
 using Servicemnager.Networking.Server;
+using Servicemnager.Networking.Transmitter;
 
 namespace ServiceManagerIpProbe.Phase
 {
@@ -17,8 +18,7 @@ namespace ServiceManagerIpProbe.Phase
             context.TargetFile = Path.GetTempFileName();
 
             var id = NetworkMessage.Create(NetworkOperation.Identifer, Encoding.UTF8.GetBytes(context.Configuration.Identifer));
-            Stream dataStream = null;
-
+            var reciver = new Reciever(() => File.Create(context.TargetFile), context.DataClient);
 
             try
             {
@@ -33,23 +33,14 @@ namespace ServiceManagerIpProbe.Phase
                             Console.WriteLine("Request Deny");
 
                             deny = true;
-                            dataStream?.Dispose();
-                            
-                            if(File.Exists(context.TargetFile))
+
+                            if (File.Exists(context.TargetFile))
                                 File.Delete(context.TargetFile);
 
                             context.PhaseLock.Set();
                             break;
-                        case NetworkOperation.Compled:
-                            context.PhaseLock.Set();
-                            break;
-                        case NetworkOperation.Accept:
-                            Console.WriteLine("Request Accept");
-                            dataStream = File.Open(context.TargetFile, FileMode.Open);
-                            break;
-                        case NetworkOperation.Data:
-                            // ReSharper disable once AccessToDisposedClosure
-                            dataStream?.Write(args.Message.Data, 0, args.Message.Data.Length);
+                        default:
+                            reciver.ProcessMessage(args.Message);
                             break;
                     }
                 })) return;
@@ -61,7 +52,7 @@ namespace ServiceManagerIpProbe.Phase
             }
             finally
             {
-                dataStream?.Dispose();
+                reciver.Dispose();
             }
 
             if (!deny)
