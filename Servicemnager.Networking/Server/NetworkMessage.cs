@@ -10,7 +10,7 @@ namespace Servicemnager.Networking.Server
     {
         private sealed class SimplePool
         {
-            private ConcurrentQueue<PoolArray> _arrays = new ConcurrentQueue<PoolArray>();
+            private readonly ConcurrentQueue<PoolArray> _arrays = new ConcurrentQueue<PoolArray>();
 
             public PoolArray Rent() => _arrays.TryDequeue(out var array) ? array : new PoolArray(this);
 
@@ -37,7 +37,7 @@ namespace Servicemnager.Networking.Server
         private static readonly byte[] Head = Encoding.ASCII.GetBytes("HEAD");
 
         private static readonly byte[] End = Encoding.ASCII.GetBytes("ENDING");
-        
+
         public static byte[] WriteMessage(NetworkMessage msg)
         {
             using var message = DataPool.Rent();
@@ -93,6 +93,8 @@ namespace Servicemnager.Networking.Server
 
         public static NetworkMessage Create(string type, byte[] data, int lenght = -1) => new NetworkMessage(type, data, lenght);
 
+        public static NetworkMessage Create(string type) => new NetworkMessage(type, Array.Empty<byte>(), -1);
+
         private static int ReadInt(byte[] buffer, ref int pos)
         {
             int int32 = BitConverter.ToInt32(buffer, pos);
@@ -114,17 +116,19 @@ namespace Servicemnager.Networking.Server
             return true;
         }
 
+        private readonly int _lenght;
+
         public string Type { get; }
 
         public byte[] Data { get; }
 
-        public int Lenght { get; }
+        public int Lenght => _lenght == -1 ? Data.Length : Lenght;
 
         private NetworkMessage(string type, byte[] data, int lenght)
         {
             Type = type;
             Data = data;
-            Lenght = lenght;
+            _lenght = lenght;
         }
     }
 }
