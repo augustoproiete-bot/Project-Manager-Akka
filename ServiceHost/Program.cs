@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO.Pipes;
 using System.Text;
@@ -24,7 +25,10 @@ namespace ServiceHost
 
         static async Task Main(string[] args)
         {
-            using var m = new Mutex(true, MonitorName, out var createdNew);
+            bool createdNew = false;
+
+            using var m = await Task.Factory.StartNew(() => new Mutex(true, MonitorName, out createdNew), CancellationToken.None, 
+                TaskCreationOptions.HideScheduler | TaskCreationOptions.DenyChildAttach, MutexThread.Inst);
             try
             {
                 if (createdNew)
@@ -52,7 +56,11 @@ namespace ServiceHost
             finally
             {
                 if (createdNew)
-                    m.ReleaseMutex();
+                {
+                    await Task.Factory.StartNew(() => m.ReleaseMutex(), CancellationToken.None,
+                        TaskCreationOptions.HideScheduler | TaskCreationOptions.DenyChildAttach, MutexThread.Inst);
+                    MutexThread.Inst.Dispose();
+                }
                 IncomingCommandHandler.Handler?.Stop();
             }
         }
@@ -177,6 +185,49 @@ namespace ServiceHost
             }
 
             public static IncomingCommandHandler? Handler { get; private set; }
+        }
+
+        public sealed class MutexThread : TaskScheduler, IDisposable
+        {
+            public static readonly MutexThread Inst = new MutexThread();
+
+            private readonly BlockingCollection<Task> _tasks = new BlockingCollection<Task>();
+
+            private MutexThread()
+            {
+                Thread thread = new Thread(() =>
+                {
+                    foreach (var task in _tasks.GetConsumingEnumerable()) 
+                        TryExecuteTask(task);
+
+                    _tasks.Dispose();
+                });
+
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.IsBackground = true;
+
+                thread.Start();
+            }
+
+            protected override IEnumerable<Task>? GetScheduledTasks() => _tasks;
+
+            protected override void QueueTask(Task task) 
+                => _tasks.Add(task);
+
+            protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
+            {
+                if (taskWasPreviouslyQueued)
+                    return false;
+
+                _tasks.Add(task);
+
+                return false;
+            }
+
+            public void Dispose()
+            {
+                _tasks.CompleteAdding();
+            }
         }
     }
 }

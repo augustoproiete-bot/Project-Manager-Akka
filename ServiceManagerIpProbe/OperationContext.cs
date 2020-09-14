@@ -20,7 +20,17 @@ namespace ServiceManagerIpProbe
 
         public Action DestroySelf { get; set; } = () => { };
 
+        public Action<string> WriteLine { get; }
+
+        public Action<string> Write { get; }
+
         bool IHasTimeout.IsTimeedOut => GlobalTimeout.IsCancellationRequested;
+
+        public OperationContext(Action<string> log)
+        {
+            WriteLine = s => log(s + Environment.NewLine);
+            Write = log;
+        }
 
         public bool ProcessAndWait(NetworkMessage msg, EventHandler<MessageFromServerEventArgs> handler)
         {

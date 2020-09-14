@@ -9,7 +9,7 @@ namespace ServiceManagerIpProbe.Phase
     {
         public override void Run(OperationContext context, PhaseManager<OperationContext> manager)
         {
-            Console.WriteLine("Read Configuration");
+            context.WriteLine("Read Configuration");
 
             context.Configuration = HostConfiguration.Read();
 
@@ -17,7 +17,7 @@ namespace ServiceManagerIpProbe.Phase
 
             var port = int.Parse(data[1]);
 
-            Console.Write("Open Server Connection");
+            context.Write("Open Server ");
 
             var client = new DataClient(data[0], port);
             client.Connect();

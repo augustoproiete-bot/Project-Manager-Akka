@@ -13,7 +13,7 @@ namespace ServiceManagerIpProbe.Phase
     {
         public override void Run(OperationContext context, PhaseManager<OperationContext> manager)
         {
-            Console.WriteLine("Extract Application Data");
+            context.WriteLine("Extract Application Data");
             var appDic = Path.GetDirectoryName(Application.ExecutablePath);
 
             if(string.IsNullOrWhiteSpace(appDic))
@@ -26,12 +26,12 @@ namespace ServiceManagerIpProbe.Phase
 
             if (File.Exists(seedBat))
             {
-                Console.WriteLine("Installing Seed");
+                context.WriteLine("Installing Seed");
 
                 using (var process = Process.Start(seedBat))
                 {
                     if(process == null)
-                        Console.WriteLine("Seed Install Failed");
+                        context.WriteLine("Seed Install Failed");
                     else
                     {
                         while (process.WaitForExit(5000))
@@ -40,17 +40,17 @@ namespace ServiceManagerIpProbe.Phase
                                 return;
                         }
 
-                        Console.WriteLine("Seed Installation Ok");
+                        context.WriteLine("Seed Installation Ok");
                     }
                 }
             }
 
-            Console.WriteLine("Starting Host");
+            context.WriteLine("Starting Host");
             var startBat = Path.Combine(appDic, "StartHost.bat");
             if (File.Exists(startBat)) 
                 Process.Start(startBat)?.Dispose();
 
-            Console.WriteLine("Try Creating Start Shortcut");
+            context.WriteLine("Try Creating Start Shortcut");
 
             try
             {
@@ -72,8 +72,8 @@ namespace ServiceManagerIpProbe.Phase
             }
             catch (Exception e)
             {
-                Console.WriteLine("Creation Failed");
-                Console.WriteLine(e.Message);
+                context.WriteLine("Creation Failed");
+                context.WriteLine(e.Message);
             }
 
             manager.RunNext(context);

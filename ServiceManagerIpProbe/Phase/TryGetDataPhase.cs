@@ -12,7 +12,7 @@ namespace ServiceManagerIpProbe.Phase
     {
         public override void Run(OperationContext context, PhaseManager<OperationContext> manager)
         {
-            Console.WriteLine("Downloading Host Data: ");
+            context.WriteLine("Downloading Host Data: ");
             var deny = false;
 
             context.TargetFile = Path.GetTempFileName();
@@ -27,10 +27,10 @@ namespace ServiceManagerIpProbe.Phase
                     switch (args.Message.Type)
                     {
                         case NetworkOperation.Message:
-                            Console.WriteLine(Encoding.UTF8.GetString(args.Message.Data));
+                            context.WriteLine(Encoding.UTF8.GetString(args.Message.Data));
                             break;
                         case NetworkOperation.Deny:
-                            Console.WriteLine("Request Deny");
+                            context.WriteLine("Request Deny");
 
                             deny = true;
 
@@ -48,7 +48,7 @@ namespace ServiceManagerIpProbe.Phase
             }
             catch (Exception)
             {
-                Console.WriteLine("Error");
+                context.WriteLine("Error");
                 throw;
             }
             finally
@@ -58,11 +58,11 @@ namespace ServiceManagerIpProbe.Phase
 
             if (!deny)
             {
-                Console.WriteLine("Download Compled");
+                context.WriteLine("Download Compled");
                 manager.RunNext(context);
             }
             else
-                Console.WriteLine("Download Deny");
+                context.WriteLine("Download Deny");
 
         }
     }

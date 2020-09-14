@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+using ServiceManagerIpProbe.UI;
 
 namespace ServiceManagerIpProbe
 {
@@ -9,30 +10,32 @@ namespace ServiceManagerIpProbe
         [STAThread]
         static void Main()
         {
-            Console.Title = "Host Installer";
-
             Action destroySelf = () => { };
 
-            try
+            UIStart.Run(log =>
             {
-                using (var context = new OperationContext())
+                using (var context = new OperationContext(log))
                 {
-                    Operation.Start(context);
-                    destroySelf = context.DestroySelf;
+                    try
+                    {
+                        Operation.Start(context);
+                        destroySelf = context.DestroySelf;
 
-                    context.GlobalTimeout.Token.ThrowIfCancellationRequested();
+                        context.GlobalTimeout.Token.ThrowIfCancellationRequested();
+
+                    }
+                    catch (Exception e)
+                    {
+                        context.WriteLine("Error:");
+                        context.WriteLine(e.ToString());
+
+                        using (var stream = new StreamWriter(new FileStream("errors.txt", FileMode.OpenOrCreate, FileAccess.Write)))
+                            stream.WriteLine(e.ToString());
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error:");
-                Console.WriteLine(e);
 
-                using (var stream = new StreamWriter(new FileStream("errors.txt", FileMode.OpenOrCreate, FileAccess.Write))) 
-                    stream.WriteLine(e.ToString());
-            }
-            
-            Thread.Sleep(4000);
+                Thread.Sleep(4000);
+            });
 
             destroySelf();
         }
