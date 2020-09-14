@@ -34,7 +34,7 @@ namespace Servicemnager.Networking.Transmitter
                     case NetworkOperation.DataChunk:
                         if(_stream == null)
                             throw new InvalidOperationException("Write Stream is null");
-                        _stream.Write(msg.Data, 0, msg.Lenght);
+                        _stream.Write(msg.Data, 0, msg.RealLength);
                         _client.Send(NetworkMessage.Create(NetworkOperation.DataNext));
                         return true;
                 }

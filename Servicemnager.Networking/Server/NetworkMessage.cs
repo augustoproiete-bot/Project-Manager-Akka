@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Xml.Schema;
 
 namespace Servicemnager.Networking.Server
 {
@@ -34,15 +36,15 @@ namespace Servicemnager.Networking.Server
 
         private static readonly SimplePool DataPool = new SimplePool();
 
-        private static readonly byte[] Head = Encoding.ASCII.GetBytes("HEAD");
+        public static readonly byte[] Head = Encoding.ASCII.GetBytes("HEAD");
 
-        private static readonly byte[] End = Encoding.ASCII.GetBytes("ENDING");
+        public static readonly byte[] End = Encoding.ASCII.GetBytes("ENDING");
 
         public static byte[] WriteMessage(NetworkMessage msg)
         {
             using var message = DataPool.Rent();
             var typeLenght = Encoding.UTF8.GetByteCount(msg.Type);
-            var lenght = Head.Length + End.Length + msg.Data.Length + typeLenght + 12;
+            var lenght = Head.Length + End.Length + msg.RealLength + typeLenght + 12;
                 
             message.Data.AddRange(Head);
             message.Data.AddRange(BitConverter.GetBytes(lenght));
@@ -66,6 +68,21 @@ namespace Servicemnager.Networking.Server
             return message.Data.ToArray();
         }
 
+        public static bool HasHeader(byte[] buffer)
+        {
+            var pos = 0;
+            return CheckPresence(buffer, Head, ref pos);
+        }
+
+        public static bool HasTail(byte[] buffer)
+        {
+            if (buffer.Length < End.Length)
+                return false;
+
+            var pos = buffer.Length - End.Length;
+            return CheckPresence(buffer, End, ref pos);
+        }
+
         public static NetworkMessage ReadMessage(byte[] buffer)
         {
             int bufferPos = 0;
@@ -74,8 +91,8 @@ namespace Servicemnager.Networking.Server
                 throw new InvalidOperationException("Invalid Message Format");
 
             var fullLenght = ReadInt(buffer, ref bufferPos);
-            if (fullLenght != buffer.Length)
-                throw new InvalidOperationException("Invalid message Lenght");
+            //if (fullLenght != buffer.Length)
+            //    throw new InvalidOperationException("Invalid message Lenght");
 
             var typeLenght = ReadInt(buffer, ref bufferPos);
             var type = Encoding.UTF8.GetString(buffer, bufferPos, typeLenght);
@@ -85,7 +102,7 @@ namespace Servicemnager.Networking.Server
             var data = buffer.Skip(bufferPos).Take(dataLenght).ToArray();
             bufferPos += dataLenght;
 
-            if (!CheckPresence(buffer, End, ref bufferPos) || buffer.Length != bufferPos)
+            if (!CheckPresence(buffer, End, ref bufferPos) || fullLenght != bufferPos)
                 throw new InvalidOperationException("Invalid Message Format");
 
             return new NetworkMessage(type, data, -1);
@@ -103,6 +120,7 @@ namespace Servicemnager.Networking.Server
             return int32;
         }
 
+        [DebuggerHidden]
         private static bool CheckPresence(IReadOnlyList<byte> buffer, IEnumerable<byte> target, ref int pos)
         {
             foreach (var ent in target)
@@ -116,19 +134,20 @@ namespace Servicemnager.Networking.Server
             return true;
         }
 
-        private readonly int _lenght;
-
         public string Type { get; }
 
         public byte[] Data { get; }
 
-        public int Lenght => _lenght == -1 ? Data.Length : Lenght;
+        public int Lenght { get; }
+
+
+        public int RealLength => Lenght == -1 ? Data.Length : Lenght;
 
         private NetworkMessage(string type, byte[] data, int lenght)
         {
             Type = type;
             Data = data;
-            _lenght = lenght;
+            Lenght = lenght;
         }
     }
 }

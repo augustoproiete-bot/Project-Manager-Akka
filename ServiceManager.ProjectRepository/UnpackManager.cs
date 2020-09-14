@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using Tauron;
@@ -45,7 +46,7 @@ namespace ServiceManager.ProjectRepository
             LogMessage("Packing Git Repository");
 
             using var clean = Process.Start(Configuration.DotNetPath, $"clean {Path.Combine(_targetPath, Configuration.Solotion)}");
-            clean?.WaitForExit();
+            if (clean?.WaitForExit(TimeSpan.FromSeconds(10).Milliseconds) == false) clean.Kill();
 
             _zip.DeleteFile();
 

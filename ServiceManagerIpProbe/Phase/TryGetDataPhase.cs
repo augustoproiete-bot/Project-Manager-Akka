@@ -40,7 +40,8 @@ namespace ServiceManagerIpProbe.Phase
                             context.PhaseLock.Set();
                             break;
                         default:
-                            reciver.ProcessMessage(args.Message);
+                            if (!reciver.ProcessMessage(args.Message))
+                                context.PhaseLock.Set();
                             break;
                     }
                 })) return;

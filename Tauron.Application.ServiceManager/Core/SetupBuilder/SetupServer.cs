@@ -97,12 +97,14 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                                 }
                                 else
                                 {
+                                    LogMessage("Sending Data {Id}", id);
                                     var pool = ArrayPool<byte>.Shared;
                                     op.Sender = new Sender(File.OpenRead(result.Zip), e.Client, _dataServer.Value,
                                         () => pool.Rent(50_000), bytes => pool.Return(bytes, true),
                                         exception => LogMessage("Error on Processing Message \"{Message}\" {Id}", exception.Message, id));
 
                                     op.Result = result;
+                                    op.Sender.ProcessMessage(e.Message);
                                 }
                             }
 
@@ -135,8 +137,11 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             }
         }
 
-        private void SendDeny(string client) 
-            => Task.Run(() => _dataServer.Value.Send(client, NetworkMessage.Create(NetworkOperation.Deny, Array.Empty<byte>())));
+        private void SendDeny(string client)
+        {
+            LogMessage("Communication Error {Client}", client);
+            Task.Run(() => _dataServer.Value.Send(client, NetworkMessage.Create(NetworkOperation.Deny, Array.Empty<byte>())));
+        }
 
         private BuildResult? BuildData(string id, InstallerOperation operation)
         {

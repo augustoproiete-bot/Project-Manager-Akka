@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using Servicemnager.Networking.Server;
 
 namespace Servicemnager.Networking.Transmitter
@@ -52,6 +53,7 @@ namespace Servicemnager.Networking.Transmitter
                             {
                                 _toSend.Dispose();
                                 _server.Send(_client, NetworkMessage.Create(NetworkOperation.DataCompled));
+                                Thread.Sleep(2000);
                                 return false;
                             }
                             _server.Send(_client, NetworkMessage.Create(NetworkOperation.DataChunk, chunk, count));
