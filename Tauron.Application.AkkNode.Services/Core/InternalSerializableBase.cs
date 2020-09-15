@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Akka.Actor;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.AkkNode.Services.Core
@@ -13,16 +14,22 @@ namespace Tauron.Application.AkkNode.Services.Core
             
         }
 
-        protected InternalSerializableBase(BinaryReader reader)
+        protected InternalSerializableBase(BinaryReader reader, ExtendedActorSystem? system = null)
         {
             // ReSharper disable once VirtualMemberCallInConstructor
             var manifest = BinaryManifest.Read(reader, GetType().Name, Version);
 
-            // ReSharper disable once VirtualMemberCallInConstructor
-            ReadInternal(reader, manifest);
+            if(system == null)
+                // ReSharper disable once VirtualMemberCallInConstructor
+                ReadInternal(reader, manifest);
+            else
+                // ReSharper disable once VirtualMemberCallInConstructor
+                ReadInternal(reader, manifest, system);
         }
 
-        protected virtual void ReadInternal(BinaryReader reader, BinaryManifest manifest) { }
+        protected virtual void ReadInternal(BinaryReader reader, BinaryManifest manifest, ExtendedActorSystem system) { ReadInternal(reader, manifest); }
+
+        protected virtual void ReadInternal(BinaryReader reader, BinaryManifest manifest){}
 
         public void Write(ActorBinaryWriter writer)
         {
@@ -30,6 +37,6 @@ namespace Tauron.Application.AkkNode.Services.Core
             WriteInternal(writer);
         }
 
-        protected virtual void WriteInternal(ActorBinaryWriter writer) { }
+        protected virtual void WriteInternal(ActorBinaryWriter writer){}
     }
 }

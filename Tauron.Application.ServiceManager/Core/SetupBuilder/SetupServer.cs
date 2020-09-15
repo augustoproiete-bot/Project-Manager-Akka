@@ -122,6 +122,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                             if (!running.Sender.ProcessMessage(e.Message))
                             {
                                 LogMessage("Transmission Compled {Client}", e.Client);
+                                running.Result.Compled();
                                 running.Dispose();
                             }
                         }
@@ -163,7 +164,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             return null;
         }
 
-        public void AddPendingInstallations(string id, Func<Action<string>, string, string, BuildResult?> builder)
+        public void AddPendingInstallations(string id, Func<Action<string>, string, string, BuildResult?> builder, bool addShortcurt)
         {
             if(!_dataServer.IsValueCreated)
                 _dataServer.Value.Start();
@@ -177,7 +178,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                 File.Delete(installerFile);
 
             File.Copy(Path.GetFullPath("HostInstaller\\Installer.zip"), installerFile);
-            HostConfiguration.WriteInTo(installerFile, _dataServer.Value.EndPoint.ToString(), id);
+            HostConfiguration.WriteInTo(installerFile, _dataServer.Value.EndPoint.ToString()!, id, addShortcurt);
 
             Process.Start("explorer.exe", Path.GetDirectoryName(installerFile));
         }

@@ -7,6 +7,7 @@ using Akka.Event;
 using Serilog;
 using Serilog.Core;
 using ServiceManager.ProjectRepository;
+using ServiceManager.ProjectRepository.Core;
 using Tauron.Application.Master.Commands.Host;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
@@ -128,11 +129,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                 //pause
                 //
 
-                File.WriteAllText(Path.Combine(basePath, "InstallSeed.bat"), "cd %~dp0\\Host\n" +
-                                                                             $"ServiceHost.exe --Install Manual --ZipFile ..\\Seed.zip --AppName {name} --AppType {AppType.StartUp}\n" +
-                                                                             //$"del ..\\{installApp}.zip" +
-                                                                             //$"del ..\\Install{installApp}.bat" +
-                                                                             "pause");
+                File.WriteAllText(Path.Combine(basePath, "InstallSeed.dat"), $"--Install Manual --ZipFile ..\\Seed.zip --AppName {name} --AppType {AppType.StartUp}");
             }
             finally
             {

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
+using ServiceManagerIpProbe.Phase;
 using ServiceManagerIpProbe.UI;
 
 namespace ServiceManagerIpProbe
@@ -11,6 +11,13 @@ namespace ServiceManagerIpProbe
         static void Main()
         {
             Action destroySelf = () => { };
+
+            using (var testcontext = new OperationContext(s => {}))
+            {
+                var testPhase = new SelfDestroyPhase();
+                testPhase.Run(testcontext, null);
+                destroySelf = testcontext.DestroySelf;
+            }
 
             UIStart.Run(log =>
             {
@@ -33,11 +40,10 @@ namespace ServiceManagerIpProbe
                             stream.WriteLine(e.ToString());
                     }
                 }
-
-                Thread.Sleep(4000);
             });
 
             destroySelf();
+            Environment.Exit(0);
         }
     }
 }

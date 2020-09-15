@@ -19,16 +19,12 @@ namespace Tauron.Application.Master.Commands.Host
         protected override void WriteInternal(ActorBinaryWriter writer)
         {
             BinaryHelper.WriteList(Apps, writer);
-
-            base.WriteInternal(writer);
         }
 
         protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
         {
             if (manifest.WhenVersion(1))
                 Apps = BinaryHelper.Read(reader, r => new HostApp(r));
-
-            base.ReadInternal(reader, manifest);
         }
     }
 }

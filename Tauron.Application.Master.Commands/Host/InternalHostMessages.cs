@@ -31,7 +31,6 @@ namespace Tauron.Application.Master.Commands.Host
             {
                 writer.Write(Target);
                 writer.Write((int)Type);
-                base.WriteInternal(writer);
             }
 
             protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
@@ -41,8 +40,6 @@ namespace Tauron.Application.Master.Commands.Host
                     Target = reader.ReadString();
                     Type = (CommandType) reader.ReadInt32();
                 }
-
-                base.ReadInternal(reader, manifest);
             }
         }
 
@@ -58,6 +55,7 @@ namespace Tauron.Application.Master.Commands.Host
             {
                 
             }
+
         }
 
         public sealed class GetHostNameResult : InternalSerializableBase

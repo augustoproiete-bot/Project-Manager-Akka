@@ -27,8 +27,9 @@ namespace Tauron.Application.ServiceManager.ViewModels
             : base(lifetimeScope, dispatcher)
         {
             _config = config;
-            _server = new SetupServer(s => UICall(() => TerminalLines.Add(s)), Context.System.Settings.Config);
+            _server = new SetupServer(s => UICall(() => TerminalLines!.Add(s)), Context.System.Settings.Config);
 
+            AddShortcut = RegisterProperty<bool>(nameof(AddShortcut));
             CurrentError = RegisterProperty<string>(nameof(CurrentError));
             AddSeed = RegisterProperty<bool>(nameof(AddSeed));
             TerminalLines = this.RegisterUiCollection<string>(nameof(TerminalLines)).AndAsync();
@@ -55,7 +56,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             }
 
             HostName = RegisterProperty<string>(nameof(HostName))
-                .WithValidator(SetError(HostNameValidator(() => SeedHostName)))
+                .WithValidator(SetError(HostNameValidator(() => SeedHostName!)))
                 .OnChange(s => SeedHostName += s + "_Seed");
 
             SeedHostName = RegisterProperty<string>(nameof(SeedHostName))
@@ -84,9 +85,14 @@ namespace Tauron.Application.ServiceManager.ViewModels
                 var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, _config, s => UICall(() => TerminalLines.Add(s)), stream);
                 var id = Guid.NewGuid().ToString().Substring(0, 5);
                 
-                _server.AddPendingInstallations(id, builder.Run);
+                _server.AddPendingInstallations(id, builder.Run, AddShortcut);
             }).ContinueWith(t =>
             {
+                AddShortcut.Set(false);
+                AddSeed.Set(false);
+                HostName.Set(string.Empty);
+                SeedHostName.Set(string.Empty);
+
                 Interlocked.Decrement(ref _buildRunning);
                 CommandChanged();
             });
@@ -128,5 +134,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
         public UIProperty<string> CurrentError { get; private set; }
 
         public UIProperty<string> HostName { get; }
+
+        public UIProperty<bool> AddShortcut { get; }
     }
 }

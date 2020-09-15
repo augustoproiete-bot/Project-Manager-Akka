@@ -4,7 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using Tauron;
 
-namespace ServiceManager.ProjectRepository
+namespace ServiceManager.ProjectRepository.Core
 {
     public class UnpackManager : SharedObject<UnpackManager>
     {

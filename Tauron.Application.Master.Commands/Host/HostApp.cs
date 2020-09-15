@@ -47,8 +47,6 @@ namespace Tauron.Application.Master.Commands.Host
             writer.Write(SupressWindow);
             writer.Write(Exe);
             writer.Write(Running);
-            
-            base.WriteInternal(writer);
         }
 
         protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
@@ -63,8 +61,6 @@ namespace Tauron.Application.Master.Commands.Host
                 Exe = reader.ReadString();
                 Running = reader.ReadBoolean();
             }
-
-            base.ReadInternal(reader, manifest);
         }
     }
 }

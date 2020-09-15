@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ServiceManager.ProjectRepository
+namespace ServiceManager.ProjectRepository.Core
 {
     public abstract class SharedObject<TObject> : IDisposable
         where TObject : SharedObject<TObject>, new()
@@ -23,7 +23,7 @@ namespace ServiceManager.ProjectRepository
 
         private static readonly Dictionary<RepositoryConfiguration, ObjectEntry> SharedObjects = new Dictionary<RepositoryConfiguration, ObjectEntry>();
 
-        public static TObject GatOrNew(RepositoryConfiguration configuration)
+        public static TObject GetOrNew(RepositoryConfiguration configuration)
         {
             lock (Lock)
             {

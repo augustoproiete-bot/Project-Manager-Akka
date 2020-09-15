@@ -2,7 +2,7 @@
 using System.IO;
 using JetBrains.Annotations;
 
-namespace ServiceManager.ProjectRepository
+namespace ServiceManager.ProjectRepository.Core
 {
     [PublicAPI]
     public class RepositoryConfiguration

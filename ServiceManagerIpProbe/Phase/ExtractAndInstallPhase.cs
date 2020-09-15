@@ -22,21 +22,26 @@ namespace ServiceManagerIpProbe.Phase
             using (var zip = ZipFile.OpenRead(context.TargetFile)) 
                 zip.ExtractToDirectory(appDic);
 
-            var seedBat = Path.Combine(appDic, "InstallSeed.bat");
+            var seedBat = Path.Combine(appDic, "InstallSeed.dat");
+            var seedZip = Path.Combine(appDic, "Seed.zip");
 
             if (File.Exists(seedBat))
             {
                 context.WriteLine("Installing Seed");
 
-                using (var process = Process.Start(seedBat))
+                using (var process = Process.Start(new ProcessStartInfo(Path.Combine(appDic, "Host", "ServiceHost.exe"))
                 {
-                    if(process == null)
+                    Arguments = File.ReadAllText(seedBat),
+                    WorkingDirectory = Path.Combine(appDic, "Host")
+                }))
+                {
+                    if (process == null)
                         context.WriteLine("Seed Install Failed");
                     else
                     {
-                        while (process.WaitForExit(5000))
+                        while (!process.WaitForExit(5000))
                         {
-                            if(context.GlobalTimeout.IsCancellationRequested)
+                            if (context.GlobalTimeout.IsCancellationRequested)
                                 return;
                         }
 
@@ -46,34 +51,40 @@ namespace ServiceManagerIpProbe.Phase
             }
 
             context.WriteLine("Starting Host");
-            var startBat = Path.Combine(appDic, "StartHost.bat");
-            if (File.Exists(startBat)) 
-                Process.Start(startBat)?.Dispose();
+            var hostApp = Path.Combine(appDic, "Host", "ServiceHost.exe");
+            if (File.Exists(hostApp)) 
+                Process.Start(new ProcessStartInfo(hostApp)
+                {
+                    WorkingDirectory = Path.Combine(appDic, "Host")
+                })?.Dispose();
 
-            context.WriteLine("Try Creating Start Shortcut");
-
-            try
+            if (context.Configuration.CreateShortcut)
             {
-                var startFolder = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-                IWshShell shellClass = new WshShellClass();
+                context.WriteLine("Try Creating Start Shortcut");
 
-                //Create Desktop Shortcut for Application Settings
-                var startLink = Path.Combine(startFolder, "AppHost.lnk");
+                try
+                {
+                    var startFolder = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                    IWshShell shellClass = new WshShellClass();
 
-                if(File.Exists(startLink))
-                    File.Delete(startLink);
+                    //Create Desktop Shortcut for Application Settings
+                    var startLink = Path.Combine(startFolder, "AppHost.lnk");
 
-                var shortcut = (IWshShortcut)shellClass.CreateShortcut(startLink);
-                shortcut.TargetPath = Path.Combine(appDic, "Host", "ServiceHost.exe");
-                //shortcut.IconLocation = @"C:\Program FilesMorganTechSpacesettings.ico";
-                //shortcut.Arguments = "arg1 arg2";
-                shortcut.Description = "Click to edit MorganApp settings";
-                shortcut.Save();
-            }
-            catch (Exception e)
-            {
-                context.WriteLine("Creation Failed");
-                context.WriteLine(e.Message);
+                    if (File.Exists(startLink))
+                        File.Delete(startLink);
+
+                    var shortcut = (IWshShortcut) shellClass.CreateShortcut(startLink);
+                    shortcut.TargetPath = Path.Combine(appDic, "Host", "ServiceHost.exe");
+                    //shortcut.IconLocation = @"C:\Program FilesMorganTechSpacesettings.ico";
+                    //shortcut.Arguments = "arg1 arg2";
+                    shortcut.Description = "Click to edit MorganApp settings";
+                    shortcut.Save();
+                }
+                catch (Exception e)
+                {
+                    context.WriteLine("Creation Failed");
+                    context.WriteLine(e.Message);
+                }
             }
 
             manager.RunNext(context);

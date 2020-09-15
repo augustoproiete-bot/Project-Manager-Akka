@@ -24,7 +24,7 @@ namespace Servicemnager.Networking.Server
     {
         private readonly SimpleTcpServer _server;
 
-        private ConcurrentDictionary<string, MessageBuffer> _clients = new ConcurrentDictionary<string, MessageBuffer>();
+        private readonly ConcurrentDictionary<string, MessageBuffer> _clients = new ConcurrentDictionary<string, MessageBuffer>();
 
         private EndPoint? _endPoint;
 
@@ -61,12 +61,12 @@ namespace Servicemnager.Networking.Server
             remove => _server.Events.ClientDisconnected -= value;
         }
 
-        public event EventHandler<MessageFromClientEventArgs> OnMessageReceived;
+        public event EventHandler<MessageFromClientEventArgs>? OnMessageReceived;
 
         public void Start() => _server.Start();
 
         public void Send(string client, NetworkMessage message) => _server.Send(client, NetworkMessage.WriteMessage(message));
 
-        public void Dispose() => _server?.Dispose();
+        public void Dispose() => _server.Dispose();
     }
 }

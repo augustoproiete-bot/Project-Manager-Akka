@@ -2,6 +2,8 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using Akka.Actor;
+using Akka.Serialization;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.AkkNode.Services.Core
@@ -86,5 +88,12 @@ namespace Tauron.Application.AkkNode.Services.Core
         [return:MaybeNull]
         public static TType ReadNull<TType>(BinaryReader reader, Func<BinaryReader, TType> builder) 
             => reader.ReadBoolean() ? builder(reader) : default;
+
+        public static IActorRef ReadRef(BinaryReader reader, ExtendedActorSystem system)
+            => system.Provider.ResolveActorRef(reader.ReadString());
+
+
+        public static void WriteRef(ActorBinaryWriter writer, IActorRef actor) 
+            => writer.Write(Serialization.SerializedActorPath(actor));
     }
 }

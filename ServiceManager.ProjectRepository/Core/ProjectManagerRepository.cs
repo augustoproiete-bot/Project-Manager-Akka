@@ -3,10 +3,10 @@ using System.IO;
 using System.Threading;
 using JetBrains.Annotations;
 
-namespace ServiceManager.ProjectRepository
+namespace ServiceManager.ProjectRepository.Core
 {
     [PublicAPI]
-    public sealed class ProjectManagerRepository : SharedObject<ProjectManagerRepository>
+    public sealed class ClusterRepository : SharedObject<ClusterRepository>
     {
         private Mutex? _lock;
 
@@ -34,8 +34,8 @@ namespace ServiceManager.ProjectRepository
             {
             }
 
-            _unpacker = UnpackManager.GatOrNew(configuration);
-            _updater = GitUpdater.GatOrNew(configuration);
+            _unpacker = UnpackManager.GetOrNew(configuration);
+            _updater = GitUpdater.GetOrNew(configuration);
 
             base.Init(configuration);
         }

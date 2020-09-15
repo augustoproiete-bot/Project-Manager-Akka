@@ -5,6 +5,7 @@ using System.Threading;
 using System.Windows.Threading;
 using Akka.Actor;
 using Akka.Cluster;
+using Akka.Event;
 using Autofac;
 using JetBrains.Annotations;
 using Tauron.Akka;
@@ -63,8 +64,10 @@ namespace Tauron.Application.ServiceManager.ViewModels
                .AndAsync()
                .AndInitialElements(config.SeedUrls.Select(SeedUrlModel.New));
 
-            if(Models.Count > 0) 
+            if (Models.Count > 0)
                 TryJoin();
+            else
+                Cluster.Get(Context.System).JoinSeedNodes(new[] {Cluster.Get(Context.System).SelfAddress});
 
             #endregion;
 
@@ -78,7 +81,17 @@ namespace Tauron.Application.ServiceManager.ViewModels
                                            config.SeedUrls = config.SeedUrls.Add(s);
                                            Models.Add(
                                                new SeedUrlModel(s),
-                                               c => c.When(c => c == 1, TryJoin));
+                                               c =>
+                                               {
+                                                   try
+                                                   {
+                                                       Cluster.Get(Context.System).Join(Address.Parse(c.Url));
+                                                   }
+                                                   catch (Exception e)
+                                                   {
+                                                       Log.Error(e, "Faild to Join {Url}", c.Url);
+                                                   }
+                                               });
                                        });
             }
 
@@ -114,6 +127,12 @@ namespace Tauron.Application.ServiceManager.ViewModels
                .ThenRegister("RemoveSeed");
 
             #endregion
+        }
+
+        protected override void PreStart()
+        {
+            Context.System.EventStream.Subscribe<AddSeedUrl>(Self);
+            base.PreStart();
         }
 
         public UICollectionProperty<SeedUrlModel> Models { get; }

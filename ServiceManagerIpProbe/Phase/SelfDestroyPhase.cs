@@ -10,6 +10,8 @@ namespace ServiceManagerIpProbe.Phase
     {
         public override void Run(OperationContext context, PhaseManager<OperationContext> manager)
         {
+            context.WriteLine("Configurate Self Destroy");
+
             var batchCommands = string.Empty;
             var exeFileName = Assembly.GetExecutingAssembly().CodeBase?.Replace("file:///", string.Empty).Replace("/", "\\");
 
@@ -18,9 +20,6 @@ namespace ServiceManagerIpProbe.Phase
             batchCommands += "ping 127.0.0.1 > nul\n"; // Wait approximately 4 seconds (so that the process is already terminated)
 
             string[] filesToDelete = {
-                                         exeFileName,
-                                         HostConfiguration.DefaultFileName,
-                                         //"Newtonsoft.Json.dll",
                                          "HostInstaller.exe.config",
                                          "HostInstaller.pdb",
                                          "SimpleTcp.dll",
@@ -28,7 +27,8 @@ namespace ServiceManagerIpProbe.Phase
                                          "Servicemnager.Networking.pdb",
                                          "Interop.IWshRuntimeLibrary.dll",
                                          "Seed.zip",
-                                         "InstallSeed.bat"
+                                         "InstallSeed.dat",
+                                         HostConfiguration.DefaultFileName
                                      };
 
             batchCommands += "del /Q /F "; // Delete the executeable
@@ -42,6 +42,7 @@ namespace ServiceManagerIpProbe.Phase
 
 
             batchCommands += "del /Q deleteInstaller.bat"; // Delete this bat file
+            //batchCommands += "pause";
 
             File.WriteAllText("deleteInstaller.bat", batchCommands);
 

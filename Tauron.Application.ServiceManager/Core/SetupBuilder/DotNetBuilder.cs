@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using ServiceManager.ProjectRepository;
+using ServiceManager.ProjectRepository.Core;
 
 namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 {

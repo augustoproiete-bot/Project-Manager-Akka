@@ -2,7 +2,7 @@
 using System.IO;
 using LibGit2Sharp;
 
-namespace ServiceManager.ProjectRepository
+namespace ServiceManager.ProjectRepository.Core
 {
     public sealed class GitUpdater : SharedObject<GitUpdater>
     { private Repository? _repository;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ServiceManager.ProjectRepository
+namespace ServiceManager.ProjectRepository.Core
 {
     public static class Env
     {

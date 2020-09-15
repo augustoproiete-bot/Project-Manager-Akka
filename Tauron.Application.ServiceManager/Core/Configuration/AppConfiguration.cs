@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using ServiceManager.ProjectRepository;
+using ServiceManager.ProjectRepository.Core;
 using Tauron.Application.Settings;
 using Tauron.Application.Settings.Provider;
 

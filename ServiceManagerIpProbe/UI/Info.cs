@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -22,7 +16,11 @@ namespace ServiceManagerIpProbe.UI
 
         private void Info_Shown(object sender, EventArgs e)
         {
-            _runner(s => Invoke(new Action(() => textConsole.AppendText(s))));
+            Task.Run(() =>
+            {
+                _runner(s => Invoke(new Action(() => textConsole.AppendText(s))));
+                Invoke(new Action(Close));
+            });
         }
     }
 }

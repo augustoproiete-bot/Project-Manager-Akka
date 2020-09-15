@@ -229,6 +229,7 @@ namespace Tauron.Application.Localizer.Generated
 			private readonly Task<string> __Applications;
 			private readonly Task<string> __ErrorDuplicateHostName;
 			private readonly Task<string> __ErrorEmptyHostName;
+			private readonly Task<string> __AddShortcut;
 			public SetupBuilderViewRes(ActorSystem system)
 			{
 				var loc = system.Loc();
@@ -239,6 +240,7 @@ namespace Tauron.Application.Localizer.Generated
 				__Applications = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_Applications"));
 				__ErrorDuplicateHostName = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_Error_DuplicateHostName"));
 				__ErrorEmptyHostName = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_Error_EmptyHostName"));
+				__AddShortcut = LocLocalizer.ToString(loc.RequestTask("SetupBuilderView_AddShortcut"));
 			}
 			public string Title => __Title.Result;
 			public string HostName => __HostName.Result;
@@ -247,6 +249,7 @@ namespace Tauron.Application.Localizer.Generated
 			public string Applications => __Applications.Result;
 			public string ErrorDuplicateHostName => __ErrorDuplicateHostName.Result;
 			public string ErrorEmptyHostName => __ErrorEmptyHostName.Result;
+			public string AddShortcut => __AddShortcut.Result;
 		}
 		public sealed class CommonRes
 		{
