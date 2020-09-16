@@ -33,11 +33,15 @@ namespace Tauron.Application.AkkNode.Services
         {
             public Listner(Action<string> listner, Action<OperationResult> onCompled, TimeSpan timeSpan)
             {
-                Receive(onCompled);
+                Receive<OperationResult>(c =>
+                {
+                    Context.Stop(Self);
+                    onCompled(c);
+                });
                 Receive<TransferedMessage>(m => listner(m.Message));
             }
 
-            public ITimerScheduler Timers { get; set; }
+            public ITimerScheduler Timers { get; set; } = null!;
         }
 
         private sealed class ReporterActor : ReceiveActor
