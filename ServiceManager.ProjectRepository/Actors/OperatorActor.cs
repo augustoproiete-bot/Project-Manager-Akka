@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Akka.Actor;
 using Akka.Event;
 using MongoDB.Driver;
@@ -26,7 +27,7 @@ namespace ServiceManager.ProjectRepository.Actors
 
         private void RegisterRepository(RegisterRepository repository, Reporter reporter)
         {
-
+            var data = _repos.AsQueryable().FirstOrDefault(e => e.RepoName == repository.RepoName);
         }
 
         private void TryExecute<TMessage>(TMessage msg, string name, Action<TMessage, Reporter> process) 
