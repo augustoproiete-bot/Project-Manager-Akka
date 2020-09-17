@@ -1,5 +1,5 @@
 ﻿
-
+using System.Linq;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -10,93 +10,22 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster;
 using Akka.Configuration;
+using MongoDB.Driver;
+using Octokit;
 using Serilog;
-using Servicemnager.Networking.Server;
-using Servicemnager.Networking.Transmitter;
+using ServiceManager.ProjectRepository.Data;
+using Tauron;
 using Tauron.Application.Master.Commands;
 
 namespace ProtoTyping
 {
     internal class Program
     {
-        private static BlockingCollection<Action> _dispatcher = new BlockingCollection<Action>();
-
-        private static void ReciverTest(EndPoint adress)
-        {
-            string testFile = "Test.7z";
-
-            var endppoint = new DataClient(adress.ToString()!.Split(':')[0], int.Parse(adress.ToString()!.Split(':')[1]));
-            endppoint.Connect();
-
-            using var waiter = new AutoResetEvent(false);
-            using var reciver = new Reciever(() => File.Create(testFile), endppoint);
-
-            endppoint.OnMessageReceived += (sender, args) =>
-            {
-                _dispatcher.Add(() =>
-                {
-                    // ReSharper disable once AccessToDisposedClosure
-                    if (!reciver.ProcessMessage(args.Message))
-                        // ReSharper disable once AccessToDisposedClosure
-                        waiter.Set();
-                });
-            };
-
-            endppoint.Send(NetworkMessage.Create("Start"));
-
-            waiter.WaitOne();
-        }
-
-        private static void Sendertest(string file, Action<EndPoint> established)
-        {
-            var senderWaiter = new AutoResetEvent(false);
-
-            var endpoint = new DataServer("127.0.0.1");
-            endpoint.Start();
-
-            Sender testSender = null;
-            var pool = ArrayPool<byte>.Shared;
-
-            endpoint.OnMessageReceived += (sender, args) =>
-            {
-                _dispatcher.Add(() =>
-                {
-                    switch (args.Message.Type)
-                    {
-                        case "Start":
-                            testSender = new Sender(File.OpenRead(file), args.Client, endpoint, () => pool.Rent(50_000), bytes => pool.Return(bytes), Console.WriteLine);
-                            testSender.ProcessMessage(args.Message);
-                            break;
-                        default:
-                            // ReSharper disable once AccessToDisposedClosure
-                            if (testSender?.ProcessMessage(args.Message) == false)
-                                // ReSharper disable once AccessToDisposedClosure
-                                senderWaiter.Set();
-                            break;
-                    }
-                });
-            };
-
-            Task.Run(() => established(endpoint.EndPoint));
-
-            senderWaiter.WaitOne();
-
-            endpoint.Dispose();
-            testSender?.Dispose();
-            senderWaiter.Dispose();
-        }
-
         private static void Main(string[] args)
         {
-            Task.Run(() =>
-            {
-                foreach (var action in _dispatcher.GetConsumingEnumerable())
-                {
-                    action();
-                }
-            });
+            var gitHubClient = new GitHubClient(new ProductHeaderValue("Test-App"));
 
-            Sendertest(@"C:\Users\PC\Documents\Backup.7z", ReciverTest);
+            var test = gitHubClient.Repository.Commit.Get("octokit", "octokit.net", "HEAD").Result;
 
             return;
 

@@ -11,6 +11,8 @@ namespace Tauron.Application.AkkNode.Services
     [PublicAPI]
     public sealed class Reporter
     {
+        public const string TimeoutError = nameof(TimeoutError);
+
         public static Reporter CreateReporter(IActorRefFactory factory, string name = "Reporter") => new Reporter(factory.ActorOf(Props.Create(() => new ReporterActor()), name));
 
         public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, Action<OperationResult> onCompled, TimeSpan timeout,  string name = "LogListner") 
@@ -39,6 +41,11 @@ namespace Tauron.Application.AkkNode.Services
                     onCompled(c);
                 });
                 Receive<TransferedMessage>(m => listner(m.Message));
+
+                if(timeSpan == Timeout.InfiniteTimeSpan)
+                    return;
+
+                Timers.StartSingleTimer(timeSpan, OperationResult.Failure(TimeoutError), timeSpan);
             }
 
             public ITimerScheduler Timers { get; set; } = null!;

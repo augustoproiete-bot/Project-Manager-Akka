@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Akka.Actor;
+using Tauron.Application.AkkNode.Services.Core;
 
 namespace Tauron.Application.Master.Commands.Repository
 {

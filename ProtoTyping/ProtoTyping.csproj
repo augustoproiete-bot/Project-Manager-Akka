@@ -31,6 +31,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="MongoDB.Driver" Version="2.11.2" />
+    <PackageReference Include="Octokit" Version="0.48.0" />
     <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
   </ItemGroup>
 
@@ -38,7 +40,6 @@
     <ProjectReference Include="..\ServiceManager.ProjectRepository\ServiceManager.ProjectRepository.csproj" />
     <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
     <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
-    <ProjectReference Include="..\Tauron.Application.ServiceManager\Tauron.Application.ServiceManager.csproj" />
   </ItemGroup>
 
   <ItemGroup>
