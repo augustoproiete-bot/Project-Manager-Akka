@@ -3,8 +3,9 @@ using System.Collections.Generic;
 
 namespace ServiceManager.ProjectRepository.Core
 {
-    public abstract class SharedObject<TObject> : IDisposable
-        where TObject : SharedObject<TObject>, new()
+    public abstract class SharedObject<TObject, TConfiguration> : IDisposable
+        where TObject : SharedObject<TObject, TConfiguration>, new()
+        where TConfiguration : class, IReporterProvider, new()
     {
         private sealed class ObjectEntry
         {
@@ -19,11 +20,12 @@ namespace ServiceManager.ProjectRepository.Core
             }
         }
 
+        // ReSharper disable once StaticMemberInGenericType
         protected static readonly object Lock = new object();
 
-        private static readonly Dictionary<RepositoryConfiguration, ObjectEntry> SharedObjects = new Dictionary<RepositoryConfiguration, ObjectEntry>();
+        private static readonly Dictionary<TConfiguration, ObjectEntry> SharedObjects = new Dictionary<TConfiguration, ObjectEntry>();
 
-        public static TObject GetOrNew(RepositoryConfiguration configuration)
+        public static TObject GetOrNew(TConfiguration configuration)
         {
             lock (Lock)
             {
@@ -42,24 +44,24 @@ namespace ServiceManager.ProjectRepository.Core
 
             }
         }
-        
-        protected RepositoryConfiguration Configuration
+
+        protected void SendMessage(string msg)
         {
-            get => _configuration ?? new RepositoryConfiguration();
+
+        }
+
+        protected TConfiguration Configuration
+        {
+            get => _configuration ?? new TConfiguration();
             private set => _configuration = value;
         }
-
-        protected void LogMessage(string msg, params object[] parms) => Configuration.Logger?.Invoke(msg, parms);
-
+        
         private bool _disposed;
-        private RepositoryConfiguration? _configuration;
+        private TConfiguration? _configuration;
 
-        protected virtual void Init(RepositoryConfiguration configuration) => Configuration = configuration; 
+        protected virtual void Init(TConfiguration configuration) => Configuration = configuration; 
 
-        protected virtual void InternalDispose()
-        {
-
-        }
+        protected virtual void InternalDispose() { }
 
         public void Dispose()
         {

@@ -8,6 +8,7 @@ using Serilog;
 using Serilog.Core;
 using ServiceManager.ProjectRepository;
 using ServiceManager.ProjectRepository.Core;
+using ServiceManager.ProjectRepository.Old;
 using Tauron.Application.Master.Commands.Host;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;

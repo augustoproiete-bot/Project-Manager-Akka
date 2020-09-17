@@ -1,5 +1,4 @@
-﻿using System;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson.Serialization.Attributes;
 
 namespace ServiceManager.ProjectRepository.Data
 {
@@ -7,7 +6,7 @@ namespace ServiceManager.ProjectRepository.Data
     {
         public string RepoName { get; set; } = string.Empty;
 
-        public string FileName { get; set; } = string.Empty;
+        public string FileName { get; set; }
 
         public string SourceUrl { get; set; } = string.Empty;
 

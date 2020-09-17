@@ -2,8 +2,9 @@
 using System.IO;
 using System.Threading;
 using JetBrains.Annotations;
+using ServiceManager.ProjectRepository.Core;
 
-namespace ServiceManager.ProjectRepository.Core
+namespace ServiceManager.ProjectRepository.Old
 {
     [PublicAPI]
     public sealed class ClusterRepository : SharedObject<ClusterRepository>
@@ -44,7 +45,7 @@ namespace ServiceManager.ProjectRepository.Core
         {
             var repoSource = _unpacker.UnpackRepo(trackingId);
 
-            var source = _updater.RunUpdate(trackingId, repoSource);
+            var source = _updater.RunUpdate(repoSource);
 
             ProjectFinder.Init(source, Configuration.Solotion, Configuration.Logger ?? ((s, objects) => { }));
 

@@ -1,28 +1,29 @@
 ﻿using System;
 using System.IO;
 using LibGit2Sharp;
+using Tauron;
+using Tauron.Application.Master.Commands.Repository;
 
 namespace ServiceManager.ProjectRepository.Core
 {
-    public sealed class GitUpdater : SharedObject<GitUpdater>
-    { private Repository? _repository;
+    public sealed class GitUpdater : SharedObject<GitUpdater, RepositoryConfiguration>
+    {
+        private Repository? _repository;
 
         private void Init(string sourceDic)
         {
-            if(_repository != null)
+            if (_repository != null)
                 return;
 
             if (!Directory.Exists(sourceDic)) return;
-            
+
             var path = Repository.Discover(sourceDic);
 
-            if (!string.IsNullOrWhiteSpace(path))
-            {
+            if (!string.IsNullOrWhiteSpace(path)) 
                 _repository = new Repository(path);
-            }
         }
 
-        public string RunUpdate(string tracking, string source)
+        public (string Path, string Sha) RunUpdate(string source)
         {
             lock (Lock)
             {
@@ -30,29 +31,30 @@ namespace ServiceManager.ProjectRepository.Core
 
                 if (_repository == null)
                 {
-                    LogMessage("Download Repository {Id}", tracking);
+                    SendMessage(RepositoryMessages.DownloadRepository);
                     return Download(source);
                 }
 
-                LogMessage("update Repository {Id}", tracking);
+                SendMessage(RepositoryMessages.UpdateRepository);
                 return Update(source);
             }
 
         }
 
-        private string Update(string source)
+        private (string Path, string Sha) Update(string source)
         {
-            if(_repository == null)
+            if (_repository == null)
                 throw new InvalidOperationException("Not Repository Set");
 
-            Commands.Pull(_repository, new Signature("ServiceManager", "Service@Manager.com", DateTimeOffset.Now), new PullOptions()); 
-            return _repository.Info.WorkingDirectory;
+            Commands.Pull(_repository, new Signature("ServiceManager", "Service@Manager.com", DateTimeOffset.Now), new PullOptions());
+            return (_repository.Info.WorkingDirectory, _repository.Head.Tip.Sha);
         }
 
-        private string Download(string source)
+        private (string Path, string Sha) Download(string source)
         {
-            _repository =new Repository(Repository.Clone(Configuration.CloneUrl, source));
-            return _repository.Info.WorkingDirectory;
+            source.CreateDirectoryIfNotExis();
+            _repository = new Repository(Repository.Clone(Configuration.CloneUrl, source));
+            return (_repository.Info.WorkingDirectory, _repository.Head.Tip.Sha);
         }
 
         protected override void InternalDispose()

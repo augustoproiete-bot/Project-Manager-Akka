@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace ServiceManager.ProjectRepository.Core
+namespace ServiceManager.ProjectRepository.Old
 {
     public sealed class ProjectFinder
     {

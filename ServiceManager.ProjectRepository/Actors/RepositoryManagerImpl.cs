@@ -17,7 +17,11 @@ namespace ServiceManager.ProjectRepository.Actors
             var database = client.GetDatabase("Repository");
 
             var repositoryData = database.GetCollection<RepositoryEntry>("Repositorys");
-            var gridFsBucket = new GridFSBucket(database);
+            var gridFsBucket = new GridFSBucket(database, new GridFSBucketOptions
+            {
+                BucketName = "RepositoryData",
+                ChunkSizeBytes = 1048576
+            });
 
             Receive<RepositoryAction>(r => Context.ActorOf(Props.Create(() => new OperatorActor(repositoryData, gridFsBucket))).Forward(r));
             Receive<IndexRequest>(_ =>

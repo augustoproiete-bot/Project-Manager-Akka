@@ -2,9 +2,10 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using ServiceManager.ProjectRepository.Core;
 using Tauron;
 
-namespace ServiceManager.ProjectRepository.Core
+namespace ServiceManager.ProjectRepository.Old
 {
     public class UnpackManager : SharedObject<UnpackManager>
     {
