@@ -25,15 +25,20 @@ namespace ServiceManager.ProjectRepository.Actors
         private readonly IMongoCollection<RepositoryEntry> _repos;
         private readonly GridFSBucket _bucket;
         private readonly IMongoCollection<ToDeleteRevision> _revisions;
+        private readonly IActorRef _dataTransfer;
         private readonly GitHubClient _gitHubClient;
+        
         private Reporter? _reporter;
+        private string _dataOperation = string.Empty;
 
-        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions, IMongoCollection<CleanUpTime> cleanUp)
+        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions, IMongoCollection<CleanUpTime> cleanUp,
+                IActorRef dataTransfer)
         {
             _repos = repos;
             _bucket = bucket;
             _revisions = revisions;
-            _gitHubClient = new GitHubClient(new ProductHeaderValue(Context.System.Settings.Config.GetString("akka.appinfo.applicationName")));
+            _dataTransfer = dataTransfer;
+            _gitHubClient = new GitHubClient(new ProductHeaderValue(Context.System.Settings.Config.GetString("akka.appinfo.applicationName", "Test App").Replace(' ', '_')));
 
             Receive<RegisterRepository>(r =>
             {
@@ -44,6 +49,8 @@ namespace ServiceManager.ProjectRepository.Actors
 
             Receive<TransferMessages.TransferCompled>(r =>
             {
+                if(r.OperationId != _dataOperation) return;
+
                 Log.Info("Transfer Compled for Repository {Name} with Result {Type}", r.Data, r.GetType().Name);
                 _reporter?.Compled(r is TransferCompled ? OperationResult.Success() : OperationResult.Failure(((TransferFailed)r).Reason.ToString()));
                 Context.Stop(Self);
@@ -177,18 +184,35 @@ namespace ServiceManager.ProjectRepository.Actors
                     _bucket.DownloadToStream(ObjectId.Parse(data.FileName), repozip);
                 }
 
-                var manager = DataTransferManager.New(Context);
-                manager.SubscribeToEvent<TransferCompled>();
-                manager.SubscribeToEvent<TransferFailed>();
-
                 _reporter = reporter;
+                
                 Timers.StartSingleTimer(_reporter, new TransferFailed(string.Empty, FailReason.Timeout, data.RepoName), TimeSpan.FromMinutes(10));
-                manager.Tell(DataTransferRequest.FromStream(repozip, repository.FileTarget, repository.RepoName));
+                var request = DataTransferRequest.FromStream(repozip, repository.FileTarget, repository.RepoName);
+                _dataOperation = request.OperationId;
+
+                _dataTransfer.Tell(request);
             }
             finally
             {
                 UpdateLock.ExitUpgradeableReadLock();
             }
+        }
+
+        private EventSubscribtion? _transferCompledSubscribtion;
+        private EventSubscribtion? _transferFailedSubscribtion;
+
+        protected override void PreStart()
+        {
+            _transferCompledSubscribtion = _dataTransfer.SubscribeToEvent<TransferCompled>();
+            _transferFailedSubscribtion = _dataTransfer.SubscribeToEvent<TransferFailed>();
+            base.PreStart();
+        }
+
+        protected override void PostStop()
+        {
+            _transferCompledSubscribtion?.Dispose();
+            _transferFailedSubscribtion?.Dispose();
+            base.PostStop();
         }
 
         private bool UpdateRepository(RepositoryEntry data, Reporter reporter, RepositoryAction repository, GitHubCommit commitInfo, Stream repozip)

@@ -1,32 +1,174 @@
-﻿
-using System.Linq;
-using System;
-using System.Buffers;
-using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Cluster;
 using Akka.Configuration;
-using MongoDB.Driver;
-using Octokit;
-using Serilog;
-using ServiceManager.ProjectRepository.Data;
-using Tauron;
-using Tauron.Application.Master.Commands;
+using ServiceManager.ProjectRepository;
+using Tauron.Application.AkkNode.Services;
+using Tauron.Application.AkkNode.Services.Core;
+using Tauron.Application.AkkNode.Services.FileTransfer;
+using Tauron.Application.Master.Commands.Repository;
 
 namespace ProtoTyping
 {
     internal class Program
     {
+        private sealed class TestActor : ReceiveActor
+        {
+            private const string TargetRepo = "Tauron1990/Project-Manager-Akka";
+            private const string TargetFile = "Test.zip";
+
+            private readonly IActorRef _dataTransfer;
+
+            private RepositoryManager _operator = RepositoryManager.Empty;
+            private bool _cancel;
+            private ManualResetEventSlim? _currentTransfer;
+
+            public TestActor()
+            {
+                _dataTransfer = DataTransferManager.New(Context);
+                _dataTransfer.SubscribeToEvent<TransferCompled>();
+                _dataTransfer.SubscribeToEvent<TransferFailed>();
+                _dataTransfer.SubscribeToEvent<IncomingDataTransfer>();
+
+                Receive<IncomingDataTransfer>(d => d.Accept(() => File.Create(TargetFile)));
+
+                Receive<TransferMessages.TransferCompled>(c =>
+                {
+                    if(_currentTransfer == null)
+                        return;
+
+                    switch (c)
+                    {
+                        case TransferCompled _:
+                            Console.WriteLine("Tranfer Beended");
+                        break;
+                        case TransferFailed failed:
+                            Console.WriteLine($"Transfer Fehler: {failed.Reason}");
+                            break;
+                    }
+                });
+
+
+
+                var toDo = new Queue<Action<ManualResetEvent>>();
+                toDo.Enqueue(Init);
+                toDo.Enqueue(RegisterTest);
+                toDo.Enqueue(TransferTest);
+                toDo.Enqueue(TransferTest);
+                toDo.Enqueue(CleanTest);
+
+                Receive<ManualResetEvent>(evt =>
+                {
+                    if (_cancel || toDo.Count == 0)
+                    {
+                        evt.Set();
+                        return;
+                    }
+
+                    Thread.Sleep(2000);
+                    var op = toDo.Dequeue();
+                    op(evt);
+                });
+            }
+
+            private void Init(ManualResetEvent evt)
+            {
+                try
+                {
+                    _operator = RepositoryManager.CreateInstance(Context, "mongodb://192.168.105.96:27017/?readPreference=primary&ssl=false");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                    _cancel = true;
+                }
+                finally
+                {
+                    Self.Tell(evt);
+                }
+            }
+
+            private void RegisterTest(ManualResetEvent evt)
+            {
+                try
+                {
+                    var awaiter = new ManualResetEventSlim();
+                    var reporter = Reporter.CreateListner(Context, Console.WriteLine, result =>
+                    {
+                        Console.WriteLine(result.Ok ? "Fertig" : $"Fehler {result.Error}");
+                        awaiter.Set();
+                    });
+
+                    _operator.SendAction(new RegisterRepository(TargetRepo, reporter));
+
+                    awaiter.Wait();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                    _cancel = true;
+                }
+                finally
+                {
+                    Self.Tell(evt);
+                }
+            }
+
+            private void TransferTest(ManualResetEvent evt)
+            {
+                try
+                {
+                    var awaiter = new ManualResetEventSlim();
+                    var reporter = Reporter.CreateListner(Context, Console.WriteLine, result =>
+                    {
+                        Console.WriteLine(result.Ok ? "Fertig" : $"Fehler {result.Error}");
+                        awaiter.Set();
+                    });
+
+                    _operator.SendAction(new TransferRepository(TargetRepo, reporter, _dataTransfer));
+                    
+                    awaiter.Wait();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                    _cancel = true;
+                }
+                finally
+                {
+                    Self.Tell(evt);
+                }
+            }
+
+            private void CleanTest(ManualResetEvent evt)
+            {
+                try
+                {
+                    _operator.CleanUp();
+                    Thread.Sleep(TimeSpan.FromMinutes(2));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                    _cancel = true;
+                }
+                finally
+                {
+                    Self.Tell(evt);
+                }
+            }
+        }
+
         private static void Main(string[] args)
         {
-            var gitHubClient = new GitHubClient(new ProductHeaderValue("Test-App"));
+            using var evt = new ManualResetEvent(false);
 
-            var test = gitHubClient.Repository.Commit.Get("octokit", "octokit.net", "HEAD").Result;
+            var system = ActorSystem.Create("Test", ConfigurationFactory.ParseString(File.ReadAllText("akka.conf")));
+            system.ActorOf(Props.Create<TestActor>()).Tell(evt);
 
+            evt.WaitOne();
             return;
 
             //Log.Logger = new LoggerConfiguration()

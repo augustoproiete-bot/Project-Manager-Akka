@@ -123,7 +123,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceManagerIpProbe", "Se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Servicemnager.Networking", "Servicemnager.Networking\Servicemnager.Networking.csproj", "{45FD8011-7183-408D-874D-59242E31270C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceManager.ProjectRepository", "ServiceManager.ProjectRepository\ServiceManager.ProjectRepository.csproj", "{09FEC4DC-CAE1-4C46-8004-444FEF09CCB0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServiceManager.ProjectRepository", "ServiceManager.ProjectRepository\ServiceManager.ProjectRepository.csproj", "{09FEC4DC-CAE1-4C46-8004-444FEF09CCB0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
