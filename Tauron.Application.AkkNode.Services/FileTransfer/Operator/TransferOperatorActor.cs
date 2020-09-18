@@ -29,7 +29,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
 
         private Func<Stream> Data { get;  }
 
-        private string? Metadata { get; }
+        public string? Metadata { get; }
 
         public CrcStream TransferStrem { get; }
 
@@ -198,7 +198,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                             state.StateData.TransferStrem.Dispose();
                             ArrayPool<byte>.Shared.Return(_outgoningBytes);
                             _outgoningBytes = null;
-                            Parent.Tell(new TransferCompled(state.StateData.OperationId));
+                            Parent.Tell(new TransferCompled(state.StateData.OperationId, state.StateData.Metadata));
                             return GoTo(OperatorState.Compled);
                         case RepeadChunk _:
                             _sendingAttempts += 1;
@@ -237,7 +237,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                                                 return GoTo(OperatorState.Failed).Using(state.StateData.Failed(Parent, FailReason.ComunicationError, null));
 
                                             data.TargetManager.Tell(new SendingCompled(state.StateData.OperationId));
-                                            Parent.Tell(new TransferCompled(state.StateData.OperationId));
+                                            Parent.Tell(new TransferCompled(state.StateData.OperationId, state.StateData.Metadata));
 
                                             return GoTo(OperatorState.Compled);
                                         }

@@ -1,21 +1,24 @@
 ﻿using System;
-using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading;
+using Akka.Actor;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Octokit;
 using ServiceManager.ProjectRepository.Core;
 using ServiceManager.ProjectRepository.Data;
 using Tauron.Application.AkkNode.Services;
+using Tauron.Application.AkkNode.Services.Core;
+using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Repository;
 
 namespace ServiceManager.ProjectRepository.Actors
 {
-    public sealed class OperatorActor : ReportingActor
+    public sealed class OperatorActor : ReportingActor, IWithTimers
     {
         private static readonly ReaderWriterLockSlim UpdateLock = new ReaderWriterLockSlim();
 
@@ -23,59 +26,128 @@ namespace ServiceManager.ProjectRepository.Actors
         private readonly GridFSBucket _bucket;
         private readonly IMongoCollection<ToDeleteRevision> _revisions;
         private readonly GitHubClient _gitHubClient;
+        private Reporter? _reporter;
 
-        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions)
+        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions, IMongoCollection<CleanUpTime> cleanUp)
         {
             _repos = repos;
             _bucket = bucket;
             _revisions = revisions;
             _gitHubClient = new GitHubClient(new ProductHeaderValue(Context.System.Settings.Config.GetString("akka.appinfo.applicationName")));
 
-            Receive<RegisterRepository>(r => TryExecute(r, "RegisterRepository", RegisterRepository));
+            Receive<RegisterRepository>(r =>
+            {
+                TryExecute(r, "RegisterRepository", RegisterRepository);
+                Context.Stop(Self);
+            });
             Receive<TransferRepository>(r => TryExecute(r, "RequestRepository", RequestRepository));
+
+            Receive<TransferMessages.TransferCompled>(r =>
+            {
+                Log.Info("Transfer Compled for Repository {Name} with Result {Type}", r.Data, r.GetType().Name);
+                _reporter?.Compled(r is TransferCompled ? OperationResult.Success() : OperationResult.Failure(((TransferFailed)r).Reason.ToString()));
+                Context.Stop(Self);
+            });
+
+            Receive<StartCleanUp>(_ =>
+            {
+                UpdateLock.EnterUpgradeableReadLock();
+                try
+                {
+                    var data = cleanUp.AsQueryable().First();
+                    if (data.Last + data.Interval >= DateTime.Now) return;
+                    
+                    UpdateLock.EnterWriteLock();
+                    try
+                    {
+                        List<FilterDefinition<ToDeleteRevision>> deleted = new List<FilterDefinition<ToDeleteRevision>>();
+
+                        foreach (var revision in _revisions.AsQueryable())
+                        {
+                            _bucket.Delete(ObjectId.Parse(revision.BuckedId));
+
+                            deleted.Add(Builders<ToDeleteRevision>.Filter.Eq(r => r.BuckedId == revision.BuckedId, true));
+                        }
+
+                        if(deleted.Count != 0)
+                            revisions.DeleteMany(Builders<ToDeleteRevision>.Filter.Or(deleted));
+                        cleanUp.UpdateOne(Builders<CleanUpTime>.Filter.Empty, Builders<CleanUpTime>.Update.Set(c => c.Last, DateTime.Now));
+                    }
+                    finally
+                    {
+                        UpdateLock.ExitWriteLock();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "Error on Clean up Database");
+                }
+                finally
+                {
+                    UpdateLock.ExitUpgradeableReadLock();
+                    Context.Stop(Self);
+                }
+            });
         }
 
         private void RegisterRepository(RegisterRepository repository, Reporter reporter)
         {
-            Log.Info("Incomming Registration Request for Repository {Name}", repository.RepoName);
-
-            reporter.Send(RepositoryMessages.GetRepo);
-            var data = _repos.AsQueryable().FirstOrDefault(e => e.RepoName == repository.RepoName);
-
-            if (data != null)
+            UpdateLock.EnterUpgradeableReadLock();
+            try
             {
-                Log.Info("Repository {Name} is Registrated", repository.RepoName);
-                reporter.Compled(OperationResult.Failure(ErrorCodes.DuplicateRepository));
-                return;
-            }
+                Log.Info("Incomming Registration Request for Repository {Name}", repository.RepoName);
 
-            if (!repository.RepoName.Contains('/'))
+                reporter.Send(RepositoryMessages.GetRepo);
+                var data = _repos.AsQueryable().FirstOrDefault(e => e.RepoName == repository.RepoName);
+
+                if (data != null)
+                {
+                    Log.Info("Repository {Name} is Registrated", repository.RepoName);
+                    reporter.Compled(OperationResult.Failure(ErrorCodes.DuplicateRepository));
+                    return;
+                }
+
+                if (!repository.RepoName.Contains('/'))
+                {
+                    Log.Info("Repository {Name} Name is Invalid", repository.RepoName);
+                    reporter.Compled(OperationResult.Failure(ErrorCodes.InvalidRepoName));
+                    return;
+                }
+
+                var nameSplit = repository.RepoName.Split('/');
+                var repoInfo = _gitHubClient.Repository.Get(nameSplit[0], nameSplit[1]).Result;
+
+                if (repoInfo == null)
+                {
+                    Log.Info("Repository {Name} Name not found on Github", repository.RepoName);
+                    reporter.Compled(OperationResult.Failure(ErrorCodes.GithubNoRepoFound));
+                    return;
+                }
+
+                Log.Info("Savin new Repository {Name} on Database", repository.RepoName);
+                data = new RepositoryEntry
+                       {
+                           RepoName = repository.RepoName,
+                           SourceUrl = repoInfo.CloneUrl,
+                           RepoId = repoInfo.Id
+                       };
+
+                UpdateLock.EnterWriteLock();
+                try
+                {
+                    _repos.InsertOne(data);
+                }
+                finally
+                {
+                    UpdateLock.ExitWriteLock();
+                }
+
+                reporter.Compled(OperationResult.Success());
+            }
+            finally
             {
-                Log.Info("Repository {Name} Name is Invalid", repository.RepoName);
-                reporter.Compled(OperationResult.Failure(ErrorCodes.InvalidRepoName));
-                return;
+                UpdateLock.ExitUpgradeableReadLock();
             }
-            var nameSplit = repository.RepoName.Split('/');
-            var repoInfo = _gitHubClient.Repository.Get(nameSplit[0], nameSplit[1]).Result;
-
-            if (repoInfo == null)
-            {
-                Log.Info("Repository {Name} Name not found on Github", repository.RepoName);
-                reporter.Compled(OperationResult.Failure(ErrorCodes.GithubNoRepoFound));
-                return;
-            }
-
-            Log.Info("Savin new Repository {Name} on Database", repository.RepoName);
-            data = new RepositoryEntry
-                   {
-                        RepoName = repository.RepoName,
-                        SourceUrl = repoInfo.CloneUrl,
-                        RepoId = repoInfo.Id
-                   };
-
-            _repos.InsertOne(data);
-
-            reporter.Compled(OperationResult.Success());
         }
 
         private void RequestRepository(TransferRepository repository, Reporter reporter)
@@ -95,14 +167,23 @@ namespace ServiceManager.ProjectRepository.Actors
 
                 var commitInfo = _gitHubClient.Repository.Commit.Get(data.RepoId, "HEAD").Result;
 
-                using var repozip = new MemoryStream();
+                var repozip = new MemoryStream();
 
                 if (!(commitInfo.Commit.Tree.Sha != data.LastUpdate && UpdateRepository(data, reporter, repository, commitInfo, repozip)))
                 {
-
+                    reporter.Send(RepositoryMessages.GetRepositoryFromDatabase);
+                    Log.Info("Downloading Repository {Name} From Server", repository.RepoName);
+                    repozip.SetLength(0);
+                    _bucket.DownloadToStream(ObjectId.Parse(data.FileName), repozip);
                 }
 
+                var manager = DataTransferManager.New(Context);
+                manager.SubscribeToEvent<TransferCompled>();
+                manager.SubscribeToEvent<TransferFailed>();
 
+                _reporter = reporter;
+                Timers.StartSingleTimer(_reporter, new TransferFailed(string.Empty, FailReason.Timeout, data.RepoName), TimeSpan.FromMinutes(10));
+                manager.Tell(DataTransferRequest.FromStream(repozip, repository.FileTarget, repository.RepoName));
             }
             finally
             {
@@ -129,7 +210,7 @@ namespace ServiceManager.ProjectRepository.Actors
                             Log.Info("Downloading Repository {Name} From Server", repository.RepoName);
 
                             reporter.Send(RepositoryMessages.GetRepositoryFromDatabase);
-                            _bucket.DownloadToStreamByName(data.FileName, repozip);
+                            _bucket.DownloadToStream(ObjectId.Parse(data.FileName), repozip);
 
                             downloadCompled = true;
                         }
@@ -192,16 +273,6 @@ namespace ServiceManager.ProjectRepository.Actors
             return false;
         }
 
-        protected override void TryExecute<TMessage>(TMessage msg, string name, Action<TMessage, Reporter> process)
-        {
-            try
-            {
-                base.TryExecute(msg, name, process);
-            }
-            finally
-            {
-                Context.Stop(Self);
-            }
-        }
+        public ITimerScheduler Timers { get; set; } = null!;
     }
 }

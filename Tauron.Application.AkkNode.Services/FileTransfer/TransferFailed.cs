@@ -22,13 +22,10 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
     {
         public FailReason Reason { get; private set; } = FailReason.Unkowen;
 
-        public string? Data { get; private set; }
-
         public TransferFailed(string operationId, FailReason reason, string? data) 
-            : base(operationId)
+            : base(operationId, data)
         {
             Reason = reason;
-            Data = data;
         }
 
         public TransferFailed(BinaryReader reader)
@@ -39,17 +36,13 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
         protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
         {
-            if (manifest.WhenVersion(1))
-            {
+            if (manifest.WhenVersion(1)) 
                 Reason = (FailReason) reader.ReadInt32();
-                Data = BinaryHelper.ReadNull(reader, r => r.ReadString());
-            }
         }
 
         protected override void WriteInternal(ActorBinaryWriter writer)
         {
             writer.Write((int)Reason);
-            BinaryHelper.WriteNull(Data, writer, writer.Write);
         }
     }
 }

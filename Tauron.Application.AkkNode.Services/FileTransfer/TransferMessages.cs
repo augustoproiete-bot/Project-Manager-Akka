@@ -45,12 +45,24 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
         public abstract class TransferCompled : TransferMessage
         {
-            protected TransferCompled(string operationId) : base(operationId)
-            {
-            }
+            public string? Data { get; private set; }
+
+            protected TransferCompled(string operationId, string? data) : base(operationId) => Data = data;
 
             protected TransferCompled(BinaryReader reader) : base(reader)
             {
+            }
+
+            protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
+            {
+                Data = BinaryHelper.ReadNull(reader, r => r.ReadString());
+                base.ReadInternal(reader, manifest);
+            }
+
+            protected override void WriteInternal(ActorBinaryWriter writer)
+            {
+                BinaryHelper.WriteNull(Data, writer, writer.Write);
+                base.WriteInternal(writer);
             }
         }
 
