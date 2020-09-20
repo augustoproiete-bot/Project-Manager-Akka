@@ -11,6 +11,7 @@ using MongoDB.Driver.GridFS;
 using Octokit;
 using ServiceManager.ProjectRepository.Core;
 using ServiceManager.ProjectRepository.Data;
+using Tauron;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
@@ -256,35 +257,38 @@ namespace ServiceManager.ProjectRepository.Actors
                     }
 
                     Log.Info("Execute Git Pull for {Name}", repository.RepoName);
-                    var updater = GitUpdater.GetOrNew(repoConfiguration);
+                    using var updater = GitUpdater.GetOrNew(repoConfiguration);
 
-                    var result = updater.RunUpdate(data.SourceUrl);
+                    var result = updater.RunUpdate(repoConfiguration.SourcePath);
                     var dataUpdate = Builders<RepositoryEntry>.Update.Set(e => e.LastUpdate, result.Sha);
 
                     Log.Info("Compress Repository {Name}", repository.RepoName);
                     reporter.Send(RepositoryMessages.CompressRepository);
-                    var temp = Path.GetTempFileName();
+                    var temp = Path.Combine(Env.Path, "data.zip");
+                    temp.DeleteFile();
                     ZipFile.CreateFromDirectory(result.Path, temp);
-                    using var packed = File.OpenRead(temp);
-                    var fileName = data.FileName + ".zip";
+                    using (var packed = File.OpenRead(temp))
+                    {
+                        Log.Info("Upload and Update Repository {Name}", repository.RepoName);
+                        reporter.Send(RepositoryMessages.UploadRepositoryToDatabase);
+                        var current = data.FileName;
+                        var id = _bucket.UploadFromStream(repository.RepoName.Replace('/', '_') + ".zip", packed);
+                        dataUpdate = dataUpdate.Set(e => e.FileName, id.ToString());
 
-                    Log.Info("Upload and Update Repository {Name}", repository.RepoName);
-                    reporter.Send(RepositoryMessages.UploadRepositoryToDatabase);
-                    var current = data.FileName;
-                    var id = _bucket.UploadFromStream(fileName, packed);
-                    dataUpdate = dataUpdate.Set(e => e.FileName, id.ToString());
+                        if (!string.IsNullOrWhiteSpace(current))
+                            _revisions.InsertOne(new ToDeleteRevision(current));
 
-                    if (!string.IsNullOrWhiteSpace(current))
-                        _revisions.InsertOne(new ToDeleteRevision(current));
+                        _repos.UpdateOne(e => e.RepoName == data.RepoName, dataUpdate);
+                        data.FileName = id.ToString();
 
-                    _repos.UpdateOne(e => e.RepoName == data.RepoName, dataUpdate);
-                    data.FileName = id.ToString();
+                        Log.Info("Copy current data from {Name}", repository.RepoName);
+                        packed.Seek(0, SeekOrigin.Begin);
+                        repozip.SetLength(0);
 
-                    Log.Info("Copy current data from {Name}", repository.RepoName);
-                    packed.Seek(0, SeekOrigin.Begin);
-                    repozip.SetLength(0);
-
-                    packed.CopyTo(repozip);
+                        packed.CopyTo(repozip);
+                        repozip.Seek(0, SeekOrigin.Begin);
+                    }
+                    temp.DeleteFile();
 
                     return true;
                 }

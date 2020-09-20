@@ -29,7 +29,7 @@ namespace ServiceManager.ProjectRepository.Core
         {
             Logger = logger;
             CloneUrl = entry.SourceUrl;
-            SourcePath = Path.Combine(SourcePath, entry.LastUpdate.Replace('/', '_'));
+            SourcePath = Path.Combine(SourcePath, entry.RepoName.Replace('/', '_'));
         }
 
         public RepositoryConfiguration()

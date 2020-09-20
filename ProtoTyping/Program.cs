@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Threading;
 using Akka.Actor;
 using Akka.Configuration;
+using Serilog;
 using ServiceManager.ProjectRepository;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.Core;
@@ -39,14 +41,22 @@ namespace ProtoTyping
                     if(_currentTransfer == null)
                         return;
 
-                    switch (c)
+                    try
                     {
-                        case TransferCompled _:
-                            Console.WriteLine("Tranfer Beended");
-                        break;
-                        case TransferFailed failed:
-                            Console.WriteLine($"Transfer Fehler: {failed.Reason}");
-                            break;
+                        switch (c)
+                        {
+                            case TransferCompled _:
+                                ZipFile.Open(TargetFile, ZipArchiveMode.Read).Dispose();
+                                Console.WriteLine("Tranfer Beended");
+                                break;
+                            case TransferFailed failed:
+                                Console.WriteLine($"Transfer Fehler: {failed.Reason}");
+                                break;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
                     }
                 });
 
@@ -54,6 +64,7 @@ namespace ProtoTyping
 
                 var toDo = new Queue<Action<ManualResetEvent>>();
                 toDo.Enqueue(Init);
+                toDo.Enqueue(RegisterTest);
                 toDo.Enqueue(RegisterTest);
                 toDo.Enqueue(TransferTest);
                 toDo.Enqueue(TransferTest);
@@ -67,9 +78,9 @@ namespace ProtoTyping
                         return;
                     }
 
-                    Thread.Sleep(2000);
                     var op = toDo.Dequeue();
                     op(evt);
+                    Thread.Sleep(2000);
                 });
             }
 
@@ -77,7 +88,8 @@ namespace ProtoTyping
             {
                 try
                 {
-                    _operator = RepositoryManager.CreateInstance(Context, "mongodb://192.168.105.96:27017/?readPreference=primary&ssl=false");
+                    const string work = "192.168.105.96";
+                    _operator = RepositoryManager.CreateInstance(Context, "mongodb://127.0.0.1:27017/?readPreference=primary&ssl=false");
                 }
                 catch (Exception e)
                 {
@@ -163,6 +175,7 @@ namespace ProtoTyping
 
         private static void Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration().CreateLogger();
             using var evt = new ManualResetEvent(false);
 
             var system = ActorSystem.Create("Test", ConfigurationFactory.ParseString(File.ReadAllText("akka.conf")));

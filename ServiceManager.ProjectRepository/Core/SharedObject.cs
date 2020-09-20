@@ -45,10 +45,7 @@ namespace ServiceManager.ProjectRepository.Core
             }
         }
 
-        protected void SendMessage(string msg)
-        {
-
-        }
+        protected void SendMessage(string msg) => Configuration.SendMessage(msg);
 
         protected TConfiguration Configuration
         {
