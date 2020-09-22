@@ -173,11 +173,11 @@ namespace ServiceManager.ProjectRepository.Actors
                     return;
                 }
 
-                var commitInfo = _gitHubClient.Repository.Commit.Get(data.RepoId, "HEAD").Result;
+                var commitInfo = _gitHubClient.Repository.Commit.GetSha1(data.RepoId, "HEAD").Result;
 
                 var repozip = new MemoryStream();
 
-                if (!(commitInfo.Commit.Tree.Sha != data.LastUpdate && UpdateRepository(data, reporter, repository, commitInfo, repozip)))
+                if (!(commitInfo != data.LastUpdate && UpdateRepository(data, reporter, repository, commitInfo, repozip)))
                 {
                     reporter.Send(RepositoryMessages.GetRepositoryFromDatabase);
                     Log.Info("Downloading Repository {Name} From Server", repository.RepoName);
@@ -216,7 +216,7 @@ namespace ServiceManager.ProjectRepository.Actors
             base.PostStop();
         }
 
-        private bool UpdateRepository(RepositoryEntry data, Reporter reporter, RepositoryAction repository, GitHubCommit commitInfo, Stream repozip)
+        private bool UpdateRepository(RepositoryEntry data, Reporter reporter, RepositoryAction repository, string commitInfo, Stream repozip)
         {
             Log.Info("Try Update Repository");
             UpdateLock.EnterWriteLock();
@@ -226,7 +226,7 @@ namespace ServiceManager.ProjectRepository.Actors
                 var repoConfiguration = new RepositoryConfiguration(reporter, data);
 
                 var data2 = _repos.AsQueryable().FirstOrDefault(r => r.RepoName == repository.RepoName);
-                if (data2 != null && commitInfo.Commit.Tree.Sha != data2.LastUpdate)
+                if (data2 != null && commitInfo != data2.LastUpdate)
                 {
                     if (!string.IsNullOrWhiteSpace(data.FileName))
                     {
