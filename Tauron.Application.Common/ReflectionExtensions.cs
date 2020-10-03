@@ -86,7 +86,7 @@ namespace Tauron
             }
         }
 
-        private static Func<object?, object[], object?> GetPropertyAccessor(PropertyInfo info, Func<IEnumerable<Type>> arguments)
+        public static Func<object?, object[], object?> GetPropertyAccessor(this PropertyInfo info, Func<IEnumerable<Type>> arguments)
         {
             lock (_propertyAccessorCache)
             {

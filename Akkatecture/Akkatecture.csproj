@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Configuration\defaults.conf" />
+    <None Remove="Configuration\reference.conf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Configuration\defaults.conf" />
+    <EmbeddedResource Include="Configuration\reference.conf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Akka.Persistence.Query" Version="1.4.10" />
+    <PackageReference Include="Cronos" Version="0.7.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
+  </ItemGroup>
+
+</Project>

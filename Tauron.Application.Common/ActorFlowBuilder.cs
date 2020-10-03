@@ -450,7 +450,7 @@ namespace Tauron
         //private readonly List<Action<IActorDsl>> _recieves = new List<Action<IActorDsl>>();
         private int _recieves;
 
-        private bool _buildReceiveCalled;
+        //private bool _buildReceiveCalled;
 
         public ActorFlowBuilder(IExposedReceiveActor actor, TParent parent, Action<EnterFlow<TStart>>? onReturn)
         {
