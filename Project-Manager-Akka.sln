@@ -125,6 +125,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Servicemnager.Networking", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServiceManager.ProjectRepository", "ServiceManager.ProjectRepository\ServiceManager.ProjectRepository.csproj", "{09FEC4DC-CAE1-4C46-8004-444FEF09CCB0}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Akkatecture.Projections", "Tauron.Akkatecture.Projections\Tauron.Akkatecture.Projections.csproj", "{91E31F1D-16DB-4357-B740-9DD731C18506}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -283,6 +285,10 @@ Global
 		{09FEC4DC-CAE1-4C46-8004-444FEF09CCB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09FEC4DC-CAE1-4C46-8004-444FEF09CCB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09FEC4DC-CAE1-4C46-8004-444FEF09CCB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91E31F1D-16DB-4357-B740-9DD731C18506}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91E31F1D-16DB-4357-B740-9DD731C18506}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91E31F1D-16DB-4357-B740-9DD731C18506}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91E31F1D-16DB-4357-B740-9DD731C18506}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -346,6 +352,7 @@ Global
 		{6EECB5FF-FB55-4C10-8BD3-0026ACD90A10} = {EE858827-127B-4B37-B877-2022E3350862}
 		{45FD8011-7183-408D-874D-59242E31270C} = {EE858827-127B-4B37-B877-2022E3350862}
 		{09FEC4DC-CAE1-4C46-8004-444FEF09CCB0} = {EE858827-127B-4B37-B877-2022E3350862}
+		{91E31F1D-16DB-4357-B740-9DD731C18506} = {31E55A85-34FD-4D8E-8026-D5BF59BC2040}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F63AD2ED-4320-43AB-8761-A3FEBC507539}

@@ -23,7 +23,7 @@ namespace Tauron.Application.Localizer.UIModels
     {
         private string _project = string.Empty;
 
-        public ProjectViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, LocLocalizer localizer, IDialogCoordinator dialogCoordinator, ProjectFileWorkspace workspace)
+        public ProjectViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, LocLocalizer localizer, ProjectFileWorkspace workspace)
             : base(lifetimeScope, dispatcher)
         {
             #region Init
@@ -53,14 +53,14 @@ namespace Tauron.Application.Localizer.UIModels
             {
                 _project = obj.Project.ProjectName;
 
-                Languages.Add(new ProjectViewLanguageModel(localizer.ProjectViewLanguageBoxFirstLabel, true));
+                Languages!.Add(new ProjectViewLanguageModel(localizer.ProjectViewLanguageBoxFirstLabel, true));
                 Languages.AddRange(obj.Project.ActiveLanguages.Select(al => new ProjectViewLanguageModel(al.Name, false)));
                 SelectedIndex += 0;
 
                 foreach (var projectEntry in obj.Project.Entries.OrderBy(le => le.Key)) 
                     ProjectEntrys.Add(new ProjectEntryModel(obj.Project, projectEntry, TryUpdateEntry, TryRemoveEntry));
 
-                ImportetProjects.AddRange(obj.Project.Imports);
+                ImportetProjects!.AddRange(obj.Project.Imports);
             }
 
             Receive<InitProjectViewModel>(InitProjectViewModel);

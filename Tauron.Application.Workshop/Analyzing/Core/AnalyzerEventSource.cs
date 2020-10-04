@@ -1,4 +1,5 @@
-﻿using Akka.Actor;
+﻿using System.Threading.Tasks;
+using Akka.Actor;
 using Tauron.Application.Workshop.Analyzing.Actor;
 using Tauron.Application.Workshop.Mutation;
 
@@ -7,7 +8,7 @@ namespace Tauron.Application.Workshop.Analyzing.Core
     public sealed class AnalyzerEventSource<TWorkspace, TData> : EventSourceBase<IssuesEvent>
         where TWorkspace : WorkspaceBase<TData>
     {
-        public AnalyzerEventSource(IActorRef mutator)
+        public AnalyzerEventSource(Task<IActorRef> mutator)
             : base(mutator)
         {
         }

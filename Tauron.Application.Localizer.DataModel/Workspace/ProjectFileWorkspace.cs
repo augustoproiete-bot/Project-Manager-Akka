@@ -14,7 +14,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace
         private ProjectFile _projectFile;
 
         public ProjectFileWorkspace(IActorRefFactory factory)
-            : base(factory)
+            : base(new WorkspaceSuperviser(factory, "Project_File_Workspace"))
         {
             _projectFile = new ProjectFile();
 
@@ -36,19 +36,13 @@ namespace Tauron.Application.Localizer.DataModel.Workspace
 
         public BuildMutator Build { get; }
 
-        public Project Get(string name)
-        {
-            return ProjectFile.Projects.Find(p => p.ProjectName == name) ?? new Project();
-        }
+        public Project Get(string name) 
+            => ProjectFile.Projects.Find(p => p.ProjectName == name) ?? new Project();
 
-        protected override MutatingContext<ProjectFile> GetDataInternal()
-        {
-            return new MutatingContext<ProjectFile>(null, _projectFile);
-        }
+        protected override MutatingContext<ProjectFile> GetDataInternal() 
+            => new MutatingContext<ProjectFile>(null, _projectFile);
 
-        protected override void SetDataInternal(MutatingContext<ProjectFile> data)
-        {
-            Interlocked.Exchange(ref _projectFile, data.Data);
-        }
+        protected override void SetDataInternal(MutatingContext<ProjectFile> data) 
+            => Interlocked.Exchange(ref _projectFile, data.Data);
     }
 }

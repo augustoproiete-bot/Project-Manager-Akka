@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Input;
+using Akka.Actor;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Helper;
+using Tauron.Application.Wpf.Model;
 using Tauron.Application.Wpf.ModelMessages;
+using Tauron.Host;
 
 namespace Tauron.Application.Wpf.UI
 {
@@ -73,7 +76,7 @@ namespace Tauron.Application.Wpf.UI
             {
                 Logger.Debug("Control Unloaded {Element}", UserControl.GetType());
                 BindLogic.CleanUp();
-                Model.Tell(new UnloadEvent(UserControl.Key));
+                Model.Actor.Tell(new UnloadEvent(UserControl.Key));
             }
             catch (Exception e)
             {
@@ -90,13 +93,19 @@ namespace Tauron.Application.Wpf.UI
             {
                 var parent = ControlBindLogic.FindParentDatacontext(UserControl);
                 if (parent != null)
-                    parent.Tell(new InitParentViewModel(Model));
+                    parent.Actor.Tell(new InitParentViewModel(Model));
                 else
-                    Model.Init();
+                {
+                    ViewModelSuperviser.Get(ActorApplication.Application.ActorSystem)
+                       .Create(Model);
+                }
             }
 
-            Model.Tell(new InitEvent(UserControl.Key));
-            CommandManager.InvalidateRequerySuggested();
+            Model.AwaitInit(() =>
+            {
+                Model.Actor.Tell(new InitEvent(UserControl.Key));
+                CommandManager.InvalidateRequerySuggested();
+            });
         }
     }
 }

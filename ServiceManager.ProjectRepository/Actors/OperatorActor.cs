@@ -186,7 +186,8 @@ namespace ServiceManager.ProjectRepository.Actors
                 }
 
                 _reporter = reporter;
-                
+
+                repozip.Seek(0, SeekOrigin.Begin);
                 Timers.StartSingleTimer(_reporter, new TransferFailed(string.Empty, FailReason.Timeout, data.RepoName), TimeSpan.FromMinutes(10));
                 var request = DataTransferRequest.FromStream(repozip, repository.FileTarget, repository.RepoName);
                 _dataOperation = request.OperationId;

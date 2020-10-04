@@ -1,28 +1,29 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using JetBrains.Annotations;
+using Tauron.Application.Workshop.Core;
 
 namespace Tauron.Application.Workshop.Mutation
 {
     [PublicAPI]
-    public abstract class EventSourceBase<TRespond> : IEventSource<TRespond>
+    public abstract class EventSourceBase<TRespond> : DeferredActor, IEventSource<TRespond>
     {
-        private readonly IActorRef _mutator;
         private Action<TRespond>? _action;
         private ImmutableList<IActorRef> _intrests = ImmutableList<IActorRef>.Empty;
 
-        protected EventSourceBase(IActorRef mutator)
+        protected EventSourceBase(Task<IActorRef> mutator)
+            : base(mutator)
         {
-            _mutator = mutator;
         }
 
         public void RespondOn(IActorRef actorRef)
         {
             lock(this)
                 Interlocked.Exchange(ref _intrests, _intrests.Add(actorRef));
-            _mutator.Tell(new WatchIntrest(() => Interlocked.Exchange(ref _intrests, _intrests.Remove(actorRef)), actorRef));
+            TellToActor(new WatchIntrest(() => Interlocked.Exchange(ref _intrests, _intrests.Remove(actorRef)), actorRef));
         }
 
         public void RespondOn(Action<TRespond> action)

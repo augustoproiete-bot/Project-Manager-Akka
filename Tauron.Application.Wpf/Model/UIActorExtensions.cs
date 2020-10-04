@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using JetBrains.Annotations;
+using Tauron.Application.Wpf.Helper;
 
 namespace Tauron.Application.Wpf.Model
 {
@@ -12,7 +13,7 @@ namespace Tauron.Application.Wpf.Model
             model ??= actor.LifetimeScope.Resolve<IViewModel<TModel>>();
 
             if (!model.IsInitialized)
-                model.Init(actor.ExposedContext, name);
+                model.InitModel(actor.ExposedContext, name);
 
             return new UIModel<TModel>(actor.RegisterProperty<IViewModel<TModel>>(name).WithDefaultValue(model).Property);
         }

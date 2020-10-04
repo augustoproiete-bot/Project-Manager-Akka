@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Akka.Actor;
 
 namespace Tauron.Application.Workshop.Mutation
 {
     public sealed class EventSource<TRespond, TData> : EventSourceBase<TRespond>
     {
-        public EventSource(IActorRef mutator, Func<TData, TRespond> transform, Func<TData, bool>? where, IRespondHandler<TData> handler)
+        public EventSource(Task<IActorRef> mutator, Func<TData, TRespond> transform, Func<TData, bool>? where, IRespondHandler<TData> handler)
             : base(mutator)
         {
             if (where == null)

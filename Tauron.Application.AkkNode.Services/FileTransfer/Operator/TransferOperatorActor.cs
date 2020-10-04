@@ -139,7 +139,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                         default:
                             return null;
                     }
-                }, TimeSpan.FromSeconds(2));
+                }, TimeSpan.FromSeconds(10));
 
             When(OperatorState.InitReciving,
                 state =>
@@ -166,7 +166,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                         default:
                             return null;
                     }
-                }, TimeSpan.FromSeconds(2));
+                }, TimeSpan.FromSeconds(10));
 
             When(OperatorState.Sending,
                 state =>
@@ -286,7 +286,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
 
             OnTransition((state, nextState) =>
                          {
-                             if (nextState == OperatorState.Failed)
+                             if (nextState == OperatorState.Failed || nextState == OperatorState.Compled)
                              {
                                  NextStateData.TransferStrem.Dispose();
                                  if(_outgoningBytes != null)

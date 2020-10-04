@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Akkatecture\Akkatecture.csproj" />
-    <ProjectReference Include="..\..\..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
+    <ProjectReference Include="..\External\Akkatecture\Akkatecture.csproj" />
+    <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
   </ItemGroup>
 
 </Project>

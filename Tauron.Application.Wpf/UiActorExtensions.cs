@@ -1,9 +1,12 @@
 ﻿using Akka.Actor;
 using Autofac;
+using JetBrains.Annotations;
+using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.Wpf
 {
+    [PublicAPI]
     public sealed class ModelProperty
     {
         public IActorRef Model { get; }
@@ -17,12 +20,13 @@ namespace Tauron.Application.Wpf
         }
     }
 
+    [PublicAPI]
     public static class UiActorExtensions
     {
         public static ModelProperty RegisterModel<TModel>(this UiActor actor, string propertyName, string actorName)
         {
             var model = actor.LifetimeScope.Resolve<IViewModel<TModel>>();
-            model.Init(actorName);
+            model.InitModel(actor.ExposedContext, actorName);
 
             return new ModelProperty(model.Actor, actor.RegisterProperty<IViewModel<TModel>>(propertyName).WithDefaultValue(model).Property.LockSet());
         }

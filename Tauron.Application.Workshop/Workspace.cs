@@ -1,5 +1,4 @@
-﻿using Akka.Actor;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Tauron.Application.Workshop.Analyzing;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutating.Changes;
@@ -10,22 +9,18 @@ namespace Tauron.Application.Workshop
     [PublicAPI]
     public abstract class WorkspaceBase<TData> : IDataSource<TData>
     {
-        protected WorkspaceBase(IActorRefFactory factory)
+        protected WorkspaceBase(WorkspaceSuperviser superviser)
         {
-            Engine = MutatingEngine.From(this, factory);
+            Engine = MutatingEngine.From(this, superviser);
         }
 
         protected MutatingEngine<TData> Engine { get; }
 
-        TData IDataSource<TData>.GetData()
-        {
-            return GetDataInternal();
-        }
+        TData IDataSource<TData>.GetData() 
+            => GetDataInternal();
 
-        void IDataSource<TData>.SetData(TData data)
-        {
-            SetDataInternal(data);
-        }
+        void IDataSource<TData>.SetData(TData data) 
+            => SetDataInternal(data);
 
         protected abstract TData GetDataInternal();
 
@@ -37,9 +32,9 @@ namespace Tauron.Application.Workshop
         where TThis : Workspace<TThis, TRawData>
 
     {
-        protected Workspace(IActorRefFactory factory)
-            : base(factory) =>
-            Analyzer = Analyzing.Analyzer.From<TThis, MutatingContext<TRawData>>((TThis) this, factory);
+        protected Workspace(WorkspaceSuperviser superviser)
+            : base(superviser) =>
+            Analyzer = Analyzing.Analyzer.From<TThis, MutatingContext<TRawData>>((TThis) this, superviser);
 
         public IAnalyzer<TThis, MutatingContext<TRawData>> Analyzer { get; }
 

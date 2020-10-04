@@ -1,34 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Akka.Actor;
 using JetBrains.Annotations;
+using Tauron.Application.Workshop.Core;
 
 namespace Tauron.Application.Workshop.Mutation
 {
     [PublicAPI]
-    public sealed class MutatingEngine<TData>
+    public sealed class MutatingEngine<TData> : DeferredActor
     {
+        private readonly Task<IActorRef> _mutator;
         private readonly IDataSource<TData> _dataSource;
-        private readonly IActorRef _mutator;
         private readonly ResponderList _responder;
 
-        internal MutatingEngine(IActorRef mutator, IDataSource<TData> dataSource)
+        internal MutatingEngine(Task<IActorRef> mutator, IDataSource<TData> dataSource)
+            : base(mutator)
         {
-            _dataSource = dataSource;
             _mutator = mutator;
+            _dataSource = dataSource;
             _responder = new ResponderList(_dataSource.SetData);
         }
 
         internal MutatingEngine(IDataSource<TData> dataSource)
+            : base(Task.FromResult<IActorRef>(ActorRefs.Nobody))
         {
+            _mutator = Task.FromResult<IActorRef>(ActorRefs.Nobody);
             _dataSource = dataSource;
-            _mutator = ActorRefs.Nobody;
             _responder = new ResponderList(_dataSource.SetData);
         }
 
         public void Mutate(string name, Func<TData, TData> transform)
         {
-            _mutator.Tell(new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name));
+            TellToActor(new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name));
         }
 
         public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null)
@@ -66,9 +70,9 @@ namespace Tauron.Application.Workshop.Mutation
     [PublicAPI]
     public static class MutatingEngine
     {
-        public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, IActorRefFactory factory)
+        public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, WorkspaceSuperviser superviser)
         {
-            var mutator = factory.ActorOf<MutationActor<TData>>("Mutator");
+            var mutator = superviser.Create(Props.Create<MutationActor<TData>>(), "Mutator");
             return new MutatingEngine<TData>(mutator, source);
         }
 

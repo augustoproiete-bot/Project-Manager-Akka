@@ -18,7 +18,7 @@ namespace Tauron.Application.Localizer
         {
             builder.RegisterView<CenterView, CenterViewModel>();
             builder.RegisterView<ProjectView, ProjectViewModel>().InstancePerDependency();
-            builder.RegisterView<MainWindow, MainWindowViewModel>().OnActivating(i => i.Instance.Init("Main-Window"));
+            builder.RegisterView<MainWindow, MainWindowViewModel>();
             builder.RegisterView<BuildView, BuildViewModel>();
 
             builder.RegisterType<OpenFileDialogView>().As<IOpenFileDialog>();

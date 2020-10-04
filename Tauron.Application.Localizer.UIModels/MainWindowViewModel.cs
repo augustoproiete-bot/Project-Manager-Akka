@@ -20,6 +20,7 @@ using Tauron.Application.Workshop;
 using Tauron.Application.Workshop.Analyzing;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Dialogs;
+using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.Localizer.UIModels
@@ -176,7 +177,7 @@ namespace Tauron.Application.Localizer.UIModels
             #region Build
 
             var buildModel = lifetimeScope.Resolve<IViewModel<BuildViewModel>>();
-            buildModel.Init(Context, "Build-View");
+            buildModel.InitModel(Context, "Build-View");
 
             BuildModel = RegisterProperty<IViewModel<BuildViewModel>>(nameof(BuildModel)).WithDefaultValue(buildModel);
 

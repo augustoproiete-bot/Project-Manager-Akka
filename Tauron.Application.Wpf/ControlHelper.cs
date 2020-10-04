@@ -3,9 +3,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
+using Akka.Actor;
 using JetBrains.Annotations;
 using Serilog;
-using Tauron.Akka;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
 
@@ -90,7 +90,7 @@ namespace Tauron.Application.Wpf
             protected override void Scan()
             {
                 if (DataContext is IViewModel model && AffectedObject is FrameworkElement element)
-                    model.Tell(new ControlSetEvent(element, Name));
+                    model.Actor.Tell(new ControlSetEvent(element, Name));
             }
         }
 
@@ -149,7 +149,7 @@ namespace Tauron.Application.Wpf
                 if (priTarget == null) return;
 
                 if (DataContext is IViewModel model && priTarget is FrameworkElement element)
-                    model.Tell(new ControlSetEvent(element, Name));
+                    model.Actor.Tell(new ControlSetEvent(element, Name));
             }
         }
     }

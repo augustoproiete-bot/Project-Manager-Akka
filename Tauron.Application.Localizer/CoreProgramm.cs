@@ -1,8 +1,4 @@
-﻿using System;
-using System.Globalization;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Markup;
+﻿using System.Threading.Tasks;
 using Autofac;
 using Syncfusion.Licensing;
 using Tauron.Application.Localizer.UIModels;

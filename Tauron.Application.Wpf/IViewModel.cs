@@ -1,19 +1,20 @@
 ﻿using System;
-using Tauron.Akka;
+using Akka.Actor;
 
 namespace Tauron.Application.Wpf
 {
-    public interface IViewModel : IInitableActorRef
+    public interface IViewModel
     {
+        IActorRef Actor { get; }
+
         Type ModelType { get; }
 
         bool IsInitialized { get; }
-        event Action? Initialized;
 
-        void Reset();
+        public void AwaitInit(Action waiter);
     }
 
-    public interface IViewModel<TModel> : IViewModel, IDefaultActorRef<TModel>
+    public interface IViewModel<TModel> : IViewModel
     {
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -10,6 +12,7 @@ using Autofac;
 using JetBrains.Annotations;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Commands;
+using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
 
 namespace Tauron.Application.Wpf.Model
@@ -55,20 +58,14 @@ namespace Tauron.Application.Wpf.Model
             Receive<GetValueRequest>(GetPropertyValue);
             ReceiveAsync<InitEvent>(async evt => await InitializeAsync(evt));
             Receive<SetValue>(SetPropertyValue);
-            Receive<TrackPropertyEvent>(TrackProperty);
+            Receive<TrackPropertyEvent>(t => TrackProperty(t, Sender));
             Receive<Terminated>(ActorTermination);
             Receive<PropertyTermination>(PropertyTerminationHandler);
             Receive<UnloadEvent>(ControlUnload);
             Receive<InitParentViewModel>(InitParentViewModel);
+            Receive<ReviveActor>(RestartActor);
         }
-
-        protected override void PreRestart(Exception reason, object message)
-        {
-            Log.Error(reason, message.ToString());
-            Context.System.Terminate();
-            base.PreRestart(reason, message);
-        }
-
+        
         #region ControlEvents
 
         protected virtual void SetControl(string name, FrameworkElement element)
@@ -149,10 +146,15 @@ namespace Tauron.Application.Wpf.Model
             => new CommandRegistrationBuilder(
                 (key, command, canExecute) =>
                 {
-                    _propertys.Add(key, new PropertyData(new UIProperty<ICommand>(key)
-                    {
-                        InternalValue = new ActorCommand(key, Context.Self, canExecute)
-                    }.LockSet()));
+                    var data = new PropertyData(new UIProperty<ICommand>(key)
+                                                {
+                                                    InternalValue = new ActorCommand(key, Context.Self, canExecute)
+                                                }.LockSet());
+
+                    _propertys.Add(key, data);
+
+                    PropertyValueChanged(data);
+
                     _commandRegistrations.Add(key, new CommandRegistration(command, canExecute));
                 }, this);
 
@@ -164,6 +166,31 @@ namespace Tauron.Application.Wpf.Model
         #endregion
 
         #region Lifecycle
+
+        private void RestartActor(ReviveActor actor)
+        {
+            foreach (var (name, data) in actor.Data)
+            {
+                foreach (var actorRef in data.Subscriptors)
+                    TrackProperty(new TrackPropertyEvent(name), actorRef);
+            }
+        }
+
+        protected override void PreRestart(Exception reason, object message)
+        {
+            foreach (var registration in _commandRegistrations)
+            {
+                _propertys[registration.Key]
+                   .PropertyBase
+                   .InternalValue
+                   .AsInstanceOf<ActorCommand>()
+                   .Deactivate();
+            }
+
+            Self.Tell(new ReviveActor(_propertys.ToArray()));
+
+            base.PreRestart(reason, message);
+        }
 
         protected virtual void ActorTermination(Terminated obj)
         {
@@ -209,7 +236,8 @@ namespace Tauron.Application.Wpf.Model
 
         private void InitParentViewModel(InitParentViewModel obj)
         {
-            obj.Model.Init(Context);
+            ViewModelSuperviser.Get(Context.System)
+               .Create(obj.Model);
         }
 
         #endregion
@@ -280,19 +308,19 @@ namespace Tauron.Application.Wpf.Model
             CommandChanged();
         }
 
-        private void TrackProperty(TrackPropertyEvent obj)
+        private void TrackProperty(TrackPropertyEvent obj, IActorRef sender)
         {
             Log.Info("Track Property {Name}", obj.Name);
 
             if (!_propertys.TryGetValue(obj.Name, out var prop)) return;
 
-            prop.Subscriptors.Add(Sender);
-            Context.WatchWith(Sender, new PropertyTermination(Context.Sender, obj.Name));
+            prop.Subscriptors.Add(sender);
+            Context.WatchWith(sender, new PropertyTermination(Context.Sender, obj.Name));
 
             if (prop.PropertyBase.InternalValue == null) return;
 
-            Sender.Tell(new PropertyChangedEvent(obj.Name, prop.PropertyBase.InternalValue));
-            Sender.Tell(new ValidatingEvent(prop.Error, obj.Name));
+            sender.Tell(new PropertyChangedEvent(obj.Name, prop.PropertyBase.InternalValue));
+            sender.Tell(new ValidatingEvent(prop.Error, obj.Name));
         }
 
         private void PropertyTerminationHandler(PropertyTermination obj)
@@ -398,7 +426,7 @@ namespace Tauron.Application.Wpf.Model
         {
             private readonly string _name;
             private readonly IActorRef _self;
-            private readonly Func<object?, bool> _canExecute;
+            private Func<object?, bool> _canExecute;
 
             public ActorCommand(string name, IActorRef self, Func<object?, bool>? canExecute)
             {
@@ -410,6 +438,16 @@ namespace Tauron.Application.Wpf.Model
             public override void Execute(object parameter) => _self.Tell(new CommandExecuteEvent(_name, parameter));
 
             public override bool CanExecute(object parameter) => _canExecute(parameter);
+
+            public void Deactivate() 
+                => Interlocked.Exchange(ref _canExecute, o => false);
+        }
+
+        private sealed class ReviveActor
+        {
+            public KeyValuePair<string, PropertyData>[] Data { get; }
+
+            public ReviveActor(KeyValuePair<string, PropertyData>[] data) => Data = data;
         }
     }
 }

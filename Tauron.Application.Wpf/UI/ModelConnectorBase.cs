@@ -39,13 +39,10 @@ namespace Tauron.Application.Wpf.UI
                               }
                               else
                               {
-                                  void OnModelOnInitialized()
-                                  {
-                                      Task.Run(async () => await InitAsync());
-                                      Model.Initialized -= OnModelOnInitialized;
-                                  }
+                                  void OnModelOnInitialized() 
+                                      => Task.Run(async () => await InitAsync());
 
-                                  model.Initialized += OnModelOnInitialized;
+                                  model.AwaitInit(OnModelOnInitialized);
                               }
                           });
         }
@@ -67,13 +64,13 @@ namespace Tauron.Application.Wpf.UI
                 OnLoad();
 
                 //Log.Information("Ask For {Property}", _name);
-                var eventActor = await Model.Ask<IEventActor>(new MakeEventHook(Name), TimeSpan.FromSeconds(15));
+                var eventActor = await Model.Actor.Ask<IEventActor>(new MakeEventHook(Name), TimeSpan.FromSeconds(15));
                 //Log.Information("Ask Compled For {Property}", _name);
 
                 eventActor.Register(HookEvent.Create<PropertyChangedEvent>(PropertyChangedHandler));
                 eventActor.Register(HookEvent.Create<ValidatingEvent>(ValidateCompled));
 
-                Model.Tell(new TrackPropertyEvent(Name), eventActor.OriginalRef);
+                Model.Actor.Tell(new TrackPropertyEvent(Name), eventActor.OriginalRef);
 
                 Interlocked.Exchange(ref _eventActor, eventActor);
                 Interlocked.Exchange(ref _isInitializing, 0);

@@ -25,7 +25,7 @@ namespace Tauron.Application.SoftwareRepo
         public IEventSource<ApplicationList> Changed { get; }
 
         public SoftwareRepository(IActorRefFactory factory, IDirectory path) 
-            : base(factory)
+            : base(new WorkspaceSuperviser(factory, "Software-Repository"))
         {
             Path = path;
             Changed = Engine.EventSource(mc => mc.GetChange<CommonChange>().ApplicationList, context => context.Change is CommonChange);

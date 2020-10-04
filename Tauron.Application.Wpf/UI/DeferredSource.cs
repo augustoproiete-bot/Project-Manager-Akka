@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Akka.Actor;
 using JetBrains.Annotations;
-using Tauron.Akka;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
 
@@ -27,7 +26,7 @@ namespace Tauron.Application.Wpf.UI
             set
             {
                 _value = value;
-                Model?.Tell(new SetValue(Name, value));
+                Model?.Actor.Tell(new SetValue(Name, value));
             }
         }
 

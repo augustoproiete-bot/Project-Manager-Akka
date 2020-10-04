@@ -13,7 +13,7 @@ namespace Tauron.Application.Wpf
     public static class AutofacExtensions
     {
         public static IRegistrationBuilder<ViewModelActorRef<TModel>, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterView<TView, TModel>(this ContainerBuilder builder)
-            where TView : IView where TModel : ActorBase
+            where TView : IView where TModel : UiActor
         {
             AutoViewLocation.AddPair(typeof(TView), typeof(TModel));
 

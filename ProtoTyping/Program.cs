@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Threading;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Event;
 using Serilog;
 using ServiceManager.ProjectRepository;
 using Tauron.Application.AkkNode.Services;
@@ -25,7 +26,7 @@ namespace ProtoTyping
 
             private RepositoryManager _operator = RepositoryManager.Empty;
             private bool _cancel;
-            private ManualResetEventSlim? _currentTransfer;
+            private ManualResetEvent? _currentTransfer;
 
             public TestActor()
             {
@@ -57,6 +58,10 @@ namespace ProtoTyping
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
+                    }
+                    finally
+                    {
+                        Self.Tell(_currentTransfer);
                     }
                 });
 
@@ -132,25 +137,16 @@ namespace ProtoTyping
             {
                 try
                 {
-                    var awaiter = new ManualResetEventSlim();
-                    var reporter = Reporter.CreateListner(Context, Console.WriteLine, result =>
-                    {
-                        Console.WriteLine(result.Ok ? "Fertig" : $"Fehler {result.Error}");
-                        awaiter.Set();
-                    });
+                    var reporter = Reporter.CreateListner(Context, Console.WriteLine, result => Console.WriteLine(result.Ok ? "Fertig" : $"Fehler {result.Error}"));
 
                     _operator.SendAction(new TransferRepository(TargetRepo, reporter, _dataTransfer));
-                    
-                    awaiter.Wait();
+
+                    _currentTransfer = evt;
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.ToString());
                     _cancel = true;
-                }
-                finally
-                {
-                    Self.Tell(evt);
                 }
             }
 

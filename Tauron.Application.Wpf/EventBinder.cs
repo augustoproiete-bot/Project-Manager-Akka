@@ -4,9 +4,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
+using Akka.Actor;
 using JetBrains.Annotations;
 using Serilog;
-using Tauron.Akka;
 using Tauron.Application.Wpf.Commands;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
@@ -75,7 +75,7 @@ namespace Tauron.Application.Wpf
             {
                 if (Commands == null)
                 {
-                    Log.Error("EventBinder: No Command Setted: {Context}", context ?? "Unkowen");
+                    Log.Error("EventBinder: No Command Setted: {Context}", context);
 
                     return;
                 }
@@ -160,7 +160,7 @@ namespace Tauron.Application.Wpf
 
                     if (_dataContext == null) return false;
 
-                    _command = d => _dataContext.Tell(new ExecuteEventExent(d, _targetName));
+                    _command = d => _dataContext.Actor.Tell(new ExecuteEventExent(d, _targetName));
 
 
                     return _command != null && !_isDirty;

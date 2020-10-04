@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 using Akka.Actor;
 using Autofac;
@@ -16,6 +18,7 @@ using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Workshop;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Dialogs;
+using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.Localizer.UIModels
@@ -108,7 +111,7 @@ namespace Tauron.Application.Localizer.UIModels
                 var proj = Views.FirstOrDefault(p => p.Project.ProjectName == project.ProjectName);
                 if (proj == null) return;
 
-                Context.Stop(Context.Child(GetActorName(proj.Project.ProjectName)));
+                Context.Stop(proj.Model.Actor);
                 Views.Remove(proj);
             }
 
@@ -125,9 +128,25 @@ namespace Tauron.Application.Localizer.UIModels
             {
                 mainWindow.Saved = File.Exists(obj.ProjectFile.Source);
 
-                foreach (var view in Views)
-                    Context.Stop(view.Model.Actor);
-                Views.Clear();
+                if (Views.Count != 0)
+                {
+                    //TODO Proper Error handling
+                    Task.WhenAll(Views.Select(c => c.Model.Actor.GracefulStop(TimeSpan.FromMinutes(1)).ContinueWith(t => (c.Model.Actor, t.Result))))
+                       .ContinueWith(t =>
+                        {
+                            foreach (var (actor, stopped) in t.Result)
+                            {
+                                if(stopped)
+                                    continue;
+
+                                actor.Tell(Kill.Instance);
+                            }
+
+                            Views.Clear();
+                        }).PipeTo(Self, Sender, () => obj, _ => obj);
+
+                    return;
+                }
 
                 string titleName = obj.ProjectFile.Source;
                 if (string.IsNullOrWhiteSpace(titleName))
@@ -167,9 +186,9 @@ namespace Tauron.Application.Localizer.UIModels
                 }
 
                 var view = LifetimeScope.Resolve<IViewModel<ProjectViewModel>>();
-                view.Init(Context, name);
-                view.Actor.Tell(new InitProjectViewModel(project), Self);
+                view.InitModel(Context, name);
 
+                view.AwaitInit(() => view.Actor.Tell(new InitProjectViewModel(project), Self));
                 Views.Add(new ProjectViewContainer(view, project));
 
                 CurrentProject += Views.Count - 1;
