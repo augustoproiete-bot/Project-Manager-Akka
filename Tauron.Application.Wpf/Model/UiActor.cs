@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Akka.Actor;
+using Akka.Util;
 using Akka.Util.Internal;
 using Autofac;
 using JetBrains.Annotations;
@@ -202,6 +203,8 @@ namespace Tauron.Application.Wpf.Model
             _commandRegistrations.Clear();
             _eventRegistrations.Clear();
             _propertys.Clear();
+
+            base.PostStop();
         }
 
         private Action<UiActor>? _terminationCallback;
@@ -426,21 +429,40 @@ namespace Tauron.Application.Wpf.Model
         {
             private readonly string _name;
             private readonly IActorRef _self;
-            private Func<object?, bool> _canExecute;
+            private readonly Dispatcher _dispatcher;
+            private readonly AtomicBoolean _canExecute = new AtomicBoolean();
+            private readonly AtomicBoolean _deactivated = new AtomicBoolean();
 
-            public ActorCommand(string name, IActorRef self, Func<object?, bool>? canExecute)
+            public ActorCommand(string name, IActorRef self, CommandQuery? canExecute, Dispatcher dispatcher)
             {
                 _name = name;
                 _self = self;
-                _canExecute = canExecute ?? (p => true);
+                _dispatcher = dispatcher;
+                if (canExecute == null)
+                    _canExecute.GetAndSet(true);
+                else
+                {
+                    canExecute.Monitor(b =>
+                    {
+                        if(_deactivated.Value)
+                            return;
+                        _canExecute.GetAndSet(b);
+
+                        _dispatcher.Invoke(RaiseCanExecuteChanged);
+                    });
+                }
             }
 
             public override void Execute(object parameter) => _self.Tell(new CommandExecuteEvent(_name, parameter));
 
-            public override bool CanExecute(object parameter) => _canExecute(parameter);
+            public override bool CanExecute(object parameter) => _canExecute;
 
-            public void Deactivate() 
-                => Interlocked.Exchange(ref _canExecute, o => false);
+            public void Deactivate()
+            {
+                _deactivated.GetAndSet(true);
+                _canExecute.GetAndSet(false);
+                _dispatcher.Invoke(RaiseCanExecuteChanged);
+            }
         }
 
         private sealed class ReviveActor

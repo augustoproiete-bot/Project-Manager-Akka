@@ -24,9 +24,11 @@ namespace Tauron.Application.Localizer.UIModels
             CopyCommand = new SimpleCommand(() => Clipboard.SetText(EntryName));
 
             foreach (var language in project.ActiveLanguages)
+            {
                 Entries.Add(target.Values.TryGetValue(language, out var content)
                     ? new ProjectLangEntry(EntryChanged, language, content)
                     : new ProjectLangEntry(EntryChanged, language, string.Empty));
+            }
         }
 
         public string EntryName { get; }

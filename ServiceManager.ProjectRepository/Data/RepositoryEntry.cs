@@ -6,7 +6,7 @@ namespace ServiceManager.ProjectRepository.Data
     {
         public string RepoName { get; set; } = string.Empty;
 
-        public string FileName { get; set; }
+        public string FileName { get; set; } = string.Empty;
 
         public string SourceUrl { get; set; } = string.Empty;
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using Akka.Actor;
@@ -123,6 +124,13 @@ namespace Tauron.Application.Localizer.UIModels
             #endregion
 
             #region Project Reset
+            
+            OnPreRestart += (exception, msg) => Self.Tell(new ProjectRest(workspace.ProjectFile));
+            OnPostStop += () =>
+            {
+                Views.Foreach(c => Context.Stop(c.Model.Actor));
+                Thread.Sleep(1000);
+            };
 
             void ProjectRest(ProjectRest obj)
             {
@@ -130,19 +138,30 @@ namespace Tauron.Application.Localizer.UIModels
 
                 if (Views.Count != 0)
                 {
-                    //TODO Proper Error handling
-                    Task.WhenAll(Views.Select(c => c.Model.Actor.GracefulStop(TimeSpan.FromMinutes(1)).ContinueWith(t => (c.Model.Actor, t.Result))))
+                    Task.WhenAll(Views.Select(c => c.Model.Actor.GracefulStop(TimeSpan.FromMinutes(1)).ContinueWith(t => (c.Model.Actor, t))))
                        .ContinueWith(t =>
                         {
-                            foreach (var (actor, stopped) in t.Result)
+                            try
                             {
-                                if(stopped)
-                                    continue;
+                                foreach (var (actor, stopped) in t.Result)
+                                {
+                                    try
+                                    {
+                                        if(stopped.Result)
+                                            continue;
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Log.Error(e, "Error on Stop Project Actor");
+                                    }
 
-                                actor.Tell(Kill.Instance);
+                                    actor.Tell(Kill.Instance);
+                                }
                             }
-
-                            Views.Clear();
+                            finally
+                            {
+                                Views.Clear();
+                            }
                         }).PipeTo(Self, Sender, () => obj, _ => obj);
 
                     return;

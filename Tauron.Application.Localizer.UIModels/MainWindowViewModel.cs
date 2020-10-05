@@ -40,6 +40,18 @@ namespace Tauron.Application.Localizer.UIModels
             CenterView = this.RegisterViewModel(nameof(CenterView), model);
             workspace.Source.ProjectReset.RespondOn(pr => _last = pr.ProjectFile);
 
+            #region Restarting
+
+            OnPreRestart += (exception, o) =>
+            {
+                if(_last != null)
+                    Self.Tell(_last);
+
+            };
+            Receive<ProjectFile>(workspace.Reset);
+
+            #endregion
+
             #region Operation Manager
 
             RunningOperations = RegisterProperty<IEnumerable<RunningOperation>>(nameof(RunningOperations)).WithDefaultValue(operationManager.RunningOperations);
@@ -93,7 +105,7 @@ namespace Tauron.Application.Localizer.UIModels
                 mainWindowCoordinator.IsBusy = true;
                 _loadingOperation = operationManager.StartOperation(string.Format(localizer.MainWindowModelLoadProjectOperation, Path.GetFileName(source) ?? source));
 
-                if (!workspace.ProjectFile.IsEmpty)
+                if (!workspace.ProjectFile!.IsEmpty)
                     workspace.ProjectFile.Operator.Tell(ForceSave.Force(workspace.ProjectFile));
 
                 ProjectFile.BeginLoad(Context, _loadingOperation.Id, source!, "Project_Operator");

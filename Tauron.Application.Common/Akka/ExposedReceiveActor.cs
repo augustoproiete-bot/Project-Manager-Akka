@@ -58,6 +58,14 @@ namespace Tauron.Akka
 
         IActorRef IActorDsl.ActorOf(Action<IActorDsl> config, string name) => Context.ActorOf(config, name);
 
+        protected event Action<Exception>? OnPostRestart;
+
+        protected event Action<Exception, object>? OnPreRestart;
+
+        protected event Action? OnPostStop;
+
+        protected event Action? OnPreStart;
+
         Action<Exception, IActorContext>? IActorDsl.OnPostRestart
         {
             get => _onPostRestart;
@@ -91,24 +99,28 @@ namespace Tauron.Akka
         protected override void PostRestart(Exception reason)
         {
             _onPostRestart?.Invoke(reason, Context);
+            OnPostRestart?.Invoke(reason);
             base.PostRestart(reason);
         }
 
         protected override void PreRestart(Exception reason, object message)
         {
             _onPreRestart?.Invoke(reason, message, Context);
+            OnPreRestart?.Invoke(reason, message);
             base.PreRestart(reason, message);
         }
 
         protected override void PostStop()
         {
             _onPostStop?.Invoke(Context);
+            OnPostStop?.Invoke();
             base.PostStop();
         }
 
         protected override void PreStart()
         {
             _onPreStart?.Invoke(Context);
+            OnPreStart?.Invoke();
             base.PreStart();
         }
 

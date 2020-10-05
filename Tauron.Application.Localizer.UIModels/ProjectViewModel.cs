@@ -49,6 +49,8 @@ namespace Tauron.Application.Localizer.UIModels
                 self.Tell(new RemoveRequest(entryName, projectName));
             }
 
+            OnPreRestart += (exception, o) => Self.Tell(new InitProjectViewModel(workspace.Get(_project)));
+
             void InitProjectViewModel(InitProjectViewModel obj)
             {
                 _project = obj.Project.ProjectName;
@@ -81,7 +83,7 @@ namespace Tauron.Application.Localizer.UIModels
                         .Select(s => s.Split('_', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault())
                         .Where(s => !string.IsNullOrWhiteSpace(s))
                         .Distinct(StringComparer.Ordinal)
-                        .Select(s => new NewEntrySuggestInfo(s)));
+                        .Select(s => new NewEntrySuggestInfo(s!)));
 
             }
 
@@ -125,7 +127,7 @@ namespace Tauron.Application.Localizer.UIModels
                 if (_project != obj.Entry.Project) return;
 
                 var model = ProjectEntrys.FirstOrDefault(m => m.EntryName == obj.Entry.Key);
-                model.Update(obj.Entry);
+                model?.Update(obj.Entry);
             }
 
             this.Flow<UpdateRequest>()

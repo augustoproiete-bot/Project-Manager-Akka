@@ -105,7 +105,9 @@ namespace Tauron.Application.Localizer.UIModels
             Importintegration = RegisterProperty<bool>(nameof(Importintegration))
                .WithDefaultValue(true).ThenFlow(b => new ChangeIntigrate(b), this)
                .From.Mutate(workspace.Build).With(bm => bm.Intigrate, bm => ci => bm.SetIntigrate(ci.ToIntigrate)).ToSelf()
+#pragma warning disable CS8604 // Mögliches Nullverweisargument.
                .Then.Action(ii => Importintegration += ii.IsIntigrated)
+#pragma warning restore CS8604 // Mögliches Nullverweisargument.
                .AndReturn();
 
             #endregion
