@@ -28,24 +28,23 @@ namespace Tauron.Application.Localizer.UIModels
     [UsedImplicitly]
     public sealed class MainWindowViewModel : UiActor
     {
-        private ProjectFile? _last;
-
-        private OperationController? _loadingOperation;
-
         public MainWindowViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IOperationManager operationManager, LocLocalizer localizer, IDialogCoordinator dialogCoordinator,
             AppConfig config, IDialogFactory dialogFactory, IViewModel<CenterViewModel> model, IMainWindowCoordinator mainWindowCoordinator, ProjectFileWorkspace workspace)
             : base(lifetimeScope, dispatcher)
         {
+            var last = QueryProperty.Create<ProjectFile?>();
+            var loadingOperation = QueryProperty.Create<OperationController?>();
+
             var self = Self;
             CenterView = this.RegisterViewModel(nameof(CenterView), model);
-            workspace.Source.ProjectReset.RespondOn(pr => _last = pr.ProjectFile);
+            workspace.Source.ProjectReset.RespondOn(pr => last.Value = pr.ProjectFile);
 
             #region Restarting
 
             OnPreRestart += (exception, o) =>
             {
-                if(_last != null)
-                    Self.Tell(_last);
+                if(last != null)
+                    Self.Tell(last);
 
             };
             Receive<ProjectFile>(workspace.Reset);
@@ -81,7 +80,7 @@ namespace Tauron.Application.Localizer.UIModels
                 return true;
             }
 
-            NewCommad.WithCanExecute(() => _last != null && !_last.IsEmpty)
+            NewCommad.WithCanExecute(b => b.FromProperty(last, file => file != null && !file.IsEmpty))
                 .ThenFlow(SaveAsProject).Send.ToModel(CenterView)
                 .Return().ThenRegister("SaveAs");
 
@@ -103,39 +102,39 @@ namespace Tauron.Application.Localizer.UIModels
                 if (CheckSourceOk(source)) return;
 
                 mainWindowCoordinator.IsBusy = true;
-                _loadingOperation = operationManager.StartOperation(string.Format(localizer.MainWindowModelLoadProjectOperation, Path.GetFileName(source) ?? source));
+                loadingOperation.Value = operationManager.StartOperation(string.Format(localizer.MainWindowModelLoadProjectOperation, Path.GetFileName(source) ?? source));
 
                 if (!workspace.ProjectFile!.IsEmpty)
                     workspace.ProjectFile.Operator.Tell(ForceSave.Force(workspace.ProjectFile));
 
-                ProjectFile.BeginLoad(Context, _loadingOperation.Id, source!, "Project_Operator");
+                ProjectFile.BeginLoad(Context, loadingOperation.Value.Id, source!, "Project_Operator");
             }
 
             SupplyNewProjectFile? ProjectLoaded(LoadedProjectFile obj)
             {
-                if (_loadingOperation != null)
+                if (loadingOperation.Value != null)
                 {
                     if (obj.Ok)
                     {
-                        _loadingOperation.Compled();
+                        loadingOperation.Value.Compled();
                     }
                     else
                     {
                         mainWindowCoordinator.IsBusy = false;
-                        _loadingOperation.Failed(obj.ErrorReason?.Message ?? localizer.CommonError);
+                        loadingOperation.Value.Failed(obj.ErrorReason?.Message ?? localizer.CommonError);
                         return null;
                     }
                 }
 
-                _loadingOperation = null;
+                loadingOperation.Value = null;
                 if (obj.Ok) RenctFiles.Value.AddNewFile(obj.ProjectFile.Source);
 
-                _last = obj.ProjectFile;
+                last!.Value = obj.ProjectFile;
 
-                return new SupplyNewProjectFile(_last);
+                return new SupplyNewProjectFile(obj.ProjectFile);
             }
 
-            NewCommad.WithCanExecute(() => _loadingOperation == null)
+            NewCommad.WithCanExecute(b => b.NotNull(loadingOperation))
                 .ThenFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenExistingFile)), OpenFileMode.OpenExistingFile))
                 .From.Func(SourceSelectedFunc).ToSelf()
                 .Then.Func(ProjectLoaded!).ToModel(CenterView)
@@ -161,7 +160,7 @@ namespace Tauron.Application.Localizer.UIModels
                 return new LoadedProjectFile(string.Empty, ProjectFile.NewProjectFile(Context, source, "Project_Operator"), null, true);
             }
 
-            NewCommad.WithCanExecute(() => _loadingOperation == null)
+            NewCommad.WithCanExecute(b => b.NotNull(loadingOperation))
                 //.ThenFlow(SourceSelected.From(() => "", OpenFileMode.OpenNewFile)).Send.ToSelf()
                 .ThenFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenNewFile)), OpenFileMode.OpenNewFile)).Send.ToSelf()
                 .Return().ThenRegister("NewFile");

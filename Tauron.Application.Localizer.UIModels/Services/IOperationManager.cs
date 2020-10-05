@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.Localizer.UIModels.Services
 {
@@ -10,12 +12,12 @@ namespace Tauron.Application.Localizer.UIModels.Services
 
         OperationController? Find(string id);
 
-        bool ShouldClear();
+        CommandQuery ShouldClear(CommandQueryBuilder builder, out IDisposable subscription);
 
         void Clear();
 
 
-        bool ShouldCompledClear();
+        CommandQuery ShouldCompledClear(CommandQueryBuilder builder, out IDisposable subscription);
 
         void CompledClear();
     }

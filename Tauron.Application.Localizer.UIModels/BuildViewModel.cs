@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.DataModel.Workspace;
+using Tauron.Application.Localizer.UIModels.Core;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Services;
 using Tauron.Application.Workshop;
@@ -173,14 +174,19 @@ namespace Tauron.Application.Localizer.UIModels
 
             #region Build
 
-            var canBuild = true;
+            var canBuild = QueryProperty.Create(true);
 
             this.RespondOnEventSource(workspace.Source.SaveRequest, _ => InvokeCommand("StartBuild"));
 
-            NewCommad.WithCanExecute(() => canBuild && !workspace.ProjectFile.IsEmpty && !string.IsNullOrWhiteSpace(workspace.ProjectFile.Source))
+            NewCommad
+                .WithCanExecute(b => new []
+                {
+                    b.FromProperty(canBuild),
+                    b.FromEventSource(workspace.Source.ProjectReset, _ => !workspace.ProjectFile.IsEmpty && !string.IsNullOrWhiteSpace(workspace.ProjectFile.Source))
+                })
                .WithExecute(ClearTerminal).WithExecute(() =>
                                                        {
-                                                           canBuild = false;
+                                                           canBuild += false;
                                                            CommandChanged();
                                                        })
                .ThenFlow(() => new BuildRequest(manager.StartOperation(localizer.MainWindowodelBuildProjectOperation).Id, workspace.ProjectFile))
@@ -198,7 +204,7 @@ namespace Tauron.Application.Localizer.UIModels
                 else
                     op.Compled();
 
-                canBuild = true;
+                canBuild!.Value = true;
                 CommandChanged();
             }
 

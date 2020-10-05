@@ -12,6 +12,7 @@ using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.DataModel.Workspace;
+using Tauron.Application.Localizer.UIModels.Core;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Messages;
 using Tauron.Application.Localizer.UIModels.Services;
@@ -116,7 +117,12 @@ namespace Tauron.Application.Localizer.UIModels
                 Views.Remove(proj);
             }
 
-            NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty && CurrentProject != null)
+            NewCommad
+                .WithCanExecute(b => new []
+                {
+                    b.FromProperty(CurrentProject, i => i != null),
+                    b.NoEmptyProjectFile(workspace)
+                })
                 .ThenFlow(TryGetRemoveProjectName).From.Mutate(workspace.Projects).With(pm => pm.RemovedProject, pm => RemoveDialog).ToSelf()
                 .Then.Action(rp => RemoveProject(rp.Project))
                 .AndReturn().ThenRegister("RemoveProject");
@@ -213,7 +219,7 @@ namespace Tauron.Application.Localizer.UIModels
                 CurrentProject += Views.Count - 1;
             }
 
-            NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty)
+            NewCommad.WithCanExecute(b => b.NoEmptyProjectFile(workspace))
                 .ThenFlow(this.ShowDialog<IProjectNameDialog, NewProjectDialogResult, IEnumerable<string>>(() => workspace.ProjectFile.Projects.Select(p => p.ProjectName)))
                 .From.Mutate(workspace.Projects).With(pm => pm.NewProject, pm => result => pm.AddProject(result.Name)).ToSelf()
                 .Then.Action(p => AddProject(p.Project))
@@ -223,7 +229,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             #region Add Global Language
 
-            NewCommad.WithCanExecute(() => !workspace.ProjectFile.IsEmpty)
+            NewCommad.WithCanExecute(b => b.NoEmptyProjectFile(workspace))
                 .ThenFlow(this.ShowDialog<ILanguageSelectorDialog, AddLanguageDialogResult?, IEnumerable<CultureInfo>>(() => workspace.ProjectFile.GlobalLanguages.Select(al => al.ToCulture())))
                 .From.Mutate(workspace.Projects).With(mutator => result => mutator.AddLanguage(result?.CultureInfo))
                 .AndReturn().ThenRegister("AddGlobalLang");

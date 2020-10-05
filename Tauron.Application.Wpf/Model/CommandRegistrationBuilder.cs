@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Tauron.Akka;
 
@@ -7,13 +8,13 @@ namespace Tauron.Application.Wpf.Model
     [PublicAPI]
     public sealed class CommandRegistrationBuilder
     {
-        private readonly Action<string, Action<object?>, Func<object?, bool>?> _register;
+        private readonly Action<string, Action<object?>, CommandQuery?> _register;
 
-        private Delegate? _canExecute;
+        private List<CommandQuery> _canExecute = new List<CommandQuery>();
 
         private Delegate? _command;
 
-        internal CommandRegistrationBuilder(Action<string, Action<object?>, Func<object?, bool>?> register, IExposedReceiveActor target)
+        internal CommandRegistrationBuilder(Action<string, Action<object?>, CommandQuery?> register, IExposedReceiveActor target)
         {
             Target = target;
             _register = register;
@@ -21,46 +22,44 @@ namespace Tauron.Application.Wpf.Model
 
         public IExposedReceiveActor Target { get; }
 
-        public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<object?, bool>? canExecute)
-        {
-            _command = Delegate.Combine(_command, execute);
-            _canExecute = Delegate.Combine(_canExecute, canExecute);
-
-            return this;
-        }
-
-        public CommandRegistrationBuilder WithExecute(Action execute, Func<bool> canExecute)
-        {
-            _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
-            _canExecute = Delegate.Combine(_canExecute, new FuncMapper(canExecute).Action);
-
-            return this;
-        }
-
-        public CommandRegistrationBuilder WithCanExecute(Func<object?, bool> execute)
-        {
-            _canExecute = Delegate.Combine(_canExecute, execute);
-
-            return this;
-        }
-
-        public CommandRegistrationBuilder WithCanExecute(Func<bool> execute)
-        {
-            _canExecute = Delegate.Combine(_canExecute, new FuncMapper(execute).Action);
-
-            return this;
-        }
-
-        public CommandRegistrationBuilder WithExecute(Action<object?> execute)
+        public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>>? canExecute = null)
         {
             _command = Delegate.Combine(_command, execute);
 
+            return canExecute != null ? WithCanExecute(canExecute) : this;
+        }
+
+        public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>>? canExecute = null)
+        {
+            _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
+
+            return canExecute != null ? WithCanExecute(canExecute) : this;
+        }
+
+        public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, CommandQuery>? canExecute = null)
+        {
+            _command = Delegate.Combine(_command, execute);
+
+            return canExecute != null ? WithCanExecute(canExecute) : this;
+        }
+
+        public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, CommandQuery>? canExecute = null)
+        {
+            _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
+
+            return canExecute != null ? WithCanExecute(canExecute) : this;
+        }
+
+        public CommandRegistrationBuilder WithCanExecute(Func<CommandQueryBuilder, IEnumerable<CommandQuery>> canExecute)
+        {
+            _canExecute.AddRange(canExecute(CommandQueryBuilder.Instance));
+
             return this;
         }
 
-        public CommandRegistrationBuilder WithExecute(Action execute)
+        public CommandRegistrationBuilder WithCanExecute(Func<CommandQueryBuilder, CommandQuery> canExecute)
         {
-            _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
+            _canExecute.Add(canExecute(CommandQueryBuilder.Instance));
 
             return this;
         }
@@ -69,7 +68,7 @@ namespace Tauron.Application.Wpf.Model
         {
             if (_command == null) return;
 
-            _register(name, (Action<object?>) _command, _canExecute as Func<object?, bool>);
+            _register(name, (Action<object?>) _command, CommandQueryBuilder.Instance.Combine(_canExecute.ToArray()));
         }
 
         private sealed class ActionMapper
@@ -89,21 +88,21 @@ namespace Tauron.Application.Wpf.Model
             }
         }
 
-        private sealed class FuncMapper
-        {
-            private readonly Func<bool> _action;
+        //private sealed class FuncMapper
+        //{
+        //    private readonly Func<bool> _action;
 
-            public FuncMapper(Func<bool> action)
-            {
-                _action = action;
-            }
+        //    public FuncMapper(Func<bool> action)
+        //    {
+        //        _action = action;
+        //    }
 
-            public Func<object?, bool> Action => ActionImpl;
+        //    public Func<object?, bool> Action => ActionImpl;
 
-            private bool ActionImpl(object? o)
-            {
-                return _action();
-            }
-        }
+        //    private bool ActionImpl(object? o)
+        //    {
+        //        return _action();
+        //    }
+        //}
     }
 }

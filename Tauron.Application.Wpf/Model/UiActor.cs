@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -121,7 +120,7 @@ namespace Tauron.Application.Wpf.Model
 
         private void CanCommandExecute(CanCommandExecuteRequest obj)
         {
-            var (name, parameter) = obj;
+            var (name, _) = obj;
             if (!_commandRegistrations.TryGetValue(name, out var registration))
             {
                 Log.Warning("No Command Found {Name}", name);
@@ -130,7 +129,7 @@ namespace Tauron.Application.Wpf.Model
             else
             {
                 var invoker = registration.CanExecute;
-                Context.Sender.Tell(invoker == null ? new CanCommandExecuteRespond(name, () => true) : new CanCommandExecuteRespond(name, () => invoker(parameter)));
+                Context.Sender.Tell(invoker == null ? new CanCommandExecuteRespond(name, () => true) : new CanCommandExecuteRespond(name, () => invoker.Run()));
             }
         }
 
@@ -139,7 +138,7 @@ namespace Tauron.Application.Wpf.Model
             if(!_commandRegistrations.TryGetValue(name, out var cr))
                 return;
 
-            if (cr.CanExecute?.Invoke(null) ?? true) 
+            if (cr.CanExecute?.Run() ?? true) 
                 cr.Command(null);
         }
 
@@ -149,7 +148,7 @@ namespace Tauron.Application.Wpf.Model
                 {
                     var data = new PropertyData(new UIProperty<ICommand>(key)
                                                 {
-                                                    InternalValue = new ActorCommand(key, Context.Self, canExecute)
+                                                    InternalValue = new ActorCommand(key, Context.Self, canExecute, Dispatcher)
                                                 }.LockSet());
 
                     _propertys.Add(key, data);
@@ -357,7 +356,7 @@ namespace Tauron.Application.Wpf.Model
 
         private sealed class CommandRegistration
         {
-            public CommandRegistration(Action<object?> command, Func<object?, bool>? canExecute)
+            public CommandRegistration(Action<object?> command, CommandQuery? canExecute)
             {
                 Command = command;
                 CanExecute = canExecute;
@@ -365,7 +364,7 @@ namespace Tauron.Application.Wpf.Model
 
             public Action<object?> Command { get; }
 
-            public Func<object?, bool>? CanExecute { get; }
+            public CommandQuery? CanExecute { get; }
         }
 
         private sealed class InvokeHelper
@@ -450,6 +449,8 @@ namespace Tauron.Application.Wpf.Model
 
                         _dispatcher.Invoke(RaiseCanExecuteChanged);
                     });
+
+                    _canExecute.GetAndSet(canExecute.Run());
                 }
             }
 

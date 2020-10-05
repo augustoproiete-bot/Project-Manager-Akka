@@ -9,6 +9,7 @@ using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel;
 using Tauron.Application.Localizer.DataModel.Workspace;
 using Tauron.Application.Localizer.DataModel.Workspace.Mutating;
+using Tauron.Application.Localizer.UIModels.Core;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Workshop;
@@ -155,7 +156,7 @@ namespace Tauron.Application.Localizer.UIModels
             ImportSelectIndex = RegisterProperty<int>(nameof(ImportSelectIndex)).WithDefaultValue(-1);
             ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).AndAsync();
 
-            NewCommad.WithCanExecute(() => GetImportableProjects().Any())
+            NewCommad.WithCanExecute(b => b.FromEventSource(workspace.Entrys.EntryUpdate, _ => GetImportableProjects().Any(), null!))
                 .ThenFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, IEnumerable<string>>(GetImportableProjects))
                 .From.Mutate(workspace.Projects).With(pm => pm.NewImport, pm => r => pm.AddImport(_project, r!.Project)).ToSelf()
                 .Then.Action(AddImport)
@@ -167,8 +168,8 @@ namespace Tauron.Application.Localizer.UIModels
 
                 ImportetProjects.Remove(import.ToRemove);
             }
-
-            NewCommad.WithCanExecute(() => ImportSelectIndex.Value != -1)
+            
+            NewCommad.WithCanExecute(b => b.FromProperty(ImportSelectIndex, i => i != -1))
                 .ThenFlow(() => new InitImportRemove(ImportetProjects[ImportSelectIndex]))
                 .From.Mutate(workspace.Projects).With(pm => pm.RemoveImport, pm => ir => pm.TryRemoveImport(_project, ir.ToRemove)).ToSelf()
                 .Then.Action(RemoveImport)

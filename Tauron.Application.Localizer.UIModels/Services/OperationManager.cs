@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Threading;
 using Tauron.Application.Localizer.UIModels.lang;
+using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.Localizer.UIModels.Services
 {
@@ -46,7 +47,13 @@ namespace Tauron.Application.Localizer.UIModels.Services
             });
         }
 
-        public bool ShouldClear()
+        public CommandQuery ShouldClear(CommandQueryBuilder builder, out IDisposable subscription)
+        {
+            var query = builder.FromTrigger(ShouldClear, out var trigger);
+            
+        }
+
+        private bool ShouldClear()
         {
             return _operations.Any(op => op.Operation == OperationStatus.Success);
         }
@@ -58,6 +65,11 @@ namespace Tauron.Application.Localizer.UIModels.Services
                 foreach (var operation in _operations.Where(op => op.Operation == OperationStatus.Success).ToArray())
                     _operations.Remove(operation);
             });
+        }
+
+        public CommandQuery ShouldCompledClear(CommandQueryBuilder builder, out IDisposable subscription)
+        {
+            throw new NotImplementedException();
         }
 
         public bool ShouldCompledClear()
@@ -93,6 +105,24 @@ namespace Tauron.Application.Localizer.UIModels.Services
             {
                 OnPropertyChanged(new PropertyChangedEventArgs(nameof(RunningOperations)));
             }
+        }
+
+        private sealed class ObservableSubscription : IDisposable
+        {
+            private readonly Action _trigger;
+            private OperationList _list;
+
+            public ObservableSubscription(Action trigger, OperationList list)
+            {
+                _trigger = trigger;
+                _list = list;
+
+                _list.CollectionChanged += ListOnCollectionChanged;
+            }
+
+            private void ListOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => _trigger();
+
+            public void Dispose() => _list.CollectionChanged -= ListOnCollectionChanged;
         }
     }
 }
