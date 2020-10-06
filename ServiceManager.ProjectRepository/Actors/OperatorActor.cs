@@ -33,7 +33,7 @@ namespace ServiceManager.ProjectRepository.Actors
         private Reporter? _reporter;
         private string _dataOperation = string.Empty;
 
-        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions, IMongoCollection<CleanUpTime> cleanUp,
+        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions,
                 IActorRef dataTransfer)
         {
             _repos = repos;
@@ -56,46 +56,6 @@ namespace ServiceManager.ProjectRepository.Actors
                 Log.Info("Transfer Compled for Repository {Name} with Result {Type}", r.Data, r.GetType().Name);
                 _reporter?.Compled(r is TransferCompled ? OperationResult.Success() : OperationResult.Failure(((TransferFailed)r).Reason.ToString()));
                 Context.Stop(Self);
-            });
-
-            Receive<StartCleanUp>(_ =>
-            {
-                UpdateLock.EnterUpgradeableReadLock();
-                try
-                {
-                    var data = cleanUp.AsQueryable().First();
-                    if (data.Last + data.Interval >= DateTime.Now) return;
-                    
-                    UpdateLock.EnterWriteLock();
-                    try
-                    {
-                        List<FilterDefinition<ToDeleteRevision>> deleted = new List<FilterDefinition<ToDeleteRevision>>();
-
-                        foreach (var revision in _revisions.AsQueryable())
-                        {
-                            _bucket.Delete(ObjectId.Parse(revision.BuckedId));
-
-                            deleted.Add(Builders<ToDeleteRevision>.Filter.Eq(r => r.BuckedId == revision.BuckedId, true));
-                        }
-
-                        if(deleted.Count != 0)
-                            revisions.DeleteMany(Builders<ToDeleteRevision>.Filter.Or(deleted));
-                        cleanUp.UpdateOne(Builders<CleanUpTime>.Filter.Empty, Builders<CleanUpTime>.Update.Set(c => c.Last, DateTime.Now));
-                    }
-                    finally
-                    {
-                        UpdateLock.ExitWriteLock();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e, "Error on Clean up Database");
-                }
-                finally
-                {
-                    UpdateLock.ExitUpgradeableReadLock();
-                    Context.Stop(Self);
-                }
             });
         }
 

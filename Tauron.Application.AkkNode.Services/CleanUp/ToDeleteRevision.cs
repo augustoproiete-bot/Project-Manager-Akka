@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace ServiceManager.ProjectRepository.Data
+namespace Tauron.Application.AkkNode.Services.CleanUp
 {
     public sealed class ToDeleteRevision
     {

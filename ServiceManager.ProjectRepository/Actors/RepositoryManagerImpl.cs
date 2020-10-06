@@ -25,9 +25,6 @@ namespace ServiceManager.ProjectRepository.Actors
             var repositoryData = database.GetCollection<RepositoryEntry>("Repositorys");
             var trashBin = database.GetCollection<ToDeleteRevision>("TrashBin");
 
-            if (!IsDefined(database.ListCollectionNames(), s => s == "CleanUp"))
-                database.CreateCollection("CleanUp", new CreateCollectionOptions {Capped = true, MaxDocuments = 1, MaxSize = 1024});
-
             var cleanUp = database.GetCollection<CleanUpTime>("CleanUp");
 
             var gridFsBucket = new GridFSBucket(database, new GridFSBucketOptions
@@ -36,7 +33,7 @@ namespace ServiceManager.ProjectRepository.Actors
                                                               ChunkSizeBytes = 1048576
                                                           });
 
-            Receive<RepositoryAction>(r => Context.ActorOf(Props.Create(() => new OperatorActor(repositoryData, gridFsBucket, trashBin, cleanUp, dataTransfer))).Forward(r));
+            Receive<RepositoryAction>(r => Context.ActorOf(Props.Create(() => new OperatorActor(repositoryData, gridFsBucket, trashBin, dataTransfer))).Forward(r));
             Receive<IndexRequest>(_ =>
             {
                 try
