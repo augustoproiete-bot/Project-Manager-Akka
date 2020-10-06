@@ -29,11 +29,11 @@ namespace Tauron.Application.Wpf.Model
             return canExecute != null ? WithCanExecute(canExecute) : this;
         }
 
-        public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>>? canExecute = null)
+        public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>> canExecute)
         {
             _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
 
-            return canExecute != null ? WithCanExecute(canExecute) : this;
+            return WithCanExecute(canExecute);
         }
 
         public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, CommandQuery>? canExecute = null)
@@ -43,11 +43,17 @@ namespace Tauron.Application.Wpf.Model
             return canExecute != null ? WithCanExecute(canExecute) : this;
         }
 
-        public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, CommandQuery>? canExecute = null)
+        public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, CommandQuery> canExecute)
         {
             _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
 
-            return canExecute != null ? WithCanExecute(canExecute) : this;
+            return WithCanExecute(canExecute);
+        }
+
+        public CommandRegistrationBuilder WithExecute(Action execute)
+        {
+            _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
+            return this;
         }
 
         public CommandRegistrationBuilder WithCanExecute(Func<CommandQueryBuilder, IEnumerable<CommandQuery>> canExecute)

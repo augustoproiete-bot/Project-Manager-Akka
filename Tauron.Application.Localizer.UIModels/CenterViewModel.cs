@@ -18,6 +18,7 @@ using Tauron.Application.Localizer.UIModels.Messages;
 using Tauron.Application.Localizer.UIModels.Services;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Workshop;
+using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Dialogs;
 using Tauron.Application.Wpf.Helper;
@@ -32,6 +33,8 @@ namespace Tauron.Application.Localizer.UIModels
             IMainWindowCoordinator mainWindow, ProjectFileWorkspace workspace)
             : base(lifetimeScope, dispatcher)
         {
+            Receive<IncommingEvent>(e => e.Action());
+
             Views = this.RegisterUiCollection<ProjectViewContainer>(nameof(Views)).AndAsync();
             CurrentProject = RegisterProperty<int?>(nameof(CurrentProject));
 
@@ -190,7 +193,6 @@ namespace Tauron.Application.Localizer.UIModels
                 foreach (var project in obj.ProjectFile.Projects)
                     AddProject(project);
 
-                CommandChanged();
                 mainWindow.IsBusy = false;
             }
 

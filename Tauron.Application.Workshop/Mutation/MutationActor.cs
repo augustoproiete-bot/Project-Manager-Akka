@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using Akka.Actor;
 using Akka.Event;
 
@@ -6,12 +7,23 @@ namespace Tauron.Application.Workshop.Mutation
 {
     public sealed class MutationActor<TData> : ReceiveActor
     {
+        private ImmutableDictionary<IActorRef, Action> _intrest = ImmutableDictionary<IActorRef, Action>.Empty;
+
         public MutationActor()
         {
             Receive<DataMutation<TData>>(Mutation);
-            Receive<WatchIntrest>(wi => Context.WatchWith(wi.Target, new HandlerTerminated(wi.OnRemove)));
-            Receive<HandlerTerminated>(ht => ht.Remover());
-            Receive<Terminated>(t => { });
+            Receive<WatchIntrest>(wi =>
+            {
+                ImmutableInterlocked.AddOrUpdate(ref _intrest, wi.Target, _ => wi.OnRemove, (_, action) => action.Combine(wi.OnRemove) ?? wi.OnRemove);
+                Context.Watch(wi.Target);
+            });
+            Receive<Terminated>(t =>
+            {
+                if (!_intrest.TryGetValue(t.ActorRef, out var action)) return;
+                
+                action();
+                _intrest = _intrest.Remove(t.ActorRef);
+            });
         }
 
         private ILoggingAdapter _log => Context.GetLogger();
@@ -30,14 +42,14 @@ namespace Tauron.Application.Workshop.Mutation
             }
         }
 
-        private sealed class HandlerTerminated
-        {
-            public HandlerTerminated(Action remover)
-            {
-                Remover = remover;
-            }
+        //private sealed class HandlerTerminated
+        //{
+        //    public HandlerTerminated(Action remover)
+        //    {
+        //        Remover = remover;
+        //    }
 
-            public Action Remover { get; }
-        }
+        //    public Action Remover { get; }
+        //}
     }
 }

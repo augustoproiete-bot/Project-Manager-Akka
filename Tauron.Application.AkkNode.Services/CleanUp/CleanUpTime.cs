@@ -1,7 +1,7 @@
 ﻿using System;
 using MongoDB.Bson;
 
-namespace ServiceManager.ProjectRepository.Data
+namespace Tauron.Application.AkkNode.Services.CleanUp
 {
     public sealed class CleanUpTime
     {

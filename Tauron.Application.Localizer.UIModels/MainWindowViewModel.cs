@@ -18,6 +18,7 @@ using Tauron.Application.Localizer.UIModels.Services;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Workshop;
 using Tauron.Application.Workshop.Analyzing;
+using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Dialogs;
 using Tauron.Application.Wpf.Helper;
@@ -32,12 +33,14 @@ namespace Tauron.Application.Localizer.UIModels
             AppConfig config, IDialogFactory dialogFactory, IViewModel<CenterViewModel> model, IMainWindowCoordinator mainWindowCoordinator, ProjectFileWorkspace workspace)
             : base(lifetimeScope, dispatcher)
         {
+            Receive<IncommingEvent>(e => e.Action());
+
             var last = QueryProperty.Create<ProjectFile?>();
             var loadingOperation = QueryProperty.Create<OperationController?>();
 
             var self = Self;
             CenterView = this.RegisterViewModel(nameof(CenterView), model);
-            workspace.Source.ProjectReset.RespondOn(pr => last.Value = pr.ProjectFile);
+            workspace.Source.ProjectReset.RespondOn(null, pr => last.Value = pr.ProjectFile);
 
             #region Restarting
 
@@ -56,8 +59,8 @@ namespace Tauron.Application.Localizer.UIModels
             RunningOperations = RegisterProperty<IEnumerable<RunningOperation>>(nameof(RunningOperations)).WithDefaultValue(operationManager.RunningOperations);
             RenctFiles = RegisterProperty<RenctFilesCollection>(nameof(RenctFiles)).WithDefaultValue(new RenctFilesCollection(config, s => self.Tell(new InternlRenctFile(s))));
 
-            NewCommad.WithExecute(operationManager.Clear, operationManager.ShouldClear).ThenRegister("ClearOp");
-            NewCommad.WithExecute(operationManager.CompledClear, operationManager.ShouldCompledClear).ThenRegister("ClearAllOp");
+            NewCommad.WithExecute(operationManager.Clear, b => operationManager.ShouldClear(b, AddResource)).ThenRegister("ClearOp");
+            NewCommad.WithExecute(operationManager.CompledClear, b =>  operationManager.ShouldCompledClear(b, AddResource)).ThenRegister("ClearAllOp");
 
             #endregion
 

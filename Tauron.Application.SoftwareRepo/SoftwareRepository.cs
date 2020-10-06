@@ -29,7 +29,7 @@ namespace Tauron.Application.SoftwareRepo
         {
             Path = path;
             Changed = Engine.EventSource(mc => mc.GetChange<CommonChange>().ApplicationList, context => context.Change is CommonChange);
-            Changed.RespondOn(Save);
+            Changed.RespondOn(null, Save);
         }
 
 

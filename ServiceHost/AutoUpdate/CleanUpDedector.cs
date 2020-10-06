@@ -1,6 +1,6 @@
 ﻿using Akka.Actor;
 using Microsoft.Extensions.Configuration;
-using Tauron.Application.AkkaNode.Boottrap;
+using Tauron.Application.AkkaNode.Bootstrap;
 
 namespace ServiceHost.AutoUpdate
 {

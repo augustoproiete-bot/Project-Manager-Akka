@@ -7,7 +7,6 @@ using Akka.Configuration;
 using Autofac;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -17,9 +16,9 @@ using Tauron.Application.AkkNode.Services.Configuration;
 using Tauron.Application.Master.Commands;
 using Tauron.Host;
 
-namespace Tauron.Application.AkkaNode.Boottrap
+namespace Tauron.Application.AkkaNode.Bootstrap
 {
-    public static class Boottrap
+    public static class Bootstrap
     {
         public static IApplicationBuilder StartNode(string[] args, KillRecpientType type)
         {

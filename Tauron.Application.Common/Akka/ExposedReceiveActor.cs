@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Dsl;
@@ -16,6 +17,7 @@ namespace Tauron.Akka
     [PublicAPI]
     public class ExposedReceiveActor : ReceiveActor, IActorDsl, IExposedReceiveActor
     {
+        private List<IDisposable> _resources = new List<IDisposable>();
         private Action<Exception, IActorContext>? _onPostRestart;
         private Action<IActorContext>? _onPostStop;
         private Action<Exception, object, IActorContext>? _onPreRestart;
@@ -25,6 +27,9 @@ namespace Tauron.Akka
         public IActorDsl Exposed => this;
 
         public IUntypedActorContext ExposedContext => Context;
+
+        public void AddResource(IDisposable res)
+            => _resources.Add(res);
 
         protected internal ILoggingAdapter Log { get; } = Context.GetLogger();
 
@@ -114,6 +119,10 @@ namespace Tauron.Akka
         {
             _onPostStop?.Invoke(Context);
             OnPostStop?.Invoke();
+
+            foreach (var disposable in _resources) 
+                disposable.Dispose();
+
             base.PostStop();
         }
 

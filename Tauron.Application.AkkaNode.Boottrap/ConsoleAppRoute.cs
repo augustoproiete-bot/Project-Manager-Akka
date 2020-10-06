@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -9,7 +8,7 @@ using Autofac.Features.OwnedInstances;
 using Serilog;
 using Tauron.Host;
 
-namespace Tauron.Application.AkkaNode.Boottrap
+namespace Tauron.Application.AkkaNode.Bootstrap
 {
     public sealed class ConsoleAppRoute : IAppRoute
     {

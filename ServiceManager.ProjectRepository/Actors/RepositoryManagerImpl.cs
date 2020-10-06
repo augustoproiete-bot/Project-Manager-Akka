@@ -6,8 +6,9 @@ using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using ServiceManager.ProjectRepository.Data;
 using Tauron.Akka;
+using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.FileTransfer;
-using Tauron.Application.Master.Commands.Repository;
+using Tauron.Application.Master.Commands.Deployment.Repository;
 
 namespace ServiceManager.ProjectRepository.Actors
 {
@@ -49,25 +50,6 @@ namespace ServiceManager.ProjectRepository.Actors
                     _log.Error(e, "Error on Building Repository index");
                 }
             });
-
-            Receive<InitCleanUp>(_ =>
-            {
-                var data = cleanUp.AsQueryable().FirstOrDefault();
-                if (data == null)
-                {
-                    data = new CleanUpTime
-                           {
-                               Interval = TimeSpan.FromDays(7),
-                               Last = DateTime.Now
-                           };
-
-                    cleanUp.InsertOne(data);
-                }
-
-                Timers.StartPeriodicTimer(data, new StartCleanUp(), TimeSpan.FromHours(1));
-            });
-
-            Receive<StartCleanUp>(r => Context.ActorOf(Props.Create(() => new OperatorActor(repositoryData, gridFsBucket, trashBin, cleanUp, dataTransfer))).Forward(r));
         }
 
         private bool IsDefined<TSource>(IAsyncCursor<TSource> cursor, Func<TSource, bool> predicate)
@@ -86,18 +68,17 @@ namespace ServiceManager.ProjectRepository.Actors
         {
             base.PreStart();
             Self.Tell(new IndexRequest());
-            Self.Tell(new InitCleanUp());
         }
+
+
+        protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(e => Directive.Stop);
 
         private sealed class IndexRequest
         {
 
         }
 
-        private sealed class InitCleanUp
-        {
 
-        }
 
         public ITimerScheduler Timers { get; set; } = null!;
     }

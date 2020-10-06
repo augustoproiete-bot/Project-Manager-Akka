@@ -3,18 +3,19 @@ using Akka.Cluster;
 using Master.Seed.Node.Commands;
 using Petabridge.Cmd.Cluster;
 using Petabridge.Cmd.Host;
-using Tauron.Application.AkkaNode.Boottrap;
+using Tauron.Application.AkkaNode.Bootstrap;
 using Tauron.Application.Master.Commands;
 
 namespace Master.Seed.Node
 {
     class Program
     {
+
         static async Task Main(string[] args)
         {
             //Beacon? beacon = null;
 
-            await Boottrap.StartNode(args, KillRecpientType.Seed)
+            await Bootstrap.StartNode(args, KillRecpientType.Seed)
                 .ConfigurateAkkaSystem((context, system) =>
                 {
                     var cluster = Cluster.Get(system);

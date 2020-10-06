@@ -12,12 +12,12 @@ namespace Tauron.Application.Localizer.UIModels.Services
 
         OperationController? Find(string id);
 
-        CommandQuery ShouldClear(CommandQueryBuilder builder, out IDisposable subscription);
+        CommandQuery ShouldClear(CommandQueryBuilder builder, Action<IDisposable> subscription);
 
         void Clear();
 
 
-        CommandQuery ShouldCompledClear(CommandQueryBuilder builder, out IDisposable subscription);
+        CommandQuery ShouldCompledClear(CommandQueryBuilder builder, Action<IDisposable> subscription);
 
         void CompledClear();
     }

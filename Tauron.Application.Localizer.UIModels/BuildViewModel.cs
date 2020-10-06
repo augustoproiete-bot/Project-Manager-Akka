@@ -12,6 +12,7 @@ using Tauron.Application.Localizer.UIModels.Core;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Services;
 using Tauron.Application.Workshop;
+using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Commands;
 using Tauron.Application.Wpf.Model;
@@ -101,6 +102,8 @@ namespace Tauron.Application.Localizer.UIModels
         public BuildViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, ProjectFileWorkspace workspace, LocLocalizer localizer, IDialogFactory dialogFactory, IOperationManager manager) 
             : base(lifetimeScope, dispatcher)
         {
+            Receive<IncommingEvent>(e => e.Action());
+
             #region Import Integration
 
             Importintegration = RegisterProperty<bool>(nameof(Importintegration))
@@ -179,16 +182,13 @@ namespace Tauron.Application.Localizer.UIModels
             this.RespondOnEventSource(workspace.Source.SaveRequest, _ => InvokeCommand("StartBuild"));
 
             NewCommad
-                .WithCanExecute(b => new []
-                {
-                    b.FromProperty(canBuild),
-                    b.FromEventSource(workspace.Source.ProjectReset, _ => !workspace.ProjectFile.IsEmpty && !string.IsNullOrWhiteSpace(workspace.ProjectFile.Source))
-                })
-               .WithExecute(ClearTerminal).WithExecute(() =>
-                                                       {
-                                                           canBuild += false;
-                                                           CommandChanged();
-                                                       })
+               .WithCanExecute(b => new[]
+                                    {
+                                        b.FromProperty(canBuild),
+                                        b.FromEventSource(workspace.Source.ProjectReset, _ => !workspace.ProjectFile.IsEmpty && !string.IsNullOrWhiteSpace(workspace.ProjectFile.Source))
+                                    })
+               .WithExecute(ClearTerminal)
+               .WithExecute(() => canBuild.Value = false)
                .ThenFlow(() => new BuildRequest(manager.StartOperation(localizer.MainWindowodelBuildProjectOperation).Id, workspace.ProjectFile))
                .From.External<BuildCompled>(() => workspace.ProjectFile.Operator)
                .Then.Action(BuildCompled)
@@ -205,7 +205,6 @@ namespace Tauron.Application.Localizer.UIModels
                     op.Compled();
 
                 canBuild!.Value = true;
-                CommandChanged();
             }
 
             #endregion

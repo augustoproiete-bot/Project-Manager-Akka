@@ -1,4 +1,4 @@
-﻿namespace Tauron.Application.AkkaNode.Boottrap
+﻿namespace Tauron.Application.AkkaNode.Bootstrap
 {
     public interface IStartUpAction
     {

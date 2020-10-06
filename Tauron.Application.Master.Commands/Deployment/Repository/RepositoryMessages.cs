@@ -1,4 +1,4 @@
-﻿namespace Tauron.Application.Master.Commands.Repository
+﻿namespace Tauron.Application.Master.Commands.Deployment.Repository
 {
     public static class RepositoryMessages
     {

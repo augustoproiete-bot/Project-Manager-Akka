@@ -4,7 +4,7 @@ using Akka.Util;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Tauron.Application.AkkaNode.Boottrap
+namespace Tauron.Application.AkkaNode.Bootstrap
 {
     [DebuggerStepThrough]
     public sealed class EventTypeEnricher : ILogEventEnricher

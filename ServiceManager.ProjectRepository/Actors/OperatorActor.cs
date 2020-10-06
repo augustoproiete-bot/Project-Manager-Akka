@@ -13,9 +13,10 @@ using ServiceManager.ProjectRepository.Core;
 using ServiceManager.ProjectRepository.Data;
 using Tauron;
 using Tauron.Application.AkkNode.Services;
+using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
-using Tauron.Application.Master.Commands.Repository;
+using Tauron.Application.Master.Commands.Deployment.Repository;
 
 namespace ServiceManager.ProjectRepository.Actors
 {

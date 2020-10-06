@@ -47,10 +47,11 @@ namespace Tauron.Application.Localizer.UIModels.Services
             });
         }
 
-        public CommandQuery ShouldClear(CommandQueryBuilder builder, out IDisposable subscription)
+        public CommandQuery ShouldClear(CommandQueryBuilder builder, Action<IDisposable> subscription)
         {
             var query = builder.FromTrigger(ShouldClear, out var trigger);
-            
+            subscription(new ObservableSubscription(trigger, _operations));
+            return query;
         }
 
         private bool ShouldClear()
@@ -67,9 +68,11 @@ namespace Tauron.Application.Localizer.UIModels.Services
             });
         }
 
-        public CommandQuery ShouldCompledClear(CommandQueryBuilder builder, out IDisposable subscription)
+        public CommandQuery ShouldCompledClear(CommandQueryBuilder builder, Action<IDisposable> subscription)
         {
-            throw new NotImplementedException();
+            var query = builder.FromTrigger(ShouldCompledClear, out var trigger);
+            subscription(new ObservableSubscription(trigger, _operations));
+            return query;
         }
 
         public bool ShouldCompledClear()

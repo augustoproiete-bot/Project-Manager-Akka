@@ -12,11 +12,13 @@ namespace Tauron.Application.Workshop.Mutation
             if (where == null)
                 handler.Register(d => Send(transform(d)));
             else
+            {
                 handler.Register(d =>
                 {
                     if (@where(d))
                         Send(transform(d));
                 });
+            }
         }
     }
 }

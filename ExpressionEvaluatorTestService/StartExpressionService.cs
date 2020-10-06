@@ -1,7 +1,7 @@
 ﻿using Akka.Actor;
 using Akka.Cluster;
 using ExpressionEvaluatorTestService.Api;
-using Tauron.Application.AkkaNode.Boottrap;
+using Tauron.Application.AkkaNode.Bootstrap;
 
 namespace ExpressionEvaluatorTestService
 {

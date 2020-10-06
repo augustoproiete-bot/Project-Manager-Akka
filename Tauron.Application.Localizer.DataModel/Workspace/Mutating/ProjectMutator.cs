@@ -26,7 +26,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
             NewImport = engine.EventSource(mc => mc.GetChange<AddImportChange>().ToEventData(), context => context.Change is AddImportChange);
             RemoveImport = engine.EventSource(mc => mc.GetChange<RemoveImportChange>().ToData(), context => context.Change is RemoveImportChange);
 
-            NewLanguage.RespondOn(newLang =>
+            NewLanguage.RespondOn(null, newLang =>
             {
                 if (workspace.ProjectFile.GlobalLanguages.Contains(newLang.ActiveLanguage)) return;
 

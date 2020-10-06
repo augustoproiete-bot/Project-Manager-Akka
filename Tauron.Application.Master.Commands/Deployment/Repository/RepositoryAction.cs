@@ -3,7 +3,7 @@ using Akka.Actor;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Repository
+namespace Tauron.Application.Master.Commands.Deployment.Repository
 {
     public abstract class RepositoryAction : InternalSerializableBase, IReporterMessage
     {

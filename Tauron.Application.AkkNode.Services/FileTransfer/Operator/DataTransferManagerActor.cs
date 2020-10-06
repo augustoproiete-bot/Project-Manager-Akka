@@ -60,5 +60,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
 
             subscribe.MakeReceive();
         }
+
+        protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(e => Directive.Stop);
     }
 }

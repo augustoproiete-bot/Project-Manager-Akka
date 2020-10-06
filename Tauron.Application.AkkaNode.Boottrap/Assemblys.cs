@@ -1,11 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
-using System.Runtime.Loader;
-using JetBrains.Annotations;
-
-namespace Tauron.Application.AkkaNode.Boottrap
+﻿namespace Tauron.Application.AkkaNode.Bootstrap
 {
     //[PublicAPI]
     //public static class Assemblys

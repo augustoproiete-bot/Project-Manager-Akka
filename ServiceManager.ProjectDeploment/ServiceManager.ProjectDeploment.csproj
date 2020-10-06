@@ -2,17 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka.Persistence.Query" Version="1.4.10" />
     <PackageReference Include="MongoDB.Driver" Version="2.11.2" />
     <PackageReference Include="MongoDB.Driver.GridFS" Version="2.11.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
+    <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
   </ItemGroup>
 
 </Project>

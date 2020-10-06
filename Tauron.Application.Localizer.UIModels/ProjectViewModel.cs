@@ -13,6 +13,7 @@ using Tauron.Application.Localizer.UIModels.Core;
 using Tauron.Application.Localizer.UIModels.lang;
 using Tauron.Application.Localizer.UIModels.Views;
 using Tauron.Application.Workshop;
+using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Dialogs;
 using Tauron.Application.Wpf.Model;
@@ -28,6 +29,10 @@ namespace Tauron.Application.Localizer.UIModels
             : base(lifetimeScope, dispatcher)
         {
             #region Init
+
+            var loadTrigger = new CommandTrigger();
+
+            Receive<IncommingEvent>(e => e.Action());
 
             IsEnabled = RegisterProperty<bool>(nameof(IsEnabled)).WithDefaultValue(!workspace.ProjectFile.IsEmpty);
 
@@ -64,6 +69,7 @@ namespace Tauron.Application.Localizer.UIModels
                     ProjectEntrys.Add(new ProjectEntryModel(obj.Project, projectEntry, TryUpdateEntry, TryRemoveEntry));
 
                 ImportetProjects!.AddRange(obj.Project.Imports);
+                loadTrigger.Trigger();
             }
 
             Receive<InitProjectViewModel>(InitProjectViewModel);
@@ -156,11 +162,15 @@ namespace Tauron.Application.Localizer.UIModels
             ImportSelectIndex = RegisterProperty<int>(nameof(ImportSelectIndex)).WithDefaultValue(-1);
             ImportetProjects = this.RegisterUiCollection<string>(nameof(ImportetProjects)).AndAsync();
 
-            NewCommad.WithCanExecute(b => b.FromEventSource(workspace.Entrys.EntryUpdate, _ => GetImportableProjects().Any(), null!))
-                .ThenFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, IEnumerable<string>>(GetImportableProjects))
-                .From.Mutate(workspace.Projects).With(pm => pm.NewImport, pm => r => pm.AddImport(_project, r!.Project)).ToSelf()
-                .Then.Action(AddImport)
-                .AndReturn().ThenRegister("AddImport");
+            NewCommad.WithCanExecute(b => new[]
+                                          {
+                                              b.FromEventSource(workspace.Projects.NewImport, _ => GetImportableProjects().Any(), null!),
+                                              b.FromTrigger(() => GetImportableProjects().Any(), loadTrigger)
+                                          })
+               .ThenFlow(this.ShowDialog<IImportProjectDialog, ImportProjectDialogResult?, IEnumerable<string>>(GetImportableProjects))
+               .From.Mutate(workspace.Projects).With(pm => pm.NewImport, pm => r => pm.AddImport(_project, r!.Project)).ToSelf()
+               .Then.Action(AddImport)
+               .AndReturn().ThenRegister("AddImport");
 
             void RemoveImport(RemoveImport import)
             {

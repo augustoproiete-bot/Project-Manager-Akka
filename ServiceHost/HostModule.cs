@@ -4,7 +4,7 @@ using ServiceHost.AutoUpdate;
 using ServiceHost.Installer;
 using ServiceHost.Services;
 using ServiceHost.SharedApi;
-using Tauron.Application.AkkaNode.Boottrap;
+using Tauron.Application.AkkaNode.Bootstrap;
 
 namespace ServiceHost
 {

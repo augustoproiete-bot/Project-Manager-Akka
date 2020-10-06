@@ -14,6 +14,15 @@ namespace Tauron.Application.Wpf.Model
         public abstract bool Run();
     }
 
+    public sealed class CommandTrigger
+    {
+        private Action? _watcher;
+
+        internal void Register(Action watcher) => _watcher = _watcher.Combine(watcher);
+
+        public void Trigger() => _watcher?.Invoke();
+    }
+
     [PublicAPI]
     public sealed class CommandQueryBuilder
     {
@@ -45,6 +54,13 @@ namespace Tauron.Application.Wpf.Model
         {
             var trig = new TriggerCommandQuery(check);
             trigger = trig.Trigger;
+            return trig;
+        }
+
+        public CommandQuery FromTrigger(Func<bool> check, CommandTrigger trigger)
+        {
+            var trig = new TriggerCommandQuery(check);
+            trigger.Register(trig.Trigger);
             return trig;
         }
 

@@ -158,10 +158,8 @@ namespace Tauron.Application.Wpf.Model
                     _commandRegistrations.Add(key, new CommandRegistration(command, canExecute));
                 }, this);
 
-        public void CommandChanged()
-        {
-            Dispatcher.BeginInvoke(new Action(CommandManager.InvalidateRequerySuggested), DispatcherPriority.ApplicationIdle);
-        }
+        public void InvalidateRequerySuggested() 
+            => Dispatcher.BeginInvoke(new Action(CommandManager.InvalidateRequerySuggested), DispatcherPriority.ApplicationIdle);
 
         #endregion
 
@@ -306,8 +304,6 @@ namespace Tauron.Application.Wpf.Model
                 actorRef.Tell(new ValidatingEvent(propertyData.Error, propertyData.PropertyBase.Name));
 
             propertyData.PropertyBase.IsValid = string.IsNullOrWhiteSpace(propertyData.Error);
-
-            CommandChanged();
         }
 
         private void TrackProperty(TrackPropertyEvent obj, IActorRef sender)

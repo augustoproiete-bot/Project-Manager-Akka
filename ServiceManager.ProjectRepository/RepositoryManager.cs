@@ -3,7 +3,8 @@ using Akka.Cluster.Tools.Singleton;
 using JetBrains.Annotations;
 using MongoDB.Driver;
 using ServiceManager.ProjectRepository.Actors;
-using Tauron.Application.Master.Commands.Repository;
+using Tauron.Application.AkkNode.Services.CleanUp;
+using Tauron.Application.Master.Commands.Deployment.Repository;
 
 namespace ServiceManager.ProjectRepository
 {

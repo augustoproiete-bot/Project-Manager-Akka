@@ -2,7 +2,7 @@
 using Akka.Actor;
 using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Repository
+namespace Tauron.Application.Master.Commands.Deployment.Repository
 {
     public sealed class TransferRepository : RepositoryAction
     {

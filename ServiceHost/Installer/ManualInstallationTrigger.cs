@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Akka.Actor;
 using Microsoft.Extensions.Configuration;
-using Tauron.Application.AkkaNode.Boottrap;
+using Tauron.Application.AkkaNode.Bootstrap;
 using Tauron.Application.Master.Commands.Host;
 
 namespace ServiceHost.Installer
