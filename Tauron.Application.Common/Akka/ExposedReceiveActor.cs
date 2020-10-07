@@ -11,7 +11,6 @@ namespace Tauron.Akka
     public interface IExposedReceiveActor
     {
         IActorDsl Exposed { get; }
-        IUntypedActorContext ExposedContext { get; }
     }
 
     [PublicAPI]
@@ -26,7 +25,7 @@ namespace Tauron.Akka
 
         public IActorDsl Exposed => this;
 
-        public IUntypedActorContext ExposedContext => Context;
+        public static IUntypedActorContext ExposedContext => Context;
 
         public void AddResource(IDisposable res)
             => _resources.Add(res);

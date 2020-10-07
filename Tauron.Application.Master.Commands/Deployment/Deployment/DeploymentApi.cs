@@ -20,7 +20,7 @@ namespace Tauron.Application.Master.Commands.Deployment.Deployment
         }
 
 
-        public void SendAction(DeplaymentAction action)
+        internal void SendAction(DeplaymentAction action)
             => _repository.Tell(action);
     }
 }

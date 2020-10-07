@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Tauron.Application.Master.Commands.Host
+namespace Tauron.Application.Master.Commands.Administration.Host
 {
     public sealed class QueryHostApps : InternalHostMessages.CommandBase
     {

@@ -11,7 +11,7 @@ namespace Tauron.Application.Workshop
     {
         public static void RespondOnEventSource<TData>(this IExposedReceiveActor actor, IEventSource<TData> eventSource, Action<TData> action)
         {
-            eventSource.RespondOn(actor.ExposedContext.Self);
+            eventSource.RespondOn(ExposedReceiveActor.ExposedContext.Self);
             actor.Exposed.Receive<TData>((data, context) => action(data));
         }
 
@@ -35,7 +35,7 @@ namespace Tauron.Application.Workshop
             {
                 flow.Register(e =>
                 {
-                    eventSource.RespondOn(target(Flow.Actor.ExposedContext));
+                    eventSource.RespondOn(target(ExposedReceiveActor.ExposedContext));
                     e.Receive<TRecieve>(new RecieveHelper(runner).Run);
                 });
             }
@@ -105,7 +105,7 @@ namespace Tauron.Application.Workshop
             public EventSourceReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target, IEventSource<TEvent> evt)
                 : base(flow)
             {
-                flow.Register(e => evt.RespondOn(target(flow.Actor.ExposedContext)));
+                flow.Register(e => evt.RespondOn(target(ExposedReceiveActor.ExposedContext)));
             }
         }
 

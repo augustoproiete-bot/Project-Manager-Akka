@@ -1,5 +1,5 @@
 ﻿using ServiceHost.ApplicationRegistry;
-using Tauron.Application.Master.Commands.Host;
+using Tauron.Application.Master.Commands.Administration.Host;
 
 namespace ServiceHost.Services
 {

@@ -435,7 +435,7 @@ namespace Tauron
 
         public override ActorFlowBuilder<TStart, TParent> ToRef(Func<IActorContext, IActorRef> actorRef)
         {
-            _sendTo(ShouldForward, actorRef(Flow.Actor.ExposedContext));
+            _sendTo(ShouldForward, actorRef(ExposedReceiveActor.ExposedContext));
             return _flow;
         }
     }
@@ -487,7 +487,7 @@ namespace Tauron
             //BuildReceive();
             EnterFlow<TStart>? func = null;
             if (_recieves > 0)
-                func = new EntryPoint(Actor.ExposedContext.Self).Tell;
+                func = new EntryPoint(ExposedReceiveActor.ExposedContext.Self).Tell;
 
             return _delgators.Aggregate(func, (current, delgator) => current.Combine(delgator())) ?? (s => { });
         }

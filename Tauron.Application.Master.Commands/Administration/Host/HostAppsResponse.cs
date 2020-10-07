@@ -2,7 +2,7 @@
 using System.IO;
 using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Host
+namespace Tauron.Application.Master.Commands.Administration.Host
 {
     public sealed class HostAppsResponse : InternalSerializableBase
     {

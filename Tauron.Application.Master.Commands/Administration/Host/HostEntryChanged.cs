@@ -1,6 +1,6 @@
 ﻿using Akka.Actor;
 
-namespace Tauron.Application.Master.Commands.Host
+namespace Tauron.Application.Master.Commands.Administration.Host
 {
     public sealed class HostEntryChanged
     {

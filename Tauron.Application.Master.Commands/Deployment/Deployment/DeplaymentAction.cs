@@ -9,7 +9,7 @@ namespace Tauron.Application.Master.Commands.Deployment.Deployment
     {
         public string AppName { get; private set; } = string.Empty;
 
-        public IActorRef Listner { get; private set; } = ActorRefs.Nobody;
+        public IActorRef Listner { get; protected set; } = ActorRefs.Nobody;
 
         string IReporterMessage.Info => AppName;
 

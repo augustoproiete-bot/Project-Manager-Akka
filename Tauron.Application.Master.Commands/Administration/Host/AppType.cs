@@ -1,4 +1,4 @@
-﻿namespace Tauron.Application.Master.Commands.Host
+﻿namespace Tauron.Application.Master.Commands.Administration.Host
 {
     public enum AppType
     {

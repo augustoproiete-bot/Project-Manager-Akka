@@ -4,10 +4,10 @@ using Akka.Actor;
 using Akka.Cluster.Utility;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services.Core;
-using static Tauron.Application.Master.Commands.Host.InternalHostMessages;
+using static Tauron.Application.Master.Commands.Administration.Host.InternalHostMessages;
 using static Akka.Cluster.Utility.ClusterActorDiscoveryMessage;
 
-namespace Tauron.Application.Master.Commands.Host
+namespace Tauron.Application.Master.Commands.Administration.Host
 {
     public sealed class HostApiManagerActor : ExposedReceiveActor//, IWithTimers
     {

@@ -8,8 +8,8 @@ using ServiceHost.Installer;
 using ServiceHost.Services;
 using Tauron;
 using Tauron.Akka;
-using Tauron.Application.Master.Commands.Host;
-using static Tauron.Application.Master.Commands.Host.InternalHostMessages;
+using Tauron.Application.Master.Commands.Administration.Host;
+using static Tauron.Application.Master.Commands.Administration.Host.InternalHostMessages;
 
 namespace ServiceHost.SharedApi
 {

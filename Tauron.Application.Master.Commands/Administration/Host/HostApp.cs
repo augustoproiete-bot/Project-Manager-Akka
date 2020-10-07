@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Host
+namespace Tauron.Application.Master.Commands.Administration.Host
 {
     [PublicAPI]
     public sealed class HostApp : InternalSerializableBase

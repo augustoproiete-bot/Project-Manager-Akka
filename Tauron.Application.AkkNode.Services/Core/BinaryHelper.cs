@@ -73,6 +73,14 @@ namespace Tauron.Application.AkkNode.Services.Core
                 writer.Write(writeable);
         }
 
+        public static void WriteBuffer(byte[] buffer, BinaryWriter writer)
+        {
+            writer.Write(buffer.Length);
+            writer.Write(buffer);
+        }
+
+        public static byte[] Readbuffer(BinaryReader reader) 
+            => reader.ReadBytes(reader.ReadInt32());
 
         public static void WriteNull<TValue>([AllowNull] TValue value, BinaryWriter writer, Action<TValue> action)
         {

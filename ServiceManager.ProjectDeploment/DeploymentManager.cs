@@ -12,15 +12,15 @@ namespace ServiceManager.ProjectDeployment
     {
         public static readonly DeploymentManager Empty = new DeploymentManager(ActorRefs.Nobody); 
 
-        public static DeploymentManager CreateInstance(IActorRefFactory factory, string connectionString)
-            => new DeploymentManager(factory.ActorOf(Props.Create(() => new DeploymentServerImpl(new MongoClient(connectionString)))));
+        public static DeploymentManager CreateInstance(IActorRefFactory factory, string connectionString, IActorRef manager)
+            => new DeploymentManager(factory.ActorOf(Props.Create(() => new DeploymentServerImpl(new MongoClient(connectionString), manager))));
 
-        public static DeploymentManager InitDeploymentManager(ActorSystem actorSystem, string connectionString) 
-            => InitDeploymentManager(actorSystem, new MongoClient(connectionString));
+        public static DeploymentManager InitDeploymentManager(ActorSystem actorSystem, string connectionString, IActorRef manager) 
+            => InitDeploymentManager(actorSystem, new MongoClient(connectionString), manager);
 
-        public static DeploymentManager InitDeploymentManager(ActorSystem actorSystem, IMongoClient client)
+        public static DeploymentManager InitDeploymentManager(ActorSystem actorSystem, IMongoClient client, IActorRef manager)
         {
-            var repo = ClusterSingletonManager.Props(Props.Create(() => new DeploymentServerImpl(client)),
+            var repo = ClusterSingletonManager.Props(Props.Create(() => new DeploymentServerImpl(client, manager)),
                 ClusterSingletonManagerSettings.Create(actorSystem).WithRole("UpdateSystem"));
             return new DeploymentManager(actorSystem.ActorOf(repo, DeploymentApi.RepositoryPath));
         }

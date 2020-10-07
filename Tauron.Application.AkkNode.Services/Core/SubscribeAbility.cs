@@ -23,7 +23,7 @@ namespace Tauron.Application.AkkNode.Services.Core
 
         private readonly ExposedReceiveActor _actor;
 
-        private IUntypedActorContext ActorContext => _actor.ExposedContext;
+        private IUntypedActorContext ActorContext => ExposedReceiveActor.ExposedContext;
 
         public event Action<Terminated>? Terminated;
 
@@ -45,7 +45,7 @@ namespace Tauron.Application.AkkNode.Services.Core
             _actor.Flow<EventSubscribe>()
                 .From.Action(s =>
                 {
-                    _actor.ExposedContext
+                    ExposedReceiveActor.ExposedContext
                         .Sender.When(ar => !ar.Equals(ActorRefs.Nobody),
                             sender =>
                             {
@@ -59,7 +59,7 @@ namespace Tauron.Application.AkkNode.Services.Core
             _actor.Flow<EventUnSubscribe>()
                 .From.Action(s =>
                 {
-                    _actor.ExposedContext
+                    ExposedReceiveActor.ExposedContext
                         .Sender.When(ar => !ar.Equals(ActorRefs.Nobody),
                             sender =>
                             {

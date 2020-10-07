@@ -10,7 +10,7 @@ using ServiceHost.Services;
 using Tauron;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services.Core;
-using Tauron.Application.Master.Commands.Host;
+using Tauron.Application.Master.Commands.Administration.Host;
 
 namespace ServiceHost.ApplicationRegistry
 {

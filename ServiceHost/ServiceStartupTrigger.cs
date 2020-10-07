@@ -4,7 +4,7 @@ using ServiceHost.Installer;
 using ServiceHost.Services;
 using Tauron.Akka;
 using Tauron.Application.AkkaNode.Bootstrap;
-using Tauron.Application.Master.Commands.Host;
+using Tauron.Application.Master.Commands.Administration.Host;
 
 namespace ServiceHost
 {

@@ -1,0 +1,49 @@
+﻿using System;
+using System.IO;
+using JetBrains.Annotations;
+using Tauron.Application.AkkNode.Services.Core;
+
+namespace Tauron.Application.Master.Commands.Deployment.Deployment.Data
+{
+    [PublicAPI]
+    public sealed class AppInfo : InternalSerializableBase
+    {
+        public string Name { get; private set; }
+
+        public int LastVersion { get; private set; }
+
+        public DateTime UpdateDate { get; private set; }
+
+        public DateTime CreationTime { get; private set; }
+
+        public AppInfo(string name, int lastVersion, DateTime updateDate, DateTime creationTime)
+        {
+            Name = name;
+            LastVersion = lastVersion;
+            UpdateDate = updateDate;
+            CreationTime = creationTime;
+        }
+
+        public AppInfo(BinaryReader reader)
+            : base(reader)
+        { }
+
+        protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
+        {
+            Name = reader.ReadString();
+            LastVersion = reader.ReadInt32();
+            UpdateDate = new DateTime(reader.ReadInt64());
+            CreationTime = new DateTime(reader.ReadInt64());
+            base.ReadInternal(reader, manifest);
+        }
+
+        protected override void WriteInternal(ActorBinaryWriter writer)
+        {
+            writer.Write(Name);
+            writer.Write(LastVersion);
+            writer.Write(UpdateDate.Ticks);
+            writer.Write(CreationTime.Ticks);
+            base.WriteInternal(writer);
+        }
+    }
+}

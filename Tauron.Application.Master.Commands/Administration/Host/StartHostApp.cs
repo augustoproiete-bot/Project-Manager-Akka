@@ -2,20 +2,20 @@
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Host
+namespace Tauron.Application.Master.Commands.Administration.Host
 {
-    public sealed class StopHostApp : InternalHostMessages.CommandBase
+    public sealed class StartHostApp : InternalHostMessages.CommandBase
     {
         public string AppName { get; private set; } = string.Empty;
 
 
-        public StopHostApp(string target, string appName) : base(target, InternalHostMessages.CommandType.AppManager)
+        public StartHostApp(string target, string appName) : base(target, InternalHostMessages.CommandType.AppManager)
         {
             AppName = appName;
         }
 
         [UsedImplicitly]
-        public StopHostApp(BinaryReader reader) 
+        public StartHostApp(BinaryReader reader)
             : base(reader)
         {
         }

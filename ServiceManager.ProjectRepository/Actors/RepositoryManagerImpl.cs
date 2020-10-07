@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using ServiceManager.ProjectRepository.Data;
 using Tauron.Akka;
+using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 
@@ -14,27 +15,32 @@ namespace ServiceManager.ProjectRepository.Actors
     internal sealed class RepositoryManagerImpl : ExposedReceiveActor, IWithTimers
     {
         private readonly ILoggingAdapter _log = Context.GetLogger();
+        private readonly IMongoDatabase _database;
+        private readonly IMongoCollection<ToDeleteRevision> _trashBin;
+        private readonly GridFSBucket _gridFsBucket;
+
+        private IActorRef _cleaner;
 
         public RepositoryManagerImpl(IMongoClient client, IActorRef dataTransfer)
         {
-            var database = client.GetDatabase("Repository");
+            _database = client.GetDatabase("Repository");
 
-            var repositoryData = database.GetCollection<RepositoryEntry>("Repositorys");
-            var trashBin = database.GetCollection<ToDeleteRevision>("TrashBin");
+            var repositoryData = _database.GetCollection<RepositoryEntry>("Repositorys");
+            _trashBin = _database.GetCollection<ToDeleteRevision>("TrashBin");
 
-            var gridFsBucket = new GridFSBucket(database, new GridFSBucketOptions
+            _gridFsBucket = new GridFSBucket(_database, new GridFSBucketOptions
                                                           {
                                                               BucketName = "RepositoryData",
                                                               ChunkSizeBytes = 1048576
                                                           });
 
-            Receive<RepositoryAction>(r => Context.ActorOf(Props.Create(() => new OperatorActor(repositoryData, gridFsBucket, trashBin, dataTransfer))).Forward(r));
+            Receive<RepositoryAction>(r => Context.ActorOf(Props.Create(() => new OperatorActor(repositoryData, _gridFsBucket, _trashBin, dataTransfer))).Forward(r));
             Receive<IndexRequest>(_ =>
             {
                 try
                 {
                     // ReSharper disable once VariableHidesOuterVariable
-                    if (!IsDefined(repositoryData.Indexes.List(), _ => true))
+                    if (repositoryData.Indexes.List().Contains(_ => true))
                         repositoryData.Indexes.CreateOne(new CreateIndexModel<RepositoryEntry>(Builders<RepositoryEntry>.IndexKeys.Ascending(r => r.RepoName)));
                 }
                 catch (Exception e)
@@ -43,23 +49,26 @@ namespace ServiceManager.ProjectRepository.Actors
                 }
             });
 
-            var cleanUp = Context.ActorOf(Props.Create(() => new CleanUpManager(database, "CleanUp", trashBin, gridFsBucket)), "CleanUp-Manager");
+            _cleaner = CreateCleanUp();
+
+            Receive<Terminated>(t =>
+            {
+                if (t.ActorRef.Equals(_cleaner))
+                    _cleaner = CreateCleanUp();
+            });
+
+            Context.Watch(_cleaner);
+
+            Receive<StartCleanUp>(c => _cleaner.Forward(c));
+        }
+
+        private IActorRef CreateCleanUp()
+        {
+            var cleanUp = Context.ActorOf(Props.Create(() => new CleanUpManager(_database, "CleanUp", _trashBin, _gridFsBucket)), "CleanUp-Manager");
             cleanUp.Tell(CleanUpManager.Initialization);
 
-            Receive<StartCleanUp>(c => cleanUp.Forward(c));
+            return cleanUp;
         }
-
-        private bool IsDefined<TSource>(IAsyncCursor<TSource> cursor, Func<TSource, bool> predicate)
-        {
-            while (cursor.MoveNext())
-            {
-                if (cursor.Current.Any(predicate))
-                    return true;
-            }
-
-            return false;
-        }
-
 
         protected override void PreStart()
         {
@@ -68,7 +77,7 @@ namespace ServiceManager.ProjectRepository.Actors
         }
 
 
-        protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(e => Directive.Stop);
+        protected override SupervisorStrategy SupervisorStrategy() => Akka.Actor.SupervisorStrategy.StoppingStrategy;
 
         private sealed class IndexRequest
         {

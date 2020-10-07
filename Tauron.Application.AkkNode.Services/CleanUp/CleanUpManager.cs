@@ -15,22 +15,13 @@ namespace Tauron.Application.AkkNode.Services.CleanUp
 
         public CleanUpManager(IMongoDatabase database, string cleanUpCollection, IMongoCollection<ToDeleteRevision> revisions, GridFSBucket bucked)
         {
-            bool IsDefined<TSource>(IAsyncCursor<TSource> cursor, Func<TSource, bool> predicate)
-            {
-                while (cursor.MoveNext())
-                {
-                    if (cursor.Current.Any(predicate))
-                        return true;
-                }
 
-                return false;
-            }
 
             void Initializing()
             {
                 Receive<InitCleanUp>(_ =>
                 {
-                    if (!IsDefined(database.ListCollectionNames(), s => s == cleanUpCollection))
+                    if (!database.ListCollectionNames().Contains(s => s == cleanUpCollection))
                         database.CreateCollection("CleanUp", new CreateCollectionOptions {Capped = true, MaxDocuments = 1, MaxSize = 1024});
 
                     var cleanUp = database.GetCollection<CleanUpTime>(cleanUpCollection);

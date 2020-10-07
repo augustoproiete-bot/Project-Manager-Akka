@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Akka.Actor;
+using Akka.Util;
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 
@@ -13,23 +14,42 @@ namespace Tauron.Application.AkkNode.Services
     {
         public const string TimeoutError = nameof(TimeoutError);
 
-        public static Reporter CreateReporter(IActorRefFactory factory, string name = "Reporter") => new Reporter(factory.ActorOf(Props.Create(() => new ReporterActor()), name));
+        public static Reporter CreateReporter(IActorRefFactory factory, string name = "Reporter") 
+            => new Reporter(factory.ActorOf(Props.Create(() => new ReporterActor()).WithSupervisorStrategy(SupervisorStrategy.StoppingStrategy), name));
 
         public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, Action<OperationResult> onCompled, TimeSpan timeout,  string name = "LogListner") 
-            => factory.ActorOf(Props.Create(() => new Listner(listner, onCompled, timeout)), name);
+            => factory.ActorOf(Props.Create(() => new Listner(listner, onCompled, timeout)).WithSupervisorStrategy(SupervisorStrategy.StoppingStrategy), name);
 
         public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, Action<OperationResult> onCompled, string name = "LogListner")
-            => factory.ActorOf(Props.Create(() => new Listner(listner, onCompled, Timeout.InfiniteTimeSpan)), name);
+            => factory.ActorOf(Props.Create(() => new Listner(listner, onCompled, Timeout.InfiniteTimeSpan)).WithSupervisorStrategy(SupervisorStrategy.StoppingStrategy), name);
 
         private readonly IActorRef _reporter;
+        private AtomicBoolean _compledCalled = new AtomicBoolean();
+
+        public bool IsCompled => _compledCalled.Value;
 
         public Reporter(IActorRef reporter) => _reporter = reporter;
 
-        public void Listen(IActorRef actor) => _reporter.Tell(new ListeningActor(actor));
+        public void Listen(IActorRef actor)
+        {
+            if(_compledCalled.Value)
+                throw new InvalidOperationException("Reporter is Compled");
+            _reporter.Tell(new ListeningActor(actor));
+        }
 
-        public void Send(string message) => _reporter.Tell(new TransferedMessage(message));
+        public void Send(string message)
+        {
+            if (_compledCalled.Value)
+                throw new InvalidOperationException("Reporter is Compled");
+            _reporter.Tell(new TransferedMessage(message));
+        }
 
-        public void Compled(OperationResult result) => _reporter.Tell(result);
+        public void Compled(OperationResult result)
+        {
+            if (_compledCalled.GetAndSet(true))
+                throw new InvalidOperationException("Reporter is Compled");
+            _reporter.Tell(result);
+        }
 
         private sealed class Listner : ReceiveActor, IWithTimers
         {
@@ -65,6 +85,7 @@ namespace Tauron.Application.AkkNode.Services
                 Receive<OperationResult>(msg =>
                 {
                     foreach (var actorRef in _listner) actorRef.Forward(msg);
+                    Context.Stop(Self);
                 });
 
                 Receive<ListeningActor>(a =>

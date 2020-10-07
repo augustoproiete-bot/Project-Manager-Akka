@@ -139,7 +139,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                         default:
                             return null;
                     }
-                }, TimeSpan.FromSeconds(10));
+                }, TimeSpan.FromMinutes(5));
 
             When(OperatorState.InitReciving,
                 state =>
@@ -166,7 +166,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                         default:
                             return null;
                     }
-                }, TimeSpan.FromSeconds(10));
+                }, TimeSpan.FromMinutes(2));
 
             When(OperatorState.Sending,
                 state =>
