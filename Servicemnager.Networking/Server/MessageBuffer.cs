@@ -6,7 +6,7 @@ namespace Servicemnager.Networking.Server
 {
     public sealed class MessageBuffer
     {
-        private List<byte[]> _incomming = new List<byte[]>();
+        private readonly List<byte[]> _incomming = new List<byte[]>();
         private byte[] _merge = new byte[short.MaxValue * 2];
 
         public NetworkMessage? AddBuffer(byte[] buffer)
