@@ -13,15 +13,15 @@ namespace ServiceManager.ProjectRepository
     {
         public static readonly RepositoryManager Empty = new RepositoryManager(ActorRefs.Nobody); 
 
-        public static RepositoryManager CreateInstance(IActorRefFactory factory, string connectionString)
-            => new RepositoryManager(factory.ActorOf(Props.Create(() => new RepositoryManagerImpl(new MongoClient(connectionString)))));
+        public static RepositoryManager CreateInstance(IActorRefFactory factory, string connectionString, IActorRef tranferManager)
+            => new RepositoryManager(factory.ActorOf(Props.Create(() => new RepositoryManagerImpl(new MongoClient(connectionString), tranferManager))));
 
-        public static RepositoryManager InitRepositoryManager(ActorSystem actorSystem, string connectionString) 
-            => InitRepositoryManager(actorSystem, new MongoClient(connectionString));
+        public static RepositoryManager InitRepositoryManager(ActorSystem actorSystem, string connectionString, IActorRef tranferManager) 
+            => InitRepositoryManager(actorSystem, new MongoClient(connectionString), tranferManager);
 
-        public static RepositoryManager InitRepositoryManager(ActorSystem actorSystem, IMongoClient client)
+        public static RepositoryManager InitRepositoryManager(ActorSystem actorSystem, IMongoClient client, IActorRef tranferManager)
         {
-            var repo = ClusterSingletonManager.Props(Props.Create(() => new RepositoryManagerImpl(client)),
+            var repo = ClusterSingletonManager.Props(Props.Create(() => new RepositoryManagerImpl(client, tranferManager)),
                 ClusterSingletonManagerSettings.Create(actorSystem).WithRole("UpdateSystem"));
             return new RepositoryManager(actorSystem.ActorOf(repo, RepositoryApi.RepositoryPath));
         }

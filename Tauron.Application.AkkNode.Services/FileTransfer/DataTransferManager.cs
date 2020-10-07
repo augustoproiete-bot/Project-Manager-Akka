@@ -7,7 +7,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
     [PublicAPI]
     public static class DataTransferManager
     {
-        public static IActorRef New(IActorRefFactory factory)
-            => factory.ActorOf(Props.Create<DataTransferManagerActor>());
+        public static IActorRef New(IActorRefFactory factory, string? name = null)
+            => factory.ActorOf(Props.Create<DataTransferManagerActor>(), name);
     }
 }

@@ -13,7 +13,7 @@ namespace Tauron.Application.AkkNode.Services.CleanUp
 
         public ITimerScheduler Timers { get; set; } = null!;
 
-        public CleanUpManager(IMongoDatabase database,  string clenUpCollection, IMongoCollection<ToDeleteRevision> revisions, GridFSBucket bucked)
+        public CleanUpManager(IMongoDatabase database, string cleanUpCollection, IMongoCollection<ToDeleteRevision> revisions, GridFSBucket bucked)
         {
             bool IsDefined<TSource>(IAsyncCursor<TSource> cursor, Func<TSource, bool> predicate)
             {
@@ -26,27 +26,39 @@ namespace Tauron.Application.AkkNode.Services.CleanUp
                 return false;
             }
 
-            Receive<InitCleanUp>(_ =>
+            void Initializing()
             {
-                if (!IsDefined(database.ListCollectionNames(), s => s == "CleanUp"))
-                    database.CreateCollection("CleanUp", new CreateCollectionOptions { Capped = true, MaxDocuments = 1, MaxSize = 1024 });
-
-                var data = database.AsQueryable().FirstOrDefault();
-                if (data == null)
+                Receive<InitCleanUp>(_ =>
                 {
-                    data = new CleanUpTime
-                           {
-                               Interval = TimeSpan.FromDays(7),
-                               Last = DateTime.Now
-                           };
+                    if (!IsDefined(database.ListCollectionNames(), s => s == cleanUpCollection))
+                        database.CreateCollection("CleanUp", new CreateCollectionOptions {Capped = true, MaxDocuments = 1, MaxSize = 1024});
 
-                    database.InsertOne(data);
-                }
+                    var cleanUp = database.GetCollection<CleanUpTime>(cleanUpCollection);
 
-                Timers.StartPeriodicTimer(data, new StartCleanUp(), TimeSpan.FromHours(1));
-            });
+                    var data = cleanUp.AsQueryable().FirstOrDefault();
+                    if (data == null)
+                    {
+                        data = new CleanUpTime
+                               {
+                                   Interval = TimeSpan.FromDays(7),
+                                   Last = DateTime.Now
+                               };
 
-            Receive<StartCleanUp>(r => Context.ActorOf(Props.Create(() => new CleanUpOperator(database, revisions, bucked))).Forward(r));
+                        cleanUp.InsertOne(data);
+                    }
+
+                    Timers.StartPeriodicTimer(data, new StartCleanUp(), TimeSpan.FromHours(1));
+
+                    Become(Running);
+                });
+            }
+
+            void Running()
+            {
+                Receive<StartCleanUp>(r => Context.ActorOf(Props.Create(() => new CleanUpOperator(database.GetCollection<CleanUpTime>(cleanUpCollection, null), revisions, bucked))).Forward(r));
+            }
+
+            Become(Initializing);
         }
 
 

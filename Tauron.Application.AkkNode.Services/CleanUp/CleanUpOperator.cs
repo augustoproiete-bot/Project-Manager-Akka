@@ -28,9 +28,14 @@ namespace Tauron.Application.AkkNode.Services.CleanUp
                         }
 
                         if (deleted.Count != 0)
-                            revisions.DeleteMany(Builders<ToDeleteRevision>.Filter.Or(deleted));
-                        cleanUp.UpdateOne(Builders<CleanUpTime>.Filter.Empty, Builders<CleanUpTime>.Update.Set(c => c.Last, DateTime.Now));
-                    
+                        {
+                            if (!revisions.DeleteMany(Builders<ToDeleteRevision>.Filter.And(deleted)).IsAcknowledged) 
+                                Log.Warning("Delete Revisions not Deleted");
+                        }
+
+                        if (!cleanUp.UpdateOne(Builders<CleanUpTime>.Filter.Empty, Builders<CleanUpTime>.Update.Set(c => c.Last, DateTime.Now)).IsAcknowledged) 
+                            Log.Warning("Cleanup Interval not updated");
+
                 }
                 catch (Exception e)
                 {

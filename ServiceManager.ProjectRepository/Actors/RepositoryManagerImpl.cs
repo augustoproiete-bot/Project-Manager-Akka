@@ -7,7 +7,6 @@ using MongoDB.Driver.GridFS;
 using ServiceManager.ProjectRepository.Data;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services.CleanUp;
-using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 
 namespace ServiceManager.ProjectRepository.Actors
@@ -16,16 +15,12 @@ namespace ServiceManager.ProjectRepository.Actors
     {
         private readonly ILoggingAdapter _log = Context.GetLogger();
 
-        public RepositoryManagerImpl(IMongoClient client)
+        public RepositoryManagerImpl(IMongoClient client, IActorRef dataTransfer)
         {
-            var dataTransfer = DataTransferManager.New(Context);
-
             var database = client.GetDatabase("Repository");
 
             var repositoryData = database.GetCollection<RepositoryEntry>("Repositorys");
             var trashBin = database.GetCollection<ToDeleteRevision>("TrashBin");
-
-            var cleanUp = database.GetCollection<CleanUpTime>("CleanUp");
 
             var gridFsBucket = new GridFSBucket(database, new GridFSBucketOptions
                                                           {
@@ -47,6 +42,11 @@ namespace ServiceManager.ProjectRepository.Actors
                     _log.Error(e, "Error on Building Repository index");
                 }
             });
+
+            var cleanUp = Context.ActorOf(Props.Create(() => new CleanUpManager(database, "CleanUp", trashBin, gridFsBucket)), "CleanUp-Manager");
+            cleanUp.Tell(CleanUpManager.Initialization);
+
+            Receive<StartCleanUp>(c => cleanUp.Forward(c));
         }
 
         private bool IsDefined<TSource>(IAsyncCursor<TSource> cursor, Func<TSource, bool> predicate)

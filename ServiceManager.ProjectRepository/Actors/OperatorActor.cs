@@ -33,8 +33,7 @@ namespace ServiceManager.ProjectRepository.Actors
         private Reporter? _reporter;
         private string _dataOperation = string.Empty;
 
-        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions,
-                IActorRef dataTransfer)
+        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions, IActorRef dataTransfer)
         {
             _repos = repos;
             _bucket = bucket;

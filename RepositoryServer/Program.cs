@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Akka.Cluster;
 using ServiceManager.ProjectRepository;
 using Tauron.Application.AkkaNode.Bootstrap;
+using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands;
 
 namespace RepositoryServer
@@ -13,7 +13,10 @@ namespace RepositoryServer
             await Bootstrap.StartNode(args, KillRecpientType.Service)
                .ConfigurateAkkaSystem((context, system) =>
                     {
-                        RepositoryManager.InitRepositoryManager(system, system.Settings.Config.GetString("akka.persistence.journal.mongodb.connection-string"));
+                        RepositoryManager.InitRepositoryManager(
+                            system, 
+                            system.Settings.Config.GetString("akka.persistence.journal.mongodb.connection-string"),
+                            DataTransferManager.New(system, "Data-Tranfer-Manager"));
                     })
                .Build().Run();
         }
