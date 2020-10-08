@@ -14,5 +14,7 @@ namespace ServiceManager.ProjectDeployment.Data
         public DateTime CreationTime { get; set; }
 
         public DateTime LastUpdate { get; set; }
+
+        public string Repository { get; set; }
     }
 }

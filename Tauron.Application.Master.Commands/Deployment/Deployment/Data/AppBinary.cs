@@ -14,11 +14,19 @@ namespace Tauron.Application.Master.Commands.Deployment.Deployment.Data
 
         public DateTime CreationTime { get; private set; }
 
-        public AppBinary(int fileVersion, string appName, DateTime creationTime)
+        public bool Deleted { get; set; }
+
+        public string Commit { get; set; } = string.Empty;
+
+        public string Repository { get; set; } = string.Empty;
+
+        public AppBinary(int fileVersion, DateTime creationTime, bool deleted, string commit, string repository)
         {
             FileVersion = fileVersion;
-            AppName = appName;
             CreationTime = creationTime;
+            Deleted = deleted;
+            Commit = commit;
+            Repository = repository;
         }
 
         public AppBinary(BinaryReader reader)
@@ -32,6 +40,9 @@ namespace Tauron.Application.Master.Commands.Deployment.Deployment.Data
             FileVersion = reader.ReadInt32();
             AppName = reader.ReadString();
             CreationTime = new DateTime(reader.ReadInt64());
+            Deleted = reader.ReadBoolean();
+            Commit = reader.ReadString();
+            Repository = reader.ReadString();
             base.ReadInternal(reader, manifest);
         }
 
@@ -40,6 +51,9 @@ namespace Tauron.Application.Master.Commands.Deployment.Deployment.Data
             writer.Write(FileVersion);
             writer.Write(AppName);
             writer.Write(CreationTime.Ticks);
+            writer.Write(Deleted);
+            writer.Write(Commit);
+            writer.Write(Repository);
             base.WriteInternal(writer);
         }
     }

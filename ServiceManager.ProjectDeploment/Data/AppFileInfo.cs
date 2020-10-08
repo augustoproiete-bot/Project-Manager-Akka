@@ -10,5 +10,9 @@ namespace ServiceManager.ProjectDeployment.Data
         public AppVersion Version { get; set; } = new AppVersion { Version = -1 };
 
         public DateTime CreationTime { get; set; }
+
+        public bool Deleted { get; set; }
+
+        public string Commit { get; set; }
     }
 }

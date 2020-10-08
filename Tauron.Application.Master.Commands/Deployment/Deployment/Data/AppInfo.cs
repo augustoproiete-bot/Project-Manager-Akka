@@ -16,12 +16,15 @@ namespace Tauron.Application.Master.Commands.Deployment.Deployment.Data
 
         public DateTime CreationTime { get; private set; }
 
-        public AppInfo(string name, int lastVersion, DateTime updateDate, DateTime creationTime)
+        public string Repository { get; private set; }
+
+        public AppInfo(string name, int lastVersion, DateTime updateDate, DateTime creationTime, string repository)
         {
             Name = name;
             LastVersion = lastVersion;
             UpdateDate = updateDate;
             CreationTime = creationTime;
+            Repository = repository;
         }
 
         public AppInfo(BinaryReader reader)
@@ -34,6 +37,7 @@ namespace Tauron.Application.Master.Commands.Deployment.Deployment.Data
             LastVersion = reader.ReadInt32();
             UpdateDate = new DateTime(reader.ReadInt64());
             CreationTime = new DateTime(reader.ReadInt64());
+            Repository = reader.ReadString();
             base.ReadInternal(reader, manifest);
         }
 
@@ -43,6 +47,7 @@ namespace Tauron.Application.Master.Commands.Deployment.Deployment.Data
             writer.Write(LastVersion);
             writer.Write(UpdateDate.Ticks);
             writer.Write(CreationTime.Ticks);
+            writer.Write(Repository);
             base.WriteInternal(writer);
         }
     }

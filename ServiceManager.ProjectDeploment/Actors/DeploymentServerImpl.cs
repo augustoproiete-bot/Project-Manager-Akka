@@ -37,7 +37,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                 .WithRouter(router);
             var processor = Context.ActorOf(processorProps, "ProcessorRouter");
 
-            Receive<DeplaymentAction>(a => processor.Forward(a));
+            Receive<IDeploymentCommand>(a => processor.Forward(a));
         }
     }
 }

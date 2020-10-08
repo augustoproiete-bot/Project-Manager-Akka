@@ -9,14 +9,14 @@ using Tauron.Application.AkkNode.Services;
 namespace Tauron.Application.Master.Commands.Deployment.Deployment
 {
     [PublicAPI]
-    public abstract class DeploymentQueryBase<TResult> : DeplaymentAction, IDeploymentQuery
+    public abstract class DeploymentCommandBase<TResult> : DeplaymentAction, IDeploymentCommand
     {
-        protected DeploymentQueryBase(string appName) 
+        protected DeploymentCommandBase([NotNull] string appName) 
             : base(appName, ActorRefs.Nobody)
         {
         }
 
-        protected DeploymentQueryBase(BinaryReader reader, ExtendedActorSystem system) : base(reader, system)
+        protected DeploymentCommandBase([NotNull] BinaryReader reader, [NotNull] ExtendedActorSystem system) : base(reader, system)
         {
         }
 

@@ -20,13 +20,13 @@ namespace ServiceManager.ProjectDeployment.Actors
         public AppQueryHandler(IMongoCollection<AppData> apps, GridFSBucket files, IActorRef dataTransfer)
         {
             MakeQueryCall<QueryApps, AppList>((query, _) 
-                    => new AppList(apps.AsQueryable().Select(ad => new AppInfo(ad.Name, ad.Last.Version, ad.LastUpdate, ad.CreationTime))));
+                    => new AppList(apps.AsQueryable().Select(ad => new AppInfo(ad.Name, ad.Last.Version, ad.LastUpdate, ad.CreationTime, ad.Repository))));
 
             MakeQueryCall<QueryApp, AppInfo>((query, reporter) =>
             {
                 var data = apps.AsQueryable().FirstOrDefault(e => e.Name == query.AppName);
 
-                if (data != null) return new AppInfo(data.Name, data.Last.Version, data.LastUpdate, data.CreationTime);
+                if (data != null) return new AppInfo(data.Name, data.Last.Version, data.LastUpdate, data.CreationTime, data.Repository);
                 
                 reporter.Compled(OperationResult.Failure(ErrorCodes.QueryAppNotFound));
                 return null;
@@ -55,6 +55,16 @@ namespace ServiceManager.ProjectDeployment.Actors
                 dataTransfer.Tell(request);
 
                 return new FileTransactionId(request.OperationId);
+            });
+
+            MakeQueryCall<QueryBinaryInfo, BinaryList>((binarys, reporter) =>
+            {
+                var data = apps.AsQueryable().FirstOrDefault(ad => ad.Name == binarys.AppName);
+                if (data != null) return new BinaryList(data.Versions.Select(i => new AppBinary(i.Version.Version, i.CreationTime, i.Deleted, i.Commit, data.Repository)));
+                
+                reporter.Compled(OperationResult.Failure(ErrorCodes.QueryAppNotFound));
+                return null;
+
             });
         }
 
