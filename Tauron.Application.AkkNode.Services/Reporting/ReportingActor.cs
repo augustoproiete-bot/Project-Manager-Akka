@@ -5,9 +5,21 @@ namespace Tauron.Application.AkkNode.Services
 {
     public abstract class ReportingActor : ExposedReceiveActor
     {
+        protected void Receive<TMessage>(string name, Action<TMessage, Reporter> process) 
+            where TMessage : IReporterMessage
+        {
+            Receive<TMessage>(m => TryExecute(m, name, process));
+        }
+        protected void ReceiveContinue<TMessage>(string name, Action<TMessage, Reporter> process)
+            where TMessage : IDelegatingMessage
+        {
+            Receive<TMessage>(m => TryContinue(m, name, process));
+        }
+
         protected virtual void TryExecute<TMessage>(TMessage msg, string name, Action<TMessage, Reporter> process)
             where TMessage : IReporterMessage
         {
+            Log.Info("Enter Process {Name}", name);
             var reporter = Reporter.CreateReporter(Context);
             reporter.Listen(msg.Listner);
 
@@ -25,6 +37,7 @@ namespace Tauron.Application.AkkNode.Services
         protected virtual void TryContinue<TMessage>(TMessage msg, string name, Action<TMessage, Reporter> process)
             where TMessage : IDelegatingMessage
         {
+            Log.Info("Enter Process {Name}", name);
             try
             {
                 process(msg, msg.Reporter);

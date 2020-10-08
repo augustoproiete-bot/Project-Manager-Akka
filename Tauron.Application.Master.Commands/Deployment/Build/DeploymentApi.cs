@@ -2,7 +2,7 @@
 using Akka.Cluster.Tools.Singleton;
 using JetBrains.Annotations;
 
-namespace Tauron.Application.Master.Commands.Deployment.Deployment
+namespace Tauron.Application.Master.Commands.Deployment.Build
 {
     [PublicAPI]
     public sealed class DeploymentApi

@@ -71,6 +71,11 @@ namespace ServiceManager.ProjectRepository.Actors
                 if (data != null)
                 {
                     Log.Info("Repository {Name} is Registrated", repository.RepoName);
+                    if (repository.IgnoreDuplicate)
+                    {
+                        reporter.Compled(OperationResult.Success());
+                        return;
+                    }
                     reporter.Compled(OperationResult.Failure(ErrorCodes.DuplicateRepository));
                     return;
                 }

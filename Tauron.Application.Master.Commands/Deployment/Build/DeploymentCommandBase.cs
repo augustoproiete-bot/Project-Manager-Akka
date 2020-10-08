@@ -5,19 +5,25 @@ using Akka.Actor;
 using JetBrains.Annotations;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services;
+using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Deployment.Deployment
+namespace Tauron.Application.Master.Commands.Deployment.Build
 {
     [PublicAPI]
-    public abstract class DeploymentQueryBase<TResult> : DeplaymentAction, IDeploymentQuery
+    public abstract class DeploymentCommandBase<TResult> : DeplaymentAction, IDeploymentCommand
     {
-        protected DeploymentQueryBase(string appName) 
+        protected DeploymentCommandBase([NotNull] string appName) 
             : base(appName, ActorRefs.Nobody)
         {
         }
 
-        protected DeploymentQueryBase(BinaryReader reader, ExtendedActorSystem system) : base(reader, system)
+        protected DeploymentCommandBase([NotNull] BinaryReader reader, [NotNull] ExtendedActorSystem system) : base(reader, system)
         {
+        }
+
+        protected sealed override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
+        {
+            base.ReadInternal(reader, manifest);
         }
 
         public Task<TResult> Send(DeploymentApi api, Action<string> messages, TimeSpan timeout)

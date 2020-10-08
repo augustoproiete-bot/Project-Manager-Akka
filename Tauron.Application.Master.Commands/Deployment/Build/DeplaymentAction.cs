@@ -3,7 +3,7 @@ using Akka.Actor;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Deployment.Deployment
+namespace Tauron.Application.Master.Commands.Deployment.Build
 {
     public abstract class DeplaymentAction : InternalSerializableBase, IReporterMessage
     {

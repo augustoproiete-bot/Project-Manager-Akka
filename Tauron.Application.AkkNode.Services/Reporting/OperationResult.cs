@@ -13,6 +13,8 @@ namespace Tauron.Application.AkkNode.Services
 
         public static OperationResult Failure(string error) => new OperationResult(false, error, null);
 
+        public static OperationResult Failure(Exception error) => new OperationResult(false, error.Unwrap().Message, null);
+
         public bool Ok { get; private set; }
 
         public string? Error { get; private set; }

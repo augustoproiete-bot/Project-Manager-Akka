@@ -1,8 +1,8 @@
 ﻿using System.IO;
 using Akka.Actor;
-using Tauron.Application.Master.Commands.Deployment.Deployment.Data;
+using Tauron.Application.Master.Commands.Deployment.Build.Data;
 
-namespace Tauron.Application.Master.Commands.Deployment.Deployment.Querys
+namespace Tauron.Application.Master.Commands.Deployment.Build.Querys
 {
     public sealed class QueryApp : DeploymentQueryBase<AppInfo>
     {

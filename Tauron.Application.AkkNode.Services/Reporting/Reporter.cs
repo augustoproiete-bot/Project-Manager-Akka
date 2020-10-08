@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Util;
 using JetBrains.Annotations;
@@ -14,14 +15,49 @@ namespace Tauron.Application.AkkNode.Services
     {
         public const string TimeoutError = nameof(TimeoutError);
 
-        public static Reporter CreateReporter(IActorRefFactory factory, string name = "Reporter") 
+        public static Reporter CreateReporter(IActorRefFactory factory, string? name = "Reporter") 
             => new Reporter(factory.ActorOf(Props.Create(() => new ReporterActor()).WithSupervisorStrategy(SupervisorStrategy.StoppingStrategy), name));
 
-        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, Action<OperationResult> onCompled, TimeSpan timeout,  string name = "LogListner") 
+        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, Action<OperationResult> onCompled, TimeSpan timeout,  string? name = "LogListner")
             => factory.ActorOf(Props.Create(() => new Listner(listner, onCompled, timeout)).WithSupervisorStrategy(SupervisorStrategy.StoppingStrategy), name);
 
-        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, Action<OperationResult> onCompled, string name = "LogListner")
-            => factory.ActorOf(Props.Create(() => new Listner(listner, onCompled, Timeout.InfiniteTimeSpan)).WithSupervisorStrategy(SupervisorStrategy.StoppingStrategy), name);
+        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, Action<OperationResult> onCompled, string? name = "LogListner")
+            => CreateListner(factory, listner, onCompled, Timeout.InfiniteTimeSpan, name);
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Reporter reporter, Action<OperationResult> onCompled, TimeSpan timeout, string? name = "LogListner")
+            => CreateListner(factory, reporter.Send, onCompled, timeout, name);
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, TaskCompletionSource<OperationResult> onCompled, TimeSpan timeout, string? name = "LogListner")
+            => CreateListner(factory, listner, onCompled.SetResult, timeout, name);
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, TaskCompletionSource<OperationResult> onCompled, string? name = "LogListner")
+            => CreateListner(factory, listner, onCompled, Timeout.InfiniteTimeSpan, name);
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Reporter reporter, TaskCompletionSource<OperationResult> onCompled, TimeSpan timeout, string? name = "LogListner")
+            => CreateListner(factory, reporter.Send, onCompled, timeout, name);
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, TimeSpan timeout, string? name, Action<Task<OperationResult>> onCompled)
+        {
+            var source = new TaskCompletionSource<OperationResult>();
+            var actor =  CreateListner(factory, listner, source, timeout, null);
+            onCompled(source.Task);
+            return actor;
+        }
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, string name, Action<Task<OperationResult>> onCompled)
+            => CreateListner(factory, listner, Timeout.InfiniteTimeSpan, name, onCompled);
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Reporter reporter, TimeSpan timeout, string? name, Action<Task<OperationResult>> onCompled)
+            => CreateListner(factory, reporter.Send, timeout, name, onCompled);
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, TimeSpan timeout, Action<Task<OperationResult>> onCompled)
+            => CreateListner(factory, listner, timeout, null, onCompled);
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Action<string> listner, Action<Task<OperationResult>> onCompled)
+            => CreateListner(factory, listner, Timeout.InfiniteTimeSpan, null, onCompled);
+
+        public static IActorRef CreateListner(IActorRefFactory factory, Reporter reporter, TimeSpan timeout, Action<Task<OperationResult>> onCompled)
+            => CreateListner(factory, reporter.Send, timeout, null, onCompled);
 
         private readonly IActorRef _reporter;
         private AtomicBoolean _compledCalled = new AtomicBoolean();

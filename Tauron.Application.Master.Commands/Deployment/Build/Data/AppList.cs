@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Deployment.Deployment.Data
+namespace Tauron.Application.Master.Commands.Deployment.Build.Data
 {
     public sealed class AppList : InternalSerializableBase, IReadOnlyCollection<AppInfo>
     {

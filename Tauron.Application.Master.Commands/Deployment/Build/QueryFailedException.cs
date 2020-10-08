@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Tauron.Application.Master.Commands.Deployment.Deployment
+namespace Tauron.Application.Master.Commands.Deployment.Build
 {
     public sealed class QueryFailedException : Exception
     {

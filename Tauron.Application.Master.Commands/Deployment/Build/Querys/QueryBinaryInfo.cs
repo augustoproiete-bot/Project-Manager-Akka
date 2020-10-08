@@ -1,9 +1,9 @@
 ﻿using System.IO;
 using Akka.Actor;
 using JetBrains.Annotations;
-using Tauron.Application.Master.Commands.Deployment.Deployment.Data;
+using Tauron.Application.Master.Commands.Deployment.Build.Data;
 
-namespace Tauron.Application.Master.Commands.Deployment.Deployment.Querys
+namespace Tauron.Application.Master.Commands.Deployment.Build.Querys
 {
     [PublicAPI]
     public sealed class QueryBinaryInfo : DeploymentQueryBase<BinaryList>

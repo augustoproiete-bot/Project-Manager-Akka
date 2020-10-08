@@ -3,7 +3,7 @@ using System.IO;
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Deployment.Deployment.Data
+namespace Tauron.Application.Master.Commands.Deployment.Build.Data
 {
     [PublicAPI]
     public sealed class AppInfo : InternalSerializableBase

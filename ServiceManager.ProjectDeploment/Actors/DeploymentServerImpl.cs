@@ -6,7 +6,8 @@ using MongoDB.Driver.GridFS;
 using ServiceManager.ProjectDeployment.Data;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services.CleanUp;
-using Tauron.Application.Master.Commands.Deployment.Deployment;
+using Tauron.Application.Master.Commands.Deployment.Build;
+using Tauron.Application.Master.Commands.Deployment.Repository;
 
 namespace ServiceManager.ProjectDeployment.Actors
 {
@@ -14,7 +15,7 @@ namespace ServiceManager.ProjectDeployment.Actors
     {
         public const string AppsCollectionName = "Apps";
 
-        public DeploymentServerImpl(IMongoClient client, IActorRef dataTransfer)
+        public DeploymentServerImpl(IMongoClient client, IActorRef dataTransfer, RepositoryApi repositoryProxy)
         {
             var database = client.GetDatabase("Deployment");
             var trashBin = database.GetCollection<ToDeleteRevision>("TrashBin");
@@ -33,7 +34,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             Receive<IDeploymentQuery>(q => query.Forward(q));
 
-            var processorProps = Props.Create(() => new AppCommandProcessor(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer))
+            var processorProps = Props.Create(() => new AppCommandProcessor(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer, repositoryProxy))
                 .WithRouter(router);
             var processor = Context.ActorOf(processorProps, "ProcessorRouter");
 
