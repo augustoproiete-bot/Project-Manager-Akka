@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -16,6 +15,7 @@ using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
+using Tauron.Application.Master.Commands.Deployment;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 
 namespace ServiceManager.ProjectRepository.Actors
@@ -30,8 +30,8 @@ namespace ServiceManager.ProjectRepository.Actors
         private readonly IActorRef _dataTransfer;
         private readonly GitHubClient _gitHubClient;
         
-        private Reporter? _reporter;
-        private string _dataOperation = string.Empty;
+        //private Reporter? _reporter;
+        //private string _dataOperation = string.Empty;
 
         public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions, IActorRef dataTransfer)
         {
@@ -48,14 +48,14 @@ namespace ServiceManager.ProjectRepository.Actors
             });
             Receive<TransferRepository>(r => TryExecute(r, "RequestRepository", RequestRepository));
 
-            Receive<TransferMessages.TransferCompled>(r =>
-            {
-                if(r.OperationId != _dataOperation) return;
+            //Receive<TransferMessages.TransferCompled>(r =>
+            //{
+            //    if(r.OperationId != _dataOperation) return;
 
-                Log.Info("Transfer Compled for Repository {Name} with Result {Type}", r.Data, r.GetType().Name);
-                _reporter?.Compled(r is TransferCompled ? OperationResult.Success() : OperationResult.Failure(((TransferFailed)r).Reason.ToString()));
-                Context.Stop(Self);
-            });
+            //    Log.Info("Transfer Compled for Repository {Name} with Result {Type}", r.Data, r.GetType().Name);
+            //    _reporter?.Compled(r is TransferCompled ? OperationResult.Success() : OperationResult.Failure(((TransferFailed)r).Reason.ToString()));
+            //    Context.Stop(Self);
+            //});
         }
 
         private void RegisterRepository(RegisterRepository repository, Reporter reporter)
@@ -150,14 +150,14 @@ namespace ServiceManager.ProjectRepository.Actors
                     _bucket.DownloadToStream(ObjectId.Parse(data.FileName), repozip);
                 }
 
-                _reporter = reporter;
+                //_reporter = reporter;
 
-                repozip.Seek(0, SeekOrigin.Begin);
-                Timers.StartSingleTimer(_reporter, new TransferFailed(string.Empty, FailReason.Timeout, data.RepoName), TimeSpan.FromMinutes(10));
-                var request = DataTransferRequest.FromStream(repozip, repository.FileTarget, repository.RepoName);
-                _dataOperation = request.OperationId;
-
+                //repozip.Seek(0, SeekOrigin.Begin);
+                //Timers.StartSingleTimer(_reporter, new TransferFailed(string.Empty, FailReason.Timeout, data.RepoName), TimeSpan.FromMinutes(10));
+                var request = DataTransferRequest.FromStream(repository.OperationId, repozip, repository.FileTarget, repository.RepoName);
                 _dataTransfer.Tell(request);
+
+                reporter.Compled(OperationResult.Success(new Tranferdata(new FileTransactionId(request.OperationId), commitInfo)));
             }
             finally
             {

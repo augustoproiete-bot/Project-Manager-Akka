@@ -31,6 +31,15 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
         public static DataTransferRequest FromStream(Func<Stream> stream, IActorRef target, string? data = null)
             => new StreamTransferRequest(Guid.NewGuid().ToString(), stream, target, data);
 
+        public static DataTransferRequest FromFile(string opsId, string file, IActorRef target, string? data = null)
+            => new DataStreamTranferRequest(opsId, file, target, data);
+
+        public static DataTransferRequest FromStream(string opsId, Stream stream, IActorRef target, string? data = null)
+            => new StreamTransferRequest(opsId, stream, target, data);
+
+        public static DataTransferRequest FromStream(string opsId, Func<Stream> stream, IActorRef target, string? data = null)
+            => new StreamTransferRequest(opsId, stream, target, data);
+
         public sealed class StreamTransferRequest : DataTransferRequest
         {
             public StreamTransferRequest(string operationId, Func<Stream> source, IActorRef target, string? data) 

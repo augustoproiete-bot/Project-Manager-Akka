@@ -13,6 +13,7 @@ namespace Tauron.Application.Master.Commands.Deployment.Repository
         private readonly IActorRef _repository;
 
         private RepositoryApi(IActorRef repository) => _repository = repository;
+        public static RepositoryApi Empty { get; } = new RepositoryApi(ActorRefs.Nobody);
 
         public static RepositoryApi CreateProxy(ActorSystem system, string name = "RepositoryProxy")
         {

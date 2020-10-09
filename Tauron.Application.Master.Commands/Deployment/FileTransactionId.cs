@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 
-namespace Tauron.Application.Master.Commands.Deployment.Build.Data
+namespace Tauron.Application.Master.Commands.Deployment
 {
     [PublicAPI]
     public sealed class FileTransactionId : InternalSerializableBase

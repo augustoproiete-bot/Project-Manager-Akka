@@ -24,9 +24,8 @@ namespace ServiceManager.ProjectDeployment.Actors
             var cleanUp = Context.ActorOf(() => new CleanUpManager(database, "CleanUp", trashBin, files), "CleanUp-Manager");
             cleanUp.Tell(CleanUpManager.Initialization);
 
-            var router = new SmallestMailboxPool(2)
-                .WithResizer(new DefaultResizer(1, Environment.ProcessorCount * 2))
-                .WithSupervisorStrategy(Akka.Actor.SupervisorStrategy.StoppingStrategy);
+            var router = new SmallestMailboxPool(Environment.ProcessorCount)
+                .WithSupervisorStrategy(Akka.Actor.SupervisorStrategy.DefaultStrategy);
 
             var queryProps = Props.Create(() => new AppQueryHandler(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer))
                 .WithRouter(router);
@@ -34,7 +33,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             Receive<IDeploymentQuery>(q => query.Forward(q));
 
-            var processorProps = Props.Create(() => new AppCommandProcessor(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer, repositoryProxy))
+            var processorProps = Props.Create(() => new AppCommandProcessor(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer, repositoryProxy, trashBin))
                 .WithRouter(router);
             var processor = Context.ActorOf(processorProps, "ProcessorRouter");
 

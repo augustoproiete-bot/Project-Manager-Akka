@@ -149,7 +149,7 @@ namespace Tauron
 
         public static void DeleteDirectory(this string path, bool recursive)
         {
-            if (Directory.Exists(path))
+            if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
                 Directory.Delete(path, recursive);
         }
 

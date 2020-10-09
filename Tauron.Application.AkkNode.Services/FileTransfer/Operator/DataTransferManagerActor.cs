@@ -34,6 +34,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                                 var op = Context.Child(r.OperationId);
                                 if (!op.Equals(ActorRefs.Nobody))
                                 {
+                                    r.Target.Tell(new TransferFailed(r.OperationId, FailReason.DuplicateOperationId, null));
                                     Self.Tell(new TransferFailed(r.OperationId, FailReason.DuplicateOperationId, null));
                                     return;
                                 }
