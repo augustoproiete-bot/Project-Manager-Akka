@@ -27,7 +27,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
                 if (data != null) return new AppInfo(data.Name, data.Last.Version, data.LastUpdate, data.CreationTime, data.Repository);
                 
-                reporter.Compled(OperationResult.Failure(ErrorCodes.QueryAppNotFound));
+                reporter.Compled(OperationResult.Failure(BuildErrorCodes.QueryAppNotFound));
                 return null;
             });
 
@@ -37,7 +37,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
                 if (data == null)
                 {
-                    reporter.Compled(OperationResult.Failure(ErrorCodes.QueryAppNotFound));
+                    reporter.Compled(OperationResult.Failure(BuildErrorCodes.QueryAppNotFound));
                     return null;
                 }
 
@@ -46,7 +46,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                 var file = data.Versions.FirstOrDefault(f => f.Version.Version == targetVersion);
                 if (file == null)
                 {
-                    reporter.Compled(OperationResult.Failure(ErrorCodes.QueryFileNotFound));
+                    reporter.Compled(OperationResult.Failure(BuildErrorCodes.QueryFileNotFound));
                     return null;
                 }
 
@@ -61,7 +61,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                 var data = apps.AsQueryable().FirstOrDefault(ad => ad.Name == binarys.AppName);
                 if (data != null) return new BinaryList(data.Versions.Select(i => new AppBinary(i.Version.Version, i.CreationTime, i.Deleted, i.Commit, data.Repository)));
                 
-                reporter.Compled(OperationResult.Failure(ErrorCodes.QueryAppNotFound));
+                reporter.Compled(OperationResult.Failure(BuildErrorCodes.QueryAppNotFound));
                 return null;
 
             });
@@ -74,7 +74,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             Receive<T>(name, (msg, reporter) =>
             {
                 var outcome = handler(msg, reporter);
-                reporter.Compled(outcome == default && !reporter.IsCompled ? OperationResult.Failure(ErrorCodes.GeneralQueryFailed) : OperationResult.Success(outcome));
+                reporter.Compled(outcome == default && !reporter.IsCompled ? OperationResult.Failure(BuildErrorCodes.GeneralQueryFailed) : OperationResult.Success(outcome));
             });
         }
     }

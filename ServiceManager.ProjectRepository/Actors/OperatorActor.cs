@@ -76,14 +76,14 @@ namespace ServiceManager.ProjectRepository.Actors
                         reporter.Compled(OperationResult.Success());
                         return;
                     }
-                    reporter.Compled(OperationResult.Failure(ErrorCodes.DuplicateRepository));
+                    reporter.Compled(OperationResult.Failure(RepoErrorCodes.DuplicateRepository));
                     return;
                 }
 
                 if (!repository.RepoName.Contains('/'))
                 {
                     Log.Info("Repository {Name} Name is Invalid", repository.RepoName);
-                    reporter.Compled(OperationResult.Failure(ErrorCodes.InvalidRepoName));
+                    reporter.Compled(OperationResult.Failure(RepoErrorCodes.InvalidRepoName));
                     return;
                 }
 
@@ -93,7 +93,7 @@ namespace ServiceManager.ProjectRepository.Actors
                 if (repoInfo == null)
                 {
                     Log.Info("Repository {Name} Name not found on Github", repository.RepoName);
-                    reporter.Compled(OperationResult.Failure(ErrorCodes.GithubNoRepoFound));
+                    reporter.Compled(OperationResult.Failure(RepoErrorCodes.GithubNoRepoFound));
                     return;
                 }
 
@@ -134,7 +134,7 @@ namespace ServiceManager.ProjectRepository.Actors
                 var data = _repos.AsQueryable().FirstOrDefault(r => r.RepoName == repository.RepoName);
                 if (data == null)
                 {
-                    reporter.Compled(OperationResult.Failure(ErrorCodes.DatabaseNoRepoFound));
+                    reporter.Compled(OperationResult.Failure(RepoErrorCodes.DatabaseNoRepoFound));
                     return;
                 }
 

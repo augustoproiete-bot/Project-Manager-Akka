@@ -16,4 +16,8 @@
     <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Build\" />
+  </ItemGroup>
+
 </Project>

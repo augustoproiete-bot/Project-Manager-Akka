@@ -1,6 +1,6 @@
 ﻿namespace Tauron.Application.Master.Commands.Deployment.Repository
 {
-    public sealed class ErrorCodes
+    public sealed class RepoErrorCodes
     {
         public const string DuplicateRepository = nameof(DuplicateRepository);
 

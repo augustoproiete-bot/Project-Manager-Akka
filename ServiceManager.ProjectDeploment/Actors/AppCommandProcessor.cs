@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Linq;
 using Akka.Actor;
+using Akka.Streams.Implementation.Fusing;
 using DotNetty.Common.Utilities;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using ServiceManager.ProjectDeployment.Data;
 using Tauron.Application.AkkNode.Services;
+using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 
@@ -28,25 +31,61 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             ReceiveContinue<ContinueCreateApp>("CreateApp2", (command, reporter) =>
             {
-                using var session = apps.Database.Client.StartSession();
+                if (!command.Result.Ok)
+                {
+                    reporter.Compled(OperationResult.Failure(command.Result.Error ?? BuildErrorCodes.CommandErrorRegisterRepository));
+                    return;
+                }
+
+                var data = apps.AsQueryable().FirstOrDefault(ad => ad.Name == command.Command.AppName);
+                if (data != null)
+                {
+                    reporter.Compled(OperationResult.Failure(BuildErrorCodes.CommandDuplicateApp));
+                    return;
+                }
+
 
             });
         }
 
-        private sealed class ContinueCreateApp : IDelegatingMessage
+        private void CommandPhase1<TCommand>(string name, RepositoryApi api, Func<IActorRef, RepositoryAction> executor, Func<OperationResult, object> result)
+            where TCommand : DeploymentCommandBase<TCommand>
+        {
+            Receive<TCommand>(name, (command, reporter) =>
+            {
+                var listner = Reporter.CreateListner(Context, reporter, TimeSpan.FromSeconds(20),
+                    task => task.PipeTo(Self,
+                        success: result,
+                        failure: e => result(OperationResult.Failure(e))));
+                
+                api.SendAction(executor(listner));
+            });
+        }
+
+        private abstract class ContinueCommand<TCommand> : IDelegatingMessage
+            where TCommand : IReporterMessage
         {
             public OperationResult Result { get; }
 
-            public CreateAppCommand Command { get; }
+            public TCommand Command { get; }
 
             public Reporter Reporter { get; }
-            public string Info => Command.AppName;
+            public string Info => Command.Info;
 
-            public ContinueCreateApp(OperationResult result, CreateAppCommand command, Reporter reporter)
+            protected ContinueCommand(OperationResult result, TCommand command, Reporter reporter)
             {
                 Result = result;
                 Command = command;
                 Reporter = reporter;
+            }
+        }
+
+        private sealed class ContinueCreateApp : ContinueCommand<CreateAppCommand>
+        {
+
+            public ContinueCreateApp(OperationResult result, CreateAppCommand command, Reporter reporter)
+                : base(result, command, reporter)
+            {
             }
         }
     }
