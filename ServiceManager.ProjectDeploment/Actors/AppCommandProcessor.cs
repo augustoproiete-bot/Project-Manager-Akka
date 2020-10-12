@@ -36,7 +36,11 @@ namespace ServiceManager.ProjectDeployment.Actors
 
 
             CommandPhase1<CreateAppCommand, AppInfo>("CreateApp", repository, 
-                (command, listner, _) => new RegisterRepository(command.TargetRepo, listner()) { IgnoreDuplicate = true}, 
+                (command, listner, reporter) =>
+                {
+                    reporter.Send(DeploymentMessages.RegisterRepository);
+                    return new RegisterRepository(command.TargetRepo, listner()) {IgnoreDuplicate = true};
+                }, 
                 (command, reporter, op) => new ContinueCreateApp(op, command, reporter));
 
             CommandPhase2<ContinueCreateApp, CreateAppCommand, AppInfo>("CreateApp2", (command, result, reporter, data) =>

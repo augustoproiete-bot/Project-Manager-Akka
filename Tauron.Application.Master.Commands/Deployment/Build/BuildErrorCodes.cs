@@ -17,5 +17,11 @@
         public const string CommandAppNotFound = nameof(CommandAppNotFound);
 
         public const string GernalBuildError = nameof(GernalBuildError);
+
+        public const string BuildDotnetNotFound = nameof(BuildDotnetNotFound);
+
+        public const string BuildDotNetFailed = nameof(BuildDotNetFailed);
+
+        public const string BuildProjectNotFound = nameof(BuildProjectNotFound);
     }
 }
