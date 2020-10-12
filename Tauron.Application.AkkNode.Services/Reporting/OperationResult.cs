@@ -9,11 +9,11 @@ namespace Tauron.Application.AkkNode.Services
     [PublicAPI]
     public sealed class OperationResult : InternalSerializableBase
     {
-        public static OperationResult Success(InternalSerializableBase? result = null) => new OperationResult(true, null, result);
+        public static OperationResult Success(object? result = null) => new OperationResult(true, null, result);
 
         public static OperationResult Failure(string error) => new OperationResult(false, error, null);
 
-        public static OperationResult Failure(Exception error) => new OperationResult(false, error.Unwrap().Message, null);
+        public static OperationResult Failure(Exception? error) => new OperationResult(false, error.Unwrap()?.Message ?? "Unkowen", null);
 
         public bool Ok { get; private set; }
 
@@ -25,7 +25,7 @@ namespace Tauron.Application.AkkNode.Services
             : base(reader)
         { }
 
-        public OperationResult(bool ok, string? error, InternalSerializableBase? outcome)
+        public OperationResult(bool ok, string? error, object? outcome)
         {
             Ok = ok;
             Error = error;

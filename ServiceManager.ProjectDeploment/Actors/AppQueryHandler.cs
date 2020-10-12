@@ -20,13 +20,13 @@ namespace ServiceManager.ProjectDeployment.Actors
         public AppQueryHandler(IMongoCollection<AppData> apps, GridFSBucket files, IActorRef dataTransfer)
         {
             MakeQueryCall<QueryApps, AppList>("QueryApps", (query, _) 
-                    => new AppList(apps.AsQueryable().Select(ad => new AppInfo(ad.Name, ad.Last.Version, ad.LastUpdate, ad.CreationTime, ad.Repository))));
+                    => new AppList(apps.AsQueryable().Select(ad => new AppInfo(ad.Name, ad.Last, ad.LastUpdate, ad.CreationTime, ad.Repository))));
 
             MakeQueryCall<QueryApp, AppInfo>("QueryApp", (query, reporter) =>
             {
                 var data = apps.AsQueryable().FirstOrDefault(e => e.Name == query.AppName);
 
-                if (data != null) return new AppInfo(data.Name, data.Last.Version, data.LastUpdate, data.CreationTime, data.Repository);
+                if (data != null) return new AppInfo(data.Name, data.Last, data.LastUpdate, data.CreationTime, data.Repository);
                 
                 reporter.Compled(OperationResult.Failure(BuildErrorCodes.QueryAppNotFound));
                 return null;
@@ -42,9 +42,9 @@ namespace ServiceManager.ProjectDeployment.Actors
                     return null;
                 }
 
-                var targetVersion = query.Version != -1 ? query.Version : data.Last.Version;
+                var targetVersion = query.AppVersion != -1 ? query.AppVersion : data.Last;
 
-                var file = data.Versions.FirstOrDefault(f => f.Version.Version == targetVersion);
+                var file = data.Versions.FirstOrDefault(f => f.Version == targetVersion);
                 if (file == null)
                 {
                     reporter.Compled(OperationResult.Failure(BuildErrorCodes.QueryFileNotFound));
@@ -60,7 +60,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             MakeQueryCall<QueryBinaryInfo, BinaryList>("QueryBinaryInfo", (binarys, reporter) =>
             {
                 var data = apps.AsQueryable().FirstOrDefault(ad => ad.Name == binarys.AppName);
-                if (data != null) return new BinaryList(data.Versions.Select(i => new AppBinary(i.Version.Version, i.CreationTime, i.Deleted, i.Commit, data.Repository)));
+                if (data != null) return new BinaryList(data.Versions.Select(i => new AppBinary(i.Version, i.CreationTime, i.Deleted, i.Commit, data.Repository)));
                 
                 reporter.Compled(OperationResult.Failure(BuildErrorCodes.QueryAppNotFound));
                 return null;
@@ -68,7 +68,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             });
         }
 
-        private void MakeQueryCall<T, TResult>(string name, Func<T, Reporter, TResult> handler)
+        private void MakeQueryCall<T, TResult>(string name, Func<T, Reporter, TResult?> handler)
             where T : DeploymentQueryBase<TResult>
             where TResult : InternalSerializableBase
         {

@@ -23,5 +23,7 @@
         public const string BuildDotNetFailed = nameof(BuildDotNetFailed);
 
         public const string BuildProjectNotFound = nameof(BuildProjectNotFound);
+
+        public const string DatabaseError = nameof(DatabaseError);
     }
 }

@@ -1,24 +1,43 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace ServiceManager.ProjectDeployment.Data
 {
     public sealed class AppData
     {
-        public List<AppFileInfo> Versions { get; set; } = new List<AppFileInfo>();
+        public static readonly AppData Empty = new AppData("", -1, DateTime.MinValue, DateTime.MinValue, "", "", ImmutableList<AppFileInfo>.Empty);
 
-        [BsonId]
-        public string Name { get; set; }
+        public ImmutableList<AppFileInfo> Versions { get; }
 
-        public AppVersion Last { get; set; }
+        [BsonId, BsonElement]
+        public string Name { get; }
 
-        public DateTime CreationTime { get; set; }
+        [BsonElement]
+        public int Last { get; }
 
-        public DateTime LastUpdate { get; set; }
+        [BsonElement]
+        public DateTime CreationTime { get; }
 
-        public string Repository { get; set; }
+        [BsonElement]
+        public DateTime LastUpdate { get; }
 
-        public string ProjectName { get; set; }
+        [BsonElement]
+        public string Repository { get; }
+
+        [BsonElement]
+        public string ProjectName { get; }
+
+        [BsonConstructor]
+        public AppData(string name, int last, DateTime creationTime, DateTime lastUpdate, string repository, string projectName, ImmutableList<AppFileInfo> versions)
+        {
+            Name = name;
+            Last = last;
+            CreationTime = creationTime;
+            LastUpdate = lastUpdate;
+            Repository = repository;
+            ProjectName = projectName;
+            Versions = versions;
+        }
     }
 }

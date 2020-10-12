@@ -5,7 +5,7 @@ using Tauron.Application.AkkNode.Services.Core;
 
 namespace Tauron.Application.Master.Commands.Deployment.Build
 {
-    public abstract class DeplaymentAction : InternalSerializableBase, IReporterMessage
+    public abstract class DeploymentAction : InternalSerializableBase, IReporterMessage
     {
         public string AppName { get; private set; } = string.Empty;
 
@@ -13,13 +13,13 @@ namespace Tauron.Application.Master.Commands.Deployment.Build
 
         string IReporterMessage.Info => AppName;
 
-        protected DeplaymentAction(string appName, IActorRef listner)
+        protected DeploymentAction(string appName, IActorRef listner)
         {
             AppName = appName;
             Listner = listner;
         }
 
-        protected DeplaymentAction(BinaryReader reader, ExtendedActorSystem system)
+        protected DeploymentAction(BinaryReader reader, ExtendedActorSystem system)
             : base(reader, system)
         {
 

@@ -10,4 +10,13 @@ namespace Tauron.Application.Master.Commands.Deployment.Build
             
         }
     }
+
+    public sealed class BuildFailedException : Exception
+    {
+        public BuildFailedException(string msg)
+            : base(msg)
+        {
+
+        }
+    }
 }

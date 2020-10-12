@@ -30,7 +30,7 @@ namespace ServiceManager.ProjectDeployment
 
         private DeploymentManager(IActorRef manager) => _manager = manager;
 
-        public void SendAction(DeplaymentAction action)
+        public void SendAction(DeploymentAction action)
             => _manager.Tell(action);
     }
 }

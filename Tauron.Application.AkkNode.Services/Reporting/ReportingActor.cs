@@ -30,7 +30,7 @@ namespace Tauron.Application.AkkNode.Services
             catch (Exception e)
             {
                 Log.Error(e, "Repository Operation {Name} Failed {Repository}", name, msg.Info);
-                reporter.Compled(OperationResult.Failure(e.Unwrap().Message));
+                reporter.Compled(OperationResult.Failure(e.Unwrap()?.Message ?? "Unkowen"));
             }
         }
 
@@ -45,7 +45,7 @@ namespace Tauron.Application.AkkNode.Services
             catch (Exception e)
             {
                 Log.Error(e, "Repository Operation {Name} Failed {Repository}", name, msg.Info);
-                msg.Reporter.Compled(OperationResult.Failure(e.Unwrap().Message));
+                msg.Reporter.Compled(OperationResult.Failure(e.Unwrap()?.Message ?? "Unkowen"));
             }
         }
     }

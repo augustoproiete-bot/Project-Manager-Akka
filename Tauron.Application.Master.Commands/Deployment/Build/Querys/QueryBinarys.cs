@@ -2,7 +2,6 @@
 using Akka.Actor;
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
-using Tauron.Application.Master.Commands.Deployment.Build.Data;
 
 namespace Tauron.Application.Master.Commands.Deployment.Build.Querys
 {
@@ -11,13 +10,13 @@ namespace Tauron.Application.Master.Commands.Deployment.Build.Querys
     {
         public IActorRef DataManager { get; private set; } = ActorRefs.Nobody;
 
-        public int Version { get; private set; }
+        public int AppVersion { get; private set; }
 
-        public QueryBinarys([NotNull] string appName, IActorRef dataManager, int version = -1) 
+        public QueryBinarys([NotNull] string appName, IActorRef dataManager, int appVersion = -1) 
             : base(appName)
         {
             DataManager = dataManager;
-            Version = version;
+            AppVersion = appVersion;
         }
 
         public QueryBinarys([NotNull] BinaryReader reader, [NotNull] ExtendedActorSystem system) 
@@ -28,14 +27,14 @@ namespace Tauron.Application.Master.Commands.Deployment.Build.Querys
         protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest, ExtendedActorSystem system)
         {
             DataManager = BinaryHelper.ReadRef(reader, system);
-            Version = reader.ReadInt32();
+            AppVersion = reader.ReadInt32();
             base.ReadInternal(reader, manifest, system);
         }
 
         protected override void WriteInternal(ActorBinaryWriter writer)
         {
             BinaryHelper.WriteRef(writer, DataManager);
-            writer.Write(Version);
+            writer.Write(AppVersion);
             base.WriteInternal(writer);
         }
     }

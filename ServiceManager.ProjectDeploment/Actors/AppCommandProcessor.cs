@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using Akka.Actor;
 using JetBrains.Annotations;
@@ -7,10 +9,10 @@ using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using ServiceManager.ProjectDeployment.Build;
 using ServiceManager.ProjectDeployment.Data;
+using Tauron;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.Core;
-using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
 using Tauron.Application.Master.Commands.Deployment.Build.Data;
@@ -21,20 +23,14 @@ namespace ServiceManager.ProjectDeployment.Actors
     public sealed class AppCommandProcessor : ReportingActor, IWithTimers
     {
         private readonly IMongoCollection<AppData> _apps;
-        private readonly Dictionary<string, BuildRequest> _pendingBuilds = new Dictionary<string, BuildRequest>();
-        private readonly EventSubscribtion _compledSubscription;
 
         public ITimerScheduler Timers { get; set; } = null!;
 
-        public AppCommandProcessor(IMongoCollection<AppData> apps, GridFSBucket files, IActorRef dataTransfer, RepositoryApi repository, IMongoCollection<ToDeleteRevision> toDelete)
+        public AppCommandProcessor(IMongoCollection<AppData> apps, GridFSBucket files, IActorRef dataTransfer, RepositoryApi repository, 
+            IMongoCollection<ToDeleteRevision> toDelete, WorkDistributor<BuildRequest, BuildCompled> workDistributor)
         {
             _apps = apps;
-
-            Receive<CancelRequestInfo>(CancelRequest);
-            _compledSubscription = dataTransfer.SubscribeToEvent<TransferCompled>();
-            Receive<TransferCompled>(ContinueBuild);
-
-
+            
             CommandPhase1<CreateAppCommand, AppInfo>("CreateApp", repository, 
                 (command, listner, reporter) =>
                 {
@@ -45,67 +41,100 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             CommandPhase2<ContinueCreateApp, CreateAppCommand, AppInfo>("CreateApp2", (command, result, reporter, data) =>
             {
+                if (!result.Ok)
+                {
+                    if (reporter.IsCompled) return null;
+                    reporter.Compled(OperationResult.Failure(result.Error ?? BuildErrorCodes.CommandErrorRegisterRepository));
+                    return null;
+                }
+
                 if (data != null)
                 {
                     reporter.Compled(OperationResult.Failure(BuildErrorCodes.CommandDuplicateApp));
                     return null;
                 }
 
-                var newData = new AppData
-                {
-                    CreationTime = DateTime.UtcNow,
-                    Last = new AppVersion
-                    {
-                        Version = -1
-                    },
-
-                    LastUpdate = DateTime.MinValue,
-                    Name = command.AppName,
-                    Repository = command.TargetRepo,
-                    ProjectName = command.ProjectName
-                };
+                var newData = new AppData(command.AppName, -1, DateTime.UtcNow, DateTime.MinValue, command.TargetRepo, command.ProjectName, ImmutableList<AppFileInfo>.Empty);
+                
                 apps.InsertOne(newData);
-                return new AppInfo(newData.Name, newData.Last.Version, newData.LastUpdate.Date, newData.CreationTime, newData.Repository);
+                return new AppInfo(newData.Name, newData.Last, newData.LastUpdate.Date, newData.CreationTime, newData.Repository);
             });
 
-            CommandPhase1<PushVersionCommand, AppBinary>("PushVersion", repository,
-                (command, listner, reporter) =>
+            CommandPhase1<PushVersionCommand, AppBinary>("PushVersion",
+                (command, reporter) =>
                 {
                     var data = apps.AsQueryable().FirstOrDefault(ad => ad.Name == command.AppName);
-                    if (data == null)
-                    {
+                    if (data == null) 
                         reporter.Compled(OperationResult.Failure(BuildErrorCodes.CommandAppNotFound));
-                        return null;
+                    else
+                    {
+                        string tempFile = Path.Combine(Env.ApplicationPath, Guid.NewGuid().ToString("D") + ".zip");
+                        BuildRequest.SendWork(workDistributor, reporter, data, repository, tempFile)
+                            .PipeTo(Self,
+                                success: c => new ContinuePushNewVersion(OperationResult.Success((tempFile, c)), command, reporter),
+                                failure: e => new ContinuePushNewVersion(OperationResult.Failure(e.Unwrap()?.Message ?? "Cancel"), command, reporter));
                     }
+                });
 
-                    var req = AddRequest(reporter, null);
-                    return new TransferRepository(data.Repository, listner(), dataTransfer, req.OperationId);
-                }, 
-                (command, reporter, result) => new ContinuePushNewVersion(result, command, reporter));
+            CommandPhase2<ContinuePushNewVersion, PushVersionCommand, AppBinary>("PushVersion2", (command, result, reporter, data) =>
+            {
+                if (data == null)
+                {
+                    if(!reporter.IsCompled)
+                        reporter.Compled(OperationResult.Failure(BuildErrorCodes.CommandAppNotFound));
+                    return null;
+                }
+
+                if (!result.Ok)
+                    return null;
+
+                using var transaction = apps.Database.Client.StartSession(new ClientSessionOptions{DefaultTransactionOptions = new TransactionOptions(writeConcern:WriteConcern.Acknowledged)});
+                var dataFilter = Builders<AppData>.Filter.Eq(ad => ad.Name, data.Name);
+
+                var (fileName, commit) = ((string, string))result.Outcome!;
+
+                using var targetStream = File.Open(fileName, FileMode.Open);
+                var newId = files.UploadFromStream(data.Name + ".zip", targetStream);
+
+                var newBinary = new AppFileInfo(newId, data.Last + 1, DateTime.UtcNow, false, commit);
+                var newBinarys = data.Versions.Add(newBinary);
+
+                var definition = Builders<AppData>.Update;
+                var updates = new List<UpdateDefinition<AppData>>
+                {
+                    definition.Set(ad => ad.Last, newBinary.Version),
+                    definition.Set(ad => ad.Versions, newBinarys)
+                };
+
+                var deleteUpdates = new List<ToDeleteRevision>();
+
+                if (data.Versions.Count(s => !s.Deleted) > 5)
+                {
+                    foreach (var info in newBinarys.OrderByDescending(i => i.CreationTime).Skip(5))
+                    {
+                        if(info.Deleted) continue;
+                        info.Deleted = true;
+                        deleteUpdates.Add(new ToDeleteRevision(info.File.ToString()));
+                    }
+                }
+
+                transaction.StartTransaction();
+
+                if (deleteUpdates.Count != 0) 
+                    toDelete.InsertMany(transaction, deleteUpdates);
+                if (!apps.UpdateOne(transaction, dataFilter, definition.Combine(updates)).IsAcknowledged)
+                {
+                    transaction.AbortTransaction();
+                    reporter.Compled(OperationResult.Failure(BuildErrorCodes.DatabaseError));
+                    return null;
+                }
+
+                transaction.CommitTransaction();
+
+                return new AppBinary(newBinary.Version, newBinary.CreationTime, false, newBinary.Commit, data.Repository);
+            });
         }
-
-        private void ContinueBuild(TransferCompled obj)
-        {
-            
-        }
-
-        private BuildRequest AddRequest(Reporter source, Func<IDelegatingMessage> nextStep)
-        {
-            var req = new BuildRequest(source, nextStep);
-            _pendingBuilds.Add(req.OperationId, req);
-            Timers.StartSingleTimer(req.OperationId, new CancelRequestInfo(req.OperationId), TimeSpan.FromMinutes(10));
-            return req;
-        }
-
-        private void RequestCompled(string id)
-        {
-            Timers.Cancel(id);
-            _pendingBuilds.Remove(id);
-        }
-
-        private void CancelRequest(CancelRequestInfo info) 
-            => _pendingBuilds.Remove(info.Id);
-
+        
         private void CommandPhase1<TCommand, TResult>(string name, RepositoryApi api, Func<TCommand, Func<IActorRef>, Reporter, RepositoryAction?> executor, Func<TCommand, Reporter, OperationResult, object> result)
             where TCommand : DeploymentCommandBase<TResult>
         {
@@ -134,6 +163,11 @@ namespace ServiceManager.ProjectDeployment.Actors
             });
         }
 
+        private void CommandPhase1<TCommand, TResult>(string name, Action<TCommand, Reporter> executor)
+            where TCommand : DeploymentCommandBase<TResult>
+            => Receive(name, executor);
+
+
         private void CommandPhase2<TContinue, TCommand, TResult>(string name, Func<TCommand, OperationResult, Reporter, AppData?, TResult?> executor)
             where TContinue : ContinueCommand<TCommand> 
             where TCommand : DeploymentCommandBase<TResult>
@@ -141,56 +175,19 @@ namespace ServiceManager.ProjectDeployment.Actors
         {
             ReceiveContinue<TContinue>(name, (command, reporter) =>
             {
-                if (!command.Result.Ok)
-                {
-                    reporter.Compled(OperationResult.Failure(command.Result.Error ?? BuildErrorCodes.CommandErrorRegisterRepository));
-                    return;
-                }
-
                 var data = _apps.AsQueryable().FirstOrDefault(ad => ad.Name == command.Command.AppName);
+
                 var result = executor(command.Command, command.Result, command.Reporter, data);
+
+                if(reporter.IsCompled) return;
+
                 if (Equals(result, default(TResult)) && !reporter.IsCompled) 
                     reporter.Compled(OperationResult.Failure(BuildErrorCodes.GerneralCommandError));
                 else
                     reporter.Compled(OperationResult.Success(result));
             });
         }
-
-        //private void CommandPhase2<TContinue, TCommand, TResult>(string name, Func<TContinue, OperationResult, Reporter, AppData?, TResult?> executor)
-        //    where TContinue : ContinueCommand<TCommand>
-        //    where TCommand : DeploymentCommandBase<TResult>
-        //    where TResult : InternalSerializableBase
-        //{
-        //    ReceiveContinue<TContinue>(name, (command, reporter) =>
-        //    {
-        //        if (!command.Result.Ok)
-        //        {
-        //            reporter.Compled(OperationResult.Failure(command.Result.Error ?? BuildErrorCodes.CommandErrorRegisterRepository));
-        //            return;
-        //        }
-
-        //        var data = _apps.AsQueryable().FirstOrDefault(ad => ad.Name == command.Command.AppName);
-        //        var result = executor(command, command.Result, command.Reporter, data);
-        //        if (Equals(result, default(TResult)) && !reporter.IsCompled)
-        //            reporter.Compled(OperationResult.Failure(BuildErrorCodes.GerneralCommandError));
-        //        else
-        //            reporter.Compled(OperationResult.Success(result));
-        //    });
-        //}
-
-        protected override void PostStop()
-        {
-            _compledSubscription.Dispose();
-            base.PostStop();
-        }
-
-        private sealed class CancelRequestInfo
-        {
-            public string Id { get; }
-
-            public CancelRequestInfo(string id) => Id = id;
-        }
-
+        
         private abstract class ContinueCommand<TCommand> : IDelegatingMessage
             where TCommand : IReporterMessage
         {
@@ -221,14 +218,6 @@ namespace ServiceManager.ProjectDeployment.Actors
         private sealed class ContinuePushNewVersion : ContinueCommand<PushVersionCommand>
         {
             public ContinuePushNewVersion([NotNull] OperationResult result, PushVersionCommand command, [NotNull] Reporter reporter) 
-                : base(result, command, reporter)
-            {
-            }
-        }
-
-        private sealed class BuildFinishPushNewVersion : ContinueCommand<PushVersionCommand>
-        {
-            public BuildFinishPushNewVersion([NotNull] OperationResult result, PushVersionCommand command, [NotNull] Reporter reporter) 
                 : base(result, command, reporter)
             {
             }

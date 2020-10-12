@@ -3,8 +3,10 @@ using Akka.Actor;
 using Akka.Routing;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
+using ServiceManager.ProjectDeployment.Build;
 using ServiceManager.ProjectDeployment.Data;
 using Tauron.Akka;
+using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Repository;
@@ -33,7 +35,9 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             Receive<IDeploymentQuery>(q => query.Forward(q));
 
-            var processorProps = Props.Create(() => new AppCommandProcessor(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer, repositoryProxy, trashBin))
+            var buildSystem = WorkDistributor<BuildRequest, BuildCompled>.Create(Context, Props.Create<BuildingActor>(), "Compiler", TimeSpan.FromHours(1), "CompilerSupervisor");
+
+            var processorProps = Props.Create(() => new AppCommandProcessor(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer, repositoryProxy, trashBin, buildSystem))
                 .WithRouter(router);
             var processor = Context.ActorOf(processorProps, "ProcessorRouter");
 

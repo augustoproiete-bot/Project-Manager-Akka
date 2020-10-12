@@ -1,18 +1,34 @@
 ﻿using System;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace ServiceManager.ProjectDeployment.Data
 {
     public sealed class AppFileInfo
     {
-        public ObjectId File { get; set; }
+        [BsonElement]
+        public ObjectId File { get; }
 
-        public AppVersion Version { get; set; } = new AppVersion { Version = -1 };
+        [BsonElement]
+        public int Version { get; }
 
-        public DateTime CreationTime { get; set; }
+        [BsonElement]
+        public DateTime CreationTime { get; }
 
+        [BsonElement]
         public bool Deleted { get; set; }
 
-        public string Commit { get; set; }
+        [BsonElement]
+        public string Commit { get; }
+
+        [BsonConstructor]
+        public AppFileInfo(ObjectId file, int version, DateTime creationTime, bool deleted, string commit)
+        {
+            File = file;
+            Version = version;
+            CreationTime = creationTime;
+            Deleted = deleted;
+            Commit = commit;
+        }
     }
 }

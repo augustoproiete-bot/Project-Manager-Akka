@@ -10,7 +10,7 @@ using Tauron.Application.AkkNode.Services.Core;
 namespace Tauron.Application.Master.Commands.Deployment.Build
 {
     [PublicAPI]
-    public abstract class DeploymentQueryBase<TResult> : DeplaymentAction, IDeploymentQuery
+    public abstract class DeploymentQueryBase<TResult> : DeploymentAction, IDeploymentQuery
     {
         protected DeploymentQueryBase(string appName) 
             : base(appName, ActorRefs.Nobody)

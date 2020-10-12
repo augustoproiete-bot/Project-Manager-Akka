@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
+using Akka;
 using Akka.Actor;
 using Akka.Event;
 using ServiceManager.ProjectDeployment.Build;
@@ -23,9 +24,10 @@ namespace ServiceManager.ProjectDeployment.Actors
         Repository,
         Extracting,
         Building,
+        Compressing
     }
 
-    public sealed class BuildPaths
+    public sealed class BuildPaths : IDisposable
     {
         public string BasePath { get; } = string.Empty;
          
@@ -48,17 +50,19 @@ namespace ServiceManager.ProjectDeployment.Actors
         {
             
         }
+
+        public void Dispose() => BasePath.DeleteDirectory(true);
     }
 
     public sealed class BuildData
     {
         public Reporter? Reporter { get; private set; }
 
-        public AppData AppData { get; private set; } = new AppData();
+        public AppData AppData { get; private set; } = AppData.Empty;
         
         public RepositoryApi Api { get; private set; } = RepositoryApi.Empty;
 
-        public IActorRef CurrentListner { get; private set; } = ActorRefs.Nobody;
+        private IActorRef CurrentListner { get; set; } = ActorRefs.Nobody;
 
         public string Error { get; private set; } = string.Empty;
 
@@ -66,20 +70,26 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         public BuildPaths Paths { get; private set; } = new BuildPaths();
 
+        public string Target { get; private set; } = string.Empty;
+
+        public string Commit { get; set; } = string.Empty;
+
+        public TaskCompletionSource<string>? CompletionSource { get; private set; }
+
         public BuildData Set(BuildRequest request)
         {
             OperationId = Guid.NewGuid().ToString("D");
             Reporter = request.Source;
             AppData = request.AppData;
             Api = request.RepositoryApi;
+            Target = request.TargetFile;
+            CompletionSource = request.CompletionSource;
             return this;
         }
 
         public BuildData Set(IncomingDataTransfer request)
         {
-            Paths = new BuildPaths(Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Tauron", "DeploymentServer", OperationId));
+            Paths = new BuildPaths(Path.Combine(Env.ApplicationPath, "Building", OperationId));
 
             request.Accept(() => File.Create(Paths.RepoFile));
 
@@ -94,7 +104,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         public BuildData SetListner(IActorRef list)
         {
-            if(!CurrentListner.IsNobody())
+            if (!CurrentListner.IsNobody())
                 ExposedReceiveActor.ExposedContext.Stop(CurrentListner);
 
             Paths.BasePath.DeleteDirectory(true);
@@ -103,10 +113,20 @@ namespace ServiceManager.ProjectDeployment.Actors
             return this;
         }
 
-        public BuildData Clear()
+        public BuildData Clear(ILoggingAdapter adapter)
         {
+            CompletionSource?.TrySetCanceled();
             ExposedReceiveActor.ExposedContext.Stop(CurrentListner);
-            
+
+            try
+            {
+                Paths.Dispose();
+            }
+            catch (Exception e)
+            {
+                adapter.Error(e, "Error on disposing Build Paths");
+            }
+
             return new BuildData();
         }
     }
@@ -149,9 +169,15 @@ namespace ServiceManager.ProjectDeployment.Actors
                 switch (evt.FsmEvent)
                 {
                     case OperationResult result:
-                        return result.Ok 
-                            ? Stay() 
-                            : GoTo(BuildState.Failing)
+                        if (result.Ok)
+                        {
+                            if (result.Outcome is Tranferdata data) StateData.Commit = data.Commit;
+                            else StateData.Commit = "Unkowen";
+
+                            return Stay();
+                        }
+                        else
+                            return GoTo(BuildState.Failing)
                                 .Using(evt.StateData.SetError(result.Error ?? BuildErrorCodes.GernalBuildError));
                     case IncomingDataTransfer transfer:
                         _log.Info("Start Repository Transfer {Name}", evt.StateData.AppData.Name);
@@ -235,10 +261,33 @@ namespace ServiceManager.ProjectDeployment.Actors
                         }
                         catch (Exception e)
                         {
-                            return GoTo(BuildState.Failing).Using(evt.StateData.SetError(e.Unwrap().Message));
+                            evt.StateData.CompletionSource?.TrySetException(e);
+                            return GoTo(BuildState.Failing).Using(evt.StateData.SetError(e.Unwrap()?.Message ?? "Unkowen"));
                         }
                     case OperationResult result:
+                        return !result.Ok 
+                            ? GoTo(BuildState.Failing).Using(StateData.SetError(result.Error ?? string.Empty)) 
+                            : GoTo(BuildState.Compressing).ReplyingSelf(Trigger.Inst);
+                    default:
+                        return null;
+                }
+            });
 
+            When(BuildState.Compressing, evt =>
+            {
+                switch (evt.FsmEvent)
+                {
+                    case Trigger _:
+                        Task.Run(() =>
+                        {
+                            ZipFile.CreateFromDirectory(evt.StateData.Paths.BuildPath, evt.StateData.Target);
+                        }).PipeTo(Self, success:() => new Status.Success(null));
+                        return Stay();
+                    case Status.Success _:
+                        evt.StateData.CompletionSource?.SetResult(StateData.Commit);
+                        return GoTo(BuildState.Waiting)
+                            .Using(evt.StateData.Clear(_log))
+                            .ReplyingParent(BuildCompled.Inst);
                     default:
                         return null;
                 }
@@ -246,7 +295,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             When(BuildState.Failing, evt =>
                 GoTo(BuildState.Waiting)
-               .Using(evt.StateData.Clear())
+               .Using(evt.StateData.Clear(_log))
                .ReplyingParent(BuildCompled.Inst));
 
             WhenUnhandled(evt =>
@@ -262,8 +311,9 @@ namespace ServiceManager.ProjectDeployment.Actors
                         _log.Info("Timeout in Building {Name}", evt.StateData.AppData.Name);
                         return GoTo(BuildState.Failing).Using(evt.StateData.SetError(Reporter.TimeoutError));
                     case Status.Failure f when StateName != BuildState.Waiting:
-                        _log.Warning("Operation Failed {Name}--{Error}", evt.StateData.AppData.Name, f.Cause.Unwrap().Message);
-                        return GoTo(BuildState.Failing).Using(evt.StateData.SetError(f.Cause.Unwrap().Message));
+                        _log.Warning("Operation Failed {Name}--{Error}", evt.StateData.AppData.Name, f.Cause.Unwrap()?.Message);
+                        evt.StateData.CompletionSource?.TrySetException(f.Cause);
+                        return GoTo(BuildState.Failing).Using(evt.StateData.SetError(f.Cause.Unwrap()?.Message ?? "Unkowen"));
                     default:
                         return Stay();
                 }
@@ -274,7 +324,10 @@ namespace ServiceManager.ProjectDeployment.Actors
                 switch (nextState)
                 {
                     case BuildState.Failing:
-                        StateData.Reporter?.Compled(OperationResult.Failure(BuildErrorCodes.GernalBuildError));
+                        StateData.Reporter?.Compled(
+                            OperationResult.Failure(string.IsNullOrWhiteSpace(StateData.Error)
+                            ? BuildErrorCodes.GernalBuildError
+                            : StateData.Error));
                         Self.Tell(Trigger.Inst);
                         break;
                 }
@@ -284,6 +337,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             {
                 _log.Error("Unexpekted Termination {Cause} on {State}", evt.Reason.ToString(), evt.TerminatedState);
 
+                evt.StateData.CompletionSource?.TrySetCanceled();
                 if (evt.StateData.Reporter == null || evt.StateData.Reporter.IsCompled) return;
                 
                 OperationResult result;

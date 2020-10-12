@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using JetBrains.Annotations;
 using Tauron.Akka;
 
@@ -14,23 +14,24 @@ namespace Tauron.Application.AkkNode.Services
 
         private WorkDistributor(IActorRef actor) => _actor = actor;
 
-        public static WorkDistributor<TInput, TFinishMessage> Create(Props worker, string workerName, string? name = null)
-            => Create(ExposedReceiveActor.ExposedContext, worker, workerName, name);
+        public static WorkDistributor<TInput, TFinishMessage> Create(Props worker, string workerName, TimeSpan timeout, string? name = null)
+            => Create(ExposedReceiveActor.ExposedContext, worker, workerName, timeout, name);
 
-        public static WorkDistributor<TInput, TFinishMessage> Create(IActorRefFactory factory, Props worker, string workerName, string? name = null)
+        public static WorkDistributor<TInput, TFinishMessage> Create(IActorRefFactory factory, Props worker, string workerName, TimeSpan timeout, string? name = null)
         {
-            var actor = factory.ActorOf(() => new WorkDistributorActor(worker, workerName), name);
+            var actor = factory.ActorOf(() => new WorkDistributorActor(worker, workerName, timeout), name);
             return new WorkDistributor<TInput, TFinishMessage>(actor);
         }
 
         public void PushWork(TInput work)
             => _actor.Forward(work);
 
-        private sealed class WorkDistributorActor : ExposedReceiveActor
+        private sealed class WorkDistributorActor : ExposedReceiveActor, IWithTimers
         {
             private int _id = 5;
             private readonly Props _workerProps;
             private readonly string _workerName;
+            private readonly TimeSpan _timeout;
 
             private readonly Queue<(TInput, IActorRef)> _pendingWorkload = new Queue<(TInput, IActorRef)>();
             private readonly List<IActorRef> _worker = new List<IActorRef>();
@@ -38,12 +39,20 @@ namespace Tauron.Application.AkkNode.Services
             private readonly Queue<IActorRef> _ready = new Queue<IActorRef>();
             private readonly List<IActorRef> _running = new List<IActorRef>();
 
-            public WorkDistributorActor(Props workerProps, string workerName)
+            public ITimerScheduler Timers { get; set; } = null!;
+
+            public WorkDistributorActor(Props workerProps, string workerName, TimeSpan timeout)
             {
                 _workerProps = workerProps;
                 _workerName = workerName;
-                    
+                _timeout = timeout;
+
                 Receive<Terminated>(HandleTerminate);
+                Receive<WorkerTimeout>(t =>
+                {
+                    if(_running.Contains(t.Worker))
+                        Context.Stop(t.Worker);
+                });
 
                 foreach (var pos in Enumerable.Range(1, 5))
                 {
@@ -64,7 +73,7 @@ namespace Tauron.Application.AkkNode.Services
                 if (_pendingWorkload.TryDequeue(out var elemnt))
                 {
                     var (input, sender) = elemnt;
-                    Context.Sender.Tell(input, sender);
+                    RunWork(input, Sender, sender);
                 }
                 else
                 {
@@ -98,14 +107,27 @@ namespace Tauron.Application.AkkNode.Services
             {
                 if (_ready.TryDequeue(out var worker))
                 {
-                    worker.Forward(input);
+                    RunWork(input, worker, Sender);
                     _running.Add(worker);
                 }
                 else
                     _pendingWorkload.Enqueue((input, Sender));
             }
 
+            private void RunWork(TInput input, IActorRef worker, IActorRef sender)
+            {
+                worker.Tell(input, sender);
+                Timers.StartSingleTimer(worker, new WorkerTimeout(worker), _timeout);
+            }
+
             protected override SupervisorStrategy SupervisorStrategy() => global::Akka.Actor.SupervisorStrategy.StoppingStrategy;
+
+            private sealed class WorkerTimeout
+            {
+                public IActorRef Worker { get; }
+
+                public WorkerTimeout(IActorRef worker) => Worker = worker;
+            }
         }
     }
 }
