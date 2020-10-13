@@ -9,6 +9,6 @@ namespace Tauron.Application.ServiceManager.Core.Configuration
     public sealed class AppConfiguration : ISettingProviderConfiguration
     {
         public string Scope => SettingTypes.AppConfig;
-        public ISettingProvider Provider => new JsonProvider(Path.Combine(Env.Path, "appconfig.json"));
+        public ISettingProvider Provider => new JsonProvider(Path.Combine(RepoEnv.Path, "appconfig.json"));
     }
 }

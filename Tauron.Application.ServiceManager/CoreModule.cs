@@ -26,8 +26,7 @@ namespace Tauron.Application.ServiceManager
             builder.RegisterType<SelectHostAppDialog>().As<ISelectHostAppDialog>();
             builder.RegisterType<InitialDialog>().As<IInitialDialog>();
 
-            builder.RegisterView<MainWindow, MainWindowViewModel>()
-               .OnActivated(a => a.Instance.Init("Main-Window"));
+            builder.RegisterView<MainWindow, MainWindowViewModel>();
             builder.RegisterView<NodeView, NodeViewModel>();
             builder.RegisterView<SeedNodeView, SeedNodeViewModel>();
             builder.RegisterView<HostView, HostViewModel>();

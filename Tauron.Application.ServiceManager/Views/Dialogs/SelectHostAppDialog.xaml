@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:Tauron.Application.ServiceManager.Views.Dialogs"
              xmlns:tau="http://schemas.TauronWpf.com"
              xmlns:sync="http://schemas.syncfusion.com/wpf"
-             xmlns:host="clr-namespace:Tauron.Application.Master.Commands.Host;assembly=Tauron.Application.Master.Commands"
+             xmlns:host="clr-namespace:Tauron.Application.Master.Commands.Administration.Host;assembly=Tauron.Application.Master.Commands"
              mc:Ignorable="d" Title="{tau:Loc AddSeedDialog_Label_Title}"
              d:DesignHeight="450" d:DesignWidth="800" d:DataContext="{d:DesignInstance local:SelectHostAppViewModel, IsDesignTimeCreatable=True}">
     <sync:SfBusyIndicator IsBusy="True">

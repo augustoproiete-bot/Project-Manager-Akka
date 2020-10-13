@@ -8,7 +8,7 @@ namespace Tauron.Application.Master.Commands.Deployment.Build.Data
     [PublicAPI]
     public sealed class AppInfo : InternalSerializableBase
     {
-        public string Name { get; private set; }
+        public string Name { get; private set; } = string.Empty;
 
         public int LastVersion { get; private set; }
 
@@ -16,7 +16,7 @@ namespace Tauron.Application.Master.Commands.Deployment.Build.Data
 
         public DateTime CreationTime { get; private set; }
 
-        public string Repository { get; private set; }
+        public string Repository { get; private set; } = string.Empty;
 
         public AppInfo(string name, int lastVersion, DateTime updateDate, DateTime creationTime, string repository)
         {

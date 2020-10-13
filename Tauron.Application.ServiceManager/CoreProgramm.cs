@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Akka.Cluster;
 using Autofac;
 using Syncfusion.Licensing;
-using Tauron.Application.AkkaNode.Boottrap;
+using Tauron.Application.AkkaNode.Bootstrap;
 using Tauron.Application.Master.Commands;
 using Tauron.Application.ServiceManager.PreAppStart;
 using Tauron.Application.Wpf.SerilogViewer;

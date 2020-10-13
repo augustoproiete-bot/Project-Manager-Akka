@@ -230,7 +230,7 @@ namespace ServiceManager.ProjectRepository.Actors
 
                     Log.Info("Compress Repository {Name}", repository.RepoName);
                     reporter.Send(RepositoryMessages.CompressRepository);
-                    var temp = Path.Combine(Env.Path, "data.zip");
+                    var temp = Path.Combine(RepoEnv.Path, "data.zip");
                     temp.DeleteFile();
                     ZipFile.CreateFromDirectory(result.Path, temp);
                     using (var packed = File.OpenRead(temp))

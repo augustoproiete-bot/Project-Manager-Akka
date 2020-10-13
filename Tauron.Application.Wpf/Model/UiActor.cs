@@ -234,7 +234,7 @@ namespace Tauron.Application.Wpf.Model
         { 
         }
 
-        private void InitParentViewModel(InitParentViewModel obj)
+        protected virtual void InitParentViewModel(InitParentViewModel obj)
         {
             ViewModelSuperviser.Get(Context.System)
                .Create(obj.Model);
@@ -303,7 +303,7 @@ namespace Tauron.Application.Wpf.Model
             foreach (var actorRef in propertyData.Subscriptors)
                 actorRef.Tell(new ValidatingEvent(propertyData.Error, propertyData.PropertyBase.Name));
 
-            propertyData.PropertyBase.IsValid = string.IsNullOrWhiteSpace(propertyData.Error);
+            propertyData.PropertyBase.IsValidSetter(string.IsNullOrWhiteSpace(propertyData.Error));
         }
 
         private void TrackProperty(TrackPropertyEvent obj, IActorRef sender)

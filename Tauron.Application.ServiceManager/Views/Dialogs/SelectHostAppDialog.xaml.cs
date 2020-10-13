@@ -6,7 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using JetBrains.Annotations;
 using Serilog;
-using Tauron.Application.Master.Commands.Host;
+using Tauron.Application.Master.Commands.Administration.Host;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
 using Tauron.Application.Wpf.Commands;
 
@@ -52,7 +52,7 @@ namespace Tauron.Application.ServiceManager.Views.Dialogs
                 catch (Exception e)
                 {
                     Log.Error(e, "Error on Loading Host App Data");
-                    Info = e.Unwrap().Message;
+                    Info = e.Unwrap()?.Message;
                 }
             });
 
@@ -89,6 +89,7 @@ namespace Tauron.Application.ServiceManager.Views.Dialogs
             }
         }
 
+        [UsedImplicitly]
         public bool Loading
         {
             get => _loading;

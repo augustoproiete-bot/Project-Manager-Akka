@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text;
 using System.Windows.Threading;
-using Akka;
 using Akka.Configuration;
 using Akka.Event;
 using Autofac;
@@ -16,8 +15,6 @@ namespace Tauron.Application.ServiceManager.ViewModels
 {
     public sealed class ConfigurationViewModel : UiActor
     {
-        
-
         public ConfigurationViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig appConfig) 
             : base(lifetimeScope, dispatcher)
         {
@@ -138,13 +135,13 @@ namespace Tauron.Application.ServiceManager.ViewModels
                 });
 
             NewCommad
-                .WithCanExecute(() => ConnectionString.IsValid)
-                .WithExecute(() => ErrorText += ValidateMongoConnection(ConnectionString) ?? string.Empty)
-                .ThenRegister("ValidateConnection");
+               .WithCanExecute(b => b.FromProperty(ConnectionString.IsValid))
+               .WithExecute(() => ErrorText += ValidateMongoConnection(ConnectionString) ?? string.Empty)
+               .ThenRegister("ValidateConnection");
 
             NewCommad
-                .WithCanExecute(() => ConnectionString.IsValid)
-                .WithExecute(() =>
+               .WithCanExecute(b => b.FromProperty(ConnectionString.IsValid))
+               .WithExecute(() =>
                 {
                     try
                     {
@@ -159,7 +156,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
                         ErrorText += e.Message;
                     }
                 })
-                .ThenRegister("ApplyConnection");
+               .ThenRegister("ApplyConnection");
         }
 
         public UIProperty<string> ConnectionString { get; }

@@ -31,13 +31,13 @@ namespace Tauron.Application.Wpf.Model
         public CommandQuery Combine(params CommandQuery[] queries)
             => new CombineCommandQuery(queries);
 
-        public CommandQuery FromProperty<TData>(QueryProperty<TData> prop, Func<TData, bool> check)
+        public CommandQuery FromProperty<TData>(IQueryProperty<TData> prop, Func<TData, bool> check)
             => new QueryPropertyCommandQuery<TData>(prop, check);
 
-        public CommandQuery FromProperty(QueryProperty<bool> prop)
+        public CommandQuery FromProperty(IQueryProperty<bool> prop)
             => new QueryPropertyCommandQuery<bool>(prop, b => b);
 
-        public CommandQuery NotNull<TData>(QueryProperty<TData?> prop)
+        public CommandQuery NotNull<TData>(IQueryProperty<TData?> prop)
             where TData : class
             => new QueryPropertyCommandQuery<TData?>(prop, d => d != null);
 
@@ -49,6 +49,12 @@ namespace Tauron.Application.Wpf.Model
 
         public CommandQuery FromExternal<TData>(Func<TData, bool> check, Action<Action<TData>> registrar, TData value = default)
             => new ExternalCommandQuery<TData>(value, registrar, check);
+
+        public CommandQuery And(params CommandQuery[] queries)
+            => new CompareQuery(queries, QueryCompareType.And);
+
+        public CommandQuery Or(params CommandQuery[] queries)
+            => new CompareQuery(queries, QueryCompareType.Or);
 
         public CommandQuery FromTrigger(Func<bool> check, out Action trigger)
         {
@@ -62,6 +68,64 @@ namespace Tauron.Application.Wpf.Model
             var trig = new TriggerCommandQuery(check);
             trigger.Register(trig.Trigger);
             return trig;
+        }
+
+        public enum QueryCompareType
+        {
+            And,
+            Or
+        }
+
+        public sealed class CompareQuery : CommandQuery
+        {
+            private readonly QueryCompareType _type;
+            private readonly CommandQuery[] _queries;
+            private readonly bool[] _state;
+
+            public CompareQuery(CommandQuery[] queries, QueryCompareType type)
+            {
+                _queries = queries;
+                _type = type;
+
+                _state = new bool[queries.Length];
+
+                for (var i = 0; i < queries.Length; i++)
+                {
+                    _state[i] = queries[i].Run();
+                    var stateIndex = i;
+
+                    queries[i].Monitor(b =>
+                    {
+                        _state[stateIndex] = b;
+                        Update();
+                    });
+                }
+            }
+
+            private void Update()
+            {
+                switch (_type)
+                {
+                    case QueryCompareType.And:
+                        Monitors?.Invoke(_state.All(c => c));
+                        break;
+                    case QueryCompareType.Or:
+                        Monitors?.Invoke(_state.Any(c => c));
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+
+            public override bool Run()
+            {
+                return _type switch
+                {
+                    QueryCompareType.And => _queries.All(c => c.Run()),
+                    QueryCompareType.Or => _queries.Any(c => c.Run()),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+            }
         }
 
         public sealed class CombineCommandQuery : CommandQuery
@@ -93,10 +157,10 @@ namespace Tauron.Application.Wpf.Model
 
         public sealed class QueryPropertyCommandQuery<TData> : CommandQuery
         {
-            private readonly QueryProperty<TData> _property;
+            private readonly IQueryProperty<TData> _property;
             private readonly Func<TData, bool> _check;
 
-            public QueryPropertyCommandQuery(QueryProperty<TData> property, Func<TData, bool> check)
+            public QueryPropertyCommandQuery(IQueryProperty<TData> property, Func<TData, bool> check)
             {
                 _property = property;
                 _property.NotifyChanged(() => Monitors?.Invoke(check(_property.Value)));

@@ -68,7 +68,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                         reporter.Compled(OperationResult.Failure(BuildErrorCodes.CommandAppNotFound));
                     else
                     {
-                        string tempFile = Path.Combine(Env.ApplicationPath, Guid.NewGuid().ToString("D") + ".zip");
+                        string tempFile = Path.Combine(BuildEnv.ApplicationPath, Guid.NewGuid().ToString("D") + ".zip");
                         BuildRequest.SendWork(workDistributor, reporter, data, repository, tempFile)
                             .PipeTo(Self,
                                 success: c => new ContinuePushNewVersion(OperationResult.Success((tempFile, c)), command, reporter),

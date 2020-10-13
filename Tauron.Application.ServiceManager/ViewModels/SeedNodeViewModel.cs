@@ -120,7 +120,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             SelectIndex = RegisterProperty<int>(nameof(SelectIndex));
 
             NewCommad
-               .WithCanExecute(() => SelectIndex > -1)
+               .WithCanExecute(b => b.FromProperty(SelectIndex, i => i > -1))
                .ThenFlow(() => Models.ElementAt(SelectIndex))
                .From.Action(DoRemove)
                .AndReturn()

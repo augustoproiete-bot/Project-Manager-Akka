@@ -89,7 +89,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         public BuildData Set(IncomingDataTransfer request)
         {
-            Paths = new BuildPaths(Path.Combine(Env.ApplicationPath, "Building", OperationId));
+            Paths = new BuildPaths(Path.Combine(BuildEnv.ApplicationPath, "Building", OperationId));
 
             request.Accept(() => File.Create(Paths.RepoFile));
 

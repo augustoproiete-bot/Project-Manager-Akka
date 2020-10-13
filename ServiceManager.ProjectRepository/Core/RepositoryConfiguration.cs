@@ -21,7 +21,7 @@ namespace ServiceManager.ProjectRepository.Core
 
         public string CloneUrl { get; } = DefaultUrl;
 
-        public string SourcePath { get; } = Path.Combine(Env.Path, "Git");
+        public string SourcePath { get; } = Path.Combine(RepoEnv.Path, "Git");
 
         public Reporter? Logger { get; }
 

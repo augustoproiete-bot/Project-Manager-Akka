@@ -9,7 +9,7 @@ using Autofac;
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Localizer.Generated;
-using Tauron.Application.Master.Commands.Host;
+using Tauron.Application.Master.Commands.Administration.Host;
 using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
@@ -60,7 +60,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
                         {
                             Log.Info("Addinf Host Entry {Path}", he.Path);
                             HostEntries.Add(new UIHostEntry(he.Path, he.Name, showApps, localizer, _hostConnector, commandExecutor, 
-                                CommandChanged, this, _hostConnector));
+                                InvalidateRequerySuggested, this, _hostConnector));
                         }
                         else
                         {

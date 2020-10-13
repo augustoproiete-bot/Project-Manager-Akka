@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Threading;
 using Autofac;
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Localizer.Generated;
-using Tauron.Application.Master.Commands.Host;
+using Tauron.Application.Master.Commands.Administration.Host;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.SetupBuilder;
 using Tauron.Application.Wpf.Model;
@@ -63,39 +61,39 @@ namespace Tauron.Application.ServiceManager.ViewModels
                 .WithValidator(SetError(HostNameValidator(() => HostName)));
 
             NewCommad
-                .WithCanExecute(() => _buildRunning == 0 && HostName.IsValid && (!AddSeed.Value || SeedHostName.IsValid))
-                .WithExecute(ExecuteBuild)
-                .ThenRegister("CreateSeupCommand");
+               .WithCanExecute(b =>
+                    b.And(
+                        b.FromProperty(_buildRunning, i => i == 0),
+                        b.FromProperty(HostName.IsValid),
+                        b.Or(
+                            b.FromProperty(AddSeed, s => !s),
+                            b.FromProperty(SeedHostName.IsValid))))
+               .WithExecute(ExecuteBuild)
+               .ThenRegister("CreateSeupCommand");
         }
 
         private void ExecuteBuild()
         {
-            Interlocked.Increment(ref _buildRunning);
-            CommandChanged();
+            _buildRunning.Value++;
 
             var stream = Context.System.EventStream;
 
-            Task.Run(() =>
-            {
-                string hostName = HostName.Value;
-                string seedHostName = SeedHostName.Value;
+            string hostName = HostName.Value;
+            string seedHostName = SeedHostName.Value;
 
-                UICall(TerminalLines.Clear);
+            UICall(TerminalLines.Clear);
 
-                var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, _config, s => UICall(() => TerminalLines.Add(s)), stream);
-                var id = Guid.NewGuid().ToString().Substring(0, 5);
-                
-                _server.AddPendingInstallations(id, builder.Run, AddShortcut);
-            }).ContinueWith(t =>
-            {
-                AddShortcut.Set(false);
-                AddSeed.Set(false);
-                HostName.Set(string.Empty);
-                SeedHostName.Set(string.Empty);
+            var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, _config, s => UICall(() => TerminalLines.Add(s)), stream);
+            var id = Guid.NewGuid().ToString().Substring(0, 5);
 
-                Interlocked.Decrement(ref _buildRunning);
-                CommandChanged();
-            });
+            _server.AddPendingInstallations(id, builder.Run, AddShortcut);
+
+            AddShortcut.Set(false);
+            AddSeed.Set(false);
+            HostName.Set(string.Empty);
+            SeedHostName.Set(string.Empty);
+
+            _buildRunning.Value--;
         }
 
         private Func<TType, string?> SetError<TType>(Func<TType, string?> validator)
@@ -123,7 +121,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             base.PostStop();
         }
 
-        private int _buildRunning;
+        private readonly QueryProperty<int> _buildRunning = QueryProperty.Create(0);
 
         public UICollectionProperty<string> TerminalLines { get; }
 
