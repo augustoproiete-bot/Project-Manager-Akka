@@ -48,7 +48,7 @@ namespace Tauron.Application.Wpf.Model
             => new UIPropertyCommandQuery<bool>(prop, b => b);
 
         public CommandQuery FromExternal<TData>(Func<TData, bool> check, Action<Action<TData>> registrar, TData value = default)
-            => new ExternalCommandQuery<TData>(value, registrar, check);
+            => new ExternalCommandQuery<TData>(value!, registrar, check);
 
         public CommandQuery And(params CommandQuery[] queries)
             => new CompareQuery(queries, QueryCompareType.And);
@@ -104,16 +104,19 @@ namespace Tauron.Application.Wpf.Model
 
             private void Update()
             {
-                switch (_type)
+                lock (this)
                 {
-                    case QueryCompareType.And:
-                        Monitors?.Invoke(_state.All(c => c));
-                        break;
-                    case QueryCompareType.Or:
-                        Monitors?.Invoke(_state.Any(c => c));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    switch (_type)
+                    {
+                        case QueryCompareType.And:
+                            Monitors?.Invoke(_state.All(c => c));
+                            break;
+                        case QueryCompareType.Or:
+                            Monitors?.Invoke(_state.Any(c => c));
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 }
             }
 

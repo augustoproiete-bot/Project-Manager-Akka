@@ -21,6 +21,7 @@ namespace Tauron.Application.ServiceManager
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<CommonAppInfo>().AsSelf().SingleInstance();
+            builder.RegisterType<DeploymentServices>().AsSelf().SingleInstance();
 
             builder.RegisterType<AddSeedDialog>().As<IAddSeedUrlDialog>();
             builder.RegisterType<SelectHostAppDialog>().As<ISelectHostAppDialog>();
