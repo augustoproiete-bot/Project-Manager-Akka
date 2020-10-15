@@ -60,10 +60,10 @@ namespace ServiceHost.Services.Impl
                 }
             });
 
-            this.Flow<StopApps>()
+            Flow<StopApps>(this)
                .From.Action(() => Context.GetChildren().Foreach(r => r.Tell(new InternalStopApp())));
 
-            this.Flow<StopApp>()
+            Flow<StopApp>(this)
                .From.Action(s =>
                 {
                     var child = Context.Child(s.Name);
@@ -73,10 +73,10 @@ namespace ServiceHost.Services.Impl
                         child.Forward(new InternalStopApp());
                 });
 
-            this.Flow<StopResponse>()
+            Flow<StopResponse>(this)
                .From.Action(r => ability.Send(r));
 
-            this.Flow<StartApps>()
+            Flow<StartApps>(this)
                .From.Action(sa => 
                     appRegistry.Actor
                    .Ask<AllAppsResponse>(new AllAppsQuery())
@@ -121,7 +121,7 @@ namespace ServiceHost.Services.Impl
                     });
             });
 
-            this.Flow<StartAllApps>()
+            Flow<StartAllApps>(this)
                 .From.Func(_ =>
                 {
                     Self.Tell(new StartApps(AppType.Cluster));

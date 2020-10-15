@@ -4,6 +4,6 @@
     {
         public bool Ready { get; }
 
-        public DeploymentServicesChanged(bool ready) => Ready = ready;
+        public DeploymentServicesChanged(bool? ready) => Ready = ready == true;
     }
 }

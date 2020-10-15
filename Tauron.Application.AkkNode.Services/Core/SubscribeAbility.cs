@@ -36,13 +36,13 @@ namespace Tauron.Application.AkkNode.Services.Core
 
         public void MakeReceive()
         { 
-            _actor.Flow<Terminated>()
+            ExposedReceiveActor.Flow<Terminated>(_actor)
                 .From.Action(t => Terminated?.Invoke(t));
 
-            _actor.Flow<KeyHint>()
+            ExposedReceiveActor.Flow<KeyHint>(_actor)
                 .From.Action(kh => _sunscriptions.Remove(kh.Key, kh.Target));
 
-            _actor.Flow<EventSubscribe>()
+            ExposedReceiveActor.Flow<EventSubscribe>(_actor)
                 .From.Action(s =>
                 {
                     ExposedReceiveActor.ExposedContext
@@ -56,7 +56,7 @@ namespace Tauron.Application.AkkNode.Services.Core
                             });
                 });
 
-            _actor.Flow<EventUnSubscribe>()
+            ExposedReceiveActor.Flow<EventUnSubscribe>(_actor)
                 .From.Action(s =>
                 {
                     ExposedReceiveActor.ExposedContext

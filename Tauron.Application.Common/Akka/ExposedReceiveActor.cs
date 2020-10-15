@@ -27,6 +27,9 @@ namespace Tauron.Akka
 
         public static IUntypedActorContext ExposedContext => Context;
 
+        public void Flow<TStart>(Action<ActorFlowBuilder<TStart>> builder)
+            => builder(new ActorFlowBuilder<TStart>(this, null));
+
         public void AddResource(IDisposable res)
             => _resources.Add(res);
 

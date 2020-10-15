@@ -12,7 +12,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
         {
             var subscribe = new SubscribeAbility(this);
 
-            this.Flow<TransferMessages.TransmitRequest>()
+            Flow<TransferMessages.TransmitRequest>(this)
                .From.Action(r =>
                             {
                                 var op = Context.Child(r.OperationId);
@@ -25,10 +25,10 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                                 Context.ActorOf(Props.Create<TransferOperatorActor>(), r.OperationId).Tell(r);
                             });
 
-            this.Flow<TransferMessages.DataTranfer>()
+            Flow<TransferMessages.DataTranfer>(this)
                .From.Action(tm => Context.Child(tm.OperationId).Tell(tm));
 
-            this.Flow<DataTransferRequest>()
+            Flow<DataTransferRequest>(this)
                .From.Action(r =>
                             {
                                 var op = Context.Child(r.OperationId);
@@ -42,17 +42,17 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                                 Context.ActorOf(Props.Create<TransferOperatorActor>(), r.OperationId).Tell(r);
                             });
 
-            this.Flow<IncomingDataTransfer>()
+            Flow<IncomingDataTransfer>(this)
                .From.Action(dt => subscribe.Send(dt));
 
-            this.Flow<TransferMessages.TransferCompled>()
+            Flow<TransferMessages.TransferCompled>(this)
                .From.Action(tc =>
                             {
                                 Context.Stop(Context.Child(tc.OperationId));
                                 subscribe.Send(tc, tc.GetType());
                             });
 
-            this.Flow<TransferMessages.TransferMessage>()
+            Flow<TransferMessages.TransferMessage>(this)
                .From.Action(tm =>
                             {
                                 Context.Child(tm.OperationId).Tell(tm);

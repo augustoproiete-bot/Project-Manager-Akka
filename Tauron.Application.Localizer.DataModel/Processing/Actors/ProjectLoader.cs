@@ -8,7 +8,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
     public sealed class ProjectLoader : ExposedReceiveActor
     {
         public ProjectLoader() 
-            => this.Flow<InternalLoadProject>().From.Action(LoadProjectFile);
+            => Flow<InternalLoadProject>(this).From.Action(LoadProjectFile);
 
         private void LoadProjectFile(InternalLoadProject obj)
         {

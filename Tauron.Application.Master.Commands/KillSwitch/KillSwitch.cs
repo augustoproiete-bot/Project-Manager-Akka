@@ -25,7 +25,7 @@ namespace Tauron.Application.Master.Commands
             
             public KillWatcher(KillRecpientType type)
             {
-                this.Flow<ActorUp>()
+                Flow<ActorUp>(this)
                     .From.Func(au =>
                     {
                         Log.Info("Send ActorUp Back {Name}", au.Actor.Path);
@@ -33,14 +33,14 @@ namespace Tauron.Application.Master.Commands
                     })
                     .ToRefFromMsg(au => au.Actor);
 
-                this.Flow<RequestRegistration>()
+                Flow<RequestRegistration>(this)
                     .From.Func(rr =>
                     {
                         Log.Info("Sending Respond {Type}", type);
                         return new RespondRegistration(type);
                     }).ToSender();
 
-                this.Flow<KillNode>()
+                Flow<KillNode>(this)
                     .From.Action(kn =>
                     {
                         Log.Info("Leaving Cluster");
@@ -81,7 +81,7 @@ namespace Tauron.Application.Master.Commands
             {
                 _actorDiscovery = ClusterActorDiscovery.Get(system).Discovery;
 
-                this.Flow<ActorDown>()
+                Flow<ActorDown>(this)
                     .From.Action(ad =>
                     {
                         Log.Info("Remove Killswitch Actor {Name}", ad.Actor.Path);
@@ -90,7 +90,7 @@ namespace Tauron.Application.Master.Commands
                             .When(i => i != -1, i => _actors.RemoveAt(i));
                     });
 
-                this.Flow<ActorUp>()
+                Flow<ActorUp>(this)
                     .From.Func(au =>
                     {
                         Log.Info("New killswitch Actor {Name}", au.Actor.Path);
@@ -107,21 +107,21 @@ namespace Tauron.Application.Master.Commands
                             .When(i => i != null, element => element.RecpientType = r.RecpientType);
                     });
 
-                this.Flow<RequestRegistration>()
+                Flow<RequestRegistration>(this)
                     .From.Func(() => new RespondRegistration(KillRecpientType.Seed))
                     .ToSender();
 
-                this.Flow<KillClusterMsg>()
+                Flow<KillClusterMsg>(this)
                     .From.Action(RunKillCluster);
 
-                this.Flow<KillNode>()
+                Flow<KillNode>(this)
                     .From.Action(_ =>
                     {
                         Log.Info("Leaving Cluster");
                         Cluster.Get(Context.System).LeaveAsync();
                     });
 
-                this.Flow<ActorUp>()
+                Flow<ActorUp>(this)
                     .From.Action(au => au.When(u => u.Tag == "None", up =>
                     {
                         Log.Info("Incoming kill Watcher {Name}", up.Actor.Path);

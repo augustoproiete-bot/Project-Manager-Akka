@@ -20,10 +20,10 @@ namespace ServiceHost.SharedApi
         {
             var hostName = configuration["applicationName"];
 
-            this.Flow<GetHostName>()
+            Flow<GetHostName>(this)
                .From.Func(() => new GetHostNameResult(hostName)).ToSender();
 
-            this.Flow<CommandBase>()
+            Flow<CommandBase>(this)
                .From.Action(cb =>
                 {
                     // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault

@@ -40,6 +40,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\External\LoadingIndicators.WPF\LoadingIndicators.WPF.csproj" />
+    <ProjectReference Include="..\ServiceManager.ProjectDeploment\ServiceManager.ProjectDeploment.csproj" />
     <ProjectReference Include="..\ServiceManager.ProjectRepository\ServiceManager.ProjectRepository.csproj" />
     <ProjectReference Include="..\Servicemnager.Networking\Servicemnager.Networking.csproj" />
     <ProjectReference Include="..\Tauron.Application.AkkaNode.Boottrap\Tauron.Application.AkkaNode.Boottrap.csproj" />

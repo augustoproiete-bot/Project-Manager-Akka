@@ -9,14 +9,25 @@ namespace Tauron.Application.ServiceManager.Core
 {
     public static class CommandQueryBuilderExtensions
     {
-        public static CommandQuery FromEvent<TEvent>(this CommandQueryBuilder builder, Task<bool> currentValue, Func<TEvent, bool> check)
+        public static CommandQuery FromEvent<TEvent>(this CommandQueryBuilder builder, Task<TEvent> currentValue, Func<TEvent?, bool> check)
+            where TEvent : class
         {
             var context = ExposedReceiveActor.ExposedContext;
 
-            context.ActorOf(dsl =>
+            return builder.FromExternal(check, action =>
             {
-                dsl.OnPreStart += actorContext => actorContext.System.EventStream.Subscribe<TEvent>(actorContext.Self);
-                dsl.Receive<TEvent>();
+                currentValue.ContinueWith(t =>
+                {
+                    if(t.IsCompleted)
+                        action(t.Result);
+                });
+
+                context.ActorOf(dsl =>
+                {
+                    dsl.OnPreStart += actorContext => actorContext.System.EventStream.Subscribe<TEvent>(actorContext.Self);
+                    dsl.OnPostStop += actorContext => actorContext.System.EventStream.Unsubscribe(actorContext.Self);
+                    dsl.Receive<TEvent>((e, c) => action(e));
+                });
             });
         }
     }

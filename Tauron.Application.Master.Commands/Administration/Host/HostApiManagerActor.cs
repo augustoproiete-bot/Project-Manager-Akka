@@ -24,14 +24,14 @@ namespace Tauron.Application.Master.Commands.Administration.Host
                     subscribe.intrest.Tell(new HostEntryChanged(hostEntry.Name, path, false));
             };
 
-            this.Flow<ActorDown>()
+            Flow<ActorDown>(this)
                 .From.Action(ad =>
                 {
                     if (_entries.Remove(ad.Actor.Path, out var entry))
                         subscribeAbility.Send(new HostEntryChanged(entry.Name, entry.Actor.Path, true));
                 });
 
-            this.Flow<ActorUp>()
+            Flow<ActorUp>(this)
                 .From.Func(au =>
                 {
                     _entries[au.Actor.Path] = new HostEntry(string.Empty, au.Actor);

@@ -84,7 +84,7 @@ namespace Tauron.Application.Master.Commands
 
             private void Initializing()
             {
-                this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
+                Flow<ClusterActorDiscoveryMessage.ActorUp>(this)
                    .From.Action(au =>
                                 {
                                     Log.Info("New Service Registry {Name}", au.Actor.Path);
@@ -93,7 +93,7 @@ namespace Tauron.Application.Master.Commands
                                     Stash.UnstashAll();
                                 });
 
-                this.Flow<ClusterActorDiscoveryMessage.ActorDown>()
+                Flow<ClusterActorDiscoveryMessage.ActorDown>(this)
                    .From.Action(ad =>
                                 {
                                     Log.Info("Remove Service Registry {Name}", ad.Actor.Path);
@@ -105,14 +105,14 @@ namespace Tauron.Application.Master.Commands
 
             private void Running()
             {
-                this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
+                Flow<ClusterActorDiscoveryMessage.ActorUp>(this)
                    .From.Action(au =>
                                 {
                                     Log.Info("New Service Registry {Name}", au.Actor.Path);
                                     _serviceRegistrys.Add(au.Actor);
                                 });
 
-                this.Flow<ClusterActorDiscoveryMessage.ActorDown>()
+                Flow<ClusterActorDiscoveryMessage.ActorDown>(this)
                    .From.Action(ad =>
                                 {
                                     Log.Info("Remove Service Registry {Name}", ad.Actor.Path);
@@ -176,7 +176,7 @@ namespace Tauron.Application.Master.Commands
                     _services[service.Address] = service.Name;
                 });
 
-                this.Flow<QueryRegistratedServices>()
+                Flow<QueryRegistratedServices>(this)
                    .From.Func(qrs =>
                    {
                        Log.Info("Return Registrated Services");
@@ -189,7 +189,7 @@ namespace Tauron.Application.Master.Commands
                            .ToImmutableList());
                    }).ToSender();
 
-                this.Flow<ClusterActorDiscoveryMessage.ActorUp>()
+                Flow<ClusterActorDiscoveryMessage.ActorUp>(this)
                    .From.Action(When<ClusterActorDiscoveryMessage.ActorUp>(au => !au.Actor.Equals(Self), au =>
                    {
                        Log.Info("Send Sync New Service registry");
@@ -198,7 +198,7 @@ namespace Tauron.Application.Master.Commands
 
                 Receive<ClusterActorDiscoveryMessage.ActorDown>(_ => { });
 
-                this.Flow<SyncRegistry>()
+                Flow<SyncRegistry>(this)
                    .From.Action(sr =>
                    {
                        Log.Info("Sync Services");

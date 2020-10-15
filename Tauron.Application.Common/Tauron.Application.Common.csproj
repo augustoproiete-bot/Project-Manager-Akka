@@ -11,6 +11,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ActorFlowBuilder - Backup.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="ActorFlowBuilder - Backup.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Akka" Version="1.4.10" />
     <PackageReference Include="Akka.DI.AutoFac" Version="1.4.1" />
     <PackageReference Include="Akka.DI.Core" Version="1.4.10" />
