@@ -228,6 +228,12 @@ namespace Tauron
 
         public EnterFlow<TStart> AndBuild() => _flow.Build();
 
+        public ActionFinisher<TRecieve, TStart> Then<TResult>(Action<RunSelector<TResult, TStart>> builder)
+        {
+            builder(new RunSelector<TResult, TStart>(_flow));
+            return this;
+        }
+
         private sealed class ActionRespond
         {
             private readonly Action<TRecieve> _runner;
@@ -290,6 +296,7 @@ namespace Tauron
         public ActorFlowBuilder<TStart> Flow { get; }
 
         public void Then(Action<RunSelector<TNext, TStart>> builder) => builder(new RunSelector<TNext, TStart>(Flow));
+        public void Then<TMsg>(Action<RunSelector<TMsg, TStart>> builder) => builder(new RunSelector<TMsg, TStart>(Flow));
     }
 
     [PublicAPI]
@@ -421,16 +428,14 @@ namespace Tauron
     public sealed class ActorFlowBuilder<TStart> : RunSelector<TStart, TStart>
     {
         private readonly List<Func<EnterFlow<TStart>>> _delgators = new List<Func<EnterFlow<TStart>>>();
-        private readonly Action<EnterFlow<TStart>>? _onReturn;
 
         private int _recieves;
 
-        public ActorFlowBuilder(IExposedReceiveActor actor, Action<EnterFlow<TStart>>? onReturn)    
+        public ActorFlowBuilder(IExposedReceiveActor actor)    
             : base(null)
         {
             Flow = this;
             Actor = actor;
-            _onReturn = onReturn;
         }
 
         public IExposedReceiveActor Actor { get; }
@@ -446,7 +451,6 @@ namespace Tauron
             actorRegister(Actor.Exposed);
         }
 
-
         internal EnterFlow<TStart> Build()
         {
             EnterFlow<TStart>? func = null;
@@ -455,6 +459,10 @@ namespace Tauron
 
             return _delgators.Aggregate(func, (current, delgator) => current.Combine(delgator())) ?? (s => { });
         }
+
+        public TReturn OnTrigger<TReturn>(Func<EnterFlow<TStart>, TReturn> config) => config(Build());
+
+        public void OnTrigger(Action<EnterFlow<TStart>> config) => config(Build());
 
         private sealed class EntryPoint
         {

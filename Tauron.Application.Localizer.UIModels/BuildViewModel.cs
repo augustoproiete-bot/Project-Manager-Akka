@@ -107,22 +107,23 @@ namespace Tauron.Application.Localizer.UIModels
             #region Import Integration
 
             Importintegration = RegisterProperty<bool>(nameof(Importintegration))
-               .WithDefaultValue(true).ThenFlow(b => new ChangeIntigrate(b), this)
-               .From.Mutate(workspace.Build).With(bm => bm.Intigrate, bm => ci => bm.SetIntigrate(ci.ToIntigrate)).ToSelf()
-#pragma warning disable CS8604 // Mögliches Nullverweisargument.
-               .Then.Action(ii => Importintegration += ii.IsIntigrated)
-#pragma warning restore CS8604 // Mögliches Nullverweisargument.
-               .AndReturn();
-
+               .WithDefaultValue(true).ThenFlow(b => new ChangeIntigrate(b), this, b =>
+                {
+                    b.Mutate(workspace.Build).With(bm => bm.Intigrate, bm => ci => bm.SetIntigrate(ci.ToIntigrate)).ToSelf()
+                       .Then(b2 => b2.Action(ii => Importintegration!.Set(ii.IsIntigrated)));
+                });
+            
             #endregion
 
             #region Projects
 
             Projects = this.RegisterUiCollection<BuildProjectViewModel>(nameof(Projects)).AndAsync();
 
-            var flow = this.Flow<ProjectBuildpathRequest>()
-                .From.Mutate(workspace.Build).With(bm => bm.ProjectPath, bm => r => bm.SetProjectPath(r.Project, r.TargetPath)).ToSelf()
-                .Then.Action(UpdatePath).AndBuild();
+            var flow = EnterFlow<ProjectBuildpathRequest>(b =>
+            {
+                b.Mutate(workspace.Build).With(bm => bm.ProjectPath, bm => r => bm.SetProjectPath(r.Project, r.TargetPath)).ToSelf()
+                   .Then(b2 => b2.Action(UpdatePath).AndBuild());
+            });
 
             BuildProjectViewModel GetBuildModel(Project p, ProjectFile file)
                 => new BuildProjectViewModel(flow ?? throw new InvalidOperationException("Flow was null"), file.FindProjectPath(p), p.ProjectName, localizer, dialogFactory, file.Source);
@@ -162,7 +163,7 @@ namespace Tauron.Application.Localizer.UIModels
             TerminalMessages = this.RegisterUiCollection<string>(nameof(TerminalMessages));
             var buildMessageLocalizer = new BuildMessageLocalizer(localizer);
 
-            this.Flow<BuildMessage>().From.Action(AddMessage);
+            Flow<BuildMessage>(b => b.Action(AddMessage));
 
             void ClearTerminal() => UICall(TerminalMessages.Clear);
 
@@ -189,10 +190,12 @@ namespace Tauron.Application.Localizer.UIModels
                                     })
                .WithExecute(ClearTerminal)
                .WithExecute(() => canBuild.Value = false)
-               .ThenFlow(() => new BuildRequest(manager.StartOperation(localizer.MainWindowodelBuildProjectOperation).Id, workspace.ProjectFile))
-               .From.External<BuildCompled>(() => workspace.ProjectFile.Operator)
-               .Then.Action(BuildCompled)
-               .AndReturn().ThenRegister("StartBuild");
+               .ThenFlow(() => new BuildRequest(manager.StartOperation(localizer.MainWindowodelBuildProjectOperation).Id, workspace.ProjectFile), b =>
+                {
+                    b.External<BuildCompled>(() => workspace.ProjectFile.Operator)
+                       .Then(b2 => b2.Action(BuildCompled));
+                })
+               .ThenRegister("StartBuild");
 
             void BuildCompled(BuildCompled msg)
             {

@@ -35,15 +35,13 @@ namespace Tauron.Application.AkkNode.Services.Core
             => _actor = actor;
 
         public void MakeReceive()
-        { 
-            ExposedReceiveActor.Flow<Terminated>(_actor)
-                .From.Action(t => Terminated?.Invoke(t));
+        {
+            _actor.Flow<Terminated>(b => b.Action(t => Terminated?.Invoke(t)));
 
-            ExposedReceiveActor.Flow<KeyHint>(_actor)
-                .From.Action(kh => _sunscriptions.Remove(kh.Key, kh.Target));
+            _actor.Flow<KeyHint>(b => b.Action(kh => _sunscriptions.Remove(kh.Key, kh.Target)));
 
-            ExposedReceiveActor.Flow<EventSubscribe>(_actor)
-                .From.Action(s =>
+            _actor.Flow<EventSubscribe>(b =>
+                b.Action(s =>
                 {
                     ExposedReceiveActor.ExposedContext
                         .Sender.When(ar => !ar.Equals(ActorRefs.Nobody),
@@ -54,10 +52,10 @@ namespace Tauron.Application.AkkNode.Services.Core
                                 _sunscriptions.Add(s.Event, sender);
                                 NewSubscription?.Invoke(new InternalEventSubscription(sender, s.Event));
                             });
-                });
+                }));
 
-            ExposedReceiveActor.Flow<EventUnSubscribe>(_actor)
-                .From.Action(s =>
+            _actor.Flow<EventUnSubscribe>(b =>
+                b.Action(s =>
                 {
                     ExposedReceiveActor.ExposedContext
                         .Sender.When(ar => !ar.Equals(ActorRefs.Nobody),
@@ -66,7 +64,7 @@ namespace Tauron.Application.AkkNode.Services.Core
                                 ActorContext.Unwatch(sender);
                                 _sunscriptions.Remove(s.Event, sender);
                             });
-                });
+                }));
         }
 
         public TType Send<TType>(TType payload)
@@ -87,13 +85,13 @@ namespace Tauron.Application.AkkNode.Services.Core
 
         public sealed class InternalEventSubscription
         {
-            public IActorRef intrest { get; }
+            public IActorRef Intrest { get; }
 
             public Type Type { get; }
 
             public InternalEventSubscription(IActorRef intrest, Type type)
             {
-                this.intrest = intrest;
+                this.Intrest = intrest;
                 Type = type;
             }
         }

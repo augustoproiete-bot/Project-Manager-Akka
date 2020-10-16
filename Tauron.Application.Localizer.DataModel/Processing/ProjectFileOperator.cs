@@ -8,14 +8,11 @@ namespace Tauron.Application.Localizer.DataModel.Processing
     {
         public ProjectFileOperator()
         {
-            Flow<LoadProjectFile>(this)
-                .From.Func(lp => new InternalLoadProject(lp, Context.Sender)).ToRef(ac => ac.ActorOf<ProjectLoader>());
+            Flow<LoadProjectFile>(b => b.Func(lp => new InternalLoadProject(lp, Context.Sender)).ToRef(ac => ac.ActorOf<ProjectLoader>()));
 
-            Flow<SaveProject>(this)
-               .From.External(c => c.GetOrAdd<ProjectSaver>("Saver"), true);
+            Flow<SaveProject>(b => b.External(c => c.GetOrAdd<ProjectSaver>("Saver"), true));
 
-            Flow<BuildRequest>(this)
-               .From.External(c => c.GetOrAdd<BuildActorCoordinator>("Builder"), true);
+            Flow<BuildRequest>(b => b.External(c => c.GetOrAdd<BuildActorCoordinator>("Builder"), true));
         }
     }
 }

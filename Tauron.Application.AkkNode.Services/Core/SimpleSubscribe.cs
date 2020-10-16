@@ -8,9 +8,9 @@ namespace Tauron.Application.AkkNode.Services.Core
     [PublicAPI]
     public static class SimpleSubscribeFlow
     {
-        public sealed class EventRecieve<TNew, TStart, TParent> : ReceiveBuilderBase<TNew, TStart, TParent>
+        public sealed class EventRecieve<TNew, TStart> : ReceiveBuilderBase<TNew, TStart>
         { 
-            public EventRecieve(ActorFlowBuilder<TStart, TParent> flow, IActorRef target) 
+            public EventRecieve(ActorFlowBuilder<TStart> flow, IActorRef target) 
                 : base(flow) =>
                 flow.Register(ad => target.Tell(new EventSubscribe(typeof(TNew))));
         }
@@ -25,8 +25,8 @@ namespace Tauron.Application.AkkNode.Services.Core
         //        => new EventRecieve<TNew, TStart, TParent>(_selector.Flow, target);
         //}
 
-        public static EventRecieve<TRecieve, TStart, TParent> Event<TRecieve, TStart, TParent>(this RunSelector<TRecieve, TStart, TParent> selector, IActorRef target)
-            => new EventRecieve<TRecieve, TStart, TParent>(selector.Flow, target);
+        public static EventRecieve<TRecieve, TStart> Event<TRecieve, TStart>(this RunSelector<TRecieve, TStart> selector, IActorRef target)
+            => new EventRecieve<TRecieve, TStart>(selector.Flow, target);
     }
 
     [PublicAPI]

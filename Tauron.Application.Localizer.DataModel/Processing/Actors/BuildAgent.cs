@@ -12,8 +12,7 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
     {
         public BuildAgent()
         {
-            Flow<PreparedBuild>(this)
-                .From.Func(OnBuild).Forward.ToParent();
+            Flow<PreparedBuild>(b => b.Func(OnBuild).Forward.ToParent());
         }
 
         private AgentCompled OnBuild(PreparedBuild build)

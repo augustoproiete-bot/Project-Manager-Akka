@@ -21,30 +21,30 @@ namespace Tauron.Application.Master.Commands.Administration.Host
             subscribeAbility.NewSubscription += subscribe =>
             {
                 foreach (var (path, hostEntry) in _entries) 
-                    subscribe.intrest.Tell(new HostEntryChanged(hostEntry.Name, path, false));
+                    subscribe.Intrest.Tell(new HostEntryChanged(hostEntry.Name, path, false));
             };
 
-            Flow<ActorDown>(this)
-                .From.Action(ad =>
+            Flow<ActorDown>(b =>
+                b.Action(ad =>
                 {
                     if (_entries.Remove(ad.Actor.Path, out var entry))
                         subscribeAbility.Send(new HostEntryChanged(entry.Name, entry.Actor.Path, true));
-                });
+                }));
 
-            Flow<ActorUp>(this)
-                .From.Func(au =>
-                {
-                    _entries[au.Actor.Path] = new HostEntry(string.Empty, au.Actor);
-                    subscribeAbility.Send(new HostEntryChanged(string.Empty, au.Actor.Path, false));
-                    return new GetHostName();
-                }).ToRefFromMsg(au => au.Actor)
-                .AndRespondTo<GetHostNameResult>().Action(r =>
-                {
-                    if (!_entries.TryGetValue(Sender.Path, out var entry)) return;
+            Flow<ActorUp>(b =>
+                b.Func(au =>
+                    {
+                        _entries[au.Actor.Path] = new HostEntry(string.Empty, au.Actor);
+                        subscribeAbility.Send(new HostEntryChanged(string.Empty, au.Actor.Path, false));
+                        return new GetHostName();
+                    }).ToRefFromMsg(au => au.Actor)
+                   .Then<GetHostNameResult>(b1 => b1.Action(r =>
+                    {
+                        if (!_entries.TryGetValue(Sender.Path, out var entry)) return;
 
-                    entry.Name = r.Name;
-                    subscribeAbility.Send(new HostEntryChanged(entry.Name, entry.Actor.Path, false));
-                });
+                        entry.Name = r.Name;
+                        subscribeAbility.Send(new HostEntryChanged(entry.Name, entry.Actor.Path, false));
+                    })));
 
             Receive<CommandBase>(c =>
             {

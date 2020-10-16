@@ -98,10 +98,11 @@ namespace Tauron.Application.ServiceManager.ViewModels
             this.SubscribeToEvent<AddSeedUrl>(e => AddSeedEntry(new DialogSeedEntry(e.Url)));
 
             NewCommad
-               .ThenFlow(this.ShowDialog<IAddSeedUrlDialog, DialogSeedEntry,  IEnumerable<DialogSeedEntry>>(
-                    () => Models.Select(m => new DialogSeedEntry(m.Url))))
-               .From.Action(AddSeedEntry)
-               .AndReturn().ThenRegister("AddSeedUrl");
+               .ThenFlow(
+                    this.ShowDialog<IAddSeedUrlDialog, DialogSeedEntry, IEnumerable<DialogSeedEntry>>(
+                        () => Models.Select(m => new DialogSeedEntry(m.Url))),
+                    b => b.Action(AddSeedEntry))
+               .ThenRegister("AddSeedUrl");
 
             #endregion
 
@@ -121,9 +122,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
             NewCommad
                .WithCanExecute(b => b.FromProperty(SelectIndex, i => i > -1))
-               .ThenFlow(() => Models.ElementAt(SelectIndex))
-               .From.Action(DoRemove)
-               .AndReturn()
+               .ThenFlow(() => Models.ElementAt(SelectIndex),
+                    b => b.Action(DoRemove))
                .ThenRegister("RemoveSeed");
 
             #endregion

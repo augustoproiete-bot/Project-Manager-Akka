@@ -42,24 +42,24 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
             HostEntries = this.RegisterUiCollection<UIHostEntry>(nameof(HostEntries)).AndAsync();
 
-            this.Flow<HostEntryChanged>()
-                .From.Action(he =>
+            Flow<HostEntryChanged>(b =>
+            {
+                b.Action(he =>
                 {
                     var entry = HostEntries.FirstOrDefault(e => e.ActorPath == he.Path);
                     if (he.Removed)
                     {
-                        if (entry != null)
-                        {
-                            Log.Info("Removing Host Entry {Name}", entry.Name);
-                            HostEntries.Remove(entry);
-                        }
+                        if (entry == null) return;
+                        
+                        Log.Info("Removing Host Entry {Name}", entry.Name);
+                        HostEntries.Remove(entry);
                     }
                     else
                     {
                         if (entry == null)
                         {
                             Log.Info("Addinf Host Entry {Path}", he.Path);
-                            HostEntries.Add(new UIHostEntry(he.Path, he.Name, showApps, localizer, _hostConnector, commandExecutor, 
+                            HostEntries.Add(new UIHostEntry(he.Path, he.Name, showApps, localizer, _hostConnector, commandExecutor,
                                 InvalidateRequerySuggested, this, _hostConnector));
                         }
                         else
@@ -69,6 +69,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
                         }
                     }
                 });
+            });
         }
 
         protected override void PreStart()

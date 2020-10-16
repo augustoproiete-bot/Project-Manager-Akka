@@ -15,22 +15,17 @@ namespace Tauron.Application.Workshop
             actor.Exposed.Receive<TData>((data, context) => action(data));
         }
 
-        public static MutateClass<TRecieve, TStart, TParent, TMutator> Mutate<TRecieve, TStart, TParent, TMutator>(
-            this RunSelector<TRecieve, TStart, TParent> selector, TMutator mutator)
-        {
-            return new MutateClass<TRecieve, TStart, TParent, TMutator>(mutator, selector);
-        }
+        public static MutateClass<TRecieve, TStart, TMutator> Mutate<TRecieve, TStart, TMutator>(
+            this RunSelector<TRecieve, TStart> selector, TMutator mutator) => new MutateClass<TRecieve, TStart, TMutator>(mutator, selector);
 
-        public static EventSourceTargetSelector<TRespond, TStart, TParent> EventSource<TRecieve, TStart, TParent, TRespond>(this RunSelector<TRecieve, TStart, TParent> selector, IEventSource<TRespond> source)
-        {
-            return new EventSourceTargetSelector<TRespond, TStart, TParent>(selector.Flow, source);
-        }
+        public static EventSourceTargetSelector<TRespond, TStart> EventSource<TRecieve, TStart, TRespond>(this RunSelector<TRecieve, TStart> selector, IEventSource<TRespond> source) 
+            => new EventSourceTargetSelector<TRespond, TStart>(selector.Flow, source);
 
         #region Mutate
 
-        public sealed class MutateReceiveBuilder<TNext, TStart, TParent, TRecieve> : ReceiveBuilderBase<TNext, TStart, TParent>
+        public sealed class MutateReceiveBuilder<TNext, TStart, TRecieve> : ReceiveBuilderBase<TNext, TStart>
         {
-            public MutateReceiveBuilder([NotNull] ActorFlowBuilder<TStart, TParent> flow, IEventSource<TNext> eventSource, Action<TRecieve> runner, Func<IActorContext, IActorRef> target)
+            public MutateReceiveBuilder([NotNull] ActorFlowBuilder<TStart> flow, IEventSource<TNext> eventSource, Action<TRecieve> runner, Func<IActorContext, IActorRef> target)
                 : base(flow)
             {
                 flow.Register(e =>
@@ -44,87 +39,67 @@ namespace Tauron.Application.Workshop
             {
                 private readonly Action<TRecieve> _runner;
 
-                public RecieveHelper(Action<TRecieve> runner)
-                {
-                    _runner = runner;
-                }
+                public RecieveHelper(Action<TRecieve> runner) => _runner = runner;
 
-                public void Run(TRecieve recieve, IActorContext context)
-                {
-                    _runner(recieve);
-                }
+                public void Run(TRecieve recieve, IActorContext context) => _runner(recieve);
             }
         }
 
-        public sealed class MutateTargetSelector<TNext, TStart, TParent, TRecieve> 
-            : AbastractTargetSelector<MutateReceiveBuilder<TNext, TStart, TParent, TRecieve>, TStart, TParent>
+        public sealed class MutateTargetSelector<TNext, TStart, TRecieve> 
+            : AbastractTargetSelector<MutateReceiveBuilder<TNext, TStart, TRecieve>, TStart>
         {
             private readonly IEventSource<TNext> _eventSource;
             private readonly Action<TRecieve> _runner;
 
-            public MutateTargetSelector(ActorFlowBuilder<TStart, TParent> flow, IEventSource<TNext> eventSource, Action<TRecieve> runner) : base(flow)
+            public MutateTargetSelector(ActorFlowBuilder<TStart> flow, IEventSource<TNext> eventSource, Action<TRecieve> runner) : base(flow)
             {
                 _eventSource = eventSource;
                 _runner = runner;
             }
 
-            public override MutateReceiveBuilder<TNext, TStart, TParent, TRecieve> ToRef(Func<IActorContext, IActorRef> actorRef)
-            {
-                return new MutateReceiveBuilder<TNext, TStart, TParent, TRecieve>(Flow, _eventSource, _runner, actorRef);
-            }
+            public override MutateReceiveBuilder<TNext, TStart, TRecieve> ToRef(Func<IActorContext, IActorRef> actorRef) 
+                => new MutateReceiveBuilder<TNext, TStart, TRecieve>(Flow, _eventSource, _runner, actorRef);
         }
 
-        public sealed class MutateClass<TRecieve, TStart, TParent, TMutator>
+        public sealed class MutateClass<TRecieve, TStart, TMutator>
         {
             private readonly TMutator _mutator;
-            private readonly RunSelector<TRecieve, TStart, TParent> _selector;
+            private readonly RunSelector<TRecieve, TStart> _selector;
 
-            public MutateClass(TMutator mutator, RunSelector<TRecieve, TStart, TParent> selector)
+            public MutateClass(TMutator mutator, RunSelector<TRecieve, TStart> selector)
             {
                 _mutator = mutator;
                 _selector = selector;
             }
 
-            public MutateTargetSelector<TNext, TStart, TParent, TRecieve> With<TNext>(Func<TMutator, IEventSource<TNext>> eventSource, Func<TMutator, Action<TRecieve>> run)
-            {
-                return new MutateTargetSelector<TNext, TStart, TParent, TRecieve>(_selector.Flow, eventSource(_mutator), run(_mutator));
-            }
+            public MutateTargetSelector<TNext, TStart, TRecieve> With<TNext>(Func<TMutator, IEventSource<TNext>> eventSource, Func<TMutator, Action<TRecieve>> run) 
+                => new MutateTargetSelector<TNext, TStart, TRecieve>(_selector.Flow, eventSource(_mutator), run(_mutator));
 
-            public ActionFinisher<TRecieve, TStart, TParent> With(Func<TMutator, Action<TRecieve>> run)
-            {
-                return new ActionFinisher<TRecieve, TStart, TParent>(_selector.Flow, run(_mutator));
-            }
+            public ActionFinisher<TRecieve, TStart> With(Func<TMutator, Action<TRecieve>> run) 
+                => new ActionFinisher<TRecieve, TStart>(_selector.Flow, run(_mutator));
         }
 
         #endregion
 
         #region EventSource
 
-        public sealed class EventSourceReceiveBuilder<TEvent, TStart, TParent> : ReceiveBuilderBase<TEvent, TStart, TParent>
+        public sealed class EventSourceReceiveBuilder<TEvent, TStart> : ReceiveBuilderBase<TEvent, TStart>
         {
-            public EventSourceReceiveBuilder(ActorFlowBuilder<TStart, TParent> flow, Func<IActorContext, IActorRef> target, IEventSource<TEvent> evt)
-                : base(flow)
-            {
-                flow.Register(e => evt.RespondOn(target(ExposedReceiveActor.ExposedContext)));
-            }
+            public EventSourceReceiveBuilder(ActorFlowBuilder<TStart> flow, Func<IActorContext, IActorRef> target, IEventSource<TEvent> evt)
+                : base(flow) => flow.Register(e => evt.RespondOn(target(ExposedReceiveActor.ExposedContext)));
         }
 
-        public sealed class EventSourceTargetSelector<TEvent, TStart, TParent> 
-            : AbastractTargetSelector<EventSourceReceiveBuilder<TEvent, TStart, TParent>, TStart, TParent>
+        public sealed class EventSourceTargetSelector<TEvent, TStart> 
+            : AbastractTargetSelector<EventSourceReceiveBuilder<TEvent, TStart>, TStart>
         {
             private readonly IEventSource<TEvent> _source;
 
 
-            public EventSourceTargetSelector(ActorFlowBuilder<TStart, TParent> flow, IEventSource<TEvent> source)
-                : base(flow)
-            {
-                _source = source;
-            }
+            public EventSourceTargetSelector(ActorFlowBuilder<TStart> flow, IEventSource<TEvent> source)
+                : base(flow) => _source = source;
 
-            public override EventSourceReceiveBuilder<TEvent, TStart, TParent> ToRef(Func<IActorContext, IActorRef> actorRef)
-            {
-                return new EventSourceReceiveBuilder<TEvent, TStart, TParent>(Flow, actorRef, _source);
-            }
+            public override EventSourceReceiveBuilder<TEvent, TStart> ToRef(Func<IActorContext, IActorRef> actorRef) 
+                => new EventSourceReceiveBuilder<TEvent, TStart>(Flow, actorRef, _source);
         }
 
         #endregion

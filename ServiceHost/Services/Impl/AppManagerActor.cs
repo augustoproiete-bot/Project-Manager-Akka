@@ -60,50 +60,51 @@ namespace ServiceHost.Services.Impl
                 }
             });
 
-            Flow<StopApps>(this)
-               .From.Action(() => Context.GetChildren().Foreach(r => r.Tell(new InternalStopApp())));
+            Flow<StopApps>(b => b.Action(() => Context.GetChildren().Foreach(r => r.Tell(new InternalStopApp()))));
 
-            Flow<StopApp>(this)
-               .From.Action(s =>
+            Flow<StopApp>(b =>
+                b.Action(s =>
                 {
                     var child = Context.Child(s.Name);
                     if (child.IsNobody())
                         Sender.Tell(new StopResponse(s.Name, false));
                     else
                         child.Forward(new InternalStopApp());
-                });
+                }));
 
-            Flow<StopResponse>(this)
-               .From.Action(r => ability.Send(r));
+            Flow<StopResponse>(b => b.Action(r => ability.Send(r)));
 
-            Flow<StartApps>(this)
-               .From.Action(sa => 
-                    appRegistry.Actor
-                   .Ask<AllAppsResponse>(new AllAppsQuery())
-                   .PipeTo(Self, Sender, r => new InternalFilterApps(sa.AppType, r.Apps)))
-               .AndRespondTo<InternalFilterApps>().Action(fa => fa.Names.Foreach(s => Self.Tell(new InternalFilterApp(fa.AppType, s))))
-               .AndRespondTo<InternalFilterApp>().Action(fa => 
-                    appRegistry.Actor
-                   .Ask<InstalledAppRespond>(new InstalledAppQuery(fa.Name))
-                   .ContinueWith(t =>
+            Flow<StartApps>(b =>
+            {
+                b.Action(sa =>
+                        appRegistry.Actor
+                           .Ask<AllAppsResponse>(new AllAppsQuery())
+                           .PipeTo(Self, Sender, r => new InternalFilterApps(sa.AppType, r.Apps)))
+                   .Then<InternalFilterApps>(b1 => b1.Action(fa => fa.Names.Foreach(s => Self.Tell(new InternalFilterApp(fa.AppType, s)))))
+                   .Then<InternalFilterApp>(
+                        b1 => b1.Action(fa =>
+                            appRegistry.Actor
+                               .Ask<InstalledAppRespond>(new InstalledAppQuery(fa.Name))
+                               .ContinueWith(t =>
+                                {
+                                    if (!t.IsCompletedSuccessfully && t.Result.Fault && t.Result.App.IsEmpty())
+                                        return;
+
+                                    var data = t.Result.App;
+                                    if (data.AppType != fa.AppType)
+                                        return;
+
+                                    Self.Tell(new StartApp(data));
+                                })))
+                   .Then<StartApp>(b1 => b1.Action(sa =>
                     {
-                        if(!t.IsCompletedSuccessfully && t.Result.Fault && t.Result.App.IsEmpty())
+                        if (sa.App.IsEmpty()) return;
+                        if (!Context.Child(sa.App.Name).IsNobody())
                             return;
 
-                        var data = t.Result.App;
-                        if(data.AppType != fa.AppType)
-                            return;
-
-                        Self.Tell(new StartApp(data));
-                    }))
-               .AndRespondTo<StartApp>().Action(sa =>
-                {
-                    if(sa.App.IsEmpty()) return;
-                    if (!Context.Child(sa.App.Name).IsNobody())
-                        return;
-
-                    Context.ActorOf(Props.Create<AppProcessActor>(sa.App)).Tell(new InternalStartApp());
-                });
+                        Context.ActorOf(Props.Create<AppProcessActor>(sa.App)).Tell(new InternalStartApp());
+                    }));
+            });
 
             Receive<Status.Failure>(f => Log.Error(f.Cause, "Error while processing message"));
 
@@ -121,12 +122,11 @@ namespace ServiceHost.Services.Impl
                     });
             });
 
-            Flow<StartAllApps>(this)
-                .From.Func(_ =>
-                {
-                    Self.Tell(new StartApps(AppType.Cluster));
-                    return new OperationResponse(true);
-                }).ToSender();
+            Flow<StartAllApps>(b => b.Func(_ =>
+            {
+                Self.Tell(new StartApps(AppType.Cluster));
+                return new OperationResponse(true);
+            }).ToSender());
 
             Receive<QueryAppStaus>(s =>
             {

@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using ServiceHost.ApplicationRegistry;
 using ServiceHost.Installer;
 using ServiceHost.Services;
-using Tauron;
 using Tauron.Akka;
 using Tauron.Application.Master.Commands.Administration.Host;
 using static Tauron.Application.Master.Commands.Administration.Host.InternalHostMessages;
@@ -20,26 +19,24 @@ namespace ServiceHost.SharedApi
         {
             var hostName = configuration["applicationName"];
 
-            Flow<GetHostName>(this)
-               .From.Func(() => new GetHostNameResult(hostName)).ToSender();
+            Flow<GetHostName>(b => b.Func(() => new GetHostNameResult(hostName)).ToSender());
 
-            Flow<CommandBase>(this)
-               .From.Action(cb =>
+            Flow<CommandBase>(b => b.Action(cb =>
+            {
+                // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+                switch (cb.Type)
                 {
-                    // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
-                    switch (cb.Type)
-                    {
-                        case CommandType.AppManager:
-                            appManager.Value.Actor.Forward(cb);
-                            break;
-                        case CommandType.AppRegistry:
-                            appRegistry.Value.Actor.Forward(cb);
-                            break;
-                        case CommandType.Installer:
-                            installer.Value.Actor.Forward(cb);
-                            break;
-                    }
-                });
+                    case CommandType.AppManager:
+                        appManager.Value.Actor.Forward(cb);
+                        break;
+                    case CommandType.AppRegistry:
+                        appRegistry.Value.Actor.Forward(cb);
+                        break;
+                    case CommandType.Installer:
+                        installer.Value.Actor.Forward(cb);
+                        break;
+                }
+            }));
         }
 
         protected override void PreStart()

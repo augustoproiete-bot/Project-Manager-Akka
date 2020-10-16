@@ -84,64 +84,64 @@ namespace Tauron.Application.Master.Commands
 
             private void Initializing()
             {
-                Flow<ClusterActorDiscoveryMessage.ActorUp>(this)
-                   .From.Action(au =>
-                                {
-                                    Log.Info("New Service Registry {Name}", au.Actor.Path);
-                                    _serviceRegistrys.Add(au.Actor);
-                                    Become(Running);
-                                    Stash.UnstashAll();
-                                });
+                Flow<ClusterActorDiscoveryMessage.ActorUp>(b =>
+                    b.Action(au =>
+                    {
+                        Log.Info("New Service Registry {Name}", au.Actor.Path);
+                        _serviceRegistrys.Add(au.Actor);
+                        Become(Running);
+                        Stash.UnstashAll();
+                    }));
 
-                Flow<ClusterActorDiscoveryMessage.ActorDown>(this)
-                   .From.Action(ad =>
-                                {
-                                    Log.Info("Remove Service Registry {Name}", ad.Actor.Path);
-                                    _serviceRegistrys.Remove(ad.Actor);
-                                });
+                Flow<ClusterActorDiscoveryMessage.ActorDown>(b =>
+                    b.Action(ad =>
+                    {
+                        Log.Info("Remove Service Registry {Name}", ad.Actor.Path);
+                        _serviceRegistrys.Remove(ad.Actor);
+                    }));
 
                 ReceiveAny(m => Stash.Stash());
             }
 
             private void Running()
             {
-                Flow<ClusterActorDiscoveryMessage.ActorUp>(this)
-                   .From.Action(au =>
-                                {
-                                    Log.Info("New Service Registry {Name}", au.Actor.Path);
-                                    _serviceRegistrys.Add(au.Actor);
-                                });
+                Flow<ClusterActorDiscoveryMessage.ActorUp>(b =>
+                    b.Action(au =>
+                    {
+                        Log.Info("New Service Registry {Name}", au.Actor.Path);
+                        _serviceRegistrys.Add(au.Actor);
+                    }));
 
-                Flow<ClusterActorDiscoveryMessage.ActorDown>(this)
-                   .From.Action(ad =>
-                                {
-                                    Log.Info("Remove Service Registry {Name}", ad.Actor.Path);
-                                    _serviceRegistrys
-                                       .Remove(ad.Actor)
-                                       .When(i => i == 0, () => Become(Initializing));
-                                });
+                Flow<ClusterActorDiscoveryMessage.ActorDown>(b =>
+                    b.Action(ad =>
+                    {
+                        Log.Info("Remove Service Registry {Name}", ad.Actor.Path);
+                        _serviceRegistrys
+                           .Remove(ad.Actor)
+                           .When(i => i == 0, () => Become(Initializing));
+                    }));
 
                 Receive<RegisterService>(s =>
-                                         {
-                                             Log.Info("Register New Service {Name} -- {Adress}", s.Name, s.Address);
-                                             _serviceRegistrys.Foreach(r => r.Tell(s));
-                                         });
+                {
+                    Log.Info("Register New Service {Name} -- {Adress}", s.Name, s.Address);
+                    _serviceRegistrys.Foreach(r => r.Tell(s));
+                });
 
                 Receive<QueryRegistratedServices>(rs =>
-                                                  {
-                                                      Log.Info("Try Query Service");
-                                                      var target = _serviceRegistrys.Next();
-                                                      switch (target)
-                                                      {
-                                                          case null:
-                                                              Log.Warning("No Service Registry Registrated");
-                                                              Sender.Tell(new QueryRegistratedServicesResponse(ImmutableList<MemberService>.Empty));
-                                                              break;
-                                                          default:
-                                                              target.Forward(rs);
-                                                              break;
-                                                      }
-                                                  });
+                {
+                    Log.Info("Try Query Service");
+                    var target = _serviceRegistrys.Next();
+                    switch (target)
+                    {
+                        case null:
+                            Log.Warning("No Service Registry Registrated");
+                            Sender.Tell(new QueryRegistratedServicesResponse(ImmutableList<MemberService>.Empty));
+                            break;
+                        default:
+                            target.Forward(rs);
+                            break;
+                    }
+                });
             }
 
             protected override void PreStart()
@@ -176,34 +176,34 @@ namespace Tauron.Application.Master.Commands
                     _services[service.Address] = service.Name;
                 });
 
-                Flow<QueryRegistratedServices>(this)
-                   .From.Func(qrs =>
-                   {
-                       Log.Info("Return Registrated Services");
-                       var temp = _services
-                           .ToDictionary(service => MemberAddress.From(service.Key), 
-                               service => service.Value);
+                Flow<QueryRegistratedServices>(b =>
+                    b.Func(qrs =>
+                    {
+                        Log.Info("Return Registrated Services");
+                        var temp = _services
+                           .ToDictionary(service => MemberAddress.From(service.Key),
+                                service => service.Value);
 
-                       return new QueryRegistratedServicesResponse(temp
+                        return new QueryRegistratedServicesResponse(temp
                            .Select(e => new MemberService(e.Value, e.Key))
                            .ToImmutableList());
-                   }).ToSender();
+                    }).ToSender());
 
-                Flow<ClusterActorDiscoveryMessage.ActorUp>(this)
-                   .From.Action(When<ClusterActorDiscoveryMessage.ActorUp>(au => !au.Actor.Equals(Self), au =>
-                   {
-                       Log.Info("Send Sync New Service registry");
-                       au.Actor.Tell(new SyncRegistry(_services));
-                   }));
+                Flow<ClusterActorDiscoveryMessage.ActorUp>(b =>
+                    b.Action(When<ClusterActorDiscoveryMessage.ActorUp>(au => !au.Actor.Equals(Self), au =>
+                    {
+                        Log.Info("Send Sync New Service registry");
+                        au.Actor.Tell(new SyncRegistry(_services));
+                    })));
 
                 Receive<ClusterActorDiscoveryMessage.ActorDown>(_ => { });
 
-                Flow<SyncRegistry>(this)
-                   .From.Action(sr =>
-                   {
-                       Log.Info("Sync Services");
-                       sr.ToSync.Foreach(kp => _services[kp.Key] = kp.Value);
-                   });
+                Flow<SyncRegistry>(b =>
+                    b.Action(sr =>
+                    {
+                        Log.Info("Sync Services");
+                        sr.ToSync.Foreach(kp => _services[kp.Key] = kp.Value);
+                    }));
             }
 
             protected override void PreStart()

@@ -84,8 +84,8 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(b => b.FromProperty(last, file => file != null && !file.IsEmpty))
-                .ThenFlow(SaveAsProject).Send.ToModel(CenterView)
-                .Return().ThenRegister("SaveAs");
+                .ThenFlow(SaveAsProject, b => b.Send.ToModel(CenterView))
+                .ThenRegister("SaveAs");
 
             #endregion
 
@@ -115,7 +115,7 @@ namespace Tauron.Application.Localizer.UIModels
 
             SupplyNewProjectFile? ProjectLoaded(LoadedProjectFile obj)
             {
-                if (loadingOperation.Value != null)
+                if (loadingOperation!.Value != null)
                 {
                     if (obj.Ok)
                     {
@@ -138,10 +138,14 @@ namespace Tauron.Application.Localizer.UIModels
             }
 
             NewCommad.WithCanExecute(b => b.NotNull(loadingOperation))
-                .ThenFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenExistingFile)), OpenFileMode.OpenExistingFile))
-                .From.Func(SourceSelectedFunc).ToSelf()
-                .Then.Func(ProjectLoaded!).ToModel(CenterView)
-                .Then.Return().ThenRegister("OpenFile");
+               .ThenFlow(
+                    SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenExistingFile)), OpenFileMode.OpenExistingFile),
+                    b =>
+                    {
+                        b.Func(SourceSelectedFunc).ToSelf()
+                           .Then(b2 => b2.Func(ProjectLoaded!).ToModel(CenterView));
+                    })
+               .ThenRegister("OpenFile");
 
             #endregion
 
@@ -165,8 +169,10 @@ namespace Tauron.Application.Localizer.UIModels
 
             NewCommad.WithCanExecute(b => b.NotNull(loadingOperation))
                 //.ThenFlow(SourceSelected.From(() => "", OpenFileMode.OpenNewFile)).Send.ToSelf()
-                .ThenFlow(SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenNewFile)), OpenFileMode.OpenNewFile)).Send.ToSelf()
-                .Return().ThenRegister("NewFile");
+               .ThenFlow<SourceSelected>(
+                    SourceSelected.From(this.ShowDialog<IOpenFileDialog, string?>(TypedParameter.From(OpenFileMode.OpenNewFile)), OpenFileMode.OpenNewFile),
+                    b => b.Send.ToSelf())
+               .ThenRegister("NewFile");
 
             #endregion
 

@@ -33,8 +33,7 @@ namespace ServiceHost.ApplicationRegistry
             _subscribeAbility = new SubscribeAbility(this);
             _appsDirectory = Path.GetFullPath(configuration["AppsLocation"]);
 
-            Flow<AllAppsQuery>(this)
-                .From.Func(_ => new AllAppsResponse(_apps.Keys.ToArray())).ToSender();
+            Flow<AllAppsQuery>(b => b.Func(_ => new AllAppsResponse(_apps.Keys.ToArray())).ToSender());
 
             Receive<LoadData>(HandleLoadData);
             Receive<SaveData>(HandleSaveData);

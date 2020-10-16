@@ -14,9 +14,7 @@ namespace Tauron.Application.Localizer.UIModels.Messages
         public string? Source { get; }
         public OpenFileMode Mode { get; }
 
-        public static Func<SourceSelected> From(Func<string?> data, OpenFileMode mode)
-        {
-            return () => new SourceSelected(data(), mode);
-        }
+        public static Func<SourceSelected> From(Func<string?> data, OpenFileMode mode) 
+            => () => new SourceSelected(data(), mode);
     }
 }
