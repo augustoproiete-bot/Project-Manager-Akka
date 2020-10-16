@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using System.Windows.Data;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.DI.Core;
@@ -21,19 +20,22 @@ namespace Tauron.Application.ServiceManager.Core.Model
 
         public DeploymentServices(ActorSystem system) => _manager = system.ActorOf(system.DI().Props<ServiceManager>(), "Deployment_Service_Manager");
 
+        public CommandQuery IsReadyQuery(CommandQueryBuilder builder)
+            => builder.FromEvent(GetCurrent(), changed => changed?.Ready == true);
+
         public Task<DeploymentServicesChanged> GetCurrent()
             => _manager.Ask<DeploymentServicesChanged>(new GetCurrentState());
 
-        public void PushNewConnectionString(string url)
-            => _manager.Tell(new NewConnectionString(url));
+        public void PushNewConfigString(string configurationText)
+            => _manager.Tell(new NewConnectionString(configurationText));
 
         private sealed class Init { }
 
         private sealed class NewConnectionString
         {
-            public string Connection { get; }
+            public string Config { get; }
 
-            public NewConnectionString(string connection) => Connection = connection;
+            public NewConnectionString(string connection) => Config = connection;
         }
 
         private sealed class GetCurrentState
@@ -43,7 +45,6 @@ namespace Tauron.Application.ServiceManager.Core.Model
 
         private sealed class ServiceManager : ExposedReceiveActor
         {
-            private readonly AppConfig _config;
             private readonly IActorRef _dataTransfer;
             private readonly RepositoryApi _repositoryApi;
 
@@ -52,7 +53,6 @@ namespace Tauron.Application.ServiceManager.Core.Model
 
             public ServiceManager(AppConfig config)
             {
-                _config = config;
                 _dataTransfer = DataTransferManager.New(Context, "File_Coordination");
                 _repositoryApi = RepositoryApi.CreateProxy(Context.System);
 
@@ -82,7 +82,10 @@ namespace Tauron.Application.ServiceManager.Core.Model
                 {
                     try
                     {
-                        InitClient(s.Connection);
+                        var hConfig = ConfigurationFactory.ParseString(s.Config);
+                        var connectionString = hConfig.GetString("akka.persistence.journal.mongodb.connection-string");
+
+                        InitClient(connectionString);
                     }
                     catch (Exception e)
                     {

@@ -19,6 +19,8 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         public DeploymentServerImpl(IMongoClient client, IActorRef dataTransfer, RepositoryApi repositoryProxy)
         {
+            var changeTracker = Context.ActorOf<ChangeTrackerActor>();
+
             var database = client.GetDatabase("Deployment");
             var trashBin = database.GetCollection<ToDeleteRevision>("TrashBin");
             var files = new GridFSBucket(database, new GridFSBucketOptions {BucketName = "Apps"});
@@ -29,7 +31,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             var router = new SmallestMailboxPool(Environment.ProcessorCount)
                 .WithSupervisorStrategy(Akka.Actor.SupervisorStrategy.DefaultStrategy);
 
-            var queryProps = Props.Create(() => new AppQueryHandler(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer))
+            var queryProps = Props.Create(() => new AppQueryHandler(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer, changeTracker))
                 .WithRouter(router);
             var query = Context.ActorOf(queryProps, "QueryRouter");
 
@@ -37,7 +39,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             var buildSystem = WorkDistributor<BuildRequest, BuildCompled>.Create(Context, Props.Create<BuildingActor>(), "Compiler", TimeSpan.FromHours(1), "CompilerSupervisor");
 
-            var processorProps = Props.Create(() => new AppCommandProcessor(database.GetCollection<AppData>(AppsCollectionName, null), files, dataTransfer, repositoryProxy, trashBin, buildSystem))
+            var processorProps = Props.Create(() => new AppCommandProcessor(database.GetCollection<AppData>(AppsCollectionName, null), files, repositoryProxy, dataTransfer, trashBin, buildSystem, changeTracker))
                 .WithRouter(router);
             var processor = Context.ActorOf(processorProps, "ProcessorRouter");
 

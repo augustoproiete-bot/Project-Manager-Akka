@@ -7,6 +7,7 @@ using Autofac;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Clusters;
 using Tauron.Application.ServiceManager.Core.Configuration;
+using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.ServiceManager.Properties;
 using Tauron.Application.ServiceManager.ViewModels.SetupDialog;
 using Tauron.Application.Wpf.Model;
@@ -15,9 +16,11 @@ namespace Tauron.Application.ServiceManager.ViewModels
 {
     public sealed class ConfigurationViewModel : UiActor
     {
-        public ConfigurationViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig appConfig) 
+        public ConfigurationViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig appConfig, DeploymentServices deploymentServices) 
             : base(lifetimeScope, dispatcher)
         {
+            //TODO Global Configuration Update
+
             void ConfigurationChanged(string text)
             {
                 if(text == appConfig.CurrentConfig) return;
@@ -27,6 +30,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
                     Log.Info("Update Configuration");
                     ConfigurationFactory.ParseString(text);
                     appConfig.CurrentConfig = text;
+                    deploymentServices.PushNewConfigString(text);
                     ErrorText += string.Empty;
                 }
                 catch(Exception e)

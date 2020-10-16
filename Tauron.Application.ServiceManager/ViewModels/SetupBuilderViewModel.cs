@@ -7,6 +7,7 @@ using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Localizer.Generated;
 using Tauron.Application.Master.Commands.Administration.Host;
 using Tauron.Application.ServiceManager.Core.Configuration;
+using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.ServiceManager.Core.SetupBuilder;
 using Tauron.Application.Wpf.Model;
 
@@ -21,7 +22,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
         private EventSubscribtion? _subscribtion;
 
-        public SetupBuilderViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config) 
+        public SetupBuilderViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config, DeploymentServices deploymentServices) 
             : base(lifetimeScope, dispatcher)
         {
             _config = config;
@@ -63,6 +64,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             NewCommad
                .WithCanExecute(b =>
                     b.And(
+                        deploymentServices.IsReadyQuery(b),
                         b.FromProperty(_buildRunning, i => i == 0),
                         b.FromProperty(HostName.IsValid),
                         b.Or(

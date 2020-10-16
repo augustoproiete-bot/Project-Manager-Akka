@@ -17,16 +17,18 @@ namespace ServiceManager.ProjectDeployment.Actors
 {
     public sealed class AppQueryHandler : ReportingActor 
     {
-        public AppQueryHandler(IMongoCollection<AppData> apps, GridFSBucket files, IActorRef dataTransfer)
+        public AppQueryHandler(IMongoCollection<AppData> apps, GridFSBucket files, IActorRef dataTransfer, IActorRef changeTracker)
         {
+            Receive<QueryChangeSource>(changeTracker.Forward);
+
             MakeQueryCall<QueryApps, AppList>("QueryApps", (query, _) 
-                    => new AppList(apps.AsQueryable().Select(ad => new AppInfo(ad.Name, ad.Last, ad.LastUpdate, ad.CreationTime, ad.Repository))));
+                    => new AppList(apps.AsQueryable().Select(ad => ad.ToInfo())));
 
             MakeQueryCall<QueryApp, AppInfo>("QueryApp", (query, reporter) =>
             {
                 var data = apps.AsQueryable().FirstOrDefault(e => e.Name == query.AppName);
 
-                if (data != null) return new AppInfo(data.Name, data.Last, data.LastUpdate, data.CreationTime, data.Repository);
+                if (data != null) return data.ToInfo();
                 
                 reporter.Compled(OperationResult.Failure(BuildErrorCodes.QueryAppNotFound));
                 return null;

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Linq;
 using MongoDB.Bson.Serialization.Attributes;
+using Tauron.Application.Master.Commands.Deployment.Build.Data;
 
 namespace ServiceManager.ProjectDeployment.Data
 {
@@ -39,5 +41,8 @@ namespace ServiceManager.ProjectDeployment.Data
             ProjectName = projectName;
             Versions = versions;
         }
+
+        public AppInfo ToInfo()
+            => new AppInfo(Name, Last, LastUpdate, CreationTime, Repository, Versions.Select(fi => new AppBinary(fi.Version, fi.CreationTime, fi.Deleted, fi.Commit, Repository)));
     }
 }
