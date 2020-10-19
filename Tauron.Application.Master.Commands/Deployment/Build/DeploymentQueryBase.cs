@@ -1,54 +1,16 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using Akka.Actor;
-using JetBrains.Annotations;
-using Tauron.Akka;
-using Tauron.Application.AkkNode.Services;
-using Tauron.Application.AkkNode.Services.Core;
+﻿using JetBrains.Annotations;
+using Tauron.Application.AkkNode.Services.Commands;
 
 namespace Tauron.Application.Master.Commands.Deployment.Build
 {
     [PublicAPI]
-    public abstract class DeploymentQueryBase<TResult> : DeploymentAction, IDeploymentQuery
+    public abstract class DeploymentQueryBase<TThis, TResult> : ResultCommand<DeploymentApi, TThis, TResult>, IDeploymentQuery 
+        where TThis : ResultCommand<DeploymentApi, TThis, TResult>
     {
-        protected DeploymentQueryBase(string appName) 
-            : base(appName, ActorRefs.Nobody)
-        {
-        }
+        public string AppName { get; }
 
-        protected DeploymentQueryBase(BinaryReader reader, ExtendedActorSystem system) : base(reader, system)
-        {
-        }
+        protected override string Info => AppName;
 
-        protected sealed override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
-        {
-            base.ReadInternal(reader, manifest);
-        }
-
-        public Task<TResult> Send(DeploymentApi api, Action<string> messages, TimeSpan timeout)
-        {
-            var task = new TaskCompletionSource<TResult>();
-
-            var listner = Reporter.CreateListner(ExposedReceiveActor.ExposedContext, messages, result =>
-            {
-                if (result.Ok)
-                {
-                    if (result.Outcome is TResult outcome)
-                        task.SetResult(outcome);
-                    else
-                        task.SetException(new InvalidCastException(result.Outcome?.GetType().Name ?? "null-source"));
-                }
-                else
-                {
-                    task.SetException(new QueryFailedException(result.Error ?? "Unkowen"));
-                }
-            }, timeout);
-            Listner = listner;
-
-            api.SendAction(this);
-
-            return task.Task;
-        }
+        protected DeploymentQueryBase(string appName) => AppName = appName;
     }
 }

@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using MongoDB.Driver;
 using ServiceManager.ProjectRepository.Actors;
 using Tauron.Application.AkkNode.Services.CleanUp;
+using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 
 namespace ServiceManager.ProjectRepository
@@ -13,13 +14,13 @@ namespace ServiceManager.ProjectRepository
     {
         public static readonly RepositoryManager Empty = new RepositoryManager(ActorRefs.Nobody); 
 
-        public static RepositoryManager CreateInstance(IActorRefFactory factory, string connectionString, IActorRef tranferManager)
+        public static RepositoryManager CreateInstance(IActorRefFactory factory, string connectionString, DataTransferManager tranferManager)
             => new RepositoryManager(factory.ActorOf(Props.Create(() => new RepositoryManagerImpl(new MongoClient(connectionString), tranferManager))));
 
-        public static RepositoryManager InitRepositoryManager(ActorSystem actorSystem, string connectionString, IActorRef tranferManager) 
+        public static RepositoryManager InitRepositoryManager(ActorSystem actorSystem, string connectionString, DataTransferManager tranferManager) 
             => InitRepositoryManager(actorSystem, new MongoClient(connectionString), tranferManager);
 
-        public static RepositoryManager InitRepositoryManager(ActorSystem actorSystem, IMongoClient client, IActorRef tranferManager)
+        public static RepositoryManager InitRepositoryManager(ActorSystem actorSystem, IMongoClient client, DataTransferManager tranferManager)
         {
             var repo = ClusterSingletonManager.Props(Props.Create(() => new RepositoryManagerImpl(client, tranferManager)),
                 ClusterSingletonManagerSettings.Create(actorSystem).WithRole("UpdateSystem"));

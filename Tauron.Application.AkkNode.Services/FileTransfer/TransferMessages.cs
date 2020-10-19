@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Serialization;
 using JetBrains.Annotations;
@@ -288,11 +289,13 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
         public sealed class RequestAccept : DataTranfer
         {
             public Func<ITransferData> Target { get; }
+            public TaskCompletionSource<TransferCompled> TaskCompletionSource { get; }
 
-            public RequestAccept(string operationId, Func<ITransferData> target)
+            public RequestAccept(string operationId, Func<ITransferData> target, TaskCompletionSource<TransferCompled> taskCompletionSource)
                 : base(operationId)
             {
                 Target = target;
+                TaskCompletionSource = taskCompletionSource;
             }
 
             protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();

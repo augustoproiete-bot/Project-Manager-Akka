@@ -11,6 +11,7 @@ using ServiceManager.ProjectDeployment.Data;
 using Tauron;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
+using Tauron.Application.AkkNode.Services.Commands;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
@@ -28,16 +29,16 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         public ITimerScheduler Timers { get; set; } = null!;
 
-        public AppCommandProcessor(IMongoCollection<AppData> apps, GridFSBucket files, RepositoryApi repository, IActorRef dataTransfer,
+        public AppCommandProcessor(IMongoCollection<AppData> apps, GridFSBucket files, RepositoryApi repository, DataTransferManager dataTransfer,
             IMongoCollection<ToDeleteRevision> toDelete, WorkDistributor<BuildRequest, BuildCompled> workDistributor, IActorRef changeTracker)
         {
             _apps = apps;
             
             CommandPhase1<CreateAppCommand, AppInfo>("CreateApp", repository, 
-                (command, listner, reporter) =>
+                (command, reporter) =>
                 {
                     reporter.Send(DeploymentMessages.RegisterRepository);
-                    return new RegisterRepository(command.TargetRepo, listner()) {IgnoreDuplicate = true};
+                    return new RegisterRepository(command.TargetRepo) {IgnoreDuplicate = true};
                 }, 
                 (command, reporter, op) => new ContinueCreateApp(op, command, reporter));
 
@@ -169,23 +170,21 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             CommandPhase2<ContinueForceBuild, ForceBuildCommand, FileTransactionId>("ForceBuild2", (command, result, reporter, _) =>
             {
-                if (!result.Ok)
+                if (!result.Ok || command.Manager == null)
                     return null;
 
-                if (result.Outcome is TempStream target)
-                {
-                    var request = DataTransferRequest.FromStream(target, command.TransferManager);
-                    dataTransfer.Tell(request);
+                if (!(result.Outcome is TempStream target)) return null;
 
-                    return new FileTransactionId(request.OperationId);
-                }
+                var request = DataTransferRequest.FromStream(target, command.Manager);
+                dataTransfer.Request(request);
 
-                return null;
+                return new FileTransactionId(request.OperationId);
+
             });
         }
         
-        private void CommandPhase1<TCommand, TResult>(string name, RepositoryApi api, Func<TCommand, Func<IActorRef>, Reporter, RepositoryAction?> executor, Func<TCommand, Reporter, OperationResult, object> result)
-            where TCommand : DeploymentCommandBase<TResult>
+        private void CommandPhase1<TCommand, TResult>(string name, RepositoryApi api, Func<TCommand, Reporter, IReporterMessage?> executor, Func<TCommand, Reporter, OperationResult, object> result)
+            where TCommand : ReporterCommandBase<DeploymentApi, TCommand>, IDeploymentCommand
         {
             Receive<TCommand>(name, (command, reporter) =>
             {
@@ -198,7 +197,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
                 }
 
-                var msg = executor(command, CreateListner, reporter);
+                var msg = executor(command, reporter);
                 if (msg == null)
                 {
                     if(!reporter.IsCompled)
@@ -208,19 +207,20 @@ namespace ServiceManager.ProjectDeployment.Actors
                 }
 
                 Log.Info("Command Phase 1 {Command} -- {Action}", typeof(TCommand).Name, msg.GetType().Name);
-                api.SendAction(msg);
+                msg.SetListner(CreateListner());
+                ((ISender)api).SendCommand(msg);
             });
         }
 
         private void CommandPhase1<TCommand, TResult>(string name, Action<TCommand, Reporter> executor)
-            where TCommand : DeploymentCommandBase<TResult>
+            where TCommand : ReporterCommandBase<DeploymentApi, TCommand>, IDeploymentCommand
             => Receive(name, executor);
 
 
         private void CommandPhase2<TContinue, TCommand, TResult>(string name, Func<TCommand, OperationResult, Reporter, AppData?, TResult?> executor)
             where TContinue : ContinueCommand<TCommand> 
-            where TCommand : DeploymentCommandBase<TResult>
-            where TResult : InternalSerializableBase
+            where TCommand : ReporterCommandBase<DeploymentApi, TCommand>, IDeploymentCommand
+            where TResult : class
         {
             ReceiveContinue<TContinue>(name, (command, reporter) =>
             {

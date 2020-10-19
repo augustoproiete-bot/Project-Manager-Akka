@@ -24,7 +24,7 @@ namespace ServiceHost.Installer.Impl
             {
                 config.OnExecute(context =>
                 {
-                    Log.Info("Start Unistall App {Name}", context.Name);
+                    Log.Info("Start Unistall Apps {Name}", context.Name);
                     registry.Ask<InstalledAppRespond>(new InstalledAppQuery(context.Name), TimeSpan.FromSeconds(15))
                        .PipeTo(Self);
 
@@ -84,7 +84,7 @@ namespace ServiceHost.Installer.Impl
                     }
                     catch (Exception e)
                     {
-                        Log.Warning(e, "Error while Deleting App Directory");
+                        Log.Warning(e, "Error while Deleting Apps Directory");
                     }
 
                     return Finalization;
@@ -101,7 +101,7 @@ namespace ServiceHost.Installer.Impl
             {
                 if (!wr.Succesfully)
                 {
-                    Log.Warning("Installation Failed Recover {App}", wr.Context.Name);
+                    Log.Warning("Installation Failed Recover {Apps}", wr.Context.Name);
                     wr.Context.Recovery.Recover(Log);
                 }
 

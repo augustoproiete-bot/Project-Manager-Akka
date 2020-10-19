@@ -8,6 +8,7 @@ using ServiceManager.ProjectDeployment.Data;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
+using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 
@@ -17,7 +18,7 @@ namespace ServiceManager.ProjectDeployment.Actors
     {
         public const string AppsCollectionName = "Apps";
 
-        public DeploymentServerImpl(IMongoClient client, IActorRef dataTransfer, RepositoryApi repositoryProxy)
+        public DeploymentServerImpl(IMongoClient client, DataTransferManager dataTransfer, RepositoryApi repositoryProxy)
         {
             var changeTracker = Context.ActorOf<ChangeTrackerActor>();
 

@@ -67,7 +67,7 @@ namespace ServiceHost.ApplicationRegistry
                     }
                     catch (Exception e)
                     {
-                        Log.Error(e, "Error on Load Installed App");
+                        Log.Error(e, "Error on Load Installed Apps");
                     }
                 }
 
@@ -87,13 +87,13 @@ namespace ServiceHost.ApplicationRegistry
         private void HandleUpdateRequest(UpdateRegistrationRequest request)
         {
             RegistrationResponse response;
-            Log.Info("Update Registraion for {App}", request.Name);
+            Log.Info("Update Registraion for {Apps}", request.Name);
 
             try
             {
                 if (!_apps.TryGetValue(request.Name, out var path))
                 {
-                    Log.Warning("No Registration Found {App}", request.Name);
+                    Log.Warning("No Registration Found {Apps}", request.Name);
                     response = new RegistrationResponse(true, null);
                 }
                 else
@@ -102,12 +102,12 @@ namespace ServiceHost.ApplicationRegistry
                     File.WriteAllText(path, JsonConvert.SerializeObject(newData));
                     response = new RegistrationResponse(true, null);
 
-                    Log.Info("Registration Update Compled {App}", request.Name);
+                    Log.Info("Registration Update Compled {Apps}", request.Name);
                 }
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error while Reading or Writing Registration {App}", request.Name);
+                Log.Error(e, "Error while Reading or Writing Registration {Apps}", request.Name);
                 response = new RegistrationResponse(false, e);
             }
 
@@ -117,14 +117,14 @@ namespace ServiceHost.ApplicationRegistry
 
         private void HandleNewRegistration(NewRegistrationRequest request)
         {
-            Log.Info("Register new Application {App}", request.Name);
+            Log.Info("Register new Application {Apps}", request.Name);
             RegistrationResponse response;
 
             try
             {
                 if (_apps.ContainsKey(request.Name))
                 {
-                    Log.Warning("Attempt to Register Duplicate Application {App}", request.Name);
+                    Log.Warning("Attempt to Register Duplicate Application {Apps}", request.Name);
                     response = new RegistrationResponse(false, new InvalidOperationException("Duplicate"));
                 }
                 else
@@ -137,12 +137,12 @@ namespace ServiceHost.ApplicationRegistry
                     response = new RegistrationResponse(true, null);
                     Self.Tell(new SaveData());
 
-                    Log.Info("Registration Compled for {App}", request.Name);
+                    Log.Info("Registration Compled for {Apps}", request.Name);
                 }
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error while registration new Application {App}", request.Name);
+                Log.Error(e, "Error while registration new Application {Apps}", request.Name);
                 response = new RegistrationResponse(false, e);
             }
 
@@ -152,14 +152,14 @@ namespace ServiceHost.ApplicationRegistry
 
         private void HandleQueryApp(InstalledAppQuery request)
         {
-            Log.Info("Query App {App}", request.Name);
+            Log.Info("Query Apps {Apps}", request.Name);
             try
             {
                 Sender.Tell(new InstalledAppRespond(LoadApp(request.Name) ?? InstalledApp.Empty));
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error While Querining App Data");
+                Log.Error(e, "Error While Querining Apps Data");
                 Sender.Tell(new InstalledAppRespond(InstalledApp.Empty) { Fault = true } );
             }
         }
@@ -169,11 +169,11 @@ namespace ServiceHost.ApplicationRegistry
             if (_apps.TryGetValue(name, out var path) && File.Exists(path))
             {
                 var data = JsonConvert.DeserializeObject<InstalledApp>(path.ReadTextIfExis());
-                Log.Info("Load App Data Compled {App}", name);
+                Log.Info("Load Apps Data Compled {Apps}", name);
                 return data;
             }
 
-            Log.Info("No App Found {App}", name);
+            Log.Info("No Apps Found {Apps}", name);
             return null;
         }
 
@@ -192,7 +192,7 @@ namespace ServiceHost.ApplicationRegistry
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error while writing App Info");
+                Log.Error(e, "Error while writing Apps Info");
             }
         }
 

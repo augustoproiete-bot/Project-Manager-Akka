@@ -62,7 +62,7 @@ namespace ServiceHost.Services.Impl
             CallSafe(
                 () =>
                 {
-                    Log.Info("Stop App {Name}", _app.Name);
+                    Log.Info("Stop Apps {Name}", _app.Name);
                     _isProcesRunning = false;
                     if (_serviceCom == null)
                     {
@@ -94,7 +94,7 @@ namespace ServiceHost.Services.Impl
                         _process.Kill(true);
                     }
                 },
-                "Error while Stopping App",
+                "Error while Stopping Apps",
                 e =>
                 {
                     _process?.Dispose();
@@ -111,7 +111,7 @@ namespace ServiceHost.Services.Impl
                 () =>
                 {
                     if(_isProcesRunning) return;
-                    Log.Info("Start App {Name}", _app.Name);
+                    Log.Info("Start Apps {Name}", _app.Name);
                     _process = Process.Start(new ProcessStartInfo(Path.Combine(_app.Path, _app.Exe), $"--ComHandle {_serviceComName}")
                                              {
                                                  WorkingDirectory = _app.Path,

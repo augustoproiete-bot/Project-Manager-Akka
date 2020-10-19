@@ -1,28 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using JetBrains.Annotations;
-using Tauron.Application.AkkNode.Services.Core;
 
 namespace Tauron.Application.Master.Commands.Deployment.Build.Data
 {
     [PublicAPI]
-    public sealed class AppInfo : InternalSerializableBase
+    public sealed class AppInfo
     {
-        public string Name { get; private set; } = string.Empty;
+        public string Name { get; }
 
-        public int LastVersion { get; private set; }
+        public int LastVersion { get; }
 
-        public DateTime UpdateDate { get; private set; }
+        public DateTime UpdateDate { get; }
 
-        public DateTime CreationTime { get; private set; }
+        public DateTime CreationTime { get; }
 
-        public string Repository { get; private set; } = string.Empty;
+        public string Repository { get; }
 
-        public ImmutableList<AppBinary> Binaries { get; private set; } = ImmutableList<AppBinary>.Empty;
+        public ImmutableList<AppBinary> Binaries { get; }
 
-        public bool Deleted { get; private set; }
+        public bool Deleted { get; set; }
 
         public AppInfo(string name, int lastVersion, DateTime updateDate, DateTime creationTime, string repository, IEnumerable<AppBinary> bin)
         {
@@ -31,41 +29,13 @@ namespace Tauron.Application.Master.Commands.Deployment.Build.Data
             UpdateDate = updateDate;
             CreationTime = creationTime;
             Repository = repository;
-            Binaries = Binaries.AddRange(bin);
+            Binaries = ImmutableList<AppBinary>.Empty.AddRange(bin);
         }
 
         public AppInfo IsDeleted()
         {
             Deleted = true;
             return this;
-        }
-
-        public AppInfo(BinaryReader reader)
-            : base(reader)
-        { }
-
-        protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
-        {
-            Name = reader.ReadString();
-            LastVersion = reader.ReadInt32();
-            UpdateDate = new DateTime(reader.ReadInt64());
-            CreationTime = new DateTime(reader.ReadInt64());
-            Repository = reader.ReadString();
-            Binaries = BinaryHelper.Read(reader, r => new AppBinary(reader));
-            Deleted = reader.ReadBoolean();
-            base.ReadInternal(reader, manifest);
-        }
-
-        protected override void WriteInternal(ActorBinaryWriter writer)
-        {
-            writer.Write(Name);
-            writer.Write(LastVersion);
-            writer.Write(UpdateDate.Ticks);
-            writer.Write(CreationTime.Ticks);
-            writer.Write(Repository);
-            BinaryHelper.WriteList(Binaries, writer);
-            writer.Write(Deleted);
-            base.WriteInternal(writer);
         }
     }
 }

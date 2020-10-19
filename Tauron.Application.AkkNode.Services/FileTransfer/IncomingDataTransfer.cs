@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
@@ -14,11 +15,11 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
         public event Action? DenyEvent;
 
-        public IActorRef Manager { get; }
+        public DataTransferManager Manager { get; }
         
         public string? Data { get; }
 
-        public IncomingDataTransfer(string operationId, IActorRef manager, string? data) 
+        public IncomingDataTransfer(string operationId, DataTransferManager manager, string? data) 
             : base(operationId)
         {
             Manager = manager;
@@ -31,19 +32,17 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
         {
             DenyEvent?.Invoke();
             _denyTimer.Dispose();
-            Manager.Tell(new TransferMessages.RequestDeny(OperationId));
+            Manager.Actor.Tell(new TransferMessages.RequestDeny(OperationId));
         }
 
-        public void Accept(Func<Stream> to)
-        {
-            _denyTimer.Dispose();
-            Manager.Tell(new TransferMessages.RequestAccept(OperationId, () => new StreamData(to())));
-        }
+        public Task<TransferMessages.TransferCompled> Accept(Func<Stream> to) => Accept(() => new StreamData(to()));
 
-        public void Accept(Func<ITransferData> to)
+        public Task<TransferMessages.TransferCompled> Accept(Func<ITransferData> to)
         {
             _denyTimer.Dispose();
-            Manager.Tell(new TransferMessages.RequestAccept(OperationId, to));
+            var source = new TaskCompletionSource<TransferMessages.TransferCompled>();
+            Manager.Actor.Tell(new TransferMessages.RequestAccept(OperationId, to, source));
+            return source.Task;
         }
 
         protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();

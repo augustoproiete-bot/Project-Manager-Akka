@@ -2,6 +2,6 @@
 {
     public interface IDeploymentCommand
     {
-        
+        string AppName { get; }
     }
 }

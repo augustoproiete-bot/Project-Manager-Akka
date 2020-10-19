@@ -11,7 +11,7 @@ using Syncfusion.Windows.Shared;
 namespace Tauron.Application.ServiceManager
 {
     /// <summary>
-    /// Interaction logic for App.xaml
+    /// Interaction logic for Apps.xaml
     /// </summary>
     public partial class App
     {

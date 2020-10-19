@@ -51,7 +51,7 @@ namespace Tauron.Application.ServiceManager.Views.Dialogs
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e, "Error on Loading Host App Data");
+                    Log.Error(e, "Error on Loading Host Apps Data");
                     Info = e.Unwrap()?.Message;
                 }
             });

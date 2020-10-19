@@ -36,7 +36,7 @@ namespace ServiceHost.Installer.Impl
             {
                 config.OnExecute((context, step) =>
                 {
-                    Log.Info("Perpering Data for Installation: {App}", context.Name);
+                    Log.Info("Perpering Data for Installation: {Apps}", context.Name);
                     return context.SetSource(InstallationSourceSelector.Select, step.SetError)
                        .When(i => i != EmptySource.Instnace, () =>
                                 StepId.Waiting.DoAnd(_ =>
@@ -61,10 +61,10 @@ namespace ServiceHost.Installer.Impl
             {
                 confg.OnExecute((context, step) =>
                 {
-                    Log.Info("Validating Data for installation: {App}", context.Name);
+                    Log.Info("Validating Data for installation: {Apps}", context.Name);
                     if (context.Source.ValidateInput(context) is Status.Failure failure)
                     {
-                        Log.Warning(failure.Cause, "Source Validation Failed {App}", context.Name);
+                        Log.Warning(failure.Cause, "Source Validation Failed {Apps}", context.Name);
                         step.ErrorMessage = failure.Cause.Message;
                         return StepId.Fail;
                     }
@@ -72,7 +72,7 @@ namespace ServiceHost.Installer.Impl
                     // ReSharper disable once InvertIf
                     if (!context.InstalledApp.IsEmpty() && context.InstalledApp.Name == context.Name && !context.Override)
                     {
-                        Log.Warning("App is Installed {App}", context.Name);
+                        Log.Warning("Apps is Installed {Apps}", context.Name);
                         step.ErrorMessage = ErrorCodes.ExistingApp;
                         return StepId.Fail;
                     }
@@ -85,7 +85,7 @@ namespace ServiceHost.Installer.Impl
             {
                 config.OnExecute((context, step) =>
                 {
-                    Log.Info("Prepare for Copy Data {App}", context.Name);
+                    Log.Info("Prepare for Copy Data {Apps}", context.Name);
                     string targetAppPath = Path.GetFullPath(Path.Combine(appBaseLocation, context.Name));
 
 
@@ -99,7 +99,7 @@ namespace ServiceHost.Installer.Impl
                         }
                         catch (Exception e)
                         {
-                            Log.Warning(e, "Installation Faild during Directory Creation {App}", context.Name);
+                            Log.Warning(e, "Installation Faild during Directory Creation {Apps}", context.Name);
                             step.ErrorMessage = ErrorCodes.DirectoryCreation;
                             return StepId.Fail;
                         }
@@ -129,7 +129,7 @@ namespace ServiceHost.Installer.Impl
             {
                 config.OnExecute((context, step) =>
                 {
-                    Log.Info("Copy Application Data {App}", context.Name);
+                    Log.Info("Copy Application Data {Apps}", context.Name);
 
 
                     if (context.AppType == AppType.Host)
@@ -140,7 +140,7 @@ namespace ServiceHost.Installer.Impl
 
                     context.Recovery.Add(log =>
                     {
-                        log.Info("Clearing Installation Directory during Recover {App}", context.Name);
+                        log.Info("Clearing Installation Directory during Recover {Apps}", context.Name);
                         context.InstallationPath.ClearDirectory();
                     });
 
@@ -151,14 +151,14 @@ namespace ServiceHost.Installer.Impl
                     }
                     catch (Exception e)
                     {
-                        Log.Error(e, "Error on Extracting Files to Directory {App}", context.Name);
+                        Log.Error(e, "Error on Extracting Files to Directory {Apps}", context.Name);
                         step.ErrorMessage = e.Message;
                         return StepId.Fail;
                     }
 
                     context.Recovery.Add(log =>
                     {
-                        log.Info("Delete Insttalation Files during Recovery {App}", context.Name);
+                        log.Info("Delete Insttalation Files during Recovery {Apps}", context.Name);
                         context.InstallationPath.ClearDirectory();
                     });
 
@@ -172,7 +172,7 @@ namespace ServiceHost.Installer.Impl
             {
                 config.OnExecute((context, step) =>
                 {
-                    Log.Info("Register Application for Host {App}", context.Name);
+                    Log.Info("Register Application for Host {Apps}", context.Name);
 
                     if (context.InstalledApp.IsEmpty())
                     {
@@ -205,7 +205,7 @@ namespace ServiceHost.Installer.Impl
             {
                 config.OnExecute(context =>
                 {
-                    Log.Info("Clean Up and Compleding {App}", context.Name);
+                    Log.Info("Clean Up and Compleding {Apps}", context.Name);
 
                     context.Backup.CleanUp();
 
@@ -215,7 +215,7 @@ namespace ServiceHost.Installer.Impl
                     }
                     catch (Exception e)
                     {
-                        Log.Warning(e, "Error on Clean Up {App}", context.Name);
+                        Log.Warning(e, "Error on Clean Up {Apps}", context.Name);
                     }
 
                     return StepId.Finish;
@@ -232,7 +232,7 @@ namespace ServiceHost.Installer.Impl
             {
                 if (!wr.Succesfully)
                 {
-                    Log.Warning("Installation Failed Recover {App}", wr.Context.Name);
+                    Log.Warning("Installation Failed Recover {Apps}", wr.Context.Name);
                     wr.Context.Recovery.Recover(Log);
                 }
 

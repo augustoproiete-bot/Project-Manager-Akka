@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using JetBrains.Annotations;
 
 namespace Tauron.Application
@@ -11,10 +12,10 @@ namespace Tauron.Application
         private readonly uint[] _table;
 
         [DebuggerStepThrough]
-        public uint ComputeChecksum(byte[] bytes)
+        public uint ComputeChecksum(byte[] bytes, int count)
         {
             var crc = 0xffffffff;
-            foreach (var t in bytes)
+            foreach (var t in bytes.Take(count))
             {
                 var index = (byte)(((crc) & 0xff) ^ t);
                 crc = (crc >> 8) ^ _table[index];
@@ -22,8 +23,8 @@ namespace Tauron.Application
             return ~crc;
         }
 
-        public byte[] ComputeChecksumBytes(byte[] bytes) 
-            => BitConverter.GetBytes(ComputeChecksum(bytes));
+        public byte[] ComputeChecksumBytes(byte[] bytes, int count) 
+            => BitConverter.GetBytes(ComputeChecksum(bytes, count));
 
         public Crc32()
         {

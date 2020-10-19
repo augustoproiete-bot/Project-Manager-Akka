@@ -28,19 +28,19 @@ namespace ServiceManager.ProjectRepository.Actors
         private readonly IMongoCollection<RepositoryEntry> _repos;
         private readonly GridFSBucket _bucket;
         private readonly IMongoCollection<ToDeleteRevision> _revisions;
-        private readonly IActorRef _dataTransfer;
+        private readonly DataTransferManager _dataTransfer;
         private readonly GitHubClient _gitHubClient;
         
         //private Reporter? _reporter;
         //private string _dataOperation = string.Empty;
 
-        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions, IActorRef dataTransfer)
+        public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions, DataTransferManager dataTransfer)
         {
             _repos = repos;
             _bucket = bucket;
             _revisions = revisions;
             _dataTransfer = dataTransfer;
-            _gitHubClient = new GitHubClient(new ProductHeaderValue(Context.System.Settings.Config.GetString("akka.appinfo.applicationName", "Test App").Replace(' ', '_')));
+            _gitHubClient = new GitHubClient(new ProductHeaderValue(Context.System.Settings.Config.GetString("akka.appinfo.applicationName", "Test Apps").Replace(' ', '_')));
 
             Receive<RegisterRepository>(r =>
             {
@@ -157,7 +157,7 @@ namespace ServiceManager.ProjectRepository.Actors
                 //repozip.Seek(0, SeekOrigin.Begin);
                 //Timers.StartSingleTimer(_reporter, new TransferFailed(string.Empty, FailReason.Timeout, data.RepoName), TimeSpan.FromMinutes(10));
                 var request = DataTransferRequest.FromStream(repository.OperationId, repozip, repository.FileTarget, repository.RepoName);
-                _dataTransfer.Tell(request);
+                _dataTransfer.Request(request);
 
                 reporter.Compled(OperationResult.Success(new Tranferdata(new FileTransactionId(request.OperationId), commitInfo)));
             }
@@ -172,8 +172,8 @@ namespace ServiceManager.ProjectRepository.Actors
 
         protected override void PreStart()
         {
-            _transferCompledSubscribtion = _dataTransfer.SubscribeToEvent<TransferCompled>();
-            _transferFailedSubscribtion = _dataTransfer.SubscribeToEvent<TransferFailed>();
+            _transferCompledSubscribtion = _dataTransfer.Event<TransferCompled>();
+            _transferFailedSubscribtion = _dataTransfer.Event<TransferFailed>();
             base.PreStart();
         }
 

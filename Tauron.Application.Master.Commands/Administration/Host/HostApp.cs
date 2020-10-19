@@ -1,25 +1,23 @@
-﻿using System.IO;
-using JetBrains.Annotations;
-using Tauron.Application.AkkNode.Services.Core;
+﻿using JetBrains.Annotations;
 
 namespace Tauron.Application.Master.Commands.Administration.Host
 {
     [PublicAPI]
-    public sealed class HostApp : InternalSerializableBase
+    public sealed class HostApp
     {
-        public string Name { get; private set; } = string.Empty;
+        public string Name { get; }
 
-        public string Path { get; private set; } = string.Empty;
+        public string Path { get; }
 
-        public int AppVersion { get; private set; } 
+        public int AppVersion { get; } 
 
-        public AppType AppType { get; private set; }
+        public AppType AppType { get; }
 
-        public bool SupressWindow { get; private set; }
+        public bool SupressWindow { get; }
 
-        public string Exe { get; private set; } = string.Empty;
+        public string Exe { get; }
 
-        public bool Running { get; private set; }
+        public bool Running { get; }
 
         public HostApp(string name, string path, int version, AppType appType, bool supressWindow, string exe, bool running)
         {
@@ -30,37 +28,6 @@ namespace Tauron.Application.Master.Commands.Administration.Host
             SupressWindow = supressWindow;
             Exe = exe;
             Running = running;
-        }
-
-        public HostApp(BinaryReader reader)
-            : base(reader)
-        {
-            
-        }
-
-        protected override void WriteInternal(ActorBinaryWriter writer)
-        {
-            writer.Write(Name);
-            writer.Write(Path);
-            writer.Write(AppVersion);
-            writer.Write((int)AppType);
-            writer.Write(SupressWindow);
-            writer.Write(Exe);
-            writer.Write(Running);
-        }
-
-        protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
-        {
-            if (manifest.WhenVersion(1))
-            {
-                Name = reader.ReadString();
-                Path = reader.ReadString();
-                AppVersion = reader.ReadInt32();
-                AppType = (AppType) reader.ReadInt32();
-                SupressWindow = reader.ReadBoolean();
-                Exe = reader.ReadString();
-                Running = reader.ReadBoolean();
-            }
         }
     }
 }

@@ -9,11 +9,5 @@ namespace Tauron.Application.Master.Commands.Administration.Host
         {
             
         }
-
-        public QueryHostApps(BinaryReader reader)
-            : base(reader)
-        {
-            
-        }
     }
 }

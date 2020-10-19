@@ -17,7 +17,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 {
     public sealed class AppQueryHandler : ReportingActor 
     {
-        public AppQueryHandler(IMongoCollection<AppData> apps, GridFSBucket files, IActorRef dataTransfer, IActorRef changeTracker)
+        public AppQueryHandler(IMongoCollection<AppData> apps, GridFSBucket files, DataTransferManager dataTransfer, IActorRef changeTracker)
         {
             Receive<QueryChangeSource>(changeTracker.Forward);
 
@@ -54,7 +54,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                 }
 
                 var request = DataTransferRequest.FromStream(() => files.OpenDownloadStream(file.File), query.DataManager, query.AppName);
-                dataTransfer.Tell(request);
+                dataTransfer.Request(request);
 
                 return new FileTransactionId(request.OperationId);
             });

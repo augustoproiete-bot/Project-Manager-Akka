@@ -8,6 +8,7 @@ using ServiceManager.ProjectRepository.Data;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
+using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 
 namespace ServiceManager.ProjectRepository.Actors
@@ -21,7 +22,7 @@ namespace ServiceManager.ProjectRepository.Actors
 
         private IActorRef _cleaner;
 
-        public RepositoryManagerImpl(IMongoClient client, IActorRef dataTransfer)
+        public RepositoryManagerImpl(IMongoClient client, DataTransferManager dataTransfer)
         {
             _database = client.GetDatabase("Repository");
 

@@ -1,32 +1,16 @@
-﻿using System.IO;
-using Akka.Actor;
-using Tauron.Application.AkkNode.Services.Core;
+﻿using Tauron.Application.AkkNode.Services.Commands;
 
 namespace Tauron.Application.Master.Commands.Deployment.Repository
 {
-    public sealed class RegisterRepository : RepositoryAction
+    public sealed class RegisterRepository : SimpleCommand<RepositoryApi, RegisterRepository>
     {
-        public bool IgnoreDuplicate { get; set; } = false;
+        public string RepoName { get; }
 
-        public RegisterRepository(string repoName, IActorRef listner)
-            : base(repoName, listner)
-        {
-        }
+        public bool IgnoreDuplicate { get; set; }
 
-        public RegisterRepository(BinaryReader reader, ExtendedActorSystem system)
-            : base(reader, system)
-        { }
+        public RegisterRepository(string repoName) 
+            => RepoName = repoName;
 
-        protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest, ExtendedActorSystem system)
-        {
-            IgnoreDuplicate = reader.ReadBoolean();
-            base.ReadInternal(reader, manifest, system);
-        }
-
-        protected override void WriteInternal(ActorBinaryWriter writer)
-        {
-            writer.Write(IgnoreDuplicate);
-            base.WriteInternal(writer);
-        }
+        protected override string Info => RepoName;
     }
 }

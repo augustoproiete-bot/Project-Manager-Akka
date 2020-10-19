@@ -1,11 +1,13 @@
 ﻿using Akka.Actor;
 using Akka.Cluster.Tools.Singleton;
 using JetBrains.Annotations;
+using Tauron.Application.AkkNode.Services;
+using Tauron.Application.AkkNode.Services.Commands;
 
 namespace Tauron.Application.Master.Commands.Deployment.Build
 {
     [PublicAPI]
-    public sealed class DeploymentApi
+    public sealed class DeploymentApi : ISender
     {
         public const string RepositoryPath = @"DeplaymentManager";
 
@@ -19,8 +21,6 @@ namespace Tauron.Application.Master.Commands.Deployment.Build
             return new DeploymentApi(system.ActorOf(proxy, name));
         }
 
-
-        internal void SendAction(DeploymentAction action)
-            => _repository.Tell(action);
+        void ISender.SendCommand(IReporterMessage command) => _repository.Tell(command);
     }
 }

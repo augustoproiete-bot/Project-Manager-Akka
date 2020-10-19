@@ -1,5 +1,4 @@
-﻿using System.IO;
-using Tauron.Application.AkkNode.Services.Core;
+﻿using Newtonsoft.Json;
 
 namespace Tauron.Application.Master.Commands.Administration.Host
 {
@@ -12,76 +11,28 @@ namespace Tauron.Application.Master.Commands.Administration.Host
             Installer
         }
 
-        public abstract class CommandBase : InternalSerializableBase
+        public abstract class CommandBase
         {
-            public string Target { get; private set; } = string.Empty;
+            public string Target { get; }
 
-            public CommandType Type { get; private set; }
+            [JsonIgnore]
+            public CommandType Type { get; }
 
             protected CommandBase(string target, CommandType type)
             {
                 Target = target;
                 Type = type;
             }
-
-            protected CommandBase(BinaryReader reader)
-                : base(reader) { }
-
-            protected override void WriteInternal(ActorBinaryWriter writer)
-            {
-                writer.Write(Target);
-                writer.Write((int)Type);
-            }
-
-            protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
-            {
-                if (manifest.WhenVersion(1))
-                {
-                    Target = reader.ReadString();
-                    Type = (CommandType) reader.ReadInt32();
-                }
-            }
         }
 
-        public sealed class GetHostName : InternalSerializableBase
+        public sealed class GetHostName
+        { }
+
+        public sealed class GetHostNameResult
         {
-            public GetHostName()
-            {
-                
-            }
-
-            public GetHostName(BinaryReader reader)
-                : base(reader)
-            {
-                
-            }
-
-        }
-
-        public sealed class GetHostNameResult : InternalSerializableBase
-        {
-            public string Name { get; private set; } = string.Empty;
+            public string Name { get; }
 
             public GetHostNameResult(string name) => Name = name;
-
-            public GetHostNameResult(BinaryReader reader)
-                : base(reader)
-            {
-                
-            }
-
-            protected override void WriteInternal(ActorBinaryWriter writer)
-            {
-                writer.Write(Name);
-                base.WriteInternal(writer);
-            }
-
-            protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
-            {
-                if (manifest.WhenVersion(1))
-                    Name = reader.ReadString();
-                base.ReadInternal(reader, manifest);
-            }
         }
     }
 }

@@ -144,7 +144,7 @@ namespace ServiceHost.Services.Impl
                         }
                         catch (Exception e)
                         {
-                            Log.Error(e, "Error on Recive Prcess App Name");
+                            Log.Error(e, "Error on Recive Prcess Apps Name");
                         }
                     }
 

@@ -45,7 +45,7 @@ namespace Tauron.Application.ServiceManager.Core.Model
 
         private sealed class ServiceManager : ExposedReceiveActor
         {
-            private readonly IActorRef _dataTransfer;
+            private readonly DataTransferManager _dataTransfer;
             private readonly RepositoryApi _repositoryApi;
 
             private RepositoryManager? _repository;

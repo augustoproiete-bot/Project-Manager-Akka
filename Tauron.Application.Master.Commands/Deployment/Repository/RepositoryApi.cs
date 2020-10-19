@@ -1,12 +1,14 @@
 ﻿using Akka.Actor;
 using Akka.Cluster.Tools.Singleton;
 using JetBrains.Annotations;
+using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
+using Tauron.Application.AkkNode.Services.Commands;
 
 namespace Tauron.Application.Master.Commands.Deployment.Repository
 {
     [PublicAPI]
-    public sealed class RepositoryApi
+    public sealed class RepositoryApi : ISender
     {
         public const string RepositoryPath = @"RepositoryManager";
 
@@ -24,7 +26,6 @@ namespace Tauron.Application.Master.Commands.Deployment.Repository
         public void CleanUp()
             => _repository.Tell(new StartCleanUp());
 
-        public void SendAction(RepositoryAction action)
-            => _repository.Tell(action);
+        void ISender.SendCommand(IReporterMessage command) => _repository.Tell(command);
     }
 }

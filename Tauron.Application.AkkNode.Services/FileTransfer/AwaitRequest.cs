@@ -1,20 +1,25 @@
 ﻿using System;
-using Akka.Actor;
-using Akka.Util;
+using System.Threading.Tasks;
 
 namespace Tauron.Application.AkkNode.Services.FileTransfer
 {
     public sealed class AwaitResponse
     {
-        private readonly Option<IncomingDataTransfer> _request;
+        private readonly IncomingDataTransfer? _request;
 
-        public AwaitResponse(IncomingDataTransfer? request)
+        public AwaitResponse(IncomingDataTransfer? request) => _request = request;
+
+        public async Task<TransferMessages.TransferCompled> TryStart(Func<ITransferData?> getdata)
         {
-            if(request != null)
-                _request = new Option<IncomingDataTransfer>(request);
-        }
+            if(_request == null)
+                return new TransferFailed(string.Empty, FailReason.Deny, "NoData");
 
-        public Option<IncomingDataTransfer> Request => _request;
+            var data = getdata();
+            if (data == null)
+                return new TransferFailed(_request.OperationId, FailReason.Deny, _request.Data);
+
+            return await _request.Accept(() => data);
+        }
     }
 
     public sealed class AwaitRequest
@@ -23,13 +28,10 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
         public string Id { get; }
 
-        public IActorRef ActorRef { get; }
-
-        public AwaitRequest(TimeSpan timeout, string id, IActorRef actorRef)
+        public AwaitRequest(TimeSpan timeout, string id)
         {
             Timeout = timeout;
             Id = id;
-            ActorRef = actorRef;
         }
     }
 }

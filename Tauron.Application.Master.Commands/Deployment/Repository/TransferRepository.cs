@@ -1,37 +1,30 @@
-﻿using System.IO;
-using Akka.Actor;
-using Tauron.Application.AkkNode.Services.Core;
+﻿using Akka.Actor;
+using JetBrains.Annotations;
+using Newtonsoft.Json;
+using Tauron.Application.AkkNode.Services.Commands;
+using Tauron.Application.AkkNode.Services.FileTransfer;
 
 namespace Tauron.Application.Master.Commands.Deployment.Repository
 {
-    public sealed class TransferRepository : RepositoryAction
+    public sealed class TransferRepository : FileTransferCommand<RepositoryApi, TransferRepository>
     {
-        public IActorRef FileTarget { get; private set; } = ActorRefs.Nobody;
+        public string RepoName { get; }
+        public string OperationId { get; }
+        
+        protected override string Info => RepoName;
 
-        public string OperationId { get; private set; } = string.Empty;
 
-        public TransferRepository(string repoName, IActorRef listner, IActorRef fileTarget, string operationId)
-            : base(repoName, listner)
+        public TransferRepository(string repoName, string operationId)
         {
-            FileTarget = fileTarget;
+            RepoName = repoName;
             OperationId = operationId;
         }
-        
-        public TransferRepository(BinaryReader reader, ExtendedActorSystem system)
-            : base(reader, system) { }
 
-        protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest, ExtendedActorSystem system)
+        [JsonConstructor]
+        private TransferRepository([NotNull] IActorRef listner, [NotNull] DataTransferManager manager, string repoName, string operationId) : base(listner, manager)
         {
-            FileTarget = BinaryHelper.ReadRef(reader, system);
-            OperationId = reader.ReadString();
-            base.ReadInternal(reader, manifest, system);
-        }
-
-        protected override void WriteInternal(ActorBinaryWriter writer)
-        {
-            BinaryHelper.WriteRef(writer, FileTarget);
-            writer.Write(OperationId);
-            base.WriteInternal(writer);
+            RepoName = repoName;
+            OperationId = operationId;
         }
     }
 }

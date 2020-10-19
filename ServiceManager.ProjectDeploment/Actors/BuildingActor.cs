@@ -10,7 +10,6 @@ using ServiceManager.ProjectDeployment.Data;
 using Tauron;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services;
-using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
 using Tauron.Application.Master.Commands.Deployment.Build;
@@ -140,10 +139,10 @@ namespace ServiceManager.ProjectDeployment.Actors
     {
         private readonly ILoggingAdapter _log = Context.GetLogger();
 
-        public BuildingActor(IActorRef fileHandler)
+        public BuildingActor(DataTransferManager fileHandler)
         {
-            fileHandler.SubscribeToEvent<TransferCompled>();
-            fileHandler.SubscribeToEvent<TransferFailed>();
+            fileHandler.Event<TransferCompled>();
+            fileHandler.Event<TransferFailed>();
 
             StartWith(BuildState.Waiting, new BuildData());
 
@@ -155,7 +154,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                     case TransferCompled _: return Stay();
                     case BuildRequest request:
                     {
-                        _log.Info("Incomming Build Request {App}", request.AppData.Name);
+                        _log.Info("Incomming Build Request {Apps}", request.AppData.Name);
                         var newData = evt.StateData.Set(request);
 
                         var listner = Reporter.CreateListner(Context, newData.Reporter!, TimeSpan.FromMinutes(5), task => task.PipeTo(Self));

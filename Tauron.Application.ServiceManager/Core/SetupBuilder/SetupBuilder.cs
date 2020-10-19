@@ -27,7 +27,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         private readonly RunContext _context;
         private readonly AppConfig _config;
         private readonly DeploymentApi _api;
-        private readonly IActorRef _dataTransfer;
+        private readonly DataTransferManager _dataTransfer;
         private readonly ActorSystem _actorSystem;
 
         private Action<string> _log;
@@ -105,7 +105,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         //{
         //    var appProject = _context.Finder.Search("Master.Seed.Node.csproj");
         //    if (appProject == null)
-        //        throw new InvalidOperationException("App Project Not Found: Master.Seed.Node.csproj");
+        //        throw new InvalidOperationException("Apps Project Not Found: Master.Seed.Node.csproj");
 
         //    LogMessage("Building Seed Node {Id}", id);
         //    string appOutput = Path.Combine(basePath, "Seed");
@@ -202,7 +202,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         public void Dispose()
         {
             _logger.Dispose();
-            _dataTransfer.Tell(PoisonPill.Instance);
+            _dataTransfer.Actor.Tell(PoisonPill.Instance);
         }
     }
 }

@@ -7,5 +7,7 @@ namespace Tauron.Application.AkkNode.Services
         IActorRef Listner { get; }
 
         string Info { get; }
+
+        void SetListner(IActorRef listner);
     }
 }

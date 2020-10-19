@@ -2,6 +2,6 @@
 {
     public interface IDeploymentQuery
     {
-        
+        string AppName { get; }
     }
 }

@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Util;
 using JetBrains.Annotations;
-using Tauron.Application.AkkNode.Services.Core;
 
 namespace Tauron.Application.AkkNode.Services
 {
@@ -155,24 +153,11 @@ namespace Tauron.Application.AkkNode.Services
             public ListeningActor(IActorRef actor) => Actor = actor;
         }
 
-        private sealed class TransferedMessage : InternalSerializableBase
+        private sealed class TransferedMessage
         {
             public string Message { get; private set; }
 
-            public TransferedMessage(BinaryReader reader)
-                : base(reader)
-            {
-                Message = string.Empty;
-            }
-
-            public TransferedMessage(string message)
-            {
-                Message = message;
-            }
-
-            protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => Message = reader.ReadString();
-
-            protected override void WriteInternal(ActorBinaryWriter writer) => writer.Write(Message);
+            public TransferedMessage(string message) => Message = message;
         }
     }
 }
