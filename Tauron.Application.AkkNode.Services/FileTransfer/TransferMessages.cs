@@ -287,9 +287,9 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
         public sealed class RequestAccept : DataTranfer
         {
-            public Func<Stream> Target { get; }
+            public Func<ITransferData> Target { get; }
 
-            public RequestAccept(string operationId, Func<Stream> target)
+            public RequestAccept(string operationId, Func<ITransferData> target)
                 : base(operationId)
             {
                 Target = target;

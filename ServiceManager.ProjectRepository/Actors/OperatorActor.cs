@@ -15,6 +15,7 @@ using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
+using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
 using Tauron.Application.Master.Commands.Deployment;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 
@@ -140,7 +141,8 @@ namespace ServiceManager.ProjectRepository.Actors
 
                 var commitInfo = _gitHubClient.Repository.Commit.GetSha1(data.RepoId, "HEAD").Result;
 
-                var repozip = new MemoryStream();
+                var repozipFile = new TempFile();
+                var repozip = repozipFile.CreateStream();
 
                 if (!(commitInfo != data.LastUpdate && UpdateRepository(data, reporter, repository, commitInfo, repozip)))
                 {

@@ -12,6 +12,8 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
     {
         private readonly Timer _denyTimer;
 
+        public event Action? DenyEvent;
+
         public IActorRef Manager { get; }
         
         public string? Data { get; }
@@ -27,6 +29,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
         public void Deny()
         {
+            DenyEvent?.Invoke();
             _denyTimer.Dispose();
             Manager.Tell(new TransferMessages.RequestDeny(OperationId));
         }
@@ -34,8 +37,15 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
         public void Accept(Func<Stream> to)
         {
             _denyTimer.Dispose();
+            Manager.Tell(new TransferMessages.RequestAccept(OperationId, () => new StreamData(to())));
+        }
+
+        public void Accept(Func<ITransferData> to)
+        {
+            _denyTimer.Dispose();
             Manager.Tell(new TransferMessages.RequestAccept(OperationId, to));
         }
+
         protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();
 
         protected override void WriteInternal(ActorBinaryWriter writer) => throw new NotSupportedException();

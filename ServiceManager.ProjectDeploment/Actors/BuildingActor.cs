@@ -2,9 +2,9 @@
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
-using Akka;
 using Akka.Actor;
 using Akka.Event;
+using JetBrains.Annotations;
 using ServiceManager.ProjectDeployment.Build;
 using ServiceManager.ProjectDeployment.Data;
 using Tauron;
@@ -12,6 +12,7 @@ using Tauron.Akka;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
+using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 
@@ -29,21 +30,20 @@ namespace ServiceManager.ProjectDeployment.Actors
 
     public sealed class BuildPaths : IDisposable
     {
+        private TempFile? _repoFile;
         public string BasePath { get; } = string.Empty;
-         
-        public string RepoFile { get; } = string.Empty;
 
-        public string RepoPath { get; } = string.Empty;
+        public TempFile RepoFile => _repoFile ??= new TempFile(true);
 
         public string BuildPath { get; } = string.Empty;
+        public string RepoPath { get; } = string.Empty;
 
         public BuildPaths(string basePath)
         {
-            basePath.CreateDirectoryIfNotExis();
             BasePath = basePath;
-            RepoFile = Path.Combine(basePath, "Repository.zip");
+            BuildPath = Path.Combine(basePath, "Build");
             RepoPath = Path.Combine(basePath, "Repository");
-            RepoPath.CreateDirectoryIfNotExis();
+            BuildPath.CreateDirectoryIfNotExis();
         }
 
         public BuildPaths()
@@ -51,7 +51,11 @@ namespace ServiceManager.ProjectDeployment.Actors
             
         }
 
-        public void Dispose() => BasePath.DeleteDirectory(true);
+        public void Dispose()
+        {
+            RepoFile.ForceDispose();
+            BasePath.DeleteDirectory(true);
+        }
     }
 
     public sealed class BuildData
@@ -70,11 +74,11 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         public BuildPaths Paths { get; private set; } = new BuildPaths();
 
-        public string Target { get; private set; } = string.Empty;
+        public TempFile Target { get; private set; } = null!;
 
         public string Commit { get; set; } = string.Empty;
 
-        public TaskCompletionSource<string>? CompletionSource { get; private set; }
+        public TaskCompletionSource<(string, TempStream)>? CompletionSource { get; private set; }
 
         public BuildData Set(BuildRequest request)
         {
@@ -91,7 +95,7 @@ namespace ServiceManager.ProjectDeployment.Actors
         {
             Paths = new BuildPaths(Path.Combine(BuildEnv.ApplicationPath, "Building", OperationId));
 
-            request.Accept(() => File.Create(Paths.RepoFile));
+            request.Accept(() => Paths.RepoFile.CreateDate());
 
             return this;
         }
@@ -131,6 +135,7 @@ namespace ServiceManager.ProjectDeployment.Actors
         }
     }
 
+    [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
     public sealed class BuildingActor : FSM<BuildState, BuildData>
     {
         private readonly ILoggingAdapter _log = Context.GetLogger();
@@ -177,8 +182,10 @@ namespace ServiceManager.ProjectDeployment.Actors
                             return Stay();
                         }
                         else
+                        {
                             return GoTo(BuildState.Failing)
-                                .Using(evt.StateData.SetError(result.Error ?? BuildErrorCodes.GernalBuildError));
+                               .Using(evt.StateData.SetError(result.Error ?? BuildErrorCodes.GernalBuildError));
+                        }
                     case IncomingDataTransfer transfer:
                         _log.Info("Start Repository Transfer {Name}", evt.StateData.AppData.Name);
                         if (transfer.OperationId != evt.StateData.OperationId)
@@ -215,7 +222,9 @@ namespace ServiceManager.ProjectDeployment.Actors
                         evt.StateData.Reporter?.Send(DeploymentMessages.BuildExtractingRepository);
                         Task.Run(() =>
                         {
-                            ZipFile.ExtractToDirectory(paths.RepoFile, paths.RepoPath, true);
+                            using var archive = new ZipArchive(paths.RepoFile.CreateStream(), ZipArchiveMode.Read);
+                            archive.ExtractToDirectory(paths.RepoPath, true);
+
                         }).PipeTo(Self, success:() => new Status.Success(null));
                         return Stay();
                     case Status.Success _:
@@ -280,11 +289,11 @@ namespace ServiceManager.ProjectDeployment.Actors
                     case Trigger _:
                         Task.Run(() =>
                         {
-                            ZipFile.CreateFromDirectory(evt.StateData.Paths.BuildPath, evt.StateData.Target);
+                            ZipFile.CreateFromDirectory(evt.StateData.Paths.BuildPath, evt.StateData.Target.TargetFile);
                         }).PipeTo(Self, success:() => new Status.Success(null));
                         return Stay();
                     case Status.Success _:
-                        evt.StateData.CompletionSource?.SetResult(StateData.Commit);
+                        evt.StateData.CompletionSource?.SetResult((StateData.Commit, StateData.Target.CreateStream()));
                         return GoTo(BuildState.Waiting)
                             .Using(evt.StateData.Clear(_log))
                             .ReplyingParent(BuildCompled.Inst);
@@ -294,9 +303,12 @@ namespace ServiceManager.ProjectDeployment.Actors
             });
 
             When(BuildState.Failing, evt =>
-                GoTo(BuildState.Waiting)
-               .Using(evt.StateData.Clear(_log))
-               .ReplyingParent(BuildCompled.Inst));
+            {
+                evt.StateData.Target.ForceDispose();
+                return GoTo(BuildState.Waiting)
+                   .Using(evt.StateData.Clear(_log))
+                   .ReplyingParent(BuildCompled.Inst);
+            });
 
             WhenUnhandled(evt =>
             {

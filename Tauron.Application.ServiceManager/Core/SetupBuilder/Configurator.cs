@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Akka.Configuration;
 
 namespace Tauron.Application.ServiceManager.Core.SetupBuilder

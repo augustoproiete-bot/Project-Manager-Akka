@@ -9,7 +9,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
     [PublicAPI]
     public abstract class DataTransferRequest : TransferMessages.TransferMessage
     {
-        public abstract Func<Stream> Source { get; }
+        public abstract Func<ITransferData> Source { get; }
 
         public IActorRef Target { get; }
 
@@ -21,6 +21,9 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             Target = target;
             Data = data;
         }
+
+        public static DataTransferRequest FromStream(Func<ITransferData> stream, IActorRef target, string? data = null)
+            => new StreamTransferRequest(Guid.NewGuid().ToString(), stream, target, data);
 
         public static DataTransferRequest FromFile(string file, IActorRef target, string? data = null)
             => new DataStreamTranferRequest(Guid.NewGuid().ToString(), file, target, data);
@@ -42,7 +45,11 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
         public sealed class StreamTransferRequest : DataTransferRequest
         {
-            public StreamTransferRequest(string operationId, Func<Stream> source, IActorRef target, string? data) 
+            public StreamTransferRequest(string operationId, Func<Stream> source, IActorRef target, string? data)
+                : base(operationId, target, data) =>
+                Source = () => new StreamData(source());
+
+            public StreamTransferRequest(string operationId, Func<ITransferData> source, IActorRef target, string? data)
                 : base(operationId, target, data) =>
                 Source = source;
 
@@ -51,7 +58,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             {
             }
 
-            public override Func<Stream> Source { get; }
+            public override Func<ITransferData> Source { get; }
 
             protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();
 
@@ -63,10 +70,10 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             public DataStreamTranferRequest(string operationId, string file, IActorRef target, string? data) 
                 : base(operationId, target, data)
             {
-                Source = () => File.OpenRead(file);
+                Source = () => new StreamData(File.OpenRead(file));
             }
 
-            public override Func<Stream> Source { get; }
+            public override Func<ITransferData> Source { get; }
 
             protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();
 

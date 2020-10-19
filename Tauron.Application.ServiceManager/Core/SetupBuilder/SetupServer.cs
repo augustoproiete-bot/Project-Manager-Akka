@@ -65,7 +65,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             });
         }
         
-        private void ServOnOnMessageReceived(object? sender, MessageFromClientEventArgs e)
+        private async void ServOnOnMessageReceived(object? sender, MessageFromClientEventArgs e)
         {
             try
             {
@@ -89,7 +89,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                             }
                             else
                             {
-                                var result = BuildData(id, op);
+                                var result = await BuildData(id, op);
                                 if (result == null)
                                 {
                                     SendDeny(e.Client);
@@ -144,11 +144,11 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             Task.Run(() => _dataServer.Value.Send(client, NetworkMessage.Create(NetworkOperation.Deny, Array.Empty<byte>())));
         }
 
-        private BuildResult? BuildData(string id, InstallerOperation operation)
+        private async Task<BuildResult?> BuildData(string id, InstallerOperation operation)
         {
             try
             {
-                var file = operation.Builder(s => _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Message, Encoding.UTF8.GetBytes(s))),
+                var file = await operation.BuilderFunc(s => _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Message, Encoding.UTF8.GetBytes(s))),
                     id, operation.EndpointId);
                 if (file == null || string.IsNullOrWhiteSpace(file.Zip))
                     SendDeny(operation.EndpointId);
@@ -164,7 +164,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             return null;
         }
 
-        public void AddPendingInstallations(string id, Func<Action<string>, string, string, BuildResult?> builder, bool addShortcurt)
+        public void AddPendingInstallations(string id, SetupBuilder builder, bool addShortcurt)
         {
             if(!_dataServer.IsValueCreated)
                 _dataServer.Value.Start();
@@ -194,7 +194,8 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
         private sealed class InstallerOperation : IDisposable
         {
-            public Func<Action<string>, string, string, BuildResult?> Builder { get; }
+            private readonly SetupBuilder _builder;
+            public Func<Action<string>, string, string, Task<BuildResult?>> BuilderFunc { get; }
 
             public string EndpointId { get; set; } = string.Empty;
 
@@ -204,9 +205,10 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
             public BuildResult? Result { get; set; }
 
-            public InstallerOperation(Func<Action<string>, string, string, BuildResult?> builder, Action remove)
+            public InstallerOperation(SetupBuilder builder, Action remove)
             {
-                Builder = builder;
+                _builder = builder;
+                BuilderFunc = builder.Run;
                 Timeout = new Timer(_ =>
                 {
                     Sender?.Dispose();
@@ -219,6 +221,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
             public void Dispose()
             {
+                _builder.Dispose();
                 Timeout.Dispose();
                 Result?.Dispose();
             }

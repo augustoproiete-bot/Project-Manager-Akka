@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Akka.Actor;
 using JetBrains.Annotations;
 using MongoDB.Driver;
@@ -14,6 +12,8 @@ using Tauron;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.Core;
+using Tauron.Application.AkkNode.Services.FileTransfer;
+using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
 using Tauron.Application.Master.Commands.Deployment;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
@@ -73,15 +73,10 @@ namespace ServiceManager.ProjectDeployment.Actors
                         reporter.Compled(OperationResult.Failure(BuildErrorCodes.CommandAppNotFound));
                     else
                     {
-                        string tempFile = Path.Combine(BuildEnv.ApplicationPath, Guid.NewGuid().ToString("D") + ".zip");
-                        BuildRequest.SendWork(workDistributor, reporter, data, repository, tempFile)
+                        BuildRequest.SendWork(workDistributor, reporter, data, repository, new TempFile())
                             .PipeTo(Self,
-                                success: c => new ContinuePushNewVersion(OperationResult.Success((tempFile, c)), command, reporter),
-                                failure: e =>
-                                {
-                                    tempFile.DeleteFile();
-                                    return new ContinuePushNewVersion(OperationResult.Failure(e.Unwrap()?.Message ?? "Cancel"), command, reporter);
-                                });
+                                success: c => new ContinuePushNewVersion(OperationResult.Success(c), command, reporter),
+                                failure: e => new ContinuePushNewVersion(OperationResult.Failure(e.Unwrap()?.Message ?? "Cancel"), command, reporter));
                     }
                 });
 
@@ -89,7 +84,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             {
                 if (data == null)
                 {
-                    if(!reporter.IsCompled)
+                    if (!reporter.IsCompled)
                         reporter.Compled(OperationResult.Failure(BuildErrorCodes.CommandAppNotFound));
                     return null;
                 }
@@ -97,58 +92,52 @@ namespace ServiceManager.ProjectDeployment.Actors
                 if (!result.Ok)
                     return null;
 
-                using var transaction = apps.Database.Client.StartSession(new ClientSessionOptions{DefaultTransactionOptions = new TransactionOptions(writeConcern:WriteConcern.Acknowledged)});
+                using var transaction = apps.Database.Client.StartSession(new ClientSessionOptions {DefaultTransactionOptions = new TransactionOptions(writeConcern: WriteConcern.Acknowledged)});
                 var dataFilter = Builders<AppData>.Filter.Eq(ad => ad.Name, data.Name);
 
-                var (fileName, commit) = ((string, string))result.Outcome!;
+                var (commit, fileName) = ((string, TempStream)) result.Outcome!;
 
-                try
+                using var targetStream = fileName;
+                
+                var newId = files.UploadFromStream(data.Name + ".zip", targetStream);
+
+                var newBinary = new AppFileInfo(newId, data.Last + 1, DateTime.UtcNow, false, commit);
+                var newBinarys = data.Versions.Add(newBinary);
+
+                var definition = Builders<AppData>.Update;
+                var updates = new List<UpdateDefinition<AppData>>
+                              {
+                                  definition.Set(ad => ad.Last, newBinary.Version),
+                                  definition.Set(ad => ad.Versions, newBinarys)
+                              };
+
+                var deleteUpdates = new List<ToDeleteRevision>();
+
+                if (data.Versions.Count(s => !s.Deleted) > 5)
                 {
-                    using var targetStream = File.Open(fileName, FileMode.Open);
-                    var newId = files.UploadFromStream(data.Name + ".zip", targetStream);
-
-                    var newBinary = new AppFileInfo(newId, data.Last + 1, DateTime.UtcNow, false, commit);
-                    var newBinarys = data.Versions.Add(newBinary);
-
-                    var definition = Builders<AppData>.Update;
-                    var updates = new List<UpdateDefinition<AppData>>
+                    foreach (var info in newBinarys.OrderByDescending(i => i.CreationTime).Skip(5))
                     {
-                        definition.Set(ad => ad.Last, newBinary.Version),
-                        definition.Set(ad => ad.Versions, newBinarys)
-                    };
-
-                    var deleteUpdates = new List<ToDeleteRevision>();
-
-                    if (data.Versions.Count(s => !s.Deleted) > 5)
-                    {
-                        foreach (var info in newBinarys.OrderByDescending(i => i.CreationTime).Skip(5))
-                        {
-                            if (info.Deleted) continue;
-                            info.Deleted = true;
-                            deleteUpdates.Add(new ToDeleteRevision(info.File.ToString()));
-                        }
+                        if (info.Deleted) continue;
+                        info.Deleted = true;
+                        deleteUpdates.Add(new ToDeleteRevision(info.File.ToString()));
                     }
-
-                    transaction.StartTransaction();
-
-                    if (deleteUpdates.Count != 0)
-                        toDelete.InsertMany(transaction, deleteUpdates);
-                    if (!apps.UpdateOne(transaction, dataFilter, definition.Combine(updates)).IsAcknowledged)
-                    {
-                        transaction.AbortTransaction();
-                        reporter.Compled(OperationResult.Failure(BuildErrorCodes.DatabaseError));
-                        return null;
-                    }
-
-                    transaction.CommitTransaction();
-
-                    changeTracker.Tell(_apps.AsQueryable().FirstOrDefault(ad => ad.Name == command.AppName));
-                    return new AppBinary(newBinary.Version, newBinary.CreationTime, false, newBinary.Commit, data.Repository);
                 }
-                finally
+
+                transaction.StartTransaction();
+
+                if (deleteUpdates.Count != 0)
+                    toDelete.InsertMany(transaction, deleteUpdates);
+                if (!apps.UpdateOne(transaction, dataFilter, definition.Combine(updates)).IsAcknowledged)
                 {
-                    fileName.DeleteFile();
+                    transaction.AbortTransaction();
+                    reporter.Compled(OperationResult.Failure(BuildErrorCodes.DatabaseError));
+                    return null;
                 }
+
+                transaction.CommitTransaction();
+
+                changeTracker.Tell(_apps.AsQueryable().FirstOrDefault(ad => ad.Name == command.AppName));
+                return new AppBinary(newBinary.Version, newBinary.CreationTime, false, newBinary.Commit, data.Repository);
             });
 
             CommandPhase1<DeleteAppCommand, AppInfo>("DeleteApp", (command, reporter) =>
@@ -171,16 +160,11 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             CommandPhase1<ForceBuildCommand, FileTransactionId>("ForceBuild", (command, reporter) =>
             {
-                string tempFile = Path.Combine(BuildEnv.ApplicationPath, Guid.NewGuid().ToString("D") + ".zip");
                 var tempData = new AppData(command.AppName, -1, DateTime.Now, DateTime.MinValue, command.Repository, command.Repository, ImmutableList<AppFileInfo>.Empty);
-                BuildRequest.SendWork(workDistributor, reporter, tempData, repository, tempFile)
+                BuildRequest.SendWork(workDistributor, reporter, tempData, repository, new TempFile())
                     .PipeTo(Self,
-                        success: () => new ContinueForceBuild(OperationResult.Success(tempFile), command, reporter),
-                        failure: e =>
-                        {
-                            tempFile.DeleteFile();
-                            return new ContinueForceBuild(OperationResult.Failure(e.Unwrap()?.Message ?? "Cancel"), command, reporter);
-                        });
+                        success: d => new ContinueForceBuild(OperationResult.Success(d.Item2), command, reporter),
+                        failure: e => new ContinueForceBuild(OperationResult.Failure(e.Unwrap()?.Message ?? "Cancel"), command, reporter));
             });
 
             CommandPhase2<ContinueForceBuild, ForceBuildCommand, FileTransactionId>("ForceBuild2", (command, result, reporter, _) =>
@@ -188,34 +172,18 @@ namespace ServiceManager.ProjectDeployment.Actors
                 if (!result.Ok)
                     return null;
 
-                var fileName = (string)result.Outcome!;
-                Timers.StartSingleTimer(fileName, fileName, TimeSpan.FromMinutes(10));
-            });
+                if (result.Outcome is TempStream target)
+                {
+                    var request = DataTransferRequest.FromStream(target, command.TransferManager);
+                    dataTransfer.Tell(request);
 
-            Receive<string>(s => s.DeleteFile());
+                    return new FileTransactionId(request.OperationId);
+                }
+
+                return null;
+            });
         }
         
-        public sealed class SelfDeleteFile : FileStream
-        {
-            private readonly string _file;
-
-            public SelfDeleteFile(string file)
-                : base(file, FileMode.Open)
-                => _file = file;
-
-            protected override void Dispose(bool disposing)
-            {
-                base.Dispose(disposing);
-                _file.DeleteFile();
-            }
-
-            public override async ValueTask DisposeAsync()
-            {
-                await base.DisposeAsync();
-                _file.DeleteFile();
-            }
-        }
-
         private void CommandPhase1<TCommand, TResult>(string name, RepositoryApi api, Func<TCommand, Func<IActorRef>, Reporter, RepositoryAction?> executor, Func<TCommand, Reporter, OperationResult, object> result)
             where TCommand : DeploymentCommandBase<TResult>
         {

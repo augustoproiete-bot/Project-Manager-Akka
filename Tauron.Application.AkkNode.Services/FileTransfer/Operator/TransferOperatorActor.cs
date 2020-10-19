@@ -4,6 +4,7 @@ using System.IO;
 using Akka.Actor;
 using Akka.Event;
 using JetBrains.Annotations;
+using Tauron.Application.AkkNode.Services.FileTransfer.Internal;
 using static Tauron.Application.AkkNode.Services.FileTransfer.TransferMessages;
 
 namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
@@ -27,36 +28,33 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
 
         public IActorRef TargetManager { get; }
 
-        private Func<Stream> Data { get;  }
+        private Func<ITransferData> Data { get;  }
 
         public string? Metadata { get; }
 
-        public CrcStream TransferStrem { get; }
+        public InternalCrcStream TransferStrem { get; }
 
         public TransferError? Error { get; }
 
-        private OperatorData(string operationId, IActorRef targetManager, Func<Stream> data, string? metadata, Stream transferStrem, TransferError? error)
+        private OperatorData(string operationId, IActorRef targetManager, Func<ITransferData> data, string? metadata, InternalCrcStream transferStrem, TransferError? error)
         {
             OperationId = operationId;
             TargetManager = targetManager;
             Data = data;
             Metadata = metadata;
             Error = error;
-
-            if (transferStrem is CrcStream stream)
-                TransferStrem = stream;
-            else
-                TransferStrem = new CrcStream(transferStrem);
+            
+            TransferStrem = transferStrem;
         }
 
         public OperatorData()
-            : this(string.Empty, ActorRefs.Nobody, () => Stream.Null, null, Stream.Null, null)
+            : this(string.Empty, ActorRefs.Nobody, () => new StreamData(Stream.Null), null, new InternalCrcStream(StreamData.Null), null)
         {
             
         }
 
-        private OperatorData Copy(string? id = null, IActorRef? target = null, Func<Stream>? data = null, string? metadata = null, Stream? stream = null, TransferError? fieled = null) 
-            => new OperatorData(id ?? OperationId, target ?? TargetManager, data ?? Data, metadata ?? Metadata, stream ?? TransferStrem, fieled ?? Error);
+        private OperatorData Copy(string? id = null, IActorRef? target = null, Func<ITransferData>? data = null, string? metadata = null, InternalCrcStream? stream = null, TransferError? failed = null) 
+            => new OperatorData(id ?? OperationId, target ?? TargetManager, data ?? Data, metadata ?? Metadata, stream ?? TransferStrem, failed ?? Error);
 
         public OperatorData StartSending(DataTransferRequest id)
             => Copy(id.OperationId, id.Target, id.Source, id.Data);
@@ -64,10 +62,10 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
         public OperatorData StartRecdiving(TransmitRequest id)
             => Copy(id.OperationId, id.From, metadata: id.Data);
 
-        public OperatorData SetData(Func<Stream> data)
+        public OperatorData SetData(Func<ITransferData> data)
             => Copy(data: data);
 
-        public OperatorData Open() => Copy(stream: Data());
+        public OperatorData Open() => Copy(stream: new InternalCrcStream(Data()));
 
         public OperatorData Failed(IActorRef parent, FailReason reason, string? errorData)
         {
@@ -75,11 +73,11 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
             TargetManager.Tell(failed, parent);
             parent.Tell(failed.ToFailed());
 
-            return Copy(fieled: failed);
+            return Copy(failed: failed);
         }
 
         public OperatorData InComingError(TransferError error)
-            => Copy(fieled: error);
+            => Copy(failed: error);
     }
 
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]

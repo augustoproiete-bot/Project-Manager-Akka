@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System.Collections.Generic;
+using JetBrains.Annotations;
 using Tauron.Akka;
 using Akka.Actor;
 using Tauron.Application.AkkNode.Services.Core;
@@ -6,8 +7,13 @@ using Tauron.Application.AkkNode.Services.Core;
 namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
 {
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
-    public sealed class DataTransferManagerActor : ExposedReceiveActor
+    public sealed class DataTransferManagerActor : ExposedReceiveActor, IWithTimers
     {
+        private readonly Dictionary<string, IncomingDataTransfer> _pendingTransfers = new Dictionary<string, IncomingDataTransfer>();
+        private readonly Dictionary<string, AwaitRequest> _awaiters = new Dictionary<string, AwaitRequest>();
+
+        public ITimerScheduler Timers { get; set; } = null!;
+
         public DataTransferManagerActor()
         {
             var subscribe = new SubscribeAbility(this);
@@ -41,7 +47,11 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                     Context.ActorOf(Props.Create<TransferOperatorActor>(), r.OperationId).Tell(r);
                 }));
 
-            Flow<IncomingDataTransfer>(b => b.Action(dt => subscribe.Send(dt)));
+            Flow<IncomingDataTransfer>(b => b.Action(dt =>
+            {
+                _pendingTransfers[dt.OperationId] = dt;
+                subscribe.Send(dt);
+            }));
 
             Flow<TransferMessages.TransferCompled>(b =>
                 b.Action(tc =>
@@ -61,5 +71,12 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
         }
 
         protected override SupervisorStrategy SupervisorStrategy() => new OneForOneStrategy(e => Directive.Stop);
+
+        private class DeletePending
+        {
+            public string Id { get; }
+
+            public DeletePending(string id) => Id = id;
+        }
     }
 }

@@ -1,43 +1,58 @@
 ﻿using System;
+using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
+using Akka.Actor;
 using Akka.Event;
+using Serilog;
+using Serilog.Core;
+using Tauron.Application.AkkNode.Services;
+using Tauron.Application.AkkNode.Services.FileTransfer;
+using Tauron.Application.Master.Commands.Deployment.Build;
+using Tauron.Application.Master.Commands.Deployment.Build.Commands;
 using Tauron.Application.ServiceManager.Core.Configuration;
+using LogEvent = Serilog.Events.LogEvent;
 
 namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 {
 
     //TODO New Setup builder
-    public sealed class SetupBuilder
+    public sealed class SetupBuilder : IDisposable
     {
         public static readonly string BuildRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tauron", "ServiceManager", "Build");
 
 
-        //private readonly Logger _logger;
-        //private readonly RunContext _context;
-        //private readonly AppConfig _config;
-        //private readonly EventStream? _stream;
+        private readonly Logger _logger;
+        private readonly RunContext _context;
+        private readonly AppConfig _config;
+        private readonly DeploymentApi _api;
+        private readonly IActorRef _dataTransfer;
+        private readonly ActorSystem _actorSystem;
 
-        //private Action<string> _log;
-        //private ImmutableList<string> _seeds = ImmutableList<string>.Empty;
+        private Action<string> _log;
+        private ImmutableList<string> _seeds = ImmutableList<string>.Empty;
 
-        //private void LogMessage(string template, params object[] args)
-        //    => _logger.Information(template, args);
+        private void LogMessage(string template, params object[] args)
+            => _logger.Information(template, args);
 
-        public SetupBuilder(string hostName, string? seedHostName, AppConfig config, Action<string> log, EventStream? stream)
+        public SetupBuilder(string hostName, string? seedHostName, AppConfig config, Action<string> log, ActorSystem actorSystem, DeploymentApi api)
         {
-            //_logger = new LoggerConfiguration().WriteTo.Logger(Log.ForContext<SetupBuilder>()).WriteTo.Sink(new DelegateSink(s => _log(s))).CreateLogger();
+            _logger = new LoggerConfiguration().WriteTo.Logger(Log.ForContext<SetupBuilder>()).WriteTo.Sink(new DelegateSink(s => _log!(s))).CreateLogger();
+            _dataTransfer = DataTransferManager.New(actorSystem);
 
-            //_context = new RunContext(new RepositoryConfiguration(LogMessage))
-            //{
-            //    HostName = hostName,
-            //    SeedHostName = seedHostName
-            //};
-            //_config = config;
-            //_log = log;
-            //_stream = stream;
+            _context = new RunContext
+            {
+                HostName = hostName,
+                SeedHostName = seedHostName
+            };
+            _config = config;
+            _log = log;
+            _actorSystem = actorSystem;
+            _api = api;
         }
 
-        public BuildResult? Run(Action<string> log, string identifer, string endPoint)
+        public async Task<BuildResult?> Run(Action<string> log, string identifer, string endPoint)
         {
             //_log = _log.Combine(log) ?? (s => { });
 
@@ -131,63 +146,63 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         //    }
         //}
 
-        //private void BuildHost(string basePath, string id, string ip)
-        //{
+        private async Task BuildHost(string basePath, string id, string ip)
+        {
 
-        //    var hostProject = _context.Finder.Search("ServiceHost.csproj");
-        //    if (hostProject == null)
-        //        throw new InvalidOperationException("Host Project Not Found");
+            //var hostProject = _context.Finder.Search("ServiceHost.csproj");
+            //if (hostProject == null)
+            //    throw new InvalidOperationException("Host Project Not Found");
 
-        //    LogMessage("Building Host Application {Id}", id);
-        //    string hostOutput = Path.Combine(basePath, "Host");
+            
 
-        //    Directory.CreateDirectory(hostOutput);
 
-        //    var result = DotNetBuilder.BuildApplication(hostProject, hostOutput, s => LogMessage(s, id), _context.Configuration);
-        //    if (!result)
-        //    {
-        //        LogMessage("Host Project Build Failed {Id}", id);
-        //        return;
-        //    }
+            LogMessage("Building Host Application {Id}", id);
+            string hostOutput = Path.Combine(basePath, "Host");
 
-        //    var hostConfig = new Configurator(hostOutput);
-        //    string hostIp = ip;
+            Directory.CreateDirectory(hostOutput);
 
-        //    hostConfig.SetSeed(_seeds);
-        //    hostConfig.SetIp(hostIp);
-        //    hostConfig.SetAppName(_context.HostName);
 
-        //    hostConfig.Save();
+            var hostConfig = new Configurator(hostOutput);
+            string hostIp = ip;
 
-        //    File.WriteAllText(Path.Combine(basePath, "StartHost.bat"), "cd %~dp0\\Host\n" +
-        //                                                               "ServiceHost.exe\n" +
-        //                                                               "pause");
-        //}
+            hostConfig.SetSeed(_seeds);
+            hostConfig.SetIp(hostIp);
+            hostConfig.SetAppName(_context.HostName);
 
-        //private sealed class RunContext
-        //{
-        //    public string HostName { get; set; } = string.Empty;
-        //    public string? SeedHostName { get; set; }
+            hostConfig.Save();
 
-        //    public RepositoryConfiguration Configuration { get; }
+            File.WriteAllText(Path.Combine(basePath, "StartHost.bat"), "cd %~dp0\\Host\n" +
+                                                                       "ServiceHost.exe\n" +
+                                                                       "pause");
+        }
 
-        //    public ProjectFinder Finder => Repository.ProjectFinder;
+        private async Task SendBuild(string repository, string projectFile, string buildPath)
+        {
+            var listner = Reporter.CreateListner(_actorSystem, _log, TimeSpan.FromMinutes(5),  out var waiter);
+            var command = new ForceBuildCommand(_dataTransfer, repository, projectFile);
 
-        //    private ProjectManagerRepository? _repository;
+        }
 
-        //    public ProjectManagerRepository Repository => _repository ??= ProjectManagerRepository.GatOrNew(Configuration);
+        private sealed class RunContext
+        {
+            public string HostName { get; set; } = string.Empty;
+            public string? SeedHostName { get; set; }
+        }
 
-        //    public RunContext(RepositoryConfiguration configuration) => Configuration = configuration;
-        //}
+        private sealed class DelegateSink : ILogEventSink
+        {
+            private readonly Action<string> _log;
 
-        //private sealed class DelegateSink : ILogEventSink
-        //{
-        //    private readonly Action<string> _log;
+            public DelegateSink(Action<string> log) => _log = log;
 
-        //    public DelegateSink(Action<string> log) => _log = log;
+            [DebuggerHidden]
+            public void Emit(LogEvent logEvent) => _log(logEvent.RenderMessage());
+        }
 
-        //    [DebuggerHidden]
-        //    public void Emit(LogEvent logEvent) => _log(logEvent.RenderMessage());
-        //}
+        public void Dispose()
+        {
+            _logger.Dispose();
+            _dataTransfer.Tell(PoisonPill.Instance);
+        }
     }
 }
