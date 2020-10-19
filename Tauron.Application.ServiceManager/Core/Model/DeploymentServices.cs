@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Cluster;
 using Akka.Configuration;
 using Akka.DI.Core;
 using ServiceManager.ProjectDeployment;
@@ -69,7 +70,7 @@ namespace Tauron.Application.ServiceManager.Core.Model
                         if(string.IsNullOrWhiteSpace(connectionString))
                             return;
 
-                        InitClient(connectionString);
+                        Cluster.Get(Context.System).RegisterOnMemberUp(() => InitClient(connectionString));
                     }
                     catch (Exception e)
                     {

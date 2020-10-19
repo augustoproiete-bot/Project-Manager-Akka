@@ -12,10 +12,8 @@ using Tauron;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.Commands;
-using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
-using Tauron.Application.Master.Commands.Deployment;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
 using Tauron.Application.Master.Commands.Deployment.Build.Data;
@@ -34,7 +32,7 @@ namespace ServiceManager.ProjectDeployment.Actors
         {
             _apps = apps;
             
-            CommandPhase1<CreateAppCommand, AppInfo>("CreateApp", repository, 
+            CommandPhase1<CreateAppCommand>("CreateApp", repository, 
                 (command, reporter) =>
                 {
                     reporter.Send(DeploymentMessages.RegisterRepository);
@@ -66,7 +64,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                 return info;
             });
 
-            CommandPhase1<PushVersionCommand, AppBinary>("PushVersion",
+            CommandPhase1<PushVersionCommand>("PushVersion",
                 (command, reporter) =>
                 {
                     var data = apps.AsQueryable().FirstOrDefault(ad => ad.Name == command.AppName);
@@ -138,10 +136,10 @@ namespace ServiceManager.ProjectDeployment.Actors
                 transaction.CommitTransaction();
 
                 changeTracker.Tell(_apps.AsQueryable().FirstOrDefault(ad => ad.Name == command.AppName));
-                return new AppBinary(newBinary.Version, newBinary.CreationTime, false, newBinary.Commit, data.Repository);
+                return new AppBinary(command.AppName, newBinary.Version, newBinary.CreationTime, false, newBinary.Commit, data.Repository);
             });
 
-            CommandPhase1<DeleteAppCommand, AppInfo>("DeleteApp", (command, reporter) =>
+            CommandPhase1<DeleteAppCommand>("DeleteApp", (command, reporter) =>
             {
                 var data = apps.AsQueryable().FirstOrDefault(d => d.Name == command.AppName);
                 if (data == null)
@@ -159,7 +157,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                 reporter.Compled(OperationResult.Success(data.ToInfo().IsDeleted()));
             });
 
-            CommandPhase1<ForceBuildCommand, FileTransactionId>("ForceBuild", (command, reporter) =>
+            CommandPhase1<ForceBuildCommand>("ForceBuild", (command, reporter) =>
             {
                 var tempData = new AppData(command.AppName, -1, DateTime.Now, DateTime.MinValue, command.Repository, command.Repository, ImmutableList<AppFileInfo>.Empty);
                 BuildRequest.SendWork(workDistributor, reporter, tempData, repository, new TempFile())
@@ -183,7 +181,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             });
         }
         
-        private void CommandPhase1<TCommand, TResult>(string name, RepositoryApi api, Func<TCommand, Reporter, IReporterMessage?> executor, Func<TCommand, Reporter, OperationResult, object> result)
+        private void CommandPhase1<TCommand>(string name, RepositoryApi api, Func<TCommand, Reporter, IReporterMessage?> executor, Func<TCommand, Reporter, OperationResult, object> result)
             where TCommand : ReporterCommandBase<DeploymentApi, TCommand>, IDeploymentCommand
         {
             Receive<TCommand>(name, (command, reporter) =>
@@ -212,7 +210,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             });
         }
 
-        private void CommandPhase1<TCommand, TResult>(string name, Action<TCommand, Reporter> executor)
+        private void CommandPhase1<TCommand>(string name, Action<TCommand, Reporter> executor)
             where TCommand : ReporterCommandBase<DeploymentApi, TCommand>, IDeploymentCommand
             => Receive(name, executor);
 

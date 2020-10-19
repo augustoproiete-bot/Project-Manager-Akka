@@ -43,6 +43,6 @@ namespace ServiceManager.ProjectDeployment.Data
         }
 
         public AppInfo ToInfo()
-            => new AppInfo(Name, Last, LastUpdate, CreationTime, Repository, Versions.Select(fi => new AppBinary(fi.Version, fi.CreationTime, fi.Deleted, fi.Commit, Repository)));
+            => new AppInfo(Name, Last, LastUpdate, CreationTime, Repository, Versions.Select(fi => new AppBinary(Name, fi.Version, fi.CreationTime, fi.Deleted, fi.Commit, Repository)));
     }
 }

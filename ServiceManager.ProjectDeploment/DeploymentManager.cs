@@ -33,9 +33,6 @@ namespace ServiceManager.ProjectDeployment
 
         public bool IsOk => !_manager.IsNobody();
 
-        public void SendAction(DeploymentAction action)
-            => _manager.Tell(action);
-
         public void Stop()
             => _manager.Tell(PoisonPill.Instance);
     }

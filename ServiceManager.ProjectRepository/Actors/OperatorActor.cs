@@ -13,6 +13,7 @@ using ServiceManager.ProjectRepository.Data;
 using Tauron;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
+using Tauron.Application.AkkNode.Services.Commands;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
@@ -156,10 +157,10 @@ namespace ServiceManager.ProjectRepository.Actors
 
                 //repozip.Seek(0, SeekOrigin.Begin);
                 //Timers.StartSingleTimer(_reporter, new TransferFailed(string.Empty, FailReason.Timeout, data.RepoName), TimeSpan.FromMinutes(10));
-                var request = DataTransferRequest.FromStream(repository.OperationId, repozip, repository.FileTarget, repository.RepoName);
+                var request = DataTransferRequest.FromStream(repository.OperationId, repozip, repository.Manager ?? throw new ArgumentNullException($"FileManager"), commitInfo);
                 _dataTransfer.Request(request);
 
-                reporter.Compled(OperationResult.Success(new Tranferdata(new FileTransactionId(request.OperationId), commitInfo)));
+                reporter.Compled(OperationResult.Success(new FileTransactionId(request.OperationId)));
             }
             finally
             {
@@ -184,7 +185,7 @@ namespace ServiceManager.ProjectRepository.Actors
             base.PostStop();
         }
 
-        private bool UpdateRepository(RepositoryEntry data, Reporter reporter, RepositoryAction repository, string commitInfo, Stream repozip)
+        private bool UpdateRepository(RepositoryEntry data, Reporter reporter, TransferRepository repository, string commitInfo, Stream repozip)
         {
             Log.Info("Try Update Repository");
             UpdateLock.EnterWriteLock();

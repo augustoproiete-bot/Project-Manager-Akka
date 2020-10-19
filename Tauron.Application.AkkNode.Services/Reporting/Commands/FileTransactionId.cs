@@ -1,24 +1,13 @@
-﻿using System.IO;
-using JetBrains.Annotations;
-using Tauron.Application.AkkNode.Services.Core;
+﻿using JetBrains.Annotations;
 
 namespace Tauron.Application.AkkNode.Services.Commands
 {
     [PublicAPI]
-    public sealed class FileTransactionId : InternalSerializableBase
+    public sealed class FileTransactionId
     {
-        public string Id { get; private set; } = string.Empty;
+        public string Id { get; }
 
         public FileTransactionId(string id) => Id = id;
 
-        public FileTransactionId(BinaryReader reader)
-            : base(reader)
-        { }
-
-        protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) 
-            => Id = reader.ReadString();
-
-        protected override void WriteInternal(ActorBinaryWriter writer) 
-            => writer.Write(Id);
     }
 }

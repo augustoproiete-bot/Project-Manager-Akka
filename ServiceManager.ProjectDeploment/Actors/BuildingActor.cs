@@ -82,6 +82,7 @@ namespace ServiceManager.ProjectDeployment.Actors
         public BuildData Set(BuildRequest request)
         {
             OperationId = Guid.NewGuid().ToString("D");
+            Paths = new BuildPaths(Path.Combine(BuildEnv.ApplicationPath, "Building", OperationId));
             Reporter = request.Source;
             AppData = request.AppData;
             Api = request.RepositoryApi;
@@ -89,16 +90,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             CompletionSource = request.CompletionSource;
             return this;
         }
-
-        public BuildData Set(IncomingDataTransfer request)
-        {
-            Paths = new BuildPaths(Path.Combine(BuildEnv.ApplicationPath, "Building", OperationId));
-
-            request.Accept(() => Paths.RepoFile.CreateDate());
-
-            return this;
-        }
-
+        
         public BuildData SetError(string error)
         {
             Error = error;
@@ -141,9 +133,6 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         public BuildingActor(DataTransferManager fileHandler)
         {
-            fileHandler.Event<TransferCompled>();
-            fileHandler.Event<TransferFailed>();
-
             StartWith(BuildState.Waiting, new BuildData());
 
             When(BuildState.Waiting, evt =>
@@ -157,11 +146,11 @@ namespace ServiceManager.ProjectDeployment.Actors
                         _log.Info("Incomming Build Request {Apps}", request.AppData.Name);
                         var newData = evt.StateData.Set(request);
 
-                        var listner = Reporter.CreateListner(Context, newData.Reporter!, TimeSpan.FromMinutes(5), task => task.PipeTo(Self));
-
-                        newData.Api.SendAction(new TransferRepository(newData.AppData.Repository, listner, fileHandler, newData.OperationId));
+                        new TransferRepository(newData.AppData.Repository, newData.OperationId)
+                           .Send(newData.Api, TimeSpan.FromMinutes(5), fileHandler, newData.Reporter!.Send, () => newData.Paths.RepoFile.CreateDate())
+                           .PipeTo(Self);
                         return GoTo(BuildState.Repository)
-                            .Using(newData.SetListner(listner));
+                            .Using(newData.SetListner(ActorRefs.Nobody));
                     }
                     default:
                         return null;
@@ -172,28 +161,6 @@ namespace ServiceManager.ProjectDeployment.Actors
             {
                 switch (evt.FsmEvent)
                 {
-                    case OperationResult result:
-                        if (result.Ok)
-                        {
-                            if (result.Outcome is Tranferdata data) StateData.Commit = data.Commit;
-                            else StateData.Commit = "Unkowen";
-
-                            return Stay();
-                        }
-                        else
-                        {
-                            return GoTo(BuildState.Failing)
-                               .Using(evt.StateData.SetError(result.Error ?? BuildErrorCodes.GernalBuildError));
-                        }
-                    case IncomingDataTransfer transfer:
-                        _log.Info("Start Repository Transfer {Name}", evt.StateData.AppData.Name);
-                        if (transfer.OperationId != evt.StateData.OperationId)
-                            return Stay();
-                        else
-                        {
-                            evt.StateData.Reporter?.Send(DeploymentMessages.BuildTransferRepoistory);
-                            return Stay().Using(evt.StateData.Set(transfer));
-                        }
                     case TransferFailed fail:
                         _log.Warning("Repository Transfer Failed {Name}--{Reason}", evt.StateData.AppData.Name, fail.Reason);
                         if (fail.OperationId != evt.StateData.OperationId)
@@ -204,6 +171,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                         _log.Info("Repository Transfer Compled {Name}", evt.StateData.AppData.Name);
                         if (c.OperationId != evt.StateData.OperationId)
                             return Stay();
+                        evt.StateData.Commit = c.Data ?? "Unkowen";
                         return GoTo(BuildState.Extracting)
                            .ReplyingSelf(Trigger.Inst);
                     default:

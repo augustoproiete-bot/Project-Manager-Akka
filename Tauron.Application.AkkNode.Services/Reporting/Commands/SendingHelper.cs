@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Akka.Actor;
 using Tauron.Akka;
+using Tauron.Host;
 
 namespace Tauron.Application.AkkNode.Services.Commands
 {
@@ -11,7 +13,18 @@ namespace Tauron.Application.AkkNode.Services.Commands
         {
             var task = new TaskCompletionSource<TResult>();
 
-            var listner = Reporter.CreateListner(ExposedReceiveActor.ExposedContext, messages, result =>
+            IActorRefFactory factory;
+
+            try
+            {
+                factory = ExposedReceiveActor.ExposedContext;
+            }
+            catch (NotSupportedException)
+            {
+                factory = ActorApplication.Application.ActorSystem;
+            }
+
+            var listner = Reporter.CreateListner(factory, messages, result =>
             {
                 if (result.Ok)
                 {
@@ -28,7 +41,7 @@ namespace Tauron.Application.AkkNode.Services.Commands
                 {
                     task.SetException(new CommandFailedException(result.Error ?? "Unkowen"));
                 }
-            }, timeout);
+            }, timeout, null);
             command.SetListner(listner);
 
             sender.SendCommand(command);

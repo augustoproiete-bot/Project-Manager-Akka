@@ -2,7 +2,7 @@
 
 namespace Tauron.Application.Master.Commands.Deployment.Repository
 {
-    public sealed class RegisterRepository : SimpleCommand<RepositoryApi, RegisterRepository>
+    public sealed class RegisterRepository : SimpleCommand<RepositoryApi, RegisterRepository>, IRepositoryAction
     {
         public string RepoName { get; }
 

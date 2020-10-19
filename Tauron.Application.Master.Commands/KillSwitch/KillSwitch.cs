@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using Akka.Actor;
 using Akka.Cluster;
 using Akka.Cluster.Utility;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Akka;
-using Tauron.Application.AkkNode.Services.Core;
 using static Akka.Cluster.Utility.ClusterActorDiscoveryMessage;
 
 namespace Tauron.Application.Master.Commands
@@ -169,7 +167,7 @@ namespace Tauron.Application.Master.Commands
             }
         }
 
-        public sealed class RespondRegistration : IInternalSerializable
+        public sealed class RespondRegistration
         {
             public KillRecpientType RecpientType { get; }
 
@@ -177,52 +175,18 @@ namespace Tauron.Application.Master.Commands
             {
                 RecpientType = recpientType;
             }
-
-            [UsedImplicitly]
-            public RespondRegistration(BinaryReader reader)
-            {
-                var manifest = BinaryManifest.Read(reader, nameof(RespondRegistration), 0);
-
-                if (manifest.WhenVersion(1)) 
-                    RecpientType = (KillRecpientType) reader.ReadInt32();
-            }
-
-            public void Write(ActorBinaryWriter writer)
-            {
-                BinaryManifest.Write(writer, nameof(RespondRegistration), 1);
-                writer.Write((int)RecpientType);
-            }
         }
 
-        public sealed class RequestRegistration : IInternalSerializable
+        public sealed class RequestRegistration
         {
-            public RequestRegistration()
-            {
-                
-            }
-
-            public RequestRegistration(BinaryReader reader) => BinaryManifest.VerifiyEmpty<RequestRegistration>(reader);
-            public void Write(ActorBinaryWriter writer) => BinaryManifest.WriteEmpty<RequestRegistration>(writer);
         }
 
-        public sealed class KillNode : IInternalSerializable
+        public sealed class KillNode
         {
-            public KillNode()
-            {
-                
-            }
-            public KillNode(BinaryReader reader) => BinaryManifest.VerifiyEmpty<KillNode>(reader);
-            public void Write(ActorBinaryWriter writer) => BinaryManifest.WriteEmpty<KillNode>(writer);
         }
 
-        public sealed class KillClusterMsg : IInternalSerializable
+        public sealed class KillClusterMsg
         {
-            public KillClusterMsg()
-            {
-                
-            }
-            public KillClusterMsg(BinaryReader reader) => BinaryManifest.VerifiyEmpty<KillClusterMsg>(reader);
-            public void Write(ActorBinaryWriter writer) => BinaryManifest.WriteEmpty<KillClusterMsg>(writer);
         }
 
         public static void Setup(ActorSystem system)

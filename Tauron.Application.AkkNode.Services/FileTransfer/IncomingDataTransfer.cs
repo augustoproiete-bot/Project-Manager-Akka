@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using JetBrains.Annotations;
-using Tauron.Application.AkkNode.Services.Core;
 
 namespace Tauron.Application.AkkNode.Services.FileTransfer
 {
@@ -44,9 +43,5 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
             Manager.Actor.Tell(new TransferMessages.RequestAccept(OperationId, to, source));
             return source.Task;
         }
-
-        protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest) => throw new NotSupportedException();
-
-        protected override void WriteInternal(ActorBinaryWriter writer) => throw new NotSupportedException();
     }
 }

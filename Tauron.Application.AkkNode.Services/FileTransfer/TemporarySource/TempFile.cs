@@ -12,21 +12,21 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource
 
         private Stream? _tempFile;
         private bool _isDisposed;
+        private string? _targetFile;
 
-        public string TargetFile { get; }
+        public string TargetFile => _targetFile ??= Path.GetTempFileName();
 
         public TempFile(string targetFile, bool noCheck = false)
         {
             if(noCheck)
                 _referenceCounter.GetAndSet(int.MinValue);
-            TargetFile = targetFile;
+            _targetFile = targetFile;
         }
 
         public TempFile(bool noCheck = false)
         {
             if (noCheck)
                 _referenceCounter.GetAndSet(int.MinValue);
-            TargetFile = Path.GetTempFileName();
         }
 
         public TempData CreateDate() 
@@ -73,7 +73,12 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource
                 if(_isDisposed) return;
                 _isDisposed = true;
                 _tempFile?.Dispose();
-                TargetFile.DeleteDirectory();
+                try
+                {
+                    TargetFile.DeleteDirectory();
+                }
+                catch (IOException)
+                { }
             }
         }
     }

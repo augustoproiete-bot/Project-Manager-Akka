@@ -1,6 +1,4 @@
 ﻿using System.IO;
-using JetBrains.Annotations;
-using Tauron.Application.AkkNode.Services.Core;
 
 namespace Tauron.Application.AkkNode.Services.FileTransfer
 {
@@ -20,29 +18,12 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
     public sealed class TransferFailed : TransferMessages.TransferCompled
     {
-        public FailReason Reason { get; private set; } = FailReason.Unkowen;
+        public FailReason Reason { get; }
 
         public TransferFailed(string operationId, FailReason reason, string? data) 
             : base(operationId, data)
         {
             Reason = reason;
-        }
-
-        public TransferFailed(BinaryReader reader)
-            : base(reader)
-        {
-            
-        }
-
-        protected override void ReadInternal(BinaryReader reader, BinaryManifest manifest)
-        {
-            if (manifest.WhenVersion(1)) 
-                Reason = (FailReason) reader.ReadInt32();
-        }
-
-        protected override void WriteInternal(ActorBinaryWriter writer)
-        {
-            writer.Write((int)Reason);
         }
     }
 }

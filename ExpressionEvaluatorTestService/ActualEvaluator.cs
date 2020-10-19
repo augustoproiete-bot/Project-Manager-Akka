@@ -28,7 +28,7 @@ namespace ExpressionEvaluatorTestService
                 result = ErrorResult.From(e);
             }
 
-            Sender.Tell(new EvaluationResult(result, result.GetType().IsPrimitive));
+            Sender.Tell(new EvaluationResult(result, result.GetType().IsPrimitive, false));
         }
     }
 }

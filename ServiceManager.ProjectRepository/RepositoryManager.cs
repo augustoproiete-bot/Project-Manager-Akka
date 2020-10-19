@@ -36,9 +36,6 @@ namespace ServiceManager.ProjectRepository
         public void CleanUp()
             => _manager.Tell(new StartCleanUp());
 
-        public void SendAction(RepositoryAction action)
-            => _manager.Tell(action);
-
         public void Stop()
             => _manager.Tell(PoisonPill.Instance);
     }

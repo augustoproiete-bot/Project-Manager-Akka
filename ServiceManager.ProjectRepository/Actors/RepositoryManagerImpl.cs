@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Akka.Actor;
 using Akka.Event;
 using MongoDB.Driver;
@@ -20,8 +19,6 @@ namespace ServiceManager.ProjectRepository.Actors
         private readonly IMongoCollection<ToDeleteRevision> _trashBin;
         private readonly GridFSBucket _gridFsBucket;
 
-        private IActorRef _cleaner;
-
         public RepositoryManagerImpl(IMongoClient client, DataTransferManager dataTransfer)
         {
             _database = client.GetDatabase("Repository");
@@ -35,7 +32,7 @@ namespace ServiceManager.ProjectRepository.Actors
                                                               ChunkSizeBytes = 1048576
                                                           });
 
-            Receive<RepositoryAction>(r => Context.ActorOf(Props.Create(() => new OperatorActor(repositoryData, _gridFsBucket, _trashBin, dataTransfer))).Forward(r));
+            Receive<IRepositoryAction>(r => Context.ActorOf(Props.Create(() => new OperatorActor(repositoryData, _gridFsBucket, _trashBin, dataTransfer))).Forward(r));
             Receive<IndexRequest>(_ =>
             {
                 try
@@ -50,17 +47,17 @@ namespace ServiceManager.ProjectRepository.Actors
                 }
             });
 
-            _cleaner = CreateCleanUp();
+            IActorRef cleaner = CreateCleanUp();
 
             Receive<Terminated>(t =>
             {
-                if (t.ActorRef.Equals(_cleaner))
-                    _cleaner = CreateCleanUp();
+                if (t.ActorRef.Equals(cleaner))
+                    cleaner = CreateCleanUp();
             });
 
-            Context.Watch(_cleaner);
+            Context.Watch(cleaner);
 
-            Receive<StartCleanUp>(c => _cleaner.Forward(c));
+            Receive<StartCleanUp>(c => cleaner.Forward(c));
         }
 
         private IActorRef CreateCleanUp()
