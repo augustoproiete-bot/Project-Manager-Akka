@@ -38,7 +38,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             Receive<IDeploymentQuery>(q => query.Forward(q));
 
-            var buildSystem = WorkDistributor<BuildRequest, BuildCompled>.Create(Context, Props.Create<BuildingActor>(), "Compiler", TimeSpan.FromHours(1), "CompilerSupervisor");
+            var buildSystem = WorkDistributor<BuildRequest, BuildCompled>.Create(Context, Props.Create(() => new BuildingActor(dataTransfer)), "Compiler", TimeSpan.FromHours(1), "CompilerSupervisor");
 
             var processorProps = Props.Create(() => new AppCommandProcessor(database.GetCollection<AppData>(AppsCollectionName, null), files, repositoryProxy, dataTransfer, trashBin, buildSystem, changeTracker))
                 .WithRouter(router);

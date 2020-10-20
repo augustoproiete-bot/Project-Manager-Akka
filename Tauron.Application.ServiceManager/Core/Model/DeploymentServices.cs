@@ -70,14 +70,18 @@ namespace Tauron.Application.ServiceManager.Core.Model
                         if(string.IsNullOrWhiteSpace(connectionString))
                             return;
 
-                        Cluster.Get(Context.System).RegisterOnMemberUp(() => InitClient(connectionString));
+                        var stream = Context.System.EventStream;
+
+                        Cluster.Get(Context.System).RegisterOnMemberUp(() =>
+                        {
+                            InitClient(connectionString);
+                            stream.Publish(new DeploymentServicesChanged(_repository?.IsOk == true && _deploymentServer?.IsOk == true));
+                        });
                     }
                     catch (Exception e)
                     {
                         Log.Warning(e, "Error on Parsing Current Configuration");
                     }
-
-                    Context.System.EventStream.Publish(new DeploymentServicesChanged(_repository?.IsOk == true && _deploymentServer?.IsOk == true));
                 });
                 Receive<NewConnectionString>(s =>
                 {

@@ -18,7 +18,6 @@ namespace Tauron.Application.ServiceManager.ViewModels
     public sealed class SetupBuilderViewModel : UiActor
     {
         private readonly AppConfig _config;
-        private readonly DeploymentServices _deploymentServices;
         private readonly HostApi _api;
         private readonly DeploymentApi _deploymentApi;
         private readonly SetupServer _server;
@@ -29,7 +28,6 @@ namespace Tauron.Application.ServiceManager.ViewModels
             : base(lifetimeScope, dispatcher)
         {
             _config = config;
-            _deploymentServices = deploymentServices;
             _server = new SetupServer(s => UICall(() => TerminalLines!.Add(s)), Context.System.Settings.Config);
             _deploymentApi = DeploymentApi.CreateProxy(Context.System, "SetupBuilder_DeploymentApi");
 

@@ -9,7 +9,7 @@ namespace Tauron.Application.Master.Commands.Deployment.Build
     [PublicAPI]
     public sealed class DeploymentApi : ISender
     {
-        public const string RepositoryPath = @"DeplaymentManager";
+        public const string DeploymentPath = @"DeploymentManager";
 
         private readonly IActorRef _repository;
 
@@ -17,7 +17,7 @@ namespace Tauron.Application.Master.Commands.Deployment.Build
 
         public static DeploymentApi CreateProxy(ActorSystem system, string name = "DeploymentProxy")
         {
-            var proxy = ClusterSingletonProxy.Props($"/user/{RepositoryPath}", ClusterSingletonProxySettings.Create(system).WithRole("UpdateSystem"));
+            var proxy = ClusterSingletonProxy.Props($"/user/{DeploymentPath}", ClusterSingletonProxySettings.Create(system).WithRole("UpdateSystem"));
             return new DeploymentApi(system.ActorOf(proxy, name));
         }
 
