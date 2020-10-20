@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Threading;
+using Akka.Util;
 using Autofac;
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Localizer.Generated;
 using Tauron.Application.Master.Commands.Administration.Host;
 using Tauron.Application.Master.Commands.Deployment.Build;
+using Tauron.Application.Master.Commands.Deployment.Repository;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.ServiceManager.Core.SetupBuilder;
@@ -20,6 +22,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
         private readonly AppConfig _config;
         private readonly HostApi _api;
         private readonly DeploymentApi _deploymentApi;
+        private readonly RepositoryApi _repositoryApi;
         private readonly SetupServer _server;
 
         private EventSubscribtion? _subscribtion;
@@ -30,6 +33,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             _config = config;
             _server = new SetupServer(s => UICall(() => TerminalLines!.Add(s)), Context.System.Settings.Config);
             _deploymentApi = DeploymentApi.CreateProxy(Context.System, "SetupBuilder_DeploymentApi");
+            _repositoryApi = RepositoryApi.CreateProxy(Context.System, "SetupBuilder_RepositoryApi");
 
             AddShortcut = RegisterProperty<bool>(nameof(AddShortcut));
             CurrentError = RegisterProperty<string>(nameof(CurrentError));
@@ -86,7 +90,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
             UICall(TerminalLines.Clear);
 
-            var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, _config, s => UICall(() => TerminalLines.Add(s)), Context.System, _deploymentApi);
+            var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, _config, s => UICall(() => TerminalLines.Add(s)), Context.System, _deploymentApi, _repositoryApi);
             var id = Guid.NewGuid().ToString().Substring(0, 5);
 
             _server.AddPendingInstallations(id, builder, AddShortcut);

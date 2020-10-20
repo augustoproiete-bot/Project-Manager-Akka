@@ -127,6 +127,7 @@ namespace ServiceManager.ProjectRepository.Actors
 
         private void RequestRepository(TransferRepository repository, Reporter reporter)
         {
+            var repozipFile = new TempFile(true);
             UpdateLock.EnterUpgradeableReadLock();
             try
             {
@@ -142,7 +143,6 @@ namespace ServiceManager.ProjectRepository.Actors
 
                 var commitInfo = _gitHubClient.Repository.Commit.GetSha1(data.RepoId, "HEAD").Result;
 
-                var repozipFile = new TempFile();
                 var repozip = repozipFile.CreateStream();
 
                 if (!(commitInfo != data.LastUpdate && UpdateRepository(data, reporter, repository, commitInfo, repozip)))
@@ -164,6 +164,7 @@ namespace ServiceManager.ProjectRepository.Actors
             }
             finally
             {
+                repozipFile.ForceDispose();
                 UpdateLock.ExitUpgradeableReadLock();
             }
         }

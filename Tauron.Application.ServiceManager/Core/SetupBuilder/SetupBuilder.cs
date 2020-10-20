@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Event;
+using Akka.Util;
 using Serilog;
 using Serilog.Core;
 using Tauron.Application.AkkNode.Services;
@@ -14,6 +15,7 @@ using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
 using Tauron.Application.Master.Commands.Administration.Host;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
+using Tauron.Application.Master.Commands.Deployment.Repository;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
 using LogEvent = Serilog.Events.LogEvent;
@@ -21,12 +23,13 @@ using LogEvent = Serilog.Events.LogEvent;
 namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 {
 
-    //TODO New Setup builder
     public sealed class SetupBuilder : IDisposable
     {
-        public const string Repository = "Tauron1990/Project-Manager-Akka";
-        public const string ServiceHost = "ServiceHost.csproj";
-        public const string SeedNode = "Master.Seed.Node.csproj";
+        private const string Repository = "Tauron1990/Project-Manager-Akka";
+        private const string ServiceHost = "ServiceHost.csproj";
+        private const string SeedNode = "Master.Seed.Node.csproj";
+
+        private static AtomicBoolean _existRepo = new AtomicBoolean();
 
         public static readonly string BuildRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tauron", "ServiceManager", "Build");
 
@@ -35,6 +38,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         private readonly RunContext _context;
         private readonly AppConfig _config;
         private readonly DeploymentApi _api;
+        private readonly RepositoryApi _repository;
         private readonly DataTransferManager _dataTransfer;
         private readonly ActorSystem _actorSystem;
 
@@ -44,7 +48,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         private void LogMessage(string template, params object[] args)
             => _logger.Information(template, args);
 
-        public SetupBuilder(string hostName, string? seedHostName, AppConfig config, Action<string> log, ActorSystem actorSystem, DeploymentApi api)
+        public SetupBuilder(string hostName, string? seedHostName, AppConfig config, Action<string> log, ActorSystem actorSystem, DeploymentApi api, RepositoryApi repository)
         {
             _logger = new LoggerConfiguration().WriteTo.Logger(Log.ForContext<SetupBuilder>()).WriteTo.Sink(new DelegateSink(s => _log!(s))).CreateLogger();
             _dataTransfer = DataTransferManager.New(actorSystem);
@@ -58,6 +62,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             _log = log;
             _actorSystem = actorSystem;
             _api = api;
+            _repository = repository;
         }
 
         public async Task<BuildResult?> Run(Action<string> log, string identifer, string endPoint)
@@ -110,6 +115,8 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
         private async Task<bool> BuildSeed(string basePath, string id, string ip, string name)
         {
+            await new RegisterRepository(Repository) {IgnoreDuplicate = true}
+                .Send(_repository, TimeSpan.FromSeconds(20), _log);
 
             LogMessage("Building Seed Node {Id}", id);
             string appOutput = Path.Combine(basePath, "Seed");
@@ -177,6 +184,8 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
         private async Task<bool> SendBuild(string repository, string projectFile, string buildPath)
         {
+            
+
             var command = new ForceBuildCommand(repository, projectFile);
 
             using var tempFile = new TempFile();
