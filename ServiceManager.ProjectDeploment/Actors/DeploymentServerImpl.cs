@@ -45,6 +45,24 @@ namespace ServiceManager.ProjectDeployment.Actors
             var processor = Context.ActorOf(processorProps, "ProcessorRouter");
 
             Receive<IDeploymentCommand>(a => processor.Forward(a));
+
+            Receive<string>(s =>
+            {
+                try
+                {
+                    database.GetCollection<AppData>(AppsCollectionName).Indexes.CreateOne(new CreateIndexModel<AppData>(Builders<AppData>.IndexKeys.Ascending(ad => ad.Name)));
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "Error on Creating Index for Data");
+                }
+            });
+        }
+
+        protected override void PreStart()
+        {
+            base.PreStart();
+            Self.Tell("Start");
         }
     }
 }

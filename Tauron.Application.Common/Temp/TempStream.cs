@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 
-namespace Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource
+namespace Tauron.Temp
 {
     [PublicAPI]
     public sealed class TempStream : Stream
@@ -14,8 +14,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource
         public TempStream(TempFile file)
         {
             _file = file;
-            file.AddUsage();
-            _wrappedStream = file.GetStream();
+            _wrappedStream = file.InternalStrem;
         }
 
         /// <inheritdoc />
@@ -64,11 +63,8 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource
         }
 
         /// <inheritdoc />
-        protected override void Dispose(bool disposing)
-        {
-            _file.RemoveUage();
-            _file.TryDispose();
-        }
+        protected override void Dispose(bool disposing) 
+            => _file.Dispose();
 
         /// <inheritdoc />
         public override bool Equals(object obj) => _wrappedStream.Equals(obj);

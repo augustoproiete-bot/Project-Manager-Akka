@@ -37,9 +37,7 @@ namespace ServiceManager.ProjectRepository.Actors
             {
                 try
                 {
-                    // ReSharper disable once VariableHidesOuterVariable
-                    if (repositoryData.Indexes.List().Contains(_ => true))
-                        repositoryData.Indexes.CreateOne(new CreateIndexModel<RepositoryEntry>(Builders<RepositoryEntry>.IndexKeys.Ascending(r => r.RepoName)));
+                    repositoryData.Indexes.CreateOne(new CreateIndexModel<RepositoryEntry>(Builders<RepositoryEntry>.IndexKeys.Ascending(r => r.RepoName)));
                 }
                 catch (Exception e)
                 {
