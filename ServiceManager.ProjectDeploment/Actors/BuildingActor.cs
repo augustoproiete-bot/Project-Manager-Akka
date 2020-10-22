@@ -11,7 +11,6 @@ using Tauron;
 using Tauron.Akka;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.FileTransfer;
-using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 using Tauron.Temp;
@@ -30,20 +29,30 @@ namespace ServiceManager.ProjectDeployment.Actors
 
     public sealed class BuildPaths : IDisposable
     {
-        private TempFile? _repoFile;
-        public string BasePath { get; } = string.Empty;
+        private ITempFile? _repoFile;
+        public ITempDic BasePath { get; } = TempDic.Null;
 
-        public TempFile RepoFile => _repoFile ??= new TempFile(true);
+        public ITempFile RepoFile
+        {
+            get
+            {
+                if (_repoFile != null) return _repoFile;
+                
+                _repoFile = BasePath.CreateFile();
+                _repoFile.NoStreamDispose = true;
 
-        public string BuildPath { get; } = string.Empty;
-        public string RepoPath { get; } = string.Empty;
+                return _repoFile;
+            }
+        }
 
-        public BuildPaths(string basePath)
+        public ITempDic BuildPath { get; } = TempDic.Null;
+        public ITempDic RepoPath { get; } = TempDic.Null;
+
+        public BuildPaths(ITempDic basePath)
         {
             BasePath = basePath;
-            BuildPath = Path.Combine(basePath, "Build");
-            RepoPath = Path.Combine(basePath, "Repository");
-            BuildPath.CreateDirectoryIfNotExis();
+            BuildPath = basePath.CreateDic();
+            RepoPath = basePath.CreateDic();
         }
 
         public BuildPaths()
@@ -51,11 +60,8 @@ namespace ServiceManager.ProjectDeployment.Actors
             
         }
 
-        public void Dispose()
-        {
-            RepoFile.ForceDispose();
-            BasePath.DeleteDirectory(true);
-        }
+        public void Dispose() 
+            => BasePath.Dispose();
     }
 
     public sealed class BuildData
@@ -74,16 +80,16 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         public BuildPaths Paths { get; private set; } = new BuildPaths();
 
-        public TempFile Target { get; private set; } = null!;
+        public ITempFile Target { get; private set; } = null!;
 
         public string Commit { get; set; } = string.Empty;
 
-        public TaskCompletionSource<(string, TempStream)>? CompletionSource { get; private set; }
+        public TaskCompletionSource<(string, ITempFile)>? CompletionSource { get; private set; }
 
         public BuildData Set(BuildRequest request)
         {
             OperationId = Guid.NewGuid().ToString("D");
-            Paths = new BuildPaths(Path.Combine(BuildEnv.ApplicationPath, "Building", OperationId));
+            Paths = new BuildPaths(BuildEnv.TempFiles.CreateDic());
             Reporter = request.Source;
             AppData = request.AppData;
             Api = request.RepositoryApi;
@@ -103,7 +109,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             if (!CurrentListner.IsNobody())
                 ExposedReceiveActor.ExposedContext.Stop(CurrentListner);
 
-            Paths.BasePath.DeleteDirectory(true);
+            Paths.BasePath.Clear();
             CurrentListner = list;
 
             return this;
@@ -148,7 +154,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                         var newData = evt.StateData.Set(request);
 
                         new TransferRepository(newData.AppData.Repository, newData.OperationId)
-                           .Send(newData.Api, TimeSpan.FromMinutes(5), fileHandler, newData.Reporter!.Send, () => newData.Paths.RepoFile.CreateDate())
+                           .Send(newData.Api, TimeSpan.FromMinutes(5), fileHandler, newData.Reporter!.Send, () => newData.Paths.RepoFile.Stream)
                            .PipeTo(Self);
                         return GoTo(BuildState.Repository)
                             .Using(newData.SetListner(ActorRefs.Nobody));
@@ -190,8 +196,10 @@ namespace ServiceManager.ProjectDeployment.Actors
                         evt.StateData.Reporter?.Send(DeploymentMessages.BuildExtractingRepository);
                         Task.Run(() =>
                         {
-                            using var archive = new ZipArchive(paths.RepoFile.CreateStream(), ZipArchiveMode.Read);
-                            archive.ExtractToDirectory(paths.RepoPath, true);
+                            var stream = paths.RepoFile.Stream;
+                            stream.Seek(0, SeekOrigin.Begin);
+                            using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+                            archive.ExtractToDirectory(paths.RepoPath.FullPath, true);
 
                         }).PipeTo(Self, success:() => new Status.Success(null));
                         return Stay();
@@ -214,7 +222,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                         {
                             _log.Info("Try Find Project {ProjectName} for {Name}", evt.StateData.AppData.ProjectName, evt.StateData.AppData.Name);
                             evt.StateData.Reporter?.Send(DeploymentMessages.BuildTryFindProject);
-                            var finder = new ProjectFinder(new DirectoryInfo(evt.StateData.Paths.RepoPath));
+                            var finder = new ProjectFinder(new DirectoryInfo(evt.StateData.Paths.RepoPath.FullPath));
                             var file = finder.Search(evt.StateData.AppData.ProjectName);
                             if (file == null)
                             {
@@ -316,6 +324,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             OnTermination(evt =>
             {
                 _log.Error("Unexpekted Termination {Cause} on {State}", evt.Reason.ToString(), evt.TerminatedState);
+                evt.StateData.Paths.Dispose();
 
                 evt.StateData.CompletionSource?.TrySetCanceled();
                 if (evt.StateData.Reporter == null || evt.StateData.Reporter.IsCompled) return;

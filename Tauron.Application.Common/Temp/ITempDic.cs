@@ -1,5 +1,4 @@
-﻿using System;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 
 namespace Tauron.Temp
 {
@@ -16,5 +15,6 @@ namespace Tauron.Temp
 
         ITempFile CreateFile();
 
+        void Clear();
     }
 }

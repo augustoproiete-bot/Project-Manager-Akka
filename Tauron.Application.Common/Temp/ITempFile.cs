@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using JetBrains.Annotations;
 
 namespace Tauron.Temp
@@ -7,6 +6,8 @@ namespace Tauron.Temp
     [PublicAPI]
     public interface ITempFile : ITempInfo
     {
+        bool NoStreamDispose { get; set; }
+
         Stream Stream { get; }
     }
 }

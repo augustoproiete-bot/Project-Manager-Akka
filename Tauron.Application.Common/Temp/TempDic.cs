@@ -2,13 +2,14 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Serilog;
 
 namespace Tauron.Temp
 {
     public class TempDic : DisposeableBase, ITempDic
     {
+        public static ITempDic Null = new TempDic();
+
         private readonly Func<string> _nameGenerator;
         private readonly bool _deleteDic;
         private readonly ConcurrentDictionary<string, ITempDic> _tempDics = new ConcurrentDictionary<string, ITempDic>();
@@ -18,7 +19,7 @@ namespace Tauron.Temp
         public ITempDic? Parent { get; }
         public bool KeepAlive { get; set; }
 
-        public TempDic(string fullPath, ITempDic? parent, Func<string> nameGenerator, bool deleteDic)
+        protected TempDic(string fullPath, ITempDic? parent, Func<string> nameGenerator, bool deleteDic)
         {
             _nameGenerator = nameGenerator;
             _deleteDic = deleteDic;
@@ -28,21 +29,41 @@ namespace Tauron.Temp
             fullPath.CreateDirectoryIfNotExis();
         }
 
-        public ITempDic CreateDic(string name) 
-            => _tempDics.GetOrAdd(name, s =>
+        private TempDic()
+        {
+            FullPath = string.Empty;
+            KeepAlive = true;
+            _deleteDic = false;
+            _nameGenerator = () => string.Empty;
+        }
+
+        private void CheckNull()
+        {
+            if(string.IsNullOrEmpty(FullPath))
+                throw new NotSupportedException("The Path is Empty");
+        }
+
+        public ITempDic CreateDic(string name)
+        {
+            CheckNull();
+            return _tempDics.GetOrAdd(name, s =>
             {
-                var dic =  new TempDic(Path.Combine(FullPath, s), this, _nameGenerator, true);
+                var dic = new TempDic(Path.Combine(FullPath, s), this, _nameGenerator, true);
                 dic.TrackDispose(() => _tempDics.TryRemove(s, out _));
                 return dic;
             });
+        }
 
-        public ITempFile CreateFile(string name) 
-            => _tempFiles.GetOrAdd(name, s =>
+        public ITempFile CreateFile(string name)
+        {
+            CheckNull();
+            return _tempFiles.GetOrAdd(name, s =>
             {
                 var file = new TempFile(Path.Combine(FullPath, s), this);
                 file.TrackDispose(() => _tempFiles.TryRemove(s, out _));
                 return file;
             });
+        }
 
         public ITempDic CreateDic() => CreateDic(_nameGenerator());
 
@@ -50,6 +71,9 @@ namespace Tauron.Temp
 
         protected override void DisposeCore(bool disposing)
         {
+            if(string.IsNullOrWhiteSpace(FullPath))
+                return;
+
             void TryDispose(IEnumerable<ITempInfo> toDispose)
             {
                 foreach (var entry in toDispose)
@@ -61,7 +85,7 @@ namespace Tauron.Temp
                     catch (Exception e)
                     {
                         if (KeepAlive)
-                            Log.ForContext(GetType()).Warning(e, $"Error on Dispose Dic {entry.FullPath}");
+                            Log.ForContext(GetType()).Warning(e, "Error on Dispose Dic {Path}", entry.FullPath);
                         else
                             throw;
                     }
