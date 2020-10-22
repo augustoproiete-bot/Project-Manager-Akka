@@ -58,7 +58,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                         return;
                     }
 
-                    Context.ActorOf(Props.Create<TransferOperatorActor>(), r.OperationId).Tell(r);
+                    Context.ActorOf(Props.Create<TransferOperatorActor>(), r.OperationId).Forward(r);
                 }));
 
             Flow<IncomingDataTransfer>(b => b.Action(dt =>

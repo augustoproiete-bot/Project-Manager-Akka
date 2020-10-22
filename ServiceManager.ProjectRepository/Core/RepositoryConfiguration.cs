@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using JetBrains.Annotations;
 using ServiceManager.ProjectRepository.Data;
 using Tauron.Application.AkkNode.Services;
@@ -20,16 +19,13 @@ namespace ServiceManager.ProjectRepository.Core
         //public string Solotion { get; set; } = DefaultSoloution;
 
         public string CloneUrl { get; } = DefaultUrl;
-
-        public string SourcePath { get; } = Path.Combine(RepoEnv.Path, "Git");
-
+        
         public Reporter? Logger { get; }
 
         public RepositoryConfiguration(Reporter? logger, RepositoryEntry entry)
         {
             Logger = logger;
             CloneUrl = entry.SourceUrl;
-            SourcePath = Path.Combine(SourcePath, entry.RepoName.Replace('/', '_'));
         }
 
         public RepositoryConfiguration()
@@ -43,7 +39,7 @@ namespace ServiceManager.ProjectRepository.Core
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return CloneUrl == other.CloneUrl && SourcePath == other.SourcePath && Equals(Logger, other.Logger);
+            return CloneUrl == other.CloneUrl && Equals(Logger, other.Logger);
         }
 
         public override bool Equals(object? obj)
@@ -56,7 +52,7 @@ namespace ServiceManager.ProjectRepository.Core
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(CloneUrl, SourcePath, Logger);
+            return HashCode.Combine(CloneUrl, Logger);
         }
 
         public static bool operator ==(RepositoryConfiguration? left, RepositoryConfiguration? right)

@@ -39,8 +39,12 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
 
         public TaskCompletionSource<TransferMessages.TransferCompled>? Completion { get; }
 
+        public bool SendBack { get; }
+
+        public IActorRef Sender { get; }
+
         private OperatorData(string operationId, IActorRef targetManager, Func<ITransferData> data, string? metadata, InternalCrcStream transferStrem, TransferError? error, 
-            TaskCompletionSource<TransferMessages.TransferCompled>? completion)
+            TaskCompletionSource<TransferMessages.TransferCompled>? completion, bool sendBack, IActorRef sender)
         {
             OperationId = operationId;
             TargetManager = targetManager;
@@ -48,22 +52,25 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
             Metadata = metadata;
             Error = error;
             Completion = completion;
+            SendBack = sendBack;
+            Sender = sender;
 
             TransferStrem = transferStrem;
         }
 
         public OperatorData()
-            : this(string.Empty, ActorRefs.Nobody, () => new StreamData(Stream.Null), null, new InternalCrcStream(StreamData.Null), null, null)
+            : this(string.Empty, ActorRefs.Nobody, () => new StreamData(Stream.Null), null, new InternalCrcStream(StreamData.Null), null, null, false, ActorRefs.Nobody)
         {
             
         }
 
         private OperatorData Copy(string? id = null, IActorRef? target = null, Func<ITransferData>? data = null, string? metadata = null, InternalCrcStream? stream = null, 
-            TransferError? failed = null, TaskCompletionSource<TransferMessages.TransferCompled>? completion = null) 
-            => new OperatorData(id ?? OperationId, target ?? TargetManager, data ?? Data, metadata ?? Metadata, stream ?? TransferStrem, failed ?? Error, completion ?? Completion);
+            TransferError? failed = null, TaskCompletionSource<TransferMessages.TransferCompled>? completion = null, bool? sendBack = false, IActorRef? sender = null) 
+            => new OperatorData(id ?? OperationId, target ?? TargetManager, data ?? Data, metadata ?? Metadata, stream ?? TransferStrem, failed ?? Error, completion ?? Completion,
+                sendBack ?? SendBack, sender ?? Sender);
 
-        public OperatorData StartSending(DataTransferRequest id)
-            => Copy(id.OperationId, id.Target.Actor, id.Source, id.Data);
+        public OperatorData StartSending(DataTransferRequest id, IActorRef sender)
+            => Copy(id.OperationId, id.Target.Actor, id.Source, id.Data, sendBack:id.SendCompletionBack, sender:sender);
 
         public OperatorData StartRecdiving(TransmitRequest id)
             => Copy(id.OperationId, id.From, metadata: id.Data);
@@ -113,7 +120,7 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                         case DataTransferRequest request:
                             _log.Info("Incoming Trensfer Request {id} -- {Data}", GetId(state), request.Data);
                             request.Target.Actor.Tell(new TransmitRequest(request.OperationId, Parent, request.Data), Parent);
-                            return GoTo(OperatorState.InitSending).Using(state.StateData.StartSending(request));
+                            return GoTo(OperatorState.InitSending).Using(state.StateData.StartSending(request, Sender));
                         default:
                             return null;
                     }
@@ -202,7 +209,12 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                             state.StateData.TransferStrem.Dispose();
                             ArrayPool<byte>.Shared.Return(_outgoningBytes);
                             _outgoningBytes = null;
-                            Parent.Tell(new TransferCompled(state.StateData.OperationId, state.StateData.Metadata));
+
+                            var comp = new TransferCompled(state.StateData.OperationId, state.StateData.Metadata);
+                            Parent.Tell(comp);
+                            if(state.StateData.SendBack)
+                                state.StateData.Sender.Tell(comp);
+
                             return GoTo(OperatorState.Compled);
                         case RepeadChunk _:
                             _sendingAttempts += 1;
@@ -279,6 +291,8 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer.Operator
                                            void Set(TransferMessages.TransferCompled failed)
                                            {
                                                state.StateData.Completion?.SetResult(failed);
+                                               if (state.StateData.SendBack)
+                                                   state.StateData.Sender.Tell(failed);
                                                Parent.Tell(failed);
                                            }
 

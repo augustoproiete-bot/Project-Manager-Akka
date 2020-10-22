@@ -13,7 +13,6 @@ using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.Commands;
 using Tauron.Application.AkkNode.Services.FileTransfer;
-using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
 using Tauron.Application.Master.Commands.Deployment.Build.Data;

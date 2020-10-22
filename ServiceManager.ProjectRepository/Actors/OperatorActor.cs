@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -17,6 +19,7 @@ using Tauron.Application.AkkNode.Services.Commands;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Repository;
+using Tauron.Temp;
 
 namespace ServiceManager.ProjectRepository.Actors
 {
@@ -29,9 +32,7 @@ namespace ServiceManager.ProjectRepository.Actors
         private readonly IMongoCollection<ToDeleteRevision> _revisions;
         private readonly DataTransferManager _dataTransfer;
         private readonly GitHubClient _gitHubClient;
-        
-        //private Reporter? _reporter;
-        //private string _dataOperation = string.Empty;
+        private readonly Dictionary<string, ITempFile> _currentTransfers = new Dictionary<string, ITempFile>();
 
         public OperatorActor(IMongoCollection<RepositoryEntry> repos, GridFSBucket bucket, IMongoCollection<ToDeleteRevision> revisions, DataTransferManager dataTransfer)
         {
@@ -46,16 +47,14 @@ namespace ServiceManager.ProjectRepository.Actors
                 TryExecute(r, "RegisterRepository", RegisterRepository);
                 Context.Stop(Self);
             });
+            
             Receive<TransferRepository>(r => TryExecute(r, "RequestRepository", RequestRepository));
 
-            //Receive<TransferMessages.TransferCompled>(r =>
-            //{
-            //    if(r.OperationId != _dataOperation) return;
-
-            //    Log.Info("Transfer Compled for Repository {Name} with Result {Type}", r.Data, r.GetType().Name);
-            //    _reporter?.Compled(r is TransferCompled ? OperationResult.Success() : OperationResult.Failure(((TransferFailed)r).Reason.ToString()));
-            //    Context.Stop(Self);
-            //});
+            Receive<TransferMessages.TransferCompled>(c =>
+            {
+                if(_currentTransfers.TryGetValue(c.OperationId, out var f))
+                    f.Dispose();
+            });
         }
 
         private void RegisterRepository(RegisterRepository repository, Reporter reporter)
@@ -125,7 +124,7 @@ namespace ServiceManager.ProjectRepository.Actors
 
         private void RequestRepository(TransferRepository repository, Reporter reporter)
         {
-            var repozipFile = new TempFile(true);
+            var repozipFile = RepoEnv.TempFiles.CreateFile();
             UpdateLock.EnterUpgradeableReadLock();
             try
             {
@@ -141,7 +140,7 @@ namespace ServiceManager.ProjectRepository.Actors
 
                 var commitInfo = _gitHubClient.Repository.Commit.GetSha1(data.RepoId, "HEAD").Result;
 
-                var repozip = repozipFile.CreateStream();
+                var repozip = repozipFile.Stream;
 
                 if (!(commitInfo != data.LastUpdate && UpdateRepository(data, reporter, repository, commitInfo, repozip)))
                 {
@@ -156,34 +155,19 @@ namespace ServiceManager.ProjectRepository.Actors
                 //repozip.Seek(0, SeekOrigin.Begin);
                 //Timers.StartSingleTimer(_reporter, new TransferFailed(string.Empty, FailReason.Timeout, data.RepoName), TimeSpan.FromMinutes(10));
                 var request = DataTransferRequest.FromStream(repository.OperationId, repozip, repository.Manager ?? throw new ArgumentNullException($"FileManager"), commitInfo);
+                request.SendCompletionBack = true;
+
                 _dataTransfer.Request(request);
+                _currentTransfers[request.OperationId] = repozipFile;
 
                 reporter.Compled(OperationResult.Success(new FileTransactionId(request.OperationId)));
             }
             finally
             {
-                repozipFile.ForceDispose();
                 UpdateLock.ExitUpgradeableReadLock();
             }
         }
-
-        private EventSubscribtion? _transferCompledSubscribtion;
-        private EventSubscribtion? _transferFailedSubscribtion;
-
-        protected override void PreStart()
-        {
-            _transferCompledSubscribtion = _dataTransfer.Event<TransferCompled>();
-            _transferFailedSubscribtion = _dataTransfer.Event<TransferFailed>();
-            base.PreStart();
-        }
-
-        protected override void PostStop()
-        {
-            _transferCompledSubscribtion?.Dispose();
-            _transferFailedSubscribtion?.Dispose();
-            base.PostStop();
-        }
-
+        
         private bool UpdateRepository(RepositoryEntry data, Reporter reporter, TransferRepository repository, string commitInfo, Stream repozip)
         {
             Log.Info("Try Update Repository");
@@ -192,6 +176,7 @@ namespace ServiceManager.ProjectRepository.Actors
             {
                 var downloadCompled = false;
                 var repoConfiguration = new RepositoryConfiguration(reporter, data);
+                using var repoPath = RepoEnv.TempFiles.CreateDic();
 
                 var data2 = _repos.AsQueryable().FirstOrDefault(r => r.RepoName == repository.RepoName);
                 if (data2 != null && commitInfo != data2.LastUpdate)
@@ -221,42 +206,38 @@ namespace ServiceManager.ProjectRepository.Actors
                         using var unpackZip = new ZipArchive(repozip);
 
                         reporter.Send(RepositoryMessages.ExtractRepository);
-                        unpackZip.ExtractToDirectory(repoConfiguration.SourcePath);
+                        unpackZip.ExtractToDirectory(repoPath.FullPath);
                     }
 
                     Log.Info("Execute Git Pull for {Name}", repository.RepoName);
                     using var updater = GitUpdater.GetOrNew(repoConfiguration);
-
-                    var result = updater.RunUpdate(repoConfiguration.SourcePath);
+                    var result = updater.RunUpdate(repoPath.FullPath);
                     var dataUpdate = Builders<RepositoryEntry>.Update.Set(e => e.LastUpdate, result.Sha);
 
                     Log.Info("Compress Repository {Name}", repository.RepoName);
                     reporter.Send(RepositoryMessages.CompressRepository);
-                    var temp = Path.Combine(RepoEnv.Path, "data.zip");
-                    temp.DeleteFile();
-                    ZipFile.CreateFromDirectory(result.Path, temp);
-                    using (var packed = File.OpenRead(temp))
-                    {
-                        Log.Info("Upload and Update Repository {Name}", repository.RepoName);
-                        reporter.Send(RepositoryMessages.UploadRepositoryToDatabase);
-                        var current = data.FileName;
-                        var id = _bucket.UploadFromStream(repository.RepoName.Replace('/', '_') + ".zip", packed);
-                        dataUpdate = dataUpdate.Set(e => e.FileName, id.ToString());
 
-                        if (!string.IsNullOrWhiteSpace(current))
-                            _revisions.InsertOne(new ToDeleteRevision(current));
-
-                        _repos.UpdateOne(e => e.RepoName == data.RepoName, dataUpdate);
-                        data.FileName = id.ToString();
-
-                        Log.Info("Copy current data from {Name}", repository.RepoName);
-                        packed.Seek(0, SeekOrigin.Begin);
+                    if (repozip.Length != 0)
                         repozip.SetLength(0);
 
-                        packed.CopyTo(repozip);
-                        repozip.Seek(0, SeekOrigin.Begin);
-                    }
-                    temp.DeleteFile();
+                    using (var archive = new ZipArchive(repozip, ZipArchiveMode.Create, true))
+                        AddFiles(archive, repoPath.FullPath);
+
+                    repozip.Seek(0, SeekOrigin.Begin);
+
+                    Log.Info("Upload and Update Repository {Name}", repository.RepoName);
+                    reporter.Send(RepositoryMessages.UploadRepositoryToDatabase);
+                    var current = data.FileName;
+                    var id = _bucket.UploadFromStream(repository.RepoName.Replace('/', '_') + ".zip", repozip);
+                    dataUpdate = dataUpdate.Set(e => e.FileName, id.ToString());
+
+                    if (!string.IsNullOrWhiteSpace(current))
+                        _revisions.InsertOne(new ToDeleteRevision(current));
+
+                    _repos.UpdateOne(e => e.RepoName == data.RepoName, dataUpdate);
+                    data.FileName = id.ToString();
+
+                    repozip.Seek(0, SeekOrigin.Begin);
 
                     return true;
                 }
@@ -267,6 +248,25 @@ namespace ServiceManager.ProjectRepository.Actors
             }
 
             return false;
+        }
+
+        private static void AddFiles(ZipArchive destination, string sourceDirectoryName)
+        {
+            var stack = new Stack<FileSystemInfo>();
+            new DirectoryInfo(sourceDirectoryName).EnumerateFileSystemInfos("*.*", SearchOption.AllDirectories).Foreach(e => stack.Push(e));
+
+            while (stack.Count != 0)
+            {
+                switch (stack.Pop())
+                {
+                    case FileInfo file:
+                        destination.CreateEntryFromFile(file.FullName, file.FullName.Replace(sourceDirectoryName, string.Empty, StringComparison.Ordinal), CompressionLevel.Optimal);
+                        break;
+                    case DirectoryInfo directory:
+                        destination.CreateEntry(directory.FullName.Replace(sourceDirectoryName, string.Empty));
+                        break;
+                }
+            }
         }
 
         public ITimerScheduler Timers { get; set; } = null!;

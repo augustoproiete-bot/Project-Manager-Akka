@@ -13,6 +13,8 @@ namespace Tauron.Application.AkkNode.Services.FileTransfer
 
         public string? Data { get; }
 
+        public bool SendCompletionBack { get; set; }
+
         protected DataTransferRequest(string operationId, DataTransferManager target, string? data) 
             : base(operationId)
         {

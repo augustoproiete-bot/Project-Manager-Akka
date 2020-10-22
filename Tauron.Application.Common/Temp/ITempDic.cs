@@ -4,9 +4,8 @@ using JetBrains.Annotations;
 namespace Tauron.Temp
 {
     [PublicAPI]
-    public interface ITempDic : ITempInfo, IDisposable
+    public interface ITempDic : ITempInfo
     {
-
         bool KeepAlive { get; set; }
 
         ITempDic CreateDic(string name);

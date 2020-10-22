@@ -24,6 +24,8 @@ namespace Tauron.Temp
             _deleteDic = deleteDic;
             FullPath = fullPath;
             Parent = parent;
+
+            fullPath.CreateDirectoryIfNotExis();
         }
 
         public ITempDic CreateDic(string name) 

@@ -14,6 +14,7 @@ using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Repository;
+using Tauron.Temp;
 
 namespace ServiceManager.ProjectDeployment.Actors
 {

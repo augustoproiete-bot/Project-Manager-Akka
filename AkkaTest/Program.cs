@@ -8,7 +8,7 @@ namespace AkkaTest
     {
         private static void Main(string[] args)
         {
-            var test = Path.GetTempFileName();
+            var test = new DirectoryInfo(Path.GetTempPath()).FullName;
 
             try
             {
