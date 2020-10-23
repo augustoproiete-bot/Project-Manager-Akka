@@ -17,6 +17,7 @@ using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
 using Tauron.Application.Master.Commands.Deployment.Build.Data;
 using Tauron.Application.Master.Commands.Deployment.Repository;
+using Tauron.Temp;
 
 namespace ServiceManager.ProjectDeployment.Actors
 {
@@ -71,7 +72,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                         reporter.Compled(OperationResult.Failure(BuildErrorCodes.CommandAppNotFound));
                     else
                     {
-                        BuildRequest.SendWork(workDistributor, reporter, data, repository, new TempFile())
+                        BuildRequest.SendWork(workDistributor, reporter, data, repository, BuildEnv.TempFiles.CreateFile())
                             .PipeTo(Self,
                                 success: c => new ContinuePushNewVersion(OperationResult.Success(c), command, reporter),
                                 failure: e => new ContinuePushNewVersion(OperationResult.Failure(e.Unwrap()?.Message ?? "Cancel"), command, reporter));
@@ -93,11 +94,11 @@ namespace ServiceManager.ProjectDeployment.Actors
                 using var transaction = apps.Database.Client.StartSession(new ClientSessionOptions {DefaultTransactionOptions = new TransactionOptions(writeConcern: WriteConcern.Acknowledged)});
                 var dataFilter = Builders<AppData>.Filter.Eq(ad => ad.Name, data.Name);
 
-                var (commit, fileName) = ((string, TempStream)) result.Outcome!;
+                var (commit, fileName) = ((string, ITempFile)) result.Outcome!;
 
                 using var targetStream = fileName;
                 
-                var newId = files.UploadFromStream(data.Name + ".zip", targetStream);
+                var newId = files.UploadFromStream(data.Name + ".zip", targetStream.Stream);
 
                 var newBinary = new AppFileInfo(newId, data.Last + 1, DateTime.UtcNow, false, commit);
                 var newBinarys = data.Versions.Add(newBinary);
@@ -150,7 +151,10 @@ namespace ServiceManager.ProjectDeployment.Actors
                 var transaction = apps.Database.Client.StartSession();
                 transaction.StartTransaction();
 
-
+                var arr = data.Versions.Where(f => f.Deleted).ToArray();
+                if(arr.Length > 0)
+                    toDelete.InsertMany(transaction, arr.Select(f => new ToDeleteRevision(f.File.ToString())));
+                apps.DeleteOne(transaction, Builders<AppData>.Filter.Eq(a => a.Name, data.Name));
 
                 transaction.CommitTransaction();
                 reporter.Compled(OperationResult.Success(data.ToInfo().IsDeleted()));
@@ -159,7 +163,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             CommandPhase1<ForceBuildCommand>("ForceBuild", (command, reporter) =>
             {
                 var tempData = new AppData(command.AppName, -1, DateTime.Now, DateTime.MinValue, command.Repository, command.Repository, ImmutableList<AppFileInfo>.Empty);
-                BuildRequest.SendWork(workDistributor, reporter, tempData, repository, new TempFile())
+                BuildRequest.SendWork(workDistributor, reporter, tempData, repository, BuildEnv.TempFiles.CreateFile())
                     .PipeTo(Self,
                         success: d => new ContinueForceBuild(OperationResult.Success(d.Item2), command, reporter),
                         failure: e => new ContinueForceBuild(OperationResult.Failure(e.Unwrap()?.Message ?? "Cancel"), command, reporter));

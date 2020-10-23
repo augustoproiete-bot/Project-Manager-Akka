@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -16,7 +15,6 @@ using Tauron;
 using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.Commands;
-using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 using Tauron.Temp;
@@ -154,7 +152,7 @@ namespace ServiceManager.ProjectRepository.Actors
 
                 //repozip.Seek(0, SeekOrigin.Begin);
                 //Timers.StartSingleTimer(_reporter, new TransferFailed(string.Empty, FailReason.Timeout, data.RepoName), TimeSpan.FromMinutes(10));
-                var request = DataTransferRequest.FromStream(repository.OperationId, repozip, repository.Manager ?? throw new ArgumentNullException($"FileManager"), commitInfo);
+                var request = DataTransferRequest.FromStream(repository.OperationId, repozip, repository.Manager ?? throw new ArgumentNullException("FileManager"), commitInfo);
                 request.SendCompletionBack = true;
 
                 _dataTransfer.Request(request);
@@ -221,7 +219,7 @@ namespace ServiceManager.ProjectRepository.Actors
                         repozip.SetLength(0);
 
                     using (var archive = new ZipArchive(repozip, ZipArchiveMode.Create, true))
-                        AddFiles(archive, repoPath.FullPath);
+                        archive.AddFilesFromDictionary(repoPath.FullPath);
 
                     repozip.Seek(0, SeekOrigin.Begin);
 
@@ -248,25 +246,6 @@ namespace ServiceManager.ProjectRepository.Actors
             }
 
             return false;
-        }
-
-        private static void AddFiles(ZipArchive destination, string sourceDirectoryName)
-        {
-            var stack = new Stack<FileSystemInfo>();
-            new DirectoryInfo(sourceDirectoryName).EnumerateFileSystemInfos("*.*", SearchOption.AllDirectories).Foreach(e => stack.Push(e));
-
-            while (stack.Count != 0)
-            {
-                switch (stack.Pop())
-                {
-                    case FileInfo file:
-                        destination.CreateEntryFromFile(file.FullName, file.FullName.Replace(sourceDirectoryName, string.Empty, StringComparison.Ordinal), CompressionLevel.Optimal);
-                        break;
-                    case DirectoryInfo directory:
-                        destination.CreateEntry(directory.FullName.Replace(sourceDirectoryName, string.Empty));
-                        break;
-                }
-            }
         }
 
         public ITimerScheduler Timers { get; set; } = null!;

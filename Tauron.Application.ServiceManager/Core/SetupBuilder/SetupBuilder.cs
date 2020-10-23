@@ -5,19 +5,16 @@ using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Event;
-using Akka.Util;
 using Serilog;
 using Serilog.Core;
-using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.FileTransfer;
-using Tauron.Application.AkkNode.Services.FileTransfer.TemporarySource;
 using Tauron.Application.Master.Commands.Administration.Host;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
+using Tauron.Temp;
 using LogEvent = Serilog.Events.LogEvent;
 
 namespace Tauron.Application.ServiceManager.Core.SetupBuilder
@@ -29,9 +26,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         private const string ServiceHost = "ServiceHost.csproj";
         private const string SeedNode = "Master.Seed.Node.csproj";
 
-        private static AtomicBoolean _existRepo = new AtomicBoolean();
-
-        public static readonly string BuildRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tauron", "ServiceManager", "Build");
+        public static readonly TempStorage BuildRoot = TempStorage.CleanAndCreate(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tauron", "ServiceManager", "Build"));
 
 
         private readonly Logger _logger;
@@ -69,38 +64,42 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         {
             _log = _log.Combine(log) ?? (s => { });
 
-            var buildPath = Path.Combine(BuildRoot, identifer, "Binary");
-            buildPath.CreateDirectoryIfNotExis();
+            using var buildPath = BuildRoot.CreateDic();
 
             var split = endPoint.Split(':', 2, StringSplitOptions.RemoveEmptyEntries);
             string? seedUrl = null;
 
             try
             {
-                    _seeds = ImmutableList<string>.Empty.AddRange(_config.SeedUrls);
-                    if (!string.IsNullOrWhiteSpace(_context.SeedHostName))
-                    {
-                        seedUrl = $"akka.tcp://Project-Manager@{split[0]}:8081";
-                        _seeds = _seeds.Add(seedUrl);
-                    }
+                await new RegisterRepository(Repository) {IgnoreDuplicate = true}
+                   .Send(_repository, TimeSpan.FromSeconds(20), _log);
 
-                    if (await BuildHost(buildPath, identifer, split[0]))
+                _seeds = ImmutableList<string>.Empty.AddRange(_config.SeedUrls);
+                if (!string.IsNullOrWhiteSpace(_context.SeedHostName))
+                {
+                    seedUrl = $"akka.tcp://Project-Manager@{split[0]}:8081";
+                    _seeds = _seeds.Add(seedUrl);
+                }
+
+                if (await BuildHost(buildPath, identifer, split[0]))
+                    return null;
+
+                if (_context.SeedHostName != null)
+                {
+                    if (await BuildSeed(buildPath, identifer, split[0], _context.SeedHostName))
                         return null;
+                }
 
-                    if (_context.SeedHostName != null)
-                    {
-                        if(await BuildSeed(buildPath, identifer, split[0], _context.SeedHostName))
-                            return null;
-                    }
 
-                    var buildRoot = Path.Combine(BuildRoot, identifer);
-                    var zip = Path.Combine(buildRoot, "data.zip");
+                LogMessage("Create Host Zip {Id}", identifer);
 
-                    LogMessage("Create Host Zip {Id}", identifer);
-                    ZipFile.CreateFromDirectory(buildPath, zip);
-
-                    return new BuildResult(zip, buildRoot, () => seedUrl.When(s => !string.IsNullOrWhiteSpace(s), s => _actorSystem.EventStream?.Publish(new AddSeedUrl(s!))));
+                var zipFile = BuildRoot.CreateFile();
+                zipFile.NoStreamDispose = true;
+                using var zip = new ZipArchive(zipFile.Stream, ZipArchiveMode.Create, true);
+                zip.AddFilesFromDictionary(buildPath.FullPath);
                 
+                return new BuildResult(zipFile, () => seedUrl.When(s => !string.IsNullOrWhiteSpace(s), s => _actorSystem.EventStream?.Publish(new AddSeedUrl(s!))));
+
             }
             catch (Exception e)
             {
@@ -113,51 +112,39 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             }
         }
 
-        private async Task<bool> BuildSeed(string basePath, string id, string ip, string name)
+        private async Task<bool> BuildSeed(ITempDic basePath, string id, string ip, string name)
         {
-            await new RegisterRepository(Repository) {IgnoreDuplicate = true}
-                .Send(_repository, TimeSpan.FromSeconds(20), _log);
-
             LogMessage("Building Seed Node {Id}", id);
-            string appOutput = Path.Combine(basePath, "Seed");
+            using var appOutput = basePath.CreateDic("Seed");
 
-            try
+            if (await SendBuild(Repository, SeedNode, appOutput))
             {
-                Directory.CreateDirectory(appOutput);
-
-                if (await SendBuild(Repository, SeedNode, appOutput))
-                {
-                    _log("Seed build Failed");
-                    return true;
-                }
-
-                var appConfig = new Configurator(appOutput);
-
-                appConfig.SetSeed(_seeds);
-                appConfig.SetIp(ip);
-                appConfig.SetAppName(name);
-
-                appConfig.Save();
-
-                LogMessage("Create Zip for Seed {Id}", id);
-                ZipFile.CreateFromDirectory(appOutput, Path.Combine(basePath, "Seed.zip"));
-
-
-                await File.WriteAllTextAsync(Path.Combine(basePath, "InstallSeed.dat"), $"--Install Manual --ZipFile ..\\Seed.zip --AppName {name} --AppType {AppType.StartUp}");
-                return false;
+                _log("Seed build Failed");
+                return true;
             }
-            finally
-            {
-                appOutput.DeleteDirectory(true);
-            }
+
+            var appConfig = new Configurator(appOutput.FullPath);
+
+            appConfig.SetSeed(_seeds);
+            appConfig.SetIp(ip);
+            appConfig.SetAppName(name);
+
+            appConfig.Save();
+
+            LogMessage("Create Zip for Seed {Id}", id);
+
+
+            ZipFile.CreateFromDirectory(appOutput.FullPath, Path.Combine(basePath.FullPath, "Seed.zip"));
+
+
+            await File.WriteAllTextAsync(Path.Combine(basePath.FullPath, "InstallSeed.dat"), $"--Install Manual --ZipFile ..\\Seed.zip --AppName {name} --AppType {AppType.StartUp}");
+            return false;
         }
 
-        private async Task<bool> BuildHost(string basePath, string id, string ip)
+        private async Task<bool> BuildHost(ITempDic basePath, string id, string ip)
         {
             LogMessage("Building Host Application {Id}", id);
-            string hostOutput = Path.Combine(basePath, "Host");
-
-            Directory.CreateDirectory(hostOutput);
+            var hostOutput = basePath.CreateDic("Host");
 
             if (await SendBuild(Repository, ServiceHost, hostOutput))
             {
@@ -165,7 +152,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                 return true;
             }
 
-            var hostConfig = new Configurator(hostOutput);
+            var hostConfig = new Configurator(hostOutput.FullPath);
             string hostIp = ip;
 
             hostConfig.SetSeed(_seeds);
@@ -174,7 +161,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
 
             hostConfig.Save();
 
-            await File.WriteAllTextAsync(Path.Combine(basePath, "StartHost.bat"),
+            await File.WriteAllTextAsync(Path.Combine(basePath.FullPath, "StartHost.bat"),
                 "cd %~dp0\\Host\n"  +
                 "ServiceHost.exe\n" +
                 "pause");
@@ -182,15 +169,16 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             return false;
         }
 
-        private async Task<bool> SendBuild(string repository, string projectFile, string buildPath)
+        private async Task<bool> SendBuild(string repository, string projectFile, ITempDic buildPath)
         {
-            
-
             var command = new ForceBuildCommand(repository, projectFile);
 
-            using var tempFile = new TempFile();
-            await using var zipStream = tempFile.CreateStream();
-            var result = await command.Send(_api, TimeSpan.FromMinutes(5), _dataTransfer, _log, () => tempFile.CreateDate());
+            using var tempFile = BuildRoot.CreateFile();
+            tempFile.NoStreamDispose = true;
+
+            await using var zipStream = tempFile.Stream;
+            var result = await command.Send(_api, TimeSpan.FromMinutes(5), _dataTransfer, _log, () => zipStream);
+            zipStream.Seek(0, SeekOrigin.Begin);
 
             if (result is TransferFailed f)
             {
@@ -199,7 +187,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             }
 
             using var zip = new ZipArchive(zipStream, ZipArchiveMode.Read);
-            zip.ExtractToDirectory(buildPath, true);
+            zip.ExtractToDirectory(buildPath.FullPath, true);
 
             return false;
         }

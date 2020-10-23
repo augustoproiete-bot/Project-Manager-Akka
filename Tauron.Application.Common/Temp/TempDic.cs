@@ -8,7 +8,7 @@ namespace Tauron.Temp
 {
     public class TempDic : DisposeableBase, ITempDic
     {
-        public static ITempDic Null = new TempDic();
+        public static readonly ITempDic Null = new TempDic();
 
         private readonly Func<string> _nameGenerator;
         private readonly bool _deleteDic;
@@ -68,10 +68,9 @@ namespace Tauron.Temp
         public ITempDic CreateDic() => CreateDic(_nameGenerator());
 
         public ITempFile CreateFile() => CreateFile(_nameGenerator());
-
-        protected override void DisposeCore(bool disposing)
+        public void Clear()
         {
-            if(string.IsNullOrWhiteSpace(FullPath))
+            if (string.IsNullOrWhiteSpace(FullPath))
                 return;
 
             void TryDispose(IEnumerable<ITempInfo> toDispose)
@@ -92,8 +91,6 @@ namespace Tauron.Temp
                 }
             }
 
-            if (!disposing) return;
-            
             try
             {
                 var dics = _tempDics.Values;
@@ -101,15 +98,22 @@ namespace Tauron.Temp
 
                 TryDispose(dics);
                 TryDispose(_tempFiles.Values);
-
-                if(_deleteDic)
-                    FullPath.DeleteDirectory(true);
             }
             finally
             {
                 _tempDics.Clear();
                 _tempFiles.Clear();
             }
+        }
+
+        protected override void DisposeCore(bool disposing)
+        {
+            if (!disposing) return;
+
+            Clear();
+
+            if (_deleteDic)
+                FullPath.DeleteDirectory(true);
         }
     }
 }

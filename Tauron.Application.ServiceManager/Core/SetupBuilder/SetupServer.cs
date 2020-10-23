@@ -53,8 +53,6 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         {
             _log = log;
 
-            SetupBuilder.BuildRoot.DeleteDirectory(true);
-
             _dataServer = new Lazy<DataServer>(() =>
             {
                 var serv = new DataServer(settings.GetString("akka.remote.dot-netty.tcp.hostname"));
@@ -99,7 +97,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                                 {
                                     LogMessage("Sending Data {Id}", id);
                                     var pool = ArrayPool<byte>.Shared;
-                                    op.Sender = new Sender(File.OpenRead(result.Zip), e.Client, _dataServer.Value,
+                                    op.Sender = new Sender(result.Zip.Stream, e.Client, _dataServer.Value,
                                         () => pool.Rent(50_000), bytes => pool.Return(bytes, true),
                                         exception => LogMessage("Error on Processing Message \"{Message}\" {Id}", exception.Message, id));
 
@@ -150,7 +148,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             {
                 var file = await operation.BuilderFunc(s => _dataServer.Value.Send(operation.EndpointId, NetworkMessage.Create(NetworkOperation.Message, Encoding.UTF8.GetBytes(s))),
                     id, operation.EndpointId);
-                if (file == null || string.IsNullOrWhiteSpace(file.Zip))
+                if (file == null)
                     SendDeny(operation.EndpointId);
 
                 return file;

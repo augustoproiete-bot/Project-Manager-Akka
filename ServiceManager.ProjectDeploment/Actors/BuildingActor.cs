@@ -239,7 +239,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                                 log = s => { };
 
                             Task
-                               .Run(async () => await DotNetBuilder.BuildApplication(file, evt.StateData.Paths.BuildPath, log))
+                               .Run(async () => await DotNetBuilder.BuildApplication(file, evt.StateData.Paths.BuildPath.FullPath, log))
                                .PipeTo(Self, success: s => string.IsNullOrWhiteSpace(s) ? OperationResult.Success() : OperationResult.Failure(s));
 
                             return Stay();
@@ -265,11 +265,12 @@ namespace ServiceManager.ProjectDeployment.Actors
                     case Trigger _:
                         Task.Run(() =>
                         {
-                            ZipFile.CreateFromDirectory(evt.StateData.Paths.BuildPath, evt.StateData.Target.TargetFile);
+                            using var zip = new ZipArchive(evt.StateData.Target.Stream, ZipArchiveMode.Create, true);
+                            zip.AddFilesFromDictionary(evt.StateData.Paths.BuildPath.FullPath);
                         }).PipeTo(Self, success:() => new Status.Success(null));
                         return Stay();
                     case Status.Success _:
-                        evt.StateData.CompletionSource?.SetResult((StateData.Commit, StateData.Target.CreateStream()));
+                        evt.StateData.CompletionSource?.SetResult((StateData.Commit, StateData.Target));
                         return GoTo(BuildState.Waiting)
                             .Using(evt.StateData.Clear(_log))
                             .ReplyingParent(BuildCompled.Inst);
@@ -280,7 +281,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
             When(BuildState.Failing, evt =>
             {
-                evt.StateData.Target.ForceDispose();
+                evt.StateData.Target.Dispose();
                 return GoTo(BuildState.Waiting)
                    .Using(evt.StateData.Clear(_log))
                    .ReplyingParent(BuildCompled.Inst);

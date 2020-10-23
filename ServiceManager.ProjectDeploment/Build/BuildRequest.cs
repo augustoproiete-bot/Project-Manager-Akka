@@ -26,7 +26,7 @@ namespace ServiceManager.ProjectDeployment.Build
             TargetFile = targetFile;
         }
 
-        public static Task<(string, ITempFile)> SendWork(WorkDistributor<BuildRequest, BuildCompled> distributor, Reporter source, AppData appData, RepositoryApi repositoryApi, TempFile targetFile)
+        public static Task<(string, ITempFile)> SendWork(WorkDistributor<BuildRequest, BuildCompled> distributor, Reporter source, AppData appData, RepositoryApi repositoryApi, ITempFile targetFile)
         {
             var request = new BuildRequest(source, appData, repositoryApi, targetFile);
             distributor.PushWork(request);

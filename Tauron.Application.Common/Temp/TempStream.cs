@@ -63,8 +63,11 @@ namespace Tauron.Temp
         }
 
         /// <inheritdoc />
-        protected override void Dispose(bool disposing) 
-            => _file.Dispose();
+        protected override void Dispose(bool disposing)
+        {
+            if(_file.NoStreamDispose) return;
+            _file.Dispose();
+        }
 
         /// <inheritdoc />
         public override bool Equals(object obj) => _wrappedStream.Equals(obj);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
@@ -13,6 +14,25 @@ namespace Tauron
     [PublicAPI]
     public static class IOExtensions
     {
+        public static void AddFilesFromDictionary(this ZipArchive destination, string sourceDirectoryName)
+        {
+            var stack = new Stack<FileSystemInfo>();
+            new DirectoryInfo(sourceDirectoryName).EnumerateFileSystemInfos("*.*", SearchOption.AllDirectories).Foreach(e => stack.Push(e));
+
+            while (stack.Count != 0)
+            {
+                switch (stack.Pop())
+                {
+                    case FileInfo file:
+                        destination.CreateEntryFromFile(file.FullName, file.FullName.Replace(sourceDirectoryName, string.Empty, StringComparison.Ordinal), CompressionLevel.Optimal);
+                        break;
+                    case DirectoryInfo directory:
+                        destination.CreateEntry(directory.FullName.Replace(sourceDirectoryName, string.Empty));
+                        break;
+                }
+            }
+        }
+
         public static string PathShorten(this string path, int length)
         {
             var pathParts = path.Split('\\');
@@ -101,11 +121,15 @@ namespace Tauron
         {
             try
             {
-                if (!Path.HasExtension(path)) return CreateDirectoryIfNotExis(new DirectoryInfo(path));
+                // ReSharper disable once InvertIf
+                if (Path.HasExtension(path))
+                {
+                    var temp = Path.GetDirectoryName(path);
 
-                var temp = Path.GetDirectoryName(path);
+                    return CreateDirectoryIfNotExis(new DirectoryInfo(temp ?? throw new InvalidOperationException()));
+                }
 
-                return CreateDirectoryIfNotExis(new DirectoryInfo(temp ?? throw new InvalidOperationException()));
+                return CreateDirectoryIfNotExis(new DirectoryInfo(path));
             }
             catch (ArgumentException)
             {

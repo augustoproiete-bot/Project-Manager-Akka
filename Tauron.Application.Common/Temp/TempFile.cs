@@ -8,6 +8,8 @@ namespace Tauron.Temp
 
         public ITempDic Parent { get; }
 
+        public bool NoStreamDispose { get; set; }
+
         public Stream Stream => new TempStream(this);
 
         internal Stream InternalStrem => _targetStream ??= new FileStream(FullPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Delete | FileShare.Read, 4096, FileOptions.DeleteOnClose);
