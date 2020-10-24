@@ -22,7 +22,7 @@ namespace Tauron.Application.Workshop.Analyzing
 
         internal Analyzer()
             : base(Task.FromResult<IActorRef>(ActorRefs.Nobody)) 
-            => Issues = new AnalyzerEventSource<TWorkspace, TData>(Task.FromResult<IActorRef>(ActorRefs.Nobody));
+            => Issues = new AnalyzerEventSource<TWorkspace, TData>(Task.FromResult<IActorRef>(ActorRefs.Nobody), new WorkspaceSuperviser());
 
         public void RegisterRule(IRule<TWorkspace, TData> rule)
         {
@@ -47,7 +47,7 @@ namespace Tauron.Application.Workshop.Analyzing
             var evtSource = new SourceFabricator<TWorkspace, TData>();
 
             var actor = superviser.Create(Props.Create(() => new AnalyzerActor<TWorkspace, TData>(workspace, evtSource.Send)), "AnalyzerActor");
-            evtSource.Init(actor);
+            evtSource.Init(actor, superviser);
 
             return new Analyzer<TWorkspace, TData>(actor, evtSource.EventSource ?? throw new InvalidOperationException("Create Analyzer"));
         }
@@ -57,8 +57,8 @@ namespace Tauron.Application.Workshop.Analyzing
             public AnalyzerEventSource<TWorkspace, TData>? EventSource { get; private set; }
 
 
-            public void Init(Task<IActorRef> actor) 
-                => EventSource = new AnalyzerEventSource<TWorkspace, TData>(actor);
+            public void Init(Task<IActorRef> actor, WorkspaceSuperviser superviser) 
+                => EventSource = new AnalyzerEventSource<TWorkspace, TData>(actor, superviser);
 
             public void Send(RuleIssuesChanged<TWorkspace, TData> evt) 
                 => EventSource?.SendEvent(evt);

@@ -1,14 +1,31 @@
 ﻿using System;
+using System.Collections.Immutable;
 using Akka.Actor;
 using Tauron.Akka;
+using Tauron.Application.Workshop.Mutation;
 
 namespace Tauron.Application.Workshop.Core
 {
     public sealed class WorkspaceSuperviserActor : ExposedReceiveActor
     {
+        private ImmutableDictionary<IActorRef, Action> _intrest = ImmutableDictionary<IActorRef, Action>.Empty;
+
         public WorkspaceSuperviserActor()
         {
             Receive<SuperviseActor>(CreateActor);
+
+            Receive<WatchIntrest>(wi =>
+            {
+                ImmutableInterlocked.AddOrUpdate(ref _intrest, wi.Target, _ => wi.OnRemove, (_, action) => action.Combine(wi.OnRemove) ?? wi.OnRemove);
+                Context.Watch(wi.Target);
+            });
+            Receive<Terminated>(t =>
+            {
+                if (!_intrest.TryGetValue(t.ActorRef, out var action)) return;
+
+                action();
+                _intrest = _intrest.Remove(t.ActorRef);
+            });
         }
 
         private void CreateActor(SuperviseActor obj)

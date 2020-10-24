@@ -12,13 +12,15 @@ namespace Tauron.Application.Workshop.Mutation
     {
         private readonly Task<IActorRef> _mutator;
         private readonly IDataSource<TData> _dataSource;
+        private readonly WorkspaceSuperviser _superviser;
         private readonly ResponderList _responder;
 
-        internal MutatingEngine(Task<IActorRef> mutator, IDataSource<TData> dataSource)
+        internal MutatingEngine(Task<IActorRef> mutator, IDataSource<TData> dataSource, WorkspaceSuperviser superviser)
             : base(mutator)
         {
             _mutator = mutator;
             _dataSource = dataSource;
+            _superviser = superviser;
             _responder = new ResponderList(_dataSource.SetData);
         }
 
@@ -28,13 +30,14 @@ namespace Tauron.Application.Workshop.Mutation
             _mutator = Task.FromResult<IActorRef>(ActorRefs.Nobody);
             _dataSource = dataSource;
             _responder = new ResponderList(_dataSource.SetData);
+            _superviser = new WorkspaceSuperviser();
         }
 
         public void Mutate(string name, Func<TData, TData> transform) 
             => TellToActor(new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name));
 
         public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null) 
-            => new EventSource<TRespond, TData>(_mutator, transformer, @where, _responder);
+            => new EventSource<TRespond, TData>(_superviser, _mutator, transformer, @where, _responder);
 
         private sealed class ResponderList : IRespondHandler<TData>
         {
@@ -72,7 +75,7 @@ namespace Tauron.Application.Workshop.Mutation
             mutatorProps = configurate?.Invoke(mutatorProps) ?? mutatorProps;
 
             var mutator = superviser.Create(mutatorProps, "Mutator");
-            return new MutatingEngine<TData>(mutator, source);
+            return new MutatingEngine<TData>(mutator, source, superviser);
         }
 
         public static MutatingEngine<TData> Dummy<TData>(IDataSource<TData> source)

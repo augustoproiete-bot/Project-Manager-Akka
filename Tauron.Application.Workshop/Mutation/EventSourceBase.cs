@@ -11,20 +11,21 @@ namespace Tauron.Application.Workshop.Mutation
     [PublicAPI]
     public abstract class EventSourceBase<TRespond> : DeferredActor, IEventSource<TRespond>
     {
+        private readonly WorkspaceSuperviser _superviser;
+
         private Action<TRespond>? _action;
         private ImmutableList<IActorRef> _intrests = ImmutableList<IActorRef>.Empty;
         private ImmutableDictionary<IActorRef, Action<TRespond>> _sourcesActions = ImmutableDictionary<IActorRef, Action<TRespond>>.Empty;
 
-        protected EventSourceBase(Task<IActorRef> mutator)
-            : base(mutator)
-        {
-        }
+        protected EventSourceBase(Task<IActorRef> mutator, WorkspaceSuperviser superviser)
+            : base(mutator) 
+            => _superviser = superviser;
 
         public void RespondOn(IActorRef actorRef)
         {
             lock(this)
                 Interlocked.Exchange(ref _intrests, _intrests.Add(actorRef));
-            TellToActor(new WatchIntrest(() => Interlocked.Exchange(ref _intrests, _intrests.Remove(actorRef)), actorRef));
+            _superviser.WatchIntrest(new WatchIntrest(() => Interlocked.Exchange(ref _intrests, _intrests.Remove(actorRef)), actorRef));
         }
 
         public void RespondOn(IActorRef? source, Action<TRespond> action)

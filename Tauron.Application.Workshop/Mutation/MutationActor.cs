@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using Akka.Actor;
 using Akka.Event;
 
@@ -7,24 +6,7 @@ namespace Tauron.Application.Workshop.Mutation
 {
     public sealed class MutationActor<TData> : ReceiveActor
     {
-        private ImmutableDictionary<IActorRef, Action> _intrest = ImmutableDictionary<IActorRef, Action>.Empty;
-
-        public MutationActor()
-        {
-            Receive<DataMutation<TData>>(Mutation);
-            Receive<WatchIntrest>(wi =>
-            {
-                ImmutableInterlocked.AddOrUpdate(ref _intrest, wi.Target, _ => wi.OnRemove, (_, action) => action.Combine(wi.OnRemove) ?? wi.OnRemove);
-                Context.Watch(wi.Target);
-            });
-            Receive<Terminated>(t =>
-            {
-                if (!_intrest.TryGetValue(t.ActorRef, out var action)) return;
-                
-                action();
-                _intrest = _intrest.Remove(t.ActorRef);
-            });
-        }
+        public MutationActor() => Receive<DataMutation<TData>>(Mutation);
 
         private ILoggingAdapter _log => Context.GetLogger();
 

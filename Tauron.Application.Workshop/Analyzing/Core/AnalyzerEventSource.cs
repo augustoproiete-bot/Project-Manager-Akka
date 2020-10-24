@@ -8,8 +8,8 @@ namespace Tauron.Application.Workshop.Analyzing.Core
     public sealed class AnalyzerEventSource<TWorkspace, TData> : EventSourceBase<IssuesEvent>
         where TWorkspace : WorkspaceBase<TData>
     {
-        public AnalyzerEventSource(Task<IActorRef> mutator)
-            : base(mutator)
+        public AnalyzerEventSource(Task<IActorRef> mutator, WorkspaceSuperviser superviser)
+            : base(mutator, superviser)
         {
         }
 
