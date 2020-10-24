@@ -30,15 +30,11 @@ namespace Tauron.Application.Workshop.Mutation
             _responder = new ResponderList(_dataSource.SetData);
         }
 
-        public void Mutate(string name, Func<TData, TData> transform)
-        {
-            TellToActor(new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name));
-        }
+        public void Mutate(string name, Func<TData, TData> transform) 
+            => TellToActor(new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name));
 
-        public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null)
-        {
-            return new EventSource<TRespond, TData>(_mutator, transformer, where, _responder);
-        }
+        public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null) 
+            => new EventSource<TRespond, TData>(_mutator, transformer, @where, _responder);
 
         private sealed class ResponderList : IRespondHandler<TData>
         {
@@ -70,9 +66,12 @@ namespace Tauron.Application.Workshop.Mutation
     [PublicAPI]
     public static class MutatingEngine
     {
-        public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, WorkspaceSuperviser superviser)
+        public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null)
         {
-            var mutator = superviser.Create(Props.Create<MutationActor<TData>>(), "Mutator");
+            var mutatorProps = Props.Create<MutationActor<TData>>();
+            mutatorProps = configurate?.Invoke(mutatorProps) ?? mutatorProps;
+
+            var mutator = superviser.Create(mutatorProps, "Mutator");
             return new MutatingEngine<TData>(mutator, source);
         }
 
