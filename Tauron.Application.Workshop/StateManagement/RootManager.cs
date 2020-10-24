@@ -6,7 +6,7 @@ namespace Tauron.Application.Workshop.StateManagement
     {
         public RootManager(WorkspaceSuperviser superviser, IDispatcher dispatcher)
         {
-            
+            ServiceCol
         }
     }
 }
