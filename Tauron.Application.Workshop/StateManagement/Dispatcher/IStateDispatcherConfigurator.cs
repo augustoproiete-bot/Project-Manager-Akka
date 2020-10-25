@@ -2,7 +2,7 @@
 
 namespace Tauron.Application.Workshop.StateManagement.Dispatcher
 {
-    public interface IDispatcher
+    public interface IStateDispatcherConfigurator
     {
         Props Configurate(Props mutator);
     }

@@ -2,11 +2,15 @@
 
 namespace Tauron.Application.Workshop.StateManagement
 {
-    public sealed class RootManager
+    public sealed class RootManager : IActionInvoker
     {
-        public RootManager(WorkspaceSuperviser superviser, IDispatcher dispatcher)
+        internal RootManager(WorkspaceSuperviser superviser, IStateDispatcherConfigurator stateDispatcher)
         {
-            ServiceCol
+            
         }
+
+        public TState GetState<TState>();
+
+        public void Run(object action);
     }
 }

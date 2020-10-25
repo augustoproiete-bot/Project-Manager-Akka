@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 namespace Tauron.Application.Workshop.StateManagement.Dispatcher
 {
     [PublicAPI]
-    public sealed class DefaultDispatcher : IDispatcher
+    public sealed class DefaultStateDispatcher : IStateDispatcherConfigurator
     {
         public Props Configurate(Props mutator) => mutator;
     }

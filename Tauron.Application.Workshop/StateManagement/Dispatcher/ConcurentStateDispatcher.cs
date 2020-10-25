@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 namespace Tauron.Application.Workshop.StateManagement.Dispatcher
 {
     [PublicAPI]
-    public sealed class ConcurentDispatcher : IDispatcher
+    public sealed class ConcurentStateDispatcher : IStateDispatcherConfigurator
     {
         public Props Configurate(Props mutator)
             => mutator.WithRouter(

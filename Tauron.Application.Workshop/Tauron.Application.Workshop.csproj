@@ -13,10 +13,15 @@
 
   <ItemGroup>
     <PackageReference Include="Amadevus.RecordGenerator" Version="0.6.0" />
+    <PackageReference Include="CacheManager.Core" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="StateManagement\Data\" />
   </ItemGroup>
 
 </Project>
