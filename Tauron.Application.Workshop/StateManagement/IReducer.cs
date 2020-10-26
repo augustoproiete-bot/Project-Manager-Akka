@@ -2,8 +2,8 @@
 {
     public interface IReducer<TData>
     {
-        TData Reduce(TData state, object action);
+        TData Reduce(TData state, IStateAction<TData> action);
 
-        bool ShouldReduceStateForAction(object action);
+        bool ShouldReduceStateForAction(IStateAction<TData> action);
     }
 }

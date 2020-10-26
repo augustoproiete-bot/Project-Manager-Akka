@@ -29,7 +29,8 @@ namespace Tauron.Application.Workshop.StateManagement
         private ManagerBuilder(WorkspaceSuperviser superviser) 
             => _superviser = superviser;
 
-        public IStateBuilder<TData> WithDataSource<TData>(Func<IDataSource<TData>> source)
+        public IStateBuilder<TData> WithDataSource<TData>(Func<IStateDataSource<TData>> source) 
+            where TData : class
         {
             var builder = new StateBuilder<TData>(source);
             _states.Add(builder);

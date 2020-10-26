@@ -7,10 +7,8 @@ namespace Tauron.Application.Workshop.StateManagement
         
     }
 
-    public interface IState<TData>
+    public interface IState<TData> : IState
     {
         void Initialize(MutatingEngine<TData> engine);
-
-
     }
 }

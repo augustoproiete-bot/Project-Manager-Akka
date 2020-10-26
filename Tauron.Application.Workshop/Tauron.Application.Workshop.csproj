@@ -7,8 +7,11 @@
 
   <ItemGroup>
     <Compile Remove="obj\**" />
+    <Compile Remove="StateManagement\Data\**" />
     <EmbeddedResource Remove="obj\**" />
+    <EmbeddedResource Remove="StateManagement\Data\**" />
     <None Remove="obj\**" />
+    <None Remove="StateManagement\Data\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,10 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="StateManagement\Data\" />
   </ItemGroup>
 
 </Project>

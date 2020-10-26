@@ -1,9 +1,7 @@
-﻿using Akka.Routing;
-
-namespace Tauron.Application.Workshop.StateManagement
+﻿namespace Tauron.Application.Workshop.StateManagement
 {
-    public interface IStateAction : IConsistentHashable
+    public interface IStateAction<TData>
     {
-        
+        string Query { get; }
     }
 }

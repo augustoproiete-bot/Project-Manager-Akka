@@ -2,14 +2,17 @@
 using CacheManager.Core;
 using JetBrains.Annotations;
 
-namespace AkkaTest.Cache
+namespace Tauron.Application.Workshop.StateManagement.Cache
 {
-    public abstract class ParentCache<TValue> : IDisposable
+    public static class ParentCache
     {
         [PublicAPI]
-        public static ParentCache<TValue> Create<TParent>(ICache<TParent> parent, bool disposeParent, Func<TValue, TParent> convert, Func<TParent, TValue> convertback)
-            => new ParentCacheImpl<TParent>(parent, disposeParent, convert, convertback);
+        public static ParentCache<TValue> Create<TValue, TParent>(ICache<TParent> parent, bool disposeParent, Func<TParent, TValue> convertback, Func<TValue, TParent> convert)
+            => new ParentCache<TValue>.ParentCacheImpl<TParent>(parent, disposeParent, convert, convertback);
+    }
 
+    public abstract class ParentCache<TValue> : IDisposable
+    {
         public abstract bool Exists(string key, string prefix);
 
         public abstract void ClearRegion(string region);
@@ -24,7 +27,7 @@ namespace AkkaTest.Cache
         public abstract void Put(CacheItem<TValue> cacheItem);
         public abstract void Dispose();
 
-        private sealed class ParentCacheImpl<TParent> : ParentCache<TValue>
+        internal sealed class ParentCacheImpl<TParent> : ParentCache<TValue>
         {
             private readonly ICache<TParent> _parent;
             private readonly bool _disposeParent;
@@ -62,10 +65,10 @@ namespace AkkaTest.Cache
             }
 
             private CacheItem<TParent>? Convert(CacheItem<TValue>? parent) 
-                => parent == null ? null : new CacheItem<TParent>(parent.Key, parent.Region, _convert(parent.Value), parent.ExpirationMode, parent.ExpirationTimeout);
+                => parent == null ? null : new CacheItem<TParent>(parent.Key, parent.Region ?? "null", _convert(parent.Value), parent.ExpirationMode, parent.ExpirationTimeout);
 
             private CacheItem<TValue>? ConvertBack(CacheItem<TParent>? parent)
-                => parent == null ? null : new CacheItem<TValue>(parent.Key, parent.Region, _convertback(parent.Value), parent.ExpirationMode, parent.ExpirationTimeout);
+                => parent == null ? null : new CacheItem<TValue>(parent.Key, parent.Region ?? "null", _convertback(parent.Value), parent.ExpirationMode, parent.ExpirationTimeout);
         }
     }
 }

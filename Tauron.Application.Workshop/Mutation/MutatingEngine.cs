@@ -33,8 +33,8 @@ namespace Tauron.Application.Workshop.Mutation
             _superviser = new WorkspaceSuperviser();
         }
 
-        public void Mutate(string name, Func<TData, TData> transform) 
-            => TellToActor(new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name));
+        public void Mutate(string name, Func<TData, TData> transform, object? hash = null) 
+            => TellToActor(new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name, hash));
 
         public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null) 
             => new EventSource<TRespond, TData>(_superviser, _mutator, transformer, @where, _responder);

@@ -4,7 +4,7 @@ using CacheManager.Core;
 using CacheManager.Core.Internal;
 using CacheManager.Core.Logging;
 
-namespace AkkaTest.Cache
+namespace Tauron.Application.Workshop.StateManagement.Cache
 {
 
     public sealed class ParentCacheHandle<TCacheValue> : BaseCacheHandle<TCacheValue>

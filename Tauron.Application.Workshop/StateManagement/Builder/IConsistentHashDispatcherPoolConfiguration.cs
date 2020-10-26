@@ -7,7 +7,5 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
     public interface IConsistentHashDispatcherPoolConfiguration : IDispatcherPoolConfiguration<IConsistentHashDispatcherPoolConfiguration>
     {
         public IConsistentHashDispatcherPoolConfiguration WithVirtualNodesFactor(int vnodes);
-
-        public IConsistentHashDispatcherPoolConfiguration WithHashMapping(ConsistentHashMapping mapping);
     }
 }

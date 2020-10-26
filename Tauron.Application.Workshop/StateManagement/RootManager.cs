@@ -9,8 +9,11 @@ namespace Tauron.Application.Workshop.StateManagement
             
         }
 
-        public TState GetState<TState>();
+        public TState GetState<TState>()
+            => GetState<TState>("");
 
-        public void Run(object action);
+        public TState GetState<TState>(string key);
+
+        public void Run(IStateAction action);
     }
 }
