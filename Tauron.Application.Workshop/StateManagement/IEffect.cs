@@ -1,11 +1,9 @@
-﻿using System.Threading.Tasks;
-
-namespace Tauron.Application.Workshop.StateManagement
+﻿namespace Tauron.Application.Workshop.StateManagement
 {
     public interface IEffect
     {
-		void Handle(object action, IActionInvoker dispatcher);
+		void Handle(IStateAction action, IActionInvoker dispatcher);
 
-        bool ShouldReactToAction(object action);
+        bool ShouldReactToAction(IStateAction action);
 	}
 }

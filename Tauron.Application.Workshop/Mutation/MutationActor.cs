@@ -4,18 +4,18 @@ using Akka.Event;
 
 namespace Tauron.Application.Workshop.Mutation
 {
-    public sealed class MutationActor<TData> : ReceiveActor
+    public sealed class MutationActor : ReceiveActor
     {
-        public MutationActor() => Receive<DataMutation<TData>>(Mutation);
+        public MutationActor() => Receive<IDataMutation>(Mutation);
 
         private ILoggingAdapter _log => Context.GetLogger();
 
-        private void Mutation(DataMutation<TData> obj)
+        private void Mutation(IDataMutation obj)
         {
             try
             {
                 _log.Info("Mutation Begin: {Name}", obj.Name);
-                obj.Responder(obj.Mutatuion(obj.Receiver()));
+                obj.Run();
                 _log.Info("Mutation Finisht: {Name}", obj.Name);
             }
             catch (Exception e)

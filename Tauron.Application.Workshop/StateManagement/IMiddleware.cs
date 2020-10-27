@@ -1,4 +1,6 @@
-﻿namespace Tauron.Application.Workshop.StateManagement
+﻿using System.Threading.Tasks;
+
+namespace Tauron.Application.Workshop.StateManagement
 {
     public interface IMiddleware
     {
@@ -6,10 +8,9 @@
 
         void AfterInitializeAllMiddlewares();
 
-        bool MayDispatchAction(object action);
+        bool MayDispatchAction(IStateAction action);
 
-        void BeforeDispatch(object action);
+        void BeforeDispatch(IStateAction action);
 
-        void AfterDispatch(object action);
     }
 }

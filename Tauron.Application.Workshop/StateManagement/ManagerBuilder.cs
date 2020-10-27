@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CacheManager.Core;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutation;
@@ -21,10 +22,10 @@ namespace Tauron.Application.Workshop.StateManagement
         private readonly WorkspaceSuperviser _superviser;
 
         private Func<IStateDispatcherConfigurator> _dispatcherFunc = () => new DefaultStateDispatcher();
-        private List<Func<IEffect>> _effects = new List<Func<IEffect>>();
-        private List<Func<IMiddleware>> _middlewares = new List<Func<IMiddleware>>();
-        private List<StateBuilderBase> _states = new List<StateBuilderBase>();
-        private Func<Action<ConfigurationBuilderCachePart>>? _globalCache;
+        private readonly List<Func<IEffect>> _effects = new List<Func<IEffect>>();
+        private readonly List<Func<IMiddleware>> _middlewares = new List<Func<IMiddleware>>();
+        private readonly List<StateBuilderBase> _states = new List<StateBuilderBase>();
+        private Action<ConfigurationBuilderCachePart>? _globalCache;
 
         private ManagerBuilder(WorkspaceSuperviser superviser) 
             => _superviser = superviser;
@@ -55,7 +56,13 @@ namespace Tauron.Application.Workshop.StateManagement
             return this;
         }
 
+        public ManagerBuilder WithGlobalCache(Action<ConfigurationBuilderCachePart>? config)
+        {
+            _globalCache = config;
+            return this;
+        }
+
         internal RootManager Build() 
-            => new RootManager(_superviser, _dispatcherFunc());
+            => new RootManager(_superviser, _dispatcherFunc(), _states, _effects.Select(e => e()), _middlewares.Select(m => m()), _globalCache);
     }
 }

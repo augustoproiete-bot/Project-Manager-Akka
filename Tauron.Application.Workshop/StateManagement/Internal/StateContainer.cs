@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using CacheManager.Core;
+using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutation;
 
 namespace Tauron.Application.Workshop.StateManagement.Internal
@@ -14,61 +13,32 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
         protected StateContainer(IState instance) 
             => Instance = instance;
 
-        public abstract void TryDipatch<TActionData>(IStateAction<TActionData> action);
+        public abstract IDataMutation? TryDipatch(IStateAction action);
         public abstract void Dispose();
     }
 
     public sealed class StateContainer<TData> : StateContainer
         where TData : class
     {
-        private readonly MutatingEngine<TData> _engine;
-
-        private string CacheKey = string.Empty;
-
+        private readonly IDisposable _toDispose;
         private IReadOnlyCollection<IReducer<TData>> Reducers { get; }
+        private MutatingEngine<MutatingContext<TData>> MutatingEngine { get; }
 
-        private ICache<TData>? Cache { get; }
-
-        private IStateDataSource<TData> DataSource { get; }
-
-        public StateContainer(IState instance, IReadOnlyCollection<IReducer<TData>> reducers, ICache<TData>? cache, IStateDataSource<TData> dataSource, MutatingEngine<TData> engine) 
+        public StateContainer(IState instance, IReadOnlyCollection<IReducer<TData>> reducers, MutatingEngine<MutatingContext<TData>> mutatingEngine, IDisposable toDispose)
             : base(instance)
         {
-            _engine = engine;
+            _toDispose = toDispose;
             Reducers = reducers;
-            Cache = cache;
-            DataSource = dataSource;
-
-            if(cache == null)
-                return;
-            CacheKey = $"--{instance.GetType().Name}--{Guid.NewGuid():N}";
+            MutatingEngine = mutatingEngine;
         }
 
-        public override void TryDipatch<TActionData>(IStateAction<TActionData> action)
+        public override IDataMutation? TryDipatch(IStateAction action)
         {
-            TData data;
-            if (Cache != null)
-                data = Cache.Get(action.Query, CacheKey) ?? DataSource.Get(action.Query);
-            else
-                data = DataSource.Get(action.Query);
-            var isProcessed = false;
-
-            data = Reducers.Where(r => r.ShouldReduceStateForAction(action)).Aggregate(data, (input, reducer) =>
-            {
-                isProcessed = true;
-                return reducer.Reduce(input, action);
-            });
-
-            if (!isProcessed)
-                return false;
-
-            Cache?.Put(action.Query, data, CacheKey);
-            DataSource.Set(action.Query, data);
-
-            return true;
+            var reducers = Reducers.Where(r => r.ShouldReduceStateForAction(action)).ToList();
+            return reducers.Count == 0 ? null : MutatingEngine.CreateMutate(action.ActionName, data => Reducers.Aggregate(data, (input, reducer) => reducer.Reduce(input, action)), action.Query);
         }
 
         public override void Dispose() 
-            => Cache?.Dispose();
+            => _toDispose.Dispose();
     }
 }

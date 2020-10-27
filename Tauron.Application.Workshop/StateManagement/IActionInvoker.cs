@@ -1,7 +1,16 @@
-﻿namespace Tauron.Application.Workshop.StateManagement
+﻿using JetBrains.Annotations;
+
+namespace Tauron.Application.Workshop.StateManagement
 {
+    [PublicAPI]
     public interface IActionInvoker
     {
-        void Run(object action);
+        TState? GetState<TState>()
+            where TState : class;
+
+        TState? GetState<TState>(string key)
+            where TState : class;
+
+        void Run(IStateAction action);
     }
 }

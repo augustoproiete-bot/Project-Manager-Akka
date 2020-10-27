@@ -1,11 +1,9 @@
-﻿using Tauron.Application.Workshop.StateManagement.Internal;
+﻿using Tauron.Application.Workshop.Mutation;
 
 namespace Tauron.Application.Workshop.StateManagement
 {
-    public interface IStateDataSource<TData> : IStateDataSource
+    public interface IStateDataSource<TData> : IDataSource<TData>
     {
-        TData Get(string query);
-
-        void Set(string query, TData data);
+        void Apply(string query);
     }
 }

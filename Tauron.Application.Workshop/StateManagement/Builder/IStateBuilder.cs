@@ -9,7 +9,7 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
         where TData : class
     {
         IStateBuilder<TData> WithStateType<TState>()
-            where TState : IState<TData>, new();
+            where TState : IState<TData>;
         
         IStateBuilder<TData> WithNoCache();
 

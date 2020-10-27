@@ -1,4 +1,5 @@
-﻿using Akka.Actor;
+﻿using System;
+using Akka.Actor;
 using Akka.Routing;
 using JetBrains.Annotations;
 
@@ -15,5 +16,7 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
         TConfig WithResizer(Resizer resizer);
 
         TConfig WithAkkaDispatcher(string name);
+
+        TConfig WithCustomization(Func<Props, Props> custom);
     }
 }

@@ -11,6 +11,7 @@
     <PackageReference Include="Akka.Logger.Serilog" Version="1.4.8" />
     <PackageReference Include="Akka.Remote" Version="1.4.10" />
     <PackageReference Include="Akka.Streams" Version="1.4.10" />
+    <PackageReference Include="Akka.TestKit" Version="1.4.10" />
     <PackageReference Include="CacheManager.SystemRuntimeCaching" Version="2.0.0-beta-1629" />
     <PackageReference Include="Castle.Core" Version="4.4.1" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0-dev-00839" />
@@ -21,6 +22,7 @@
     <ProjectReference Include="..\Akka.Code.Configuration\Akka.Code.Configuration.csproj" />
     <ProjectReference Include="..\Tauron.Application.Common\Tauron.Application.Common.csproj" />
     <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
+    <ProjectReference Include="..\Tauron.Application.Workshop\Tauron.Application.Workshop.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
   </ItemGroup>
 

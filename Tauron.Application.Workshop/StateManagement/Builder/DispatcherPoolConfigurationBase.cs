@@ -1,4 +1,5 @@
-﻿using Akka.Actor;
+﻿using System;
+using Akka.Actor;
 using Akka.Routing;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.StateManagement.Dispatcher;
@@ -13,6 +14,7 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
         protected SupervisorStrategy SupervisorStrategy = Pool.DefaultSupervisorStrategy;
         protected Resizer? Resizer;
         protected string? Dispatcher;
+        protected Func<Props, Props>? Custom;
 
         public TConfig NrOfInstances(int number)
         {
@@ -35,6 +37,12 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
         public TConfig WithAkkaDispatcher(string name)
         {
             Dispatcher = name;
+            return this.As<TConfig>()!;
+        }
+
+        public TConfig WithCustomization(Func<Props, Props> custom)
+        {
+            Custom = Custom.Combine(custom);
             return this.As<TConfig>()!;
         }
 

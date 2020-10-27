@@ -3,7 +3,14 @@ using Akka.Routing;
 
 namespace Tauron.Application.Workshop.Mutation
 {
-    public sealed class DataMutation<TData> : IConsistentHashable
+    public interface IDataMutation : IConsistentHashable
+    {
+        string Name { get; }
+
+        Action Run { get; }
+    }
+
+    public sealed class DataMutation<TData> : IDataMutation
     {
         private readonly object? _hash;
 
@@ -17,6 +24,7 @@ namespace Tauron.Application.Workshop.Mutation
         }
 
         public string Name { get; }
+        Action IDataMutation.Run => () => Responder(Mutatuion(Receiver()));
 
         public Func<TData, TData> Mutatuion { get; }
 

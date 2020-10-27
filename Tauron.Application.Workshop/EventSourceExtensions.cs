@@ -15,6 +15,9 @@ namespace Tauron.Application.Workshop
             actor.Exposed.Receive<TData>((data, context) => action(data));
         }
 
+        public static void RespondOn<TData>(this IEventSource<TData> source, Action<TData> action)
+            => source.RespondOn(null, action);
+
         public static MutateClass<TRecieve, TStart, TMutator> Mutate<TRecieve, TStart, TMutator>(
             this RunSelector<TRecieve, TStart> selector, TMutator mutator) => new MutateClass<TRecieve, TStart, TMutator>(mutator, selector);
 

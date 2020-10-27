@@ -31,16 +31,11 @@ namespace Tauron.Application.Workshop.Mutation
         public void RespondOn(IActorRef? source, Action<TRespond> action)
         {
             if (source.IsNobody())
-            {
-                if (_action == null)
-                    _action = action;
-                else
-                    _action += action;
-            }
+                _action = _action.Combine(action);
             else
             {
                 ImmutableInterlocked.AddOrUpdate(ref _sourcesActions!, source, _ => action, (_, old) => old.Combine(action) ?? action);
-                TellToActor(new WatchIntrest(() => ImmutableInterlocked.TryRemove(ref _sourcesActions!, source, out _), source!));
+                _superviser.WatchIntrest(new WatchIntrest(() => ImmutableInterlocked.TryRemove(ref _sourcesActions!, source, out _), source!));
             }
         }
 

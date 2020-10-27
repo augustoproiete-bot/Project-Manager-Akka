@@ -1,7 +1,11 @@
-﻿namespace Tauron.Application.Workshop.StateManagement
+﻿using Akka.Routing;
+
+namespace Tauron.Application.Workshop.StateManagement
 {
-    public interface IStateAction<TData>
+    public interface IStateAction
     {
+        string ActionName { get; }
+
         string Query { get; }
     }
 }
