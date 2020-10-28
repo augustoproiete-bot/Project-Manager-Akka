@@ -1,7 +1,7 @@
 ﻿namespace Tauron.Application.Workshop.StateManagement
 {
-    public interface IQuery
+    public interface INoCache
     {
-        string ToHash();
+        
     }
 }

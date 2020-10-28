@@ -15,7 +15,7 @@ namespace Tauron.Application.Workshop.Mutation
             {
                 handler.Register(d =>
                 {
-                    if (@where(d))
+                    if (where(d))
                         Send(transform(d));
                 });
             }

@@ -31,7 +31,7 @@ namespace Tauron.Application.Workshop.StateManagement
             => _superviser = superviser;
 
         public IStateBuilder<TData> WithDataSource<TData>(Func<IStateDataSource<TData>> source) 
-            where TData : class
+            where TData : class, IStateEntity
         {
             var builder = new StateBuilder<TData>(source);
             _states.Add(builder);

@@ -21,13 +21,15 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
         where TData : class
     {
         private readonly IDisposable _toDispose;
+        private readonly Action<IQuery> _setQuery;
         private IReadOnlyCollection<IReducer<TData>> Reducers { get; }
         private MutatingEngine<MutatingContext<TData>> MutatingEngine { get; }
 
-        public StateContainer(IState instance, IReadOnlyCollection<IReducer<TData>> reducers, MutatingEngine<MutatingContext<TData>> mutatingEngine, IDisposable toDispose)
+        public StateContainer(IState instance, IReadOnlyCollection<IReducer<TData>> reducers, MutatingEngine<MutatingContext<TData>> mutatingEngine, IDisposable toDispose, Action<IQuery> setQuery)
             : base(instance)
         {
             _toDispose = toDispose;
+            _setQuery = setQuery;
             Reducers = reducers;
             MutatingEngine = mutatingEngine;
         }
@@ -35,7 +37,11 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
         public override IDataMutation? TryDipatch(IStateAction action)
         {
             var reducers = Reducers.Where(r => r.ShouldReduceStateForAction(action)).ToList();
-            return reducers.Count == 0 ? null : MutatingEngine.CreateMutate(action.ActionName, data => Reducers.Aggregate(data, (input, reducer) => reducer.Reduce(input, action)), action.Query);
+            if (reducers.Count == 0)
+                return null;
+
+            _setQuery(action.Query);
+            return MutatingEngine.CreateMutate(action.ActionName, data => reducers.Aggregate(data, (input, reducer) => reducer.Reduce(input, action)), action.Query.ToHash());
         }
 
         public override void Dispose() 
