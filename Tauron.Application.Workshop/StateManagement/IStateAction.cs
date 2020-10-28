@@ -6,6 +6,6 @@ namespace Tauron.Application.Workshop.StateManagement
     {
         string ActionName { get; }
 
-        string Query { get; }
+        IQuery Query { get; }
     }
 }

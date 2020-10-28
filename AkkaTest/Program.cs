@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Accessibility;
-using Akka.TestKit;
+using Akka.Actor;
 using CacheManager.Core;
 using Tauron.Application.Workshop;
 using Tauron.Application.Workshop.Mutating;
@@ -12,7 +12,7 @@ using Tauron.Application.Workshop.StateManagement;
 
 namespace AkkaTest
 {
-    internal class Program : TestKitBase
+    internal static class Program
     {
         public sealed class UserData : IChangeTrackable
         {
@@ -47,38 +47,80 @@ namespace AkkaTest
                 => new UserData(Name, LastAccess, CreationTime, false, false, Id);
         }
 
+        public sealed class StringQuery : IQuery
+        {
+            public string Name { get; }
+
+            public StringQuery(string name) => Name = name;
+
+            public object ToHash() => Name;
+        }
+
+        public sealed class EmptyQuery : IQuery
+        {
+            public object ToHash() => "Empty";
+        }
+
+        public sealed class KillQuery : IQuery
+        {
+            public object ToHash() => "Kill";
+        }
+
         public sealed class UserDataSource : IStateDataSource<UserData>
         {
-            private readonly ConcurrentDictionary<string, UserData> _user = new ConcurrentDictionary<string, UserData>();
-            private UserData _next = new UserData(string.Empty, DateTime.MinValue, DateTime.MinValue, false, false, string.Empty);
+            private static readonly UserData Empty = new UserData(string.Empty, DateTime.MinValue, DateTime.MinValue, false, false, string.Empty);
+
+            private readonly ConcurrentDictionary<string, UserData> _user;
+            private UserData _next = Empty;
+
+            public UserDataSource(ConcurrentDictionary<string, UserData> user) => _user = user;
 
             public UserData GetData() => _next;
 
             public void SetData(UserData data) => _user.AddOrUpdate(data.Name, data, (s, userData) => data.SetUnchanged());
 
-            public void Apply(string query) => _next = _user.GetOrAdd(query, s => new UserData(s, DateTime.Now, DateTime.Now, true, true, s));
+            public void Apply(IQuery query)
+            {
+                if (query is StringQuery info)
+                    _next = _user.GetOrAdd(info.Name, s => new UserData(s, DateTime.Now, DateTime.Now, true, true, s));
+                else
+                    _next = Empty;
+            }
+        }
+
+        public sealed class UsersDataSource : IStateDataSource<ICollection<UserData>>
+        {
+            private readonly ConcurrentDictionary<string, UserData> _userDatas;
+
+            public UsersDataSource(ConcurrentDictionary<string, UserData> userDatas) => _userDatas = userDatas;
+
+            public ICollection<UserData> GetData() => _userDatas.Values;
+
+            public void SetData(ICollection<UserData> data) { }
+
+            public void Apply(IQuery query) { }
         }
 
         public sealed class CreateUserAction : IStateAction
         {
             public string ActionName => "CreateUser";
 
-            public string Query { get; }
+            public IQuery Query { get; }
 
-            public CreateUserAction(string userId) => Query = userId;
+            public CreateUserAction(string userId) => Query = new StringQuery(userId);
         }
 
         public sealed class RenameUserAction : IStateAction
         {
             public string ActionName => "RenameUser";
 
-            public string Query { get; }
+            public IQuery Query { get; }
 
             public string NewName { get; }
 
             public RenameUserAction(string query, string newName)
             {
-                Query = query;
+                Query = new StringQuery(query);
                 NewName = newName;
             }
         }
@@ -86,20 +128,28 @@ namespace AkkaTest
         public sealed class QueryUserNameAction : IStateAction
         {
             public string ActionName => "QueryUserName";
-            public string Query { get; }
+            public IQuery Query { get; }
 
-            public QueryUserNameAction(string query) => Query = query;
+            public QueryUserNameAction(string query) => Query =new StringQuery(query);
         }
 
         public sealed class KillApplicationAction : IStateAction
         {
             public string ActionName => "KillApp";
-            public string Query { get; }
+            public IQuery Query { get; }
 
-            public KillApplicationAction()
-            {
-                Query = "Kill";
-            }
+            public KillApplicationAction() => Query = new KillQuery();
+        }
+
+        public sealed class QueryUsersAction : IStateAction
+        {
+            public string ActionName => "QueryUsers";
+            public IQuery Query { get; } = new EmptyQuery();
+        }
+
+        public sealed class QueryUsersChange
+        {
+            
         }
 
         public sealed class KillChange : MutatingChange
@@ -193,84 +243,69 @@ namespace AkkaTest
             public bool ShouldReduceStateForAction(IStateAction action) => action is QueryUserNameAction;
         }
 
-        private sealed class Asserations : ITestKitAssertions
+        private static async Task Main(string[] args)
         {
-            public void Fail(string format = "", params object[] args)
-            {
-                
-            }
+            var actorsystem = ActorSystem.Create("TestSystem");
 
-            public void AssertTrue(bool condition, string format = "", params object[] args)
-            {
-            }
-
-            public void AssertFalse(bool condition, string format = "", params object[] args)
-            {
-            }
-
-            public void AssertEqual<T>(T expected, T actual, string format = "", params object[] args)
-            {
-            }
-
-            public void AssertEqual<T>(T expected, T actual, Func<T, T, bool> comparer, string format = "", params object[] args)
-            {
-            }
-        }
-
-        public Program()
-            : base(new Asserations())
-        {
-               
-        }
-
-        public void RunTest()
-        {
-            var superwiser = new WorkspaceSuperviser(Sys);
+            var superwiser = new WorkspaceSuperviser(actorsystem);
             var testManager = ManagerBuilder.CreateManager(superwiser, builder =>
             {
-                var source = new UserDataSource();
+                var database = new ConcurrentDictionary<string, UserData>();
+                var source = new UserDataSource(database);
 
-                builder.WithConsistentHashDispatcher().WithCustomization(p => p.WithDispatcher(CallingThreadDispatcher.Id));
+                builder.WithConsistentHashDispatcher().NrOfInstances(4);
 
                 builder.WithGlobalCache(p => p.WithSystemRuntimeCacheHandle());
                 builder.WithDataSource(() => source)
-                    .WithParentCache()
-                    .WithStateType<KillState>()
-                    .WithReducer(() => new KillReducer());
+                   .WithParentCache()
+                   .WithStateType<KillState>()
+                   .WithReducer(() => new KillReducer());
 
                 builder.WithDataSource(() => source)
-                    .WithCache(p => p.WithDictionaryHandle())
-                    .WithParentCache()
-                    .WithStateType<UserStade>()
-                    .WithReducer(() => new CreateUserReducer())
-                    .WithReducer(() => new QueryUserNameReducer())
-                    .WithReducer(() => new RenameUserreducer());
+                   .WithCache(p => p.WithDictionaryHandle())
+                   .WithParentCache()
+                   .WithStateType<UserStade>()
+                   .WithReducer(() => new CreateUserReducer())
+                   .WithReducer(() => new QueryUserNameReducer())
+                   .WithReducer(() => new RenameUserreducer());
             });
 
             var killStade = testManager.GetState<KillState>()!;
-            killStade.Kill.RespondOn(k => Sys.Terminate());
+            killStade.Kill.RespondOn(k => actorsystem.Terminate());
 
             var userState = testManager.GetState<UserStade>()!;
 
             userState.QueryUserName.RespondOn(q => Console.WriteLine($"User Name Queried: {q.Data.Name}"));
             userState.UserCreated.RespondOn(c => Console.WriteLine($"User Created: {c.Id}"));
             userState.UserRenamed.RespondOn(n => Console.WriteLine($"User Renamed {n.Id} -- {n.NewName}"));
+            
+            await Task.Run(() => StartLoop(testManager));
 
-            var userId = Guid.NewGuid().ToString("N");
-
-            testManager.Run(new CreateUserAction(userId));
-            testManager.Run(new RenameUserAction(userId, "Tauron"));
-            testManager.Run(new QueryUserNameAction(userId));
-            testManager.Run(new KillApplicationAction());
+            await actorsystem.WhenTerminated;
+            testManager.Dispose();
+            actorsystem.Dispose();
         }
 
-        private static void Main(string[] args)
+        private static void StartLoop(RootManager manager)
         {
-            var prog = new Program();
+            bool run = true;
 
-            Task.Run(prog.RunTest);
+            do
+            {
+                var line = Console.ReadLine();
 
-            Console.ReadKey();
+                switch (line)
+                {
+                    case "kill":
+                        run = false;
+                        manager.Run(new KillApplicationAction());
+                        break;
+                    default:
+                        Console.WriteLine("Unbekanntes Commando");
+                        break;
+                }
+
+            } while (run);
         }
     }
 }
