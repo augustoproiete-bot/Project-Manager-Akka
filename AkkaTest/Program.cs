@@ -5,9 +5,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Akka;
 using Akka.Actor;
 using Akka.Configuration;
+using Autofac;
+using Autofac.Features.ResolveAnything;
 using CacheManager.Core;
+using FluentValidation;
 using Tauron;
 using Tauron.Akka;
 using Tauron.Application.Workshop;
@@ -15,11 +19,86 @@ using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutating.Changes;
 using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Workshop.StateManagement;
+using Tauron.Application.Workshop.StateManagement.Attributes;
+using Tauron.Operations;
 
 namespace AkkaTest
 {
     internal static class Program
     {
+        public sealed class UserSourceFactory : IDataSourceFactory
+        {
+            private sealed class UserDataSource : IStateDataSource<UserData>
+            {
+                private static readonly UserData Empty = new UserData(string.Empty, DateTime.MinValue, DateTime.MinValue, false, false, string.Empty, true);
+
+                private readonly ConcurrentDictionary<string, UserData> _user;
+                private UserData? _next;
+
+                public UserDataSource(ConcurrentDictionary<string, UserData> user) => _user = user;
+
+                public UserData GetData() => _next ?? Empty;
+
+                public void SetData(UserData data)
+                {
+                    if (data.IsDeleted)
+                        _user.TryRemove(data.Id, out _);
+                    else
+                        _user.AddOrUpdate(data.Id, data, (s, userData) => data.SetUnchanged());
+                }
+
+                public void Apply(IQuery query)
+                {
+                    switch (query)
+                    {
+                        case UserQuery q:
+                            if (_user.TryGetValue(q.Name, out _next))
+                                return;
+                            _next = _user.Values.FirstOrDefault(u => u.Name == q.Name);
+                            break;
+                        case StringQuery info:
+                            _next = _user.GetOrAdd(info.Name, s => new UserData(s, DateTime.Now, DateTime.Now, true, true, s, false));
+                            break;
+                        default:
+                            _next = Empty;
+                            break;
+                    }
+                }
+            }
+
+            private sealed class UsersDataSource : IStateDataSource<UserList>
+            {
+                private readonly ConcurrentDictionary<string, UserData> _userDatas;
+
+                public UsersDataSource(ConcurrentDictionary<string, UserData> userDatas) => _userDatas = userDatas;
+
+                public UserList GetData() => new UserList(_userDatas.Values);
+
+                public void SetData(UserList data)
+                {
+                }
+
+                public void Apply(IQuery query)
+                {
+                }
+            }
+
+            private readonly ConcurrentDictionary<string, UserData> _userDatas = new ConcurrentDictionary<string, UserData>();
+
+            public Func<IStateDataSource<TData>> Create<TData>()
+                where TData : class, IStateEntity
+            {
+                var type = typeof(TData);
+
+                if (type == typeof(UserData))
+                    return () => (new UserDataSource(_userDatas)).As<IStateDataSource<TData>>()!;
+                if (type == typeof(UserList))
+                    return () => (new UsersDataSource(_userDatas)).As<IStateDataSource<TData>>()!;
+
+                throw new InvalidOperationException("No Data Source Found");
+            }
+        }
+
         public sealed class UserList : INoCache, ICollection<UserData>, IStateEntity
         {
             private readonly ICollection<UserData> _users;
@@ -67,7 +146,7 @@ namespace AkkaTest
             string IStateEntity.Id => "List";
         }
 
-        public sealed class UserData : IChangeTrackable, IStateEntity
+        public sealed class UserData : IChangeTrackable, IStateEntity, ICanApplyChange<UserData>
         {
             public string Id { get; }
 
@@ -94,16 +173,27 @@ namespace AkkaTest
                 IsDeleted = isDeleted;
             }
 
-            public UserData CreateFromNew() => !IsNew ? this : new UserData(Name, LastAccess, CreationTime, true, false, Name, false);
+            private UserData CreateFromNew() => !IsNew ? this : new UserData(Name, LastAccess, CreationTime, true, false, Name, false);
 
-            public UserData UpdateName(string name)
+            private UserData UpdateName(string name)
                 => new UserData(name, DateTime.Now, CreationTime, true, false, Id, false);
 
             public UserData SetUnchanged()
                 => new UserData(Name, LastAccess, CreationTime, false, false, Id, false);
 
-            public UserData MarkDelete()
+            private UserData MarkDelete()
                 => new UserData(Name, DateTime.Now, CreationTime, true, false, Id, true);
+
+            public UserData Apply(MutatingChange apply)
+            {
+                return apply switch
+                {
+                    RenameChange rename => UpdateName(rename.NewName),
+                    CreateUserChange _ => CreateFromNew(),
+                    DeleteUserChange change => MarkDelete(),
+                    _ => this
+                };
+            }
 
             public override string ToString()
             {
@@ -143,57 +233,6 @@ namespace AkkaTest
             public UserQuery(string name) => Name = name;
 
             public string ToHash() => Name;
-        }
-
-        public sealed class UserDataSource : IStateDataSource<UserData>
-        {
-            private static readonly UserData Empty = new UserData(string.Empty, DateTime.MinValue, DateTime.MinValue, false, false, string.Empty, true);
-
-            private readonly ConcurrentDictionary<string, UserData> _user;
-            private UserData? _next;
-
-            public UserDataSource(ConcurrentDictionary<string, UserData> user) => _user = user;
-
-            public UserData GetData() => _next ?? Empty;
-
-            public void SetData(UserData data)
-            {
-                if (data.IsDeleted)
-                    _user.TryRemove(data.Id, out _);
-                else
-                    _user.AddOrUpdate(data.Id, data, (s, userData) => data.SetUnchanged());
-            }
-
-            public void Apply(IQuery query)
-            {
-                switch (query)
-                {
-                    case UserQuery q:
-                        if(_user.TryGetValue(q.Name, out _next))
-                            return;
-                        _next = _user.Values.FirstOrDefault(u => u.Name == q.Name);
-                        break;
-                    case StringQuery info:
-                        _next = _user.GetOrAdd(info.Name, s => new UserData(s, DateTime.Now, DateTime.Now, true, true, s, false));
-                        break;
-                    default:
-                        _next = Empty;
-                        break;
-                }
-            }
-        }
-
-        public sealed class UsersDataSource : IStateDataSource<UserList>
-        {
-            private readonly ConcurrentDictionary<string, UserData> _userDatas;
-
-            public UsersDataSource(ConcurrentDictionary<string, UserData> userDatas) => _userDatas = userDatas;
-
-            public UserList GetData() => new UserList(_userDatas.Values);
-
-            public void SetData(UserList data) { }
-
-            public void Apply(IQuery query) { }
         }
 
         public sealed class CreateUserAction : IStateAction
@@ -298,19 +337,24 @@ namespace AkkaTest
             public DeleteUserChange(UserData data) => Data = data;
         }
 
+        [State]
         public sealed class KillState : StateBase<UserData>
         {
-            public KillState(MutatingEngine<MutatingContext<UserData>> engine)
+            public KillState(MutatingEngine<MutatingContext<UserData>> engine, ActorSystem system)
                 : base(engine)
             {
-                Kill = engine.EventSource<UserData, KillChange>();
+                engine.EventSource<UserData, KillChange>().RespondOn(c => system.Terminate());
             }
 
-            public IEventSource<KillChange> Kill { get; }
+            //public IEventSource<KillChange> Kill { get; }
         }
 
+        [State]
         public sealed class UserStade : StateBase<UserData>
         {
+            [Cache(UseParent = true)]
+            public static void ConfigurateCache(ConfigurationBuilderCachePart config) => config.WithDictionaryHandle();
+
             public UserStade(MutatingEngine<MutatingContext<UserData>> engine)
                 : base(engine)
             {
@@ -326,6 +370,7 @@ namespace AkkaTest
             public IEventSource<CreateUserChange> UserCreated { get; }
         }
 
+        [State]
         public sealed class UsersStade : StateBase<UserList>
         {
             public UsersStade(MutatingEngine<MutatingContext<UserList>> engine) 
@@ -335,88 +380,152 @@ namespace AkkaTest
             public IEventSource<QueryUsersChange> QueryUsers { get; }
         }
 
-        public sealed class KillReducer : IReducer<UserData>
+        [BelogsToState(typeof(KillState))]
+        public static class KillStateReducer
         {
-            public MutatingContext<UserData> Reduce(MutatingContext<UserData> state, IStateAction action) => state.WithChange(new KillChange());
-
-            public bool ShouldReduceStateForAction(IStateAction action) => action is KillApplicationAction;
+            [Reducer]
+            public static MutatingContext<UserData> Kill(MutatingContext<UserData> state, KillApplicationAction action)
+                => state.WithChange(new KillChange());
         }
 
-        public sealed class CreateUserReducer : IReducer<UserData>
+        [BelogsToState(typeof(UserStade))]
+        public static class UserStateReducer
         {
-            public MutatingContext<UserData> Reduce(MutatingContext<UserData> state, IStateAction action) 
-                => state.Update(new CreateUserChange(state.Data.Name), state.Data.CreateFromNew());
+            [Reducer]
+            public static MutatingContext<UserData> CreateUser(MutatingContext<UserData> state, CreateUserAction action)
+                => state.WithChange(new CreateUserChange(state.Data.Name));
 
-            public bool ShouldReduceStateForAction(IStateAction action) 
-                => action is CreateUserAction;
+            [Validator]
+            public static RenameValidator RenameActionValidator => new RenameValidator();
+
+            [Reducer]
+            public static MutatingContext<UserData> RenameUser(MutatingContext<UserData> state, RenameUserAction action)
+                => state.WithChange(new RenameChange(action.NewName, state.Data.Id));
+            
+            [Reducer]
+            public static MutatingContext<UserData> DeleteUser(MutatingContext<UserData> state, DeleteUserAction action)
+                => state.WithChange(new DeleteUserChange(state.Data));
+
+            public sealed class RenameValidator : AbstractValidator<RenameUserAction>
+            {
+                public RenameValidator() => RuleFor(a => a.NewName).NotEmpty();
+            }
         }
 
-        public sealed class RenameUserreducer : IReducer<UserData>
+        [BelogsToState(typeof(UserStade))]
+        public static class UserStateQuerys
         {
-            public MutatingContext<UserData> Reduce(MutatingContext<UserData> state, IStateAction action) 
-                => state.Update(new RenameChange(((RenameUserAction)action).NewName, state.Data.Id), state.Data.UpdateName(((RenameUserAction) action).NewName));
-
-            public bool ShouldReduceStateForAction(IStateAction action) => action is RenameUserAction;
+            [Reducer]
+            public static MutatingContext<UserData> QueryUserName(MutatingContext<UserData> state, QueryUserAction action)
+                => state.WithChange(new QueryUserChange(state.Data));
         }
 
-        public sealed class QueryUserNameReducer : IReducer<UserData>
+        [BelogsToState(typeof(UsersStade))]
+        public static class UsersQueryReducer
         {
-            public MutatingContext<UserData> Reduce(MutatingContext<UserData> state, IStateAction action) => state.WithChange(new QueryUserChange(state.Data));
-
-            public bool ShouldReduceStateForAction(IStateAction action) => action is QueryUserAction;
+            [Reducer]
+            public static MutatingContext<UserList> QueryUsers(MutatingContext<UserList> state, QueryUsersAction action)
+                => state.WithChange(new QueryUsersChange(state.Data));
         }
 
-        public sealed class QueryUsersReducer : IReducer<UserList>
+        [Effect]
+        public sealed class TestEffect : IEffect
         {
-            public MutatingContext<UserList> Reduce(MutatingContext<UserList> state, IStateAction action) => state.WithChange(new QueryUsersChange(state.Data));
+            public void Handle(IStateAction action, IActionInvoker dispatcher) => Console.WriteLine($"Hello From Effect: {action}");
 
-            public bool ShouldReduceStateForAction(IStateAction action) => action is QueryUsersAction;
+            public bool ShouldReactToAction(IStateAction action) => true;
         }
 
-        public sealed class DeleteUserReducer : IReducer<UserData>
+        public sealed class InteractionActor : ReceiveActor
         {
-            public MutatingContext<UserData> Reduce(MutatingContext<UserData> state, IStateAction action) 
-                => state.Update(new DeleteUserChange(state.Data), state.Data.MarkDelete());
+            private readonly IActionInvoker _manager;
+            
+            private string _lastId = string.Empty;
+            private bool _firstCall = true;
 
-            public bool ShouldReduceStateForAction(IStateAction action) => action is DeleteUserAction;
+            public InteractionActor(IActionInvoker invoker)
+            {
+                _manager = invoker;
+                Receive<NotUsed>(InvokeNext);
+                Receive<OperationResult>(r => Console.WriteLine($"Operation Result: {r.Ok}"));
+                Receive<string>(Input);
+            }
+
+            private void Input(string line)
+            {
+                switch (line)
+                {
+                    case "kill":
+                        _manager.Run(new KillApplicationAction());
+                        return;
+                    case "neu":
+                        _lastId = Guid.NewGuid().ToString("N");
+                        _manager.Run(new CreateUserAction(_lastId));
+                        break;
+                    case "name":
+                        Console.Write("Name: ");
+                        var name = Console.ReadLine()!;
+                        _manager.Run(new RenameUserAction(_lastId, name));
+                        break;
+                    case "daten":
+                        Console.Write("Name oder Id: ");
+                        var id = Console.ReadLine();
+                        _manager.Run(new QueryUserAction(id!));
+                        break;
+                    case "liste":
+                        _manager.Run(new QueryUsersAction());
+                        break;
+                    case "löschen":
+                        Console.Write("Name oder Id: ");
+                        var delId = Console.ReadLine();
+                        _manager.Run(new DeleteUserAction(delId!));
+                        break;
+                    default:
+                        Console.WriteLine("Unbekanntes Commando");
+                        break;
+                }
+
+                Self.Tell(NotUsed.Instance);
+            }
+
+            private void InvokeNext(NotUsed _)
+            {
+                if (_firstCall)
+                {
+                    Console.WriteLine("Fertig");
+                    _firstCall = false;
+
+                    Console.WriteLine();
+                }
+                Task.Run(Console.ReadLine).PipeTo(Self);
+            }
         }
 
         private static async Task Main(string[] args)
         {
             var actorsystem = ActorSystem.Create("TestSystem", ConfigurationFactory.ParseString("akka.loggers=[\"Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog\"]"));
 
-            var superwiser = new WorkspaceSuperviser(actorsystem, "Workspace");
-            var testManager = ManagerBuilder.CreateManager(superwiser, builder =>
-            {
-                var database = new ConcurrentDictionary<string, UserData>();
-                var source = new UserDataSource(database);
-                var usersSource = new UsersDataSource(database);
+            var testContainerBuilder = new ContainerBuilder();
 
+            //var superwiser = new WorkspaceSuperviser(actorsystem, "Workspace");
+            //var testManager = ManagerBuilder.CreateManager(superwiser, builder =>
+
+            testContainerBuilder.RegisterType<UserSourceFactory>().As<IDataSourceFactory>().SingleInstance();
+            testContainerBuilder.RegisterType<KillState>().AsSelf();
+            testContainerBuilder.RegisterInstance(actorsystem).As<ActorSystem>();
+            testContainerBuilder.RegisterStateManager((builder, context) =>
+            {
                 builder.WithConsistentHashDispatcher().NrOfInstances(4);
 
+                builder.WithDefaultSendback(true);
                 builder.WithGlobalCache(p => p.WithSystemRuntimeCacheHandle());
 
-                builder.WithDataSource(() => usersSource)
-                    .WithStateType<UsersStade>()
-                    .WithReducer(() => new QueryUsersReducer());
-
-                builder.WithDataSource(() => source)
-                   .WithParentCache()
-                   .WithStateType<KillState>()
-                   .WithReducer(() => new KillReducer());
-
-                builder.WithDataSource(() => source)
-                    .WithCache(p => p.WithDictionaryHandle())
-                    .WithParentCache()
-                    .WithStateType<UserStade>()
-                    .WithReducer(() => new CreateUserReducer())
-                    .WithReducer(() => new QueryUserNameReducer())
-                    .WithReducer(() => new RenameUserreducer())
-                    .WithReducer(() => new DeleteUserReducer());
+                builder.AddFromAssembly<InteractionActor>(context);
             });
 
-            var killStade = testManager.GetState<KillState>()!;
-            killStade.Kill.RespondOn(k => ExposedReceiveActor.ExposedContext.System.Terminate());
+
+            await using var testContiner = testContainerBuilder.Build();
+            var testManager = testContiner.Resolve<IActionInvoker>();
 
             var userState = testManager.GetState<UserStade>()!;
             userState.OnChange.RespondOn(d => Console.WriteLine($"User Data Changed: {d.Id}"));
@@ -431,56 +540,11 @@ namespace AkkaTest
                     Console.WriteLine($"Benutzer {user.Name} -- {user.Id}");
             });
 
-            await Task.Run(() => StartLoop(testManager));
+            // ReSharper disable once AccessToDisposedClosure
+            actorsystem.ActorOf(() => new InteractionActor(testManager), "Interaction_System").Tell(NotUsed.Instance);
 
             await actorsystem.WhenTerminated;
-            testManager.Dispose();
             actorsystem.Dispose();
-        }
-
-        private static void StartLoop(IActionInvoker manager)
-        {
-            var run = true;
-            string lastId = string.Empty;
-
-            do
-            {
-                var line = Console.ReadLine();
-
-                switch (line)
-                {
-                    case "kill":
-                        run = false;
-                        manager.Run(new KillApplicationAction());
-                        break;
-                    case "neu":
-                        lastId = Guid.NewGuid().ToString("N");
-                        manager.Run(new CreateUserAction(lastId));
-                        break;
-                    case "name":
-                        Console.Write("Name: ");
-                        var name = Console.ReadLine()!;
-                        manager.Run(new RenameUserAction(lastId, name));
-                        break;
-                    case "daten":
-                        Console.Write("Name oder Id: ");
-                        var id = Console.ReadLine();
-                        manager.Run(new QueryUserAction(id!));
-                        break;
-                    case "liste":
-                        manager.Run(new QueryUsersAction());
-                        break;
-                    case "löschen":
-                        Console.Write("Name oder Id: ");
-                        var delId = Console.ReadLine();
-                        manager.Run(new DeleteUserAction(delId!));
-                        break;
-                    default:
-                        Console.WriteLine("Unbekanntes Commando");
-                        break;
-                }
-
-            } while (run);
         }
     }
 }

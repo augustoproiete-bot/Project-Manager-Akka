@@ -26,7 +26,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
             if (_lastQuery == null)
                 throw new InvalidOperationException("No Query was set");
 
-            return new MutatingContext<TData>(null, _cache?.Get(_lastQuery.ToHash(), _cacheKey) ?? _original.GetData());
+            return MutatingContext<TData>.New(_cache?.Get(_lastQuery.ToHash(), _cacheKey) ?? _original.GetData());
         }
 
         public void SetData(MutatingContext<TData> data)

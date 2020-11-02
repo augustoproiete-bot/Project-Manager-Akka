@@ -4,7 +4,7 @@ namespace Tauron.Application.Workshop.StateManagement
 {
     public interface IReducer<TData>
     {
-        MutatingContext<TData> Reduce(MutatingContext<TData> state, IStateAction action);
+        ReducerResult<TData> Reduce(MutatingContext<TData> state, IStateAction action);
 
         bool ShouldReduceStateForAction(IStateAction action);
     }

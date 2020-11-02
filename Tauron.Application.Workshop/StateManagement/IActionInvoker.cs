@@ -11,6 +11,6 @@ namespace Tauron.Application.Workshop.StateManagement
         TState? GetState<TState>(string key)
             where TState : class;
 
-        void Run(IStateAction action);
+        void Run(IStateAction action, bool? sendBack = null);
     }
 }

@@ -7,6 +7,7 @@ using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Master.Commands.Deployment.Build.Data;
 using Tauron.Application.Master.Commands.Deployment.Build.Querys;
+using Tauron.Operations;
 
 namespace ServiceManager.ProjectDeployment.Actors
 {

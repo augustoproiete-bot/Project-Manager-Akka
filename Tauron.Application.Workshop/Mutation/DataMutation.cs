@@ -11,10 +11,11 @@ namespace Tauron.Application.Workshop.Mutation
     }
 
     public sealed class DataMutation<TData> : IDataMutation
+        where TData : class
     {
         private readonly object? _hash;
 
-        public DataMutation(Func<TData, TData> mutatuion, Func<TData> receiver, Action<TData> responder, string name, object? hash = null)
+        public DataMutation(Func<TData, TData?> mutatuion, Func<TData> receiver, Action<TData?> responder, string name, object? hash = null)
         {
             _hash = hash;
             Mutatuion = mutatuion;

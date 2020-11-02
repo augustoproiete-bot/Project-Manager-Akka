@@ -7,7 +7,7 @@ namespace Tauron.Application.Workshop.Analyzing.Actor
 {
     [PublicAPI]
     public sealed class RuleIssuesChanged<TWorkspace, TData>
-        where TWorkspace : WorkspaceBase<TData>
+        where TWorkspace : WorkspaceBase<TData> where TData : class
     {
         public RuleIssuesChanged(IRule<TWorkspace, TData> rule, IEnumerable<Issue.IssueCompleter> issues)
         {

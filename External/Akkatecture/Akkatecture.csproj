@@ -1,9 +1,26 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Aggregates\ExecutionResults\ExecutionResult.cs" />
+    <Compile Remove="Aggregates\ExecutionResults\FailedExecutionResult.cs" />
+    <Compile Remove="Aggregates\ExecutionResults\IExecutionResult.cs" />
+    <Compile Remove="Aggregates\ExecutionResults\SuccessExecutionResult.cs" />
+    <Compile Remove="Extensions\SpecificationExtensions.cs" />
+    <Compile Remove="Specifications\ISpecification.cs" />
+    <Compile Remove="Specifications\Provided\AggregateIsNewSpecification.cs" />
+    <Compile Remove="Specifications\Provided\AllSpecification.cs" />
+    <Compile Remove="Specifications\Provided\AndSpecification.cs" />
+    <Compile Remove="Specifications\Provided\AtLeastSpecification.cs" />
+    <Compile Remove="Specifications\Provided\ExpressionSpecification.cs" />
+    <Compile Remove="Specifications\Provided\NotSpecification.cs" />
+    <Compile Remove="Specifications\Provided\OrSpecification.cs" />
+    <Compile Remove="Specifications\Specification.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="Configuration\defaults.conf" />
@@ -13,6 +30,23 @@
   <ItemGroup>
     <EmbeddedResource Include="Configuration\defaults.conf" />
     <EmbeddedResource Include="Configuration\reference.conf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Aggregates\ExecutionResults\ExecutionResult.cs" />
+    <None Include="Aggregates\ExecutionResults\FailedExecutionResult.cs" />
+    <None Include="Aggregates\ExecutionResults\IExecutionResult.cs" />
+    <None Include="Aggregates\ExecutionResults\SuccessExecutionResult.cs" />
+    <None Include="Extensions\SpecificationExtensions.cs" />
+    <None Include="Specifications\ISpecification.cs" />
+    <None Include="Specifications\Provided\AggregateIsNewSpecification.cs" />
+    <None Include="Specifications\Provided\AllSpecification.cs" />
+    <None Include="Specifications\Provided\AndSpecification.cs" />
+    <None Include="Specifications\Provided\AtLeastSpecification.cs" />
+    <None Include="Specifications\Provided\ExpressionSpecification.cs" />
+    <None Include="Specifications\Provided\NotSpecification.cs" />
+    <None Include="Specifications\Provided\OrSpecification.cs" />
+    <None Include="Specifications\Specification.cs" />
   </ItemGroup>
 
   <ItemGroup>

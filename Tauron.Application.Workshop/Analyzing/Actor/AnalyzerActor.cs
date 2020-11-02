@@ -5,7 +5,7 @@ using Tauron.Application.Workshop.Mutation;
 namespace Tauron.Application.Workshop.Analyzing.Actor
 {
     public sealed class AnalyzerActor<TWorkspace, TData> : ReceiveActor
-        where TWorkspace : WorkspaceBase<TData>
+        where TWorkspace : WorkspaceBase<TData> where TData : class
     {
         private readonly Action<RuleIssuesChanged<TWorkspace, TData>> _issesAction;
 

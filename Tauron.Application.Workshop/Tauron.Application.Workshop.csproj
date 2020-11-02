@@ -17,6 +17,7 @@
   <ItemGroup>
     <PackageReference Include="Amadevus.RecordGenerator" Version="0.6.0" />
     <PackageReference Include="CacheManager.Core" Version="1.2.0" />
+    <PackageReference Include="FluentValidation" Version="9.2.2" />
   </ItemGroup>
 
   <ItemGroup>

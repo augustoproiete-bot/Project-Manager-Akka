@@ -13,6 +13,7 @@ using Tauron.Application.AkkNode.Services;
 using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Repository;
+using Tauron.Operations;
 using Tauron.Temp;
 
 namespace ServiceManager.ProjectDeployment.Actors
@@ -249,7 +250,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                             evt.StateData.CompletionSource?.TrySetException(e);
                             return GoTo(BuildState.Failing).Using(evt.StateData.SetError(e.Unwrap()?.Message ?? "Unkowen"));
                         }
-                    case OperationResult result:
+                    case IOperationResult result:
                         return !result.Ok 
                             ? GoTo(BuildState.Failing).Using(StateData.SetError(result.Error ?? string.Empty)) 
                             : GoTo(BuildState.Compressing).ReplyingSelf(Trigger.Inst);
@@ -294,7 +295,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                     case IncomingDataTransfer _:
                     case TransferFailed _:
                     case TransferCompled _:
-                    case OperationResult _:
+                    case IOperationResult _:
                         return Stay();
                     case StateTimeout _ when StateName != BuildState.Waiting:
                         _log.Info("Timeout in Building {Name}", evt.StateData.AppData.Name);
@@ -329,8 +330,8 @@ namespace ServiceManager.ProjectDeployment.Actors
 
                 evt.StateData.CompletionSource?.TrySetCanceled();
                 if (evt.StateData.Reporter == null || evt.StateData.Reporter.IsCompled) return;
-                
-                OperationResult result;
+
+                IOperationResult result;
                 if (evt.Reason is Failure failure)
                     result = OperationResult.Failure(failure.Cause?.ToString() ?? "Unkowen");
                 else

@@ -3,16 +3,21 @@ using Tauron.Application.Workshop.Analyzing;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutating.Changes;
 using Tauron.Application.Workshop.Mutation;
+using Tauron.Application.Workshop.StateManagement;
 
 namespace Tauron.Application.Workshop
 {
     [PublicAPI]
-    public abstract class WorkspaceBase<TData> : IDataSource<TData>
+    public abstract class WorkspaceBase<TData> : IDataSource<TData>, IState<TData>
+        where TData : class
     {
         protected WorkspaceBase(WorkspaceSuperviser superviser)
         {
             Engine = MutatingEngine.From(this, superviser);
         }
+
+        public void Dispatch(IDataMutation mutation)
+            => Engine.Mutate(mutation);
 
         protected MutatingEngine<TData> Engine { get; }
 

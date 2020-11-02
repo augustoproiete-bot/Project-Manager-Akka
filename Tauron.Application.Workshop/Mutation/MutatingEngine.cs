@@ -10,7 +10,7 @@ using Tauron.Application.Workshop.Mutating.Changes;
 namespace Tauron.Application.Workshop.Mutation
 {
     [PublicAPI]
-    public sealed class MutatingEngine<TData> : MutatingEngine
+    public sealed class MutatingEngine<TData> : MutatingEngine where TData : class
     {
         private readonly Task<IActorRef> _mutator;
         private readonly IDataSource<TData> _dataSource;
@@ -35,10 +35,10 @@ namespace Tauron.Application.Workshop.Mutation
         }
 
 
-        public void Mutate(string name, Func<TData, TData> transform, object? hash = null) 
+        public void Mutate(string name, Func<TData, TData?> transform, object? hash = null) 
             => Mutate(CreateMutate(name, transform, hash));
 
-        public IDataMutation CreateMutate(string name, Func<TData, TData> transform, object? hash = null)
+        public IDataMutation CreateMutate(string name, Func<TData, TData?> transform, object? hash = null)
             => new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name, hash);
 
         public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null) 
@@ -59,8 +59,10 @@ namespace Tauron.Application.Workshop.Mutation
                 }
             }
 
-            public void Push(TData data)
+            public void Push(TData? data)
             {
+                if(data == null) return;
+
                 _root(data);
                 lock (_handler)
                 {
@@ -83,7 +85,8 @@ namespace Tauron.Application.Workshop.Mutation
             return new MutatingEngine(mutator, superviser);
         }
 
-        public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null)
+        public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null) 
+            where TData : class
         {
             var mutatorProps = Props.Create<MutationActor>();
             mutatorProps = configurate?.Invoke(mutatorProps) ?? mutatorProps;
@@ -93,9 +96,10 @@ namespace Tauron.Application.Workshop.Mutation
         }
 
         public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, MutatingEngine parent) 
-            => new MutatingEngine<TData>(parent._mutator, source, parent._superviser);
+            where TData : class => new MutatingEngine<TData>(parent._mutator, source, parent._superviser);
 
-        public static MutatingEngine<TData> Dummy<TData>(IDataSource<TData> source)
+        public static MutatingEngine<TData> Dummy<TData>(IDataSource<TData> source) 
+            where TData : class
         {
             return new MutatingEngine<TData>(source);
         }
@@ -119,6 +123,6 @@ namespace Tauron.Application.Workshop.Mutation
     {
         public static IEventSource<TEvent> EventSource<TData, TEvent>(this MutatingEngine<MutatingContext<TData>> engine)
             where TEvent : MutatingChange
-            => engine.EventSource(c => c.GetChange<TEvent>(), c => c.Change is TEvent);
+            => engine.EventSource(c => c.GetChange<TEvent>(), c => c.Change?.Cast<TEvent>() != null);
     }
 }

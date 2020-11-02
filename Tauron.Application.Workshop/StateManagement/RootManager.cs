@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
+using Akka.Actor;
+using Akka.Actor.Internal;
+using Autofac;
 using CacheManager.Core;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutation;
@@ -10,21 +13,25 @@ using Tauron.Application.Workshop.StateManagement.Builder;
 using Tauron.Application.Workshop.StateManagement.Cache;
 using Tauron.Application.Workshop.StateManagement.Dispatcher;
 using Tauron.Application.Workshop.StateManagement.Internal;
+using Tauron.Operations;
 
 namespace Tauron.Application.Workshop.StateManagement
 {
     [PublicAPI]
     public sealed class RootManager : DisposeableBase, IActionInvoker
     {
+        private readonly bool _sendBackSetting;
         private readonly ConcurrentDictionary<string, ConcurrentBag<StateContainer>> _stateContainers = new ConcurrentDictionary<string, ConcurrentBag<StateContainer>>();
         private readonly StateContainer[] _states;
         private readonly MutatingEngine _engine;
         private readonly IEffect[] _effects;
         private readonly IMiddleware[] _middlewares;
 
-        internal RootManager(WorkspaceSuperviser superviser, IStateDispatcherConfigurator stateDispatcher, IEnumerable<StateBuilderBase> states, 
-            IEnumerable<IEffect?> effects, IEnumerable<IMiddleware?> middlewares, Action<ConfigurationBuilderCachePart>? globalCache)
+        internal RootManager(WorkspaceSuperviser superviser, IStateDispatcherConfigurator stateDispatcher, IEnumerable<StateBuilderBase> states,
+            IEnumerable<IEffect?> effects, IEnumerable<IMiddleware?> middlewares, Action<ConfigurationBuilderCachePart>? globalCache, bool sendBackSetting, 
+            IComponentContext? componentContext)
         {
+            _sendBackSetting = sendBackSetting;
             _engine = MutatingEngine.Create(superviser, stateDispatcher.Configurate);
             _effects = effects.Where(e => e != null).ToArray()!;
             _middlewares = middlewares.Where(m => m != null).ToArray()!;
@@ -35,7 +42,7 @@ namespace Tauron.Application.Workshop.StateManagement
 
             foreach (var stateBuilder in states)
             {
-                var (container, key) = stateBuilder.Materialize(_engine, cache);
+                var (container, key) = stateBuilder.Materialize(_engine, cache, componentContext);
                 _stateContainers.GetOrAdd(key, _ => new ConcurrentBag<StateContainer>()).Add(container);
             }
 
@@ -67,20 +74,28 @@ namespace Tauron.Application.Workshop.StateManagement
             return null;
         }
 
-        public void Run(IStateAction action)
+        public void Run(IStateAction action, bool? sendBack)
         {
             if(_middlewares.Any(m => !m.MayDispatchAction(action)))
                 return;
 
             _middlewares.Foreach(m => m.BeforeDispatch(action));
 
-            foreach (var dataMutation in _states.Select(sc => sc.TryDipatch(action)))
-            {
-                if(dataMutation != null)
-                    _engine.Mutate(dataMutation);
-            }
+            var sender = ActorRefs.NoSender;
+            var context = InternalCurrentActorCellKeeper.Current;
+            if (context != null)
+                sender = context.Self;
 
-            _engine.Mutate(new EffectInvoker(_effects.Where(e => e.ShouldReactToAction(action)), action, this));
+            var effects = new EffectInvoker(_effects.Where(e => e.ShouldReactToAction(action)), action, this);
+            var resultInvoker = new ResultInvoker(effects, _engine, sender, sendBack ?? _sendBackSetting);
+
+            foreach (var dataMutation in _states.Select(sc => sc.TryDipatch(action, resultInvoker.AddResult, resultInvoker.WorkCompled)))
+            {
+                if(dataMutation == null) continue;
+                
+                resultInvoker.PushWork();
+                _engine.Mutate(dataMutation);
+            }
         }
 
         protected override void DisposeCore(bool disposing)
@@ -91,13 +106,69 @@ namespace Tauron.Application.Workshop.StateManagement
             _stateContainers.Clear();
         }
 
+        private sealed class ResultInvoker : IDataMutation
+        {
+            private int _pending;
+            private readonly ConcurrentBag<IReducerResult> _results = new ConcurrentBag<IReducerResult>();
+            private readonly EffectInvoker _effectInvoker;
+            private readonly MutatingEngine _mutatingEngine;
+            private readonly IActorRef _sender;
+            private readonly bool _sendBack;
+
+            public ResultInvoker(EffectInvoker effectInvoker, MutatingEngine mutatingEngine, IActorRef sender, bool sendBack)
+            {
+                _effectInvoker = effectInvoker;
+                _mutatingEngine = mutatingEngine;
+                _sender = sender;
+                _sendBack = sendBack;
+            }
+
+
+            public object ConsistentHashKey => "RootManagerInternals";
+            public string Name => "SendBack";
+            public Action Run => Runner;
+
+            private void Runner()
+            {
+                if(!_sendBack || _sender.IsNobody()) return;
+
+                var errors = new List<string>();
+                var fail = false;
+
+                foreach (var result in _results)
+                {
+                    if(result.IsOk) continue;
+
+                    fail = true;
+                    errors.AddRange(result.Errors ?? Array.Empty<string>());
+                }
+
+                _sender.Tell(fail ? OperationResult.Failure(errors) : OperationResult.Success(), ActorRefs.NoSender);
+            }
+
+            public void PushWork()
+                => Interlocked.Increment(ref _pending);
+
+            public void AddResult(IReducerResult result)
+                => _results.Add(result);
+
+            public void WorkCompled()
+            {
+                if (Interlocked.Decrement(ref _pending) == 0)
+                {
+                    _mutatingEngine.Mutate(_effectInvoker);
+                    _mutatingEngine.Mutate(this);
+                }
+            }
+        }
+
         private sealed class EffectInvoker : IDataMutation
         {
             private readonly IEnumerable<IEffect> _effects;
             private readonly IStateAction _action;
             private readonly IActionInvoker _invoker;
 
-            public object ConsistentHashKey => "Effects";
+            public object ConsistentHashKey => "RootManagerInternals";
             public string Name => "Invoke Effects";
             public Action Run => () => _effects.Foreach(e => e.Handle(_action, _invoker));
 

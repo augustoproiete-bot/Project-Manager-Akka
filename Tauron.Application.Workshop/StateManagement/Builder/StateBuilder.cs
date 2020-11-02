@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Autofac;
 using CacheManager.Core;
 using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Workshop.StateManagement.Cache;
@@ -11,7 +12,7 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
 {
     public abstract class StateBuilderBase
     {
-        public abstract (StateContainer State, string Key) Materialize(MutatingEngine engine, ICache<object?>? parent);
+        public abstract (StateContainer State, string Key) Materialize(MutatingEngine engine, ICache<object?>? parent, IComponentContext? componentContext);
     }
 
     public sealed class StateBuilder<TData> : StateBuilderBase, IStateBuilder<TData>
@@ -32,6 +33,12 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
             where TState : IState<TData>
         {
             _state = typeof(TState);
+            return this;
+        }
+
+        public IStateBuilder<TData> WithStateType(Type type)
+        {
+            _state = type;
             return this;
         }
 
@@ -66,7 +73,7 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
             return this;
         }
 
-        public override (StateContainer State, string Key) Materialize(MutatingEngine engine, ICache<object?>? parent)
+        public override (StateContainer State, string Key) Materialize(MutatingEngine engine, ICache<object?>? parent, IComponentContext? componentContext)
         {
             if (_state == null)
                 throw new InvalidOperationException("A State type or Instance Must be set");
@@ -87,10 +94,18 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
 
 
             var dataEngine = MutatingEngine.From(dataSource, engine);
-            if (!(_state.FastCreateInstance(dataEngine) is IState state))
+
+            IState? targetState = null;
+
+            if (componentContext != null) 
+                targetState = componentContext.ResolveOptional(_state, new TypedParameter(dataEngine.GetType(), dataEngine)) as IState;
+
+            targetState ??= _state.FastCreateInstance(dataEngine) as IState;
+
+            if (targetState == null)
                 throw new InvalidOperationException("Failed to Create State");
 
-            var container = new StateContainer<TData>(state, _reducers.Select(r => r()).ToImmutableList(), dataEngine, dataSource, dataSource.Apply);
+            var container = new StateContainer<TData>(targetState, _reducers.Select(r => r()).ToImmutableList(), dataEngine, dataSource, dataSource.Apply);
 
             return (container, _key ?? string.Empty);
         }

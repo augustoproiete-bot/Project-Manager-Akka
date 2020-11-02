@@ -9,7 +9,7 @@ namespace Tauron.Application.Workshop.Analyzing.Rules
 {
     [PublicAPI]
     public abstract class RuleBase<TWorkspace, TData> : IRule<TWorkspace, TData>
-        where TWorkspace : WorkspaceBase<TData>
+        where TWorkspace : WorkspaceBase<TData> where TData : class
     {
         private sealed class InternalRuleActor : ExposedReceiveActor
         {

@@ -1,0 +1,195 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using Autofac;
+using CacheManager.Core;
+using FluentValidation;
+using JetBrains.Annotations;
+using Tauron.Application.Workshop.Mutating;
+using Tauron.Application.Workshop.StateManagement.Attributes;
+
+namespace Tauron.Application.Workshop.StateManagement.Internal
+{
+    public class ReflectionSearchEngine
+    {
+        private static readonly MethodInfo ConfigurateStateMethod = typeof(ReflectionSearchEngine).GetMethod(nameof(ConfigurateState), BindingFlags.Instance | BindingFlags.NonPublic)
+         ?? throw new InvalidOperationException("Method not Found");
+
+        private readonly Assembly _assembly;
+        private readonly IComponentContext? _context;
+
+        public ReflectionSearchEngine(Assembly assembly, IComponentContext? context)
+        {
+            _assembly = assembly;
+            _context = context;
+        }
+
+        public void Add(ManagerBuilder builder, IDataSourceFactory factory)
+        {
+            Func<TType> CreateFactory<TType>(Type target)
+            {
+                if (_context != null)
+                    return () => (TType) (_context.ResolveOptional(target) ?? Activator.CreateInstance(target));
+                return () => (TType)Activator.CreateInstance(target);
+            }
+
+            var types = _assembly.GetTypes();
+            var states = new List<(Type, string?)>();
+            var reducers = new GroupDictionary<Type, Type>();
+
+            foreach (var type in types)
+            {
+                foreach (var customAttribute in type.GetCustomAttributes(false))
+                {
+                    switch (customAttribute)
+                    {
+                        case StateAttribute state:
+                            states.Add((type, state.Key));
+                            break;
+                        case EffectAttribute _:
+                            builder.WithEffect(CreateFactory<IEffect>(type));
+                            break;
+                        case MiddlewareAttribute _:
+                            builder.WithMiddleware(CreateFactory<IMiddleware>(type));
+                            break;
+                        case BelogsToStateAttribute belogsTo:
+                            reducers.Add(belogsTo.StateType, type);
+                            break;
+                    }
+                }
+            }
+
+            foreach (var (type, key) in states)
+            {
+                if(type == null || type.BaseType?.IsGenericType != true || type.BaseType?.GetGenericTypeDefinition() != typeof(StateBase<>)) 
+                    continue;
+
+                var dataType = type.BaseType.GetGenericArguments()[0];
+                var actualMethod = ConfigurateStateMethod.MakeGenericMethod(dataType);
+                actualMethod.Invoke(this, new object?[] {type, builder, factory, reducers, key});
+            }
+        }
+
+        private void ConfigurateState<TData>(Type target, ManagerBuilder builder, IDataSourceFactory factory, GroupDictionary<Type, Type> reducerMap, string? key)
+            where TData : class, IStateEntity
+        {
+            var config = builder.WithDataSource(factory.Create<TData>());
+
+            if (!string.IsNullOrWhiteSpace(key))
+                config.WithKey(key);
+
+            config.WithStateType(target);
+            if (target.GetCustomAttribute(typeof(CacheAttribute)) is CacheAttribute cache && cache.UseParent)
+                config.WithParentCache();
+
+            foreach (var methodInfo in target.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+            {
+                if (!(methodInfo.GetCustomAttribute(typeof(CacheAttribute)) is CacheAttribute metCache)) continue;
+                
+                if (metCache.UseParent)
+                    config.WithParentCache();
+
+                config.WithCache((Action<ConfigurationBuilderCachePart>) Delegate.CreateDelegate(typeof(Action<ConfigurationBuilderCachePart>), methodInfo));
+            }
+
+            if (!reducerMap.TryGetValue(target, out var reducers)) return;
+            
+            var methods = new Dictionary<Type, MethodInfo>();
+            var validators = new Dictionary<Type, object>();
+
+            foreach (var reducer in reducers)
+            {
+                foreach (var method in reducer.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+                {
+                    if(!method.HasAttribute<ReducerAttribute>())
+                        continue;
+
+                    var parms = method.GetParameters();
+                    if(parms.Length != 2)
+                        continue;
+                    if(!parms[0].ParameterType.IsGenericType)
+                        continue;
+                    if(parms[0].ParameterType.GetGenericTypeDefinition() != typeof(MutatingContext<>))
+                        continue;
+                    methods[parms[1].ParameterType] = method;
+                }
+
+                foreach (var property in reducer.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+                {
+                    if(!property.HasAttribute<ValidatorAttribute>())
+                        continue;
+
+                    var potenialValidator = property.PropertyType;
+                    if(!potenialValidator.IsAssignableTo<IValidator>())
+                        continue;
+
+                    var validatorType = potenialValidator.GetInterface(typeof(IValidator<>).Name);
+                    if(validatorType == null)
+                        continue;
+                    var validator = property.GetValue(null);
+                    if(validator == null)
+                        continue;
+
+                    validators[validatorType.GenericTypeArguments[0]] = validator;
+                }
+            }
+
+            foreach (var (actionType, reducer) in methods)
+            {
+                Type? delegateType = null;
+                var returnType = reducer.ReturnType;
+                if (returnType == typeof(MutatingContext<TData>))
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(MutatingContext<TData>));
+                else if (returnType == typeof(ReducerResult<TData>))
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(ReducerResult<TData>));
+                else if (returnType.IsAssignableTo<TData>())
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(TData));
+
+                if(delegateType == null)
+                    continue;
+
+                var acrualDelegate = Delegate.CreateDelegate(delegateType, reducer);
+                object? validator = null;
+                if (validators.ContainsKey(actionType))
+                    validator = validators[actionType];
+
+                var constructedReducer = typeof(DelegateReducer<,>).MakeGenericType(actionType, typeof(TData));
+                var reducerInstance = Activator.CreateInstance(constructedReducer, acrualDelegate, validator);
+
+                config.WithReducer(() => (IReducer<TData>) reducerInstance);
+            }
+        }
+
+        [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
+        private sealed class DelegateReducer<TAction, TData> : Reducer<TAction, TData> 
+            where TData : IStateEntity 
+            where TAction : IStateAction
+        {
+            private readonly Func<MutatingContext<TData>, TAction, ReducerResult<TData>> _action;
+            private readonly IValidator<TAction>? _validation;
+
+            public DelegateReducer(Func<MutatingContext<TData>, TAction, ReducerResult<TData>> action, IValidator<TAction>? validation)
+            {
+                _action = action;
+                _validation = validation;
+            }
+
+            public DelegateReducer(Func<MutatingContext<TData>, TAction, MutatingContext<TData>> action, IValidator<TAction>? validation)
+            {
+                _action = (context, stateAction) => Sucess(action(context, stateAction));
+                _validation = validation;
+            }
+
+            public DelegateReducer(Func<MutatingContext<TData>, TAction, TData> action, IValidator<TAction>? validation)
+            {
+                _action = (context, stateAction) => Sucess(MutatingContext<TData>.New(action(context, stateAction)));
+                _validation = validation;
+            }
+
+            public override IValidator<TAction>? Validator => _validation;
+
+            protected override ReducerResult<TData> Reduce(MutatingContext<TData> state, TAction action) 
+                => _action(state, action);
+        }
+    }
+}

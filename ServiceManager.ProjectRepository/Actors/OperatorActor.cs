@@ -17,6 +17,7 @@ using Tauron.Application.AkkNode.Services.CleanUp;
 using Tauron.Application.AkkNode.Services.Commands;
 using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Repository;
+using Tauron.Operations;
 using Tauron.Temp;
 
 namespace ServiceManager.ProjectRepository.Actors

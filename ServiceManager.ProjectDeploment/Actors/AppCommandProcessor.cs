@@ -17,6 +17,7 @@ using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
 using Tauron.Application.Master.Commands.Deployment.Build.Data;
 using Tauron.Application.Master.Commands.Deployment.Repository;
+using Tauron.Operations;
 using Tauron.Temp;
 
 namespace ServiceManager.ProjectDeployment.Actors
@@ -184,7 +185,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             });
         }
         
-        private void CommandPhase1<TCommand>(string name, RepositoryApi api, Func<TCommand, Reporter, IReporterMessage?> executor, Func<TCommand, Reporter, OperationResult, object> result)
+        private void CommandPhase1<TCommand>(string name, RepositoryApi api, Func<TCommand, Reporter, IReporterMessage?> executor, Func<TCommand, Reporter, IOperationResult, object> result)
             where TCommand : ReporterCommandBase<DeploymentApi, TCommand>, IDeploymentCommand
         {
             Receive<TCommand>(name, (command, reporter) =>
@@ -218,7 +219,7 @@ namespace ServiceManager.ProjectDeployment.Actors
             => Receive(name, executor);
 
 
-        private void CommandPhase2<TContinue, TCommand, TResult>(string name, Func<TCommand, OperationResult, Reporter, AppData?, TResult?> executor)
+        private void CommandPhase2<TContinue, TCommand, TResult>(string name, Func<TCommand, IOperationResult, Reporter, AppData?, TResult?> executor)
             where TContinue : ContinueCommand<TCommand> 
             where TCommand : ReporterCommandBase<DeploymentApi, TCommand>, IDeploymentCommand
             where TResult : class
@@ -241,14 +242,14 @@ namespace ServiceManager.ProjectDeployment.Actors
         private abstract class ContinueCommand<TCommand> : IDelegatingMessage
             where TCommand : IReporterMessage
         {
-            public OperationResult Result { get; }
+            public IOperationResult Result { get; }
 
             public TCommand Command { get; }
 
             public Reporter Reporter { get; }
             public string Info => Command.Info;
 
-            protected ContinueCommand(OperationResult result, TCommand command, Reporter reporter)
+            protected ContinueCommand(IOperationResult result, TCommand command, Reporter reporter)
             {
                 Result = result;
                 Command = command;
@@ -259,7 +260,7 @@ namespace ServiceManager.ProjectDeployment.Actors
         private sealed class ContinueCreateApp : ContinueCommand<CreateAppCommand>
         {
 
-            public ContinueCreateApp(OperationResult result, CreateAppCommand command, Reporter reporter)
+            public ContinueCreateApp(IOperationResult result, CreateAppCommand command, Reporter reporter)
                 : base(result, command, reporter)
             {
             }
@@ -267,7 +268,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         private sealed class ContinuePushNewVersion : ContinueCommand<PushVersionCommand>
         {
-            public ContinuePushNewVersion([NotNull] OperationResult result, PushVersionCommand command, [NotNull] Reporter reporter) 
+            public ContinuePushNewVersion([NotNull] IOperationResult result, PushVersionCommand command, [NotNull] Reporter reporter) 
                 : base(result, command, reporter)
             {
             }
@@ -275,7 +276,7 @@ namespace ServiceManager.ProjectDeployment.Actors
 
         private sealed class ContinueForceBuild : ContinueCommand<ForceBuildCommand>
         {
-            public ContinueForceBuild([NotNull] OperationResult result, ForceBuildCommand command, [NotNull] Reporter reporter) : base(result, command, reporter)
+            public ContinueForceBuild([NotNull] IOperationResult result, ForceBuildCommand command, [NotNull] Reporter reporter) : base(result, command, reporter)
             {
             }
         }

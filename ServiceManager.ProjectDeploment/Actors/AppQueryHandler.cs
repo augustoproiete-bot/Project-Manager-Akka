@@ -12,6 +12,7 @@ using Tauron.Application.AkkNode.Services.FileTransfer;
 using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Data;
 using Tauron.Application.Master.Commands.Deployment.Build.Querys;
+using Tauron.Operations;
 
 namespace ServiceManager.ProjectDeployment.Actors
 {

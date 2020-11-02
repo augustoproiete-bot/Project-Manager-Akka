@@ -9,7 +9,7 @@ namespace Tauron.Application.Workshop.Analyzing
     }
 
     public interface IAnalyzer<out TWorkspace, TData> : IAnalyzer
-        where TWorkspace : WorkspaceBase<TData>
+        where TWorkspace : WorkspaceBase<TData> where TData : class
     {
         void RegisterRule(IRule<TWorkspace, TData> rule);
     }

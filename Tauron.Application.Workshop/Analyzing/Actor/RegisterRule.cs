@@ -3,7 +3,7 @@
 namespace Tauron.Application.Workshop.Analyzing.Actor
 {
     public sealed class RegisterRule<TWorkspace, TData>
-        where TWorkspace : WorkspaceBase<TData>
+        where TWorkspace : WorkspaceBase<TData> where TData : class
     {
         public RegisterRule(IRule<TWorkspace, TData> rule)
         {

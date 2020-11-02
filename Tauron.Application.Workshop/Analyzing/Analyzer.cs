@@ -13,7 +13,7 @@ namespace Tauron.Application.Workshop.Analyzing
 {
     [PublicAPI]
     public sealed class Analyzer<TWorkspace, TData> : DeferredActor, IAnalyzer<TWorkspace, TData> 
-        where TWorkspace : WorkspaceBase<TData>
+        where TWorkspace : WorkspaceBase<TData> where TData : class
     {
         private readonly HashSet<string> _rules = new HashSet<string>();
 
@@ -42,7 +42,7 @@ namespace Tauron.Application.Workshop.Analyzing
     public static class Analyzer
     {
         public static IAnalyzer<TWorkspace, TData> From<TWorkspace, TData>(TWorkspace workspace, WorkspaceSuperviser superviser)
-            where TWorkspace : WorkspaceBase<TData>
+            where TWorkspace : WorkspaceBase<TData> where TData : class
         {
             var evtSource = new SourceFabricator<TWorkspace, TData>();
 
@@ -52,7 +52,7 @@ namespace Tauron.Application.Workshop.Analyzing
             return new Analyzer<TWorkspace, TData>(actor, evtSource.EventSource ?? throw new InvalidOperationException("Create Analyzer"));
         }
 
-        private class SourceFabricator<TWorkspace, TData> where TWorkspace : WorkspaceBase<TData>
+        private class SourceFabricator<TWorkspace, TData> where TWorkspace : WorkspaceBase<TData> where TData : class
         {
             public AnalyzerEventSource<TWorkspace, TData>? EventSource { get; private set; }
 
