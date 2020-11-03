@@ -16,8 +16,8 @@ namespace Tauron.Application.Workshop
             Engine = MutatingEngine.From(this, superviser);
         }
 
-        public void Dispatch(IDataMutation mutation)
-            => Engine.Mutate(mutation);
+        public void Dispatch(IDataMutation mutationOld)
+            => Engine.Mutate(mutationOld);
 
         protected MutatingEngine<TData> Engine { get; }
 

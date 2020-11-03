@@ -30,7 +30,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
 
         }
 
-        private sealed class WorkspaceMutation : IDataMutation
+        private sealed class WorkspaceMutation : ISyncMutation
         {
             private readonly Action _run;
             private readonly Action<IReducerResult> _result;

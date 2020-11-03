@@ -106,7 +106,7 @@ namespace Tauron.Application.Workshop.StateManagement
             _stateContainers.Clear();
         }
 
-        private sealed class ResultInvoker : IDataMutation
+        private sealed class ResultInvoker : ISyncMutation
         {
             private int _pending;
             private readonly ConcurrentBag<IReducerResult> _results = new ConcurrentBag<IReducerResult>();
@@ -162,7 +162,7 @@ namespace Tauron.Application.Workshop.StateManagement
             }
         }
 
-        private sealed class EffectInvoker : IDataMutation
+        private sealed class EffectInvoker : ISyncMutation
         {
             private readonly IEnumerable<IEffect> _effects;
             private readonly IStateAction _action;

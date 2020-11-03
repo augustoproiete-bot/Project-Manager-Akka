@@ -10,7 +10,8 @@ using Tauron.Application.Workshop.Mutating.Changes;
 namespace Tauron.Application.Workshop.Mutation
 {
     [PublicAPI]
-    public sealed class MutatingEngine<TData> : MutatingEngine where TData : class
+    public sealed class MutatingEngine<TData> : MutatingEngine, IEventSourceable<TData>
+        where TData : class
     {
         private readonly Task<IActorRef> _mutator;
         private readonly IDataSource<TData> _dataSource;
@@ -39,7 +40,16 @@ namespace Tauron.Application.Workshop.Mutation
             => Mutate(CreateMutate(name, transform, hash));
 
         public IDataMutation CreateMutate(string name, Func<TData, TData?> transform, object? hash = null)
-            => new DataMutation<TData>(transform, _dataSource.GetData, _responder.Push, name, hash);
+        {
+            void Runner() => _responder.Push(transform(_dataSource.GetData()));
+            return new DataMutation<TData>(Runner, name, hash);
+        }
+
+        public IDataMutation CreateMutate(string name, Func<TData, Task<TData?>> transform, object? hash = null)
+        {
+            async Task Runner() => _responder.Push(await transform(_dataSource.GetData()));
+            return new AsyncDataMutation<TData>(Runner, name, hash);
+        }
 
         public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null) 
             => new EventSource<TRespond, TData>(_superviser, _mutator, transformer, where, _responder);
@@ -74,6 +84,71 @@ namespace Tauron.Application.Workshop.Mutation
     }
 
     [PublicAPI]
+    public sealed class QueryableMutatingEngine<TData> : MutatingEngine, IEventSourceable<TData>
+        where TData : class
+    {
+        private readonly Task<IActorRef> _mutator;
+        private readonly IQueryableDataSource<TData> _dataSource;
+        private readonly WorkspaceSuperviser _superviser;
+        private readonly ResponderList _responder;
+
+        internal QueryableMutatingEngine(Task<IActorRef> mutator, IQueryableDataSource<TData> dataSource, WorkspaceSuperviser superviser)
+            : base(mutator, superviser)
+        {
+            _mutator = mutator;
+            _dataSource = dataSource;
+            _superviser = superviser;
+            _responder = new ResponderList(_dataSource.SetData);
+        }
+
+        public void Mutate(string name, IQuery query, Func<TData, TData?> transform)
+            => Mutate(CreateMutate(name, query, transform));
+
+        public IDataMutation CreateMutate(string name, IQuery query, Func<TData, TData?> transform)
+        {
+            void Runner() => _responder.Push(query, transform(_dataSource.GetData(query)));
+            return new DataMutation<TData>(Runner, name, query.ToHash());
+        }
+
+        public IDataMutation CreateMutate(string name, IQuery query, Func<TData, Task<TData?>> transform)
+        {
+            async Task Runner() => _responder.Push(query, await transform(_dataSource.GetData(query)));
+            return new AsyncDataMutation<TData>(Runner, name, query.ToHash());
+        }
+
+        public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null)
+            => new EventSource<TRespond, TData>(_superviser, _mutator, transformer, where, _responder);
+
+        private sealed class ResponderList : IRespondHandler<TData>
+        {
+            private readonly List<Action<TData>> _handler = new List<Action<TData>>();
+            private readonly Action<IQuery, TData> _root;
+
+            public ResponderList(Action<IQuery, TData> root) => _root = root;
+
+            public void Register(Action<TData> responder)
+            {
+                lock (_handler)
+                {
+                    _handler.Add(responder);
+                }
+            }
+
+            public void Push(IQuery query, TData? data)
+            {
+                if (data == null) return;
+
+                _root(query, data);
+                lock (_handler)
+                {
+                    foreach (var action in _handler)
+                        action(data);
+                }
+            }
+        }
+    }
+
+    [PublicAPI]
     public class MutatingEngine : DeferredActor
     {
         public static MutatingEngine Create(WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null)
@@ -84,6 +159,19 @@ namespace Tauron.Application.Workshop.Mutation
             var mutator = superviser.Create(mutatorProps, "Mutator");
             return new MutatingEngine(mutator, superviser);
         }
+
+        public static QueryableMutatingEngine<TData> From<TData>(IQueryableDataSource<TData> source, WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null)
+            where TData : class
+        {
+            var mutatorProps = Props.Create<MutationActor>();
+            mutatorProps = configurate?.Invoke(mutatorProps) ?? mutatorProps;
+
+            var mutator = superviser.Create(mutatorProps, "Mutator");
+            return new QueryableMutatingEngine<TData>(mutator, source, superviser);
+        }
+
+        public static QueryableMutatingEngine<TData> From<TData>(IQueryableDataSource<TData> source, MutatingEngine parent)
+            where TData : class => new QueryableMutatingEngine<TData>(parent._mutator, source, parent._superviser);
 
         public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null) 
             where TData : class
@@ -114,14 +202,14 @@ namespace Tauron.Application.Workshop.Mutation
             _superviser = superviser;
         }
 
-        public void Mutate(IDataMutation mutation)
-            => TellToActor(mutation);
+        public void Mutate(IDataMutation mutationOld)
+            => TellToActor(mutationOld);
     }
 
     [PublicAPI]
     public static class MutatinEngineExtensions
     {
-        public static IEventSource<TEvent> EventSource<TData, TEvent>(this MutatingEngine<MutatingContext<TData>> engine)
+        public static IEventSource<TEvent> EventSource<TData, TEvent>(this IEventSourceable<MutatingContext<TData>> engine)
             where TEvent : MutatingChange
             => engine.EventSource(c => c.GetChange<TEvent>(), c => c.Change?.Cast<TEvent>() != null);
     }

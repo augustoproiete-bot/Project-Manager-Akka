@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 using Autofac;
 using CacheManager.Core;
 using FluentValidation;
@@ -137,6 +138,8 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
             foreach (var (actionType, reducer) in methods)
             {
                 Type? delegateType = null;
+
+                //Sync Version
                 var returnType = reducer.ReturnType;
                 if (returnType == typeof(MutatingContext<TData>))
                     delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(MutatingContext<TData>));
@@ -145,7 +148,15 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                 else if (returnType.IsAssignableTo<TData>())
                     delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(TData));
 
-                if(delegateType == null)
+                //AsyncVersion
+                if (returnType == typeof(Task<MutatingContext<TData>>))
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(Task<MutatingContext<TData>>));
+                else if (returnType == typeof(Task<ReducerResult<TData>>))
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(Task<ReducerResult<TData>>));
+                else if (returnType.IsAssignableTo<Task<TData>>())
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(Task<TData>));
+
+                if (delegateType == null)
                     continue;
 
                 var acrualDelegate = Delegate.CreateDelegate(delegateType, reducer);
@@ -165,31 +176,48 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
             where TData : IStateEntity 
             where TAction : IStateAction
         {
-            private readonly Func<MutatingContext<TData>, TAction, ReducerResult<TData>> _action;
-            private readonly IValidator<TAction>? _validation;
+            private readonly Func<MutatingContext<TData>, TAction, Task<ReducerResult<TData>>> _action;
 
             public DelegateReducer(Func<MutatingContext<TData>, TAction, ReducerResult<TData>> action, IValidator<TAction>? validation)
             {
-                _action = action;
-                _validation = validation;
+                _action = (a, c) => Task.FromResult(action(a, c));
+                Validator = validation;
             }
 
             public DelegateReducer(Func<MutatingContext<TData>, TAction, MutatingContext<TData>> action, IValidator<TAction>? validation)
             {
-                _action = (context, stateAction) => Sucess(action(context, stateAction));
-                _validation = validation;
+                _action = (context, stateAction) => SucessAsync(action(context, stateAction));
+                Validator = validation;
             }
 
             public DelegateReducer(Func<MutatingContext<TData>, TAction, TData> action, IValidator<TAction>? validation)
             {
-                _action = (context, stateAction) => Sucess(MutatingContext<TData>.New(action(context, stateAction)));
-                _validation = validation;
+                _action = (context, stateAction) => SucessAsync(MutatingContext<TData>.New(action(context, stateAction)));
+                Validator = validation;
             }
 
-            public override IValidator<TAction>? Validator => _validation;
+            public DelegateReducer(Func<MutatingContext<TData>, TAction, Task<ReducerResult<TData>>> action, IValidator<TAction>? validation)
+            {
+                _action = action;
+                Validator = validation;
+            }
 
-            protected override ReducerResult<TData> Reduce(MutatingContext<TData> state, TAction action) 
-                => _action(state, action);
+            public DelegateReducer(Func<MutatingContext<TData>, TAction, Task<MutatingContext<TData>>> action, IValidator<TAction>? validation)
+            {
+                _action = async (context, stateAction) => Sucess(await action(context, stateAction));
+                Validator = validation;
+            }
+
+            public DelegateReducer(Func<MutatingContext<TData>, TAction, Task<TData>> action, IValidator<TAction>? validation)
+            {
+                _action = async (context, stateAction) => Sucess(MutatingContext<TData>.New(await action(context, stateAction)));
+                Validator = validation;
+            }
+
+            public override IValidator<TAction>? Validator { get; }
+
+            protected override async Task<ReducerResult<TData>> Reduce(MutatingContext<TData> state, TAction action) 
+                => await _action(state, action);
         }
     }
 }

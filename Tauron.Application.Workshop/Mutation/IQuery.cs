@@ -1,4 +1,4 @@
-﻿namespace Tauron.Application.Workshop.StateManagement
+﻿namespace Tauron.Application.Workshop.Mutation
 {
     public interface IQuery
     {

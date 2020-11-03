@@ -1,19 +1,19 @@
 ﻿using System;
 using CacheManager.Core;
 using Tauron.Application.Workshop.Mutating;
+using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Workshop.StateManagement.Cache;
 
 namespace Tauron.Application.Workshop.StateManagement.Internal
 {
-    public sealed class CachedDataSource<TData> : IStateDataSource<MutatingContext<TData>>, IDisposable
+    public sealed class CachedDataSource<TData> : IQueryableDataSource<MutatingContext<TData>>, IDisposable
         where TData : class, IStateEntity
     {
         private readonly string _cacheKey;
         private readonly ICache<TData>? _cache;
-        private readonly IStateDataSource<TData> _original;
-        private IQuery? _lastQuery;
+        private readonly IQueryableDataSource<TData> _original;
 
-        public CachedDataSource(string cacheKey, ICache<TData>? cache, IStateDataSource<TData> original)
+        public CachedDataSource(string cacheKey, ICache<TData>? cache, IQueryableDataSource<TData> original)
         {
             _cacheKey = cacheKey;
             if (cache != null)
@@ -21,24 +21,18 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
             _original = original;
         }
 
-        public MutatingContext<TData> GetData()
+        public MutatingContext<TData> GetData(IQuery query)
         {
-            if (_lastQuery == null)
-                throw new InvalidOperationException("No Query was set");
-
-            return MutatingContext<TData>.New(_cache?.Get(_lastQuery.ToHash(), _cacheKey) ?? _original.GetData());
+            return MutatingContext<TData>.New(_cache?.Get(query.ToHash(), _cacheKey) ?? _original.GetData(query));
         }
 
-        public void SetData(MutatingContext<TData> data)
+        public void SetData(IQuery query, MutatingContext<TData> data)
         {
-            if (_lastQuery == null)
-                throw new InvalidOperationException("No Query was set");
-
             var (_, entity) = data;
 
             if (entity is IChangeTrackable trackable && !trackable.IsChanged) return;
 
-            if (!(_lastQuery is INoCache || entity is INoCache))
+            if (!(query is INoCache || entity is INoCache))
             {
                 if (entity.IsDeleted)
                     _cache?.Remove(entity.Id, _cacheKey);
@@ -46,15 +40,9 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                     _cache?.Add(entity.Id, entity, _cacheKey);
             }
 
-            _original.SetData(entity);
+            _original.SetData(query, entity);
         }
-
-        public void Apply(IQuery query)
-        {
-            _lastQuery = query;
-            _original.Apply(query);
-        }
-
+        
         public void Dispose() => _cache?.Dispose();
     }
 }

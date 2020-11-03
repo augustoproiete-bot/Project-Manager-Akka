@@ -21,15 +21,13 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
         where TData : class
     {
         private readonly IDisposable _toDispose;
-        private readonly Action<IQuery> _setQuery;
         private IReadOnlyCollection<IReducer<TData>> Reducers { get; }
-        private MutatingEngine<MutatingContext<TData>> MutatingEngine { get; }
+        private QueryableMutatingEngine<MutatingContext<TData>> MutatingEngine { get; }
 
-        public StateContainer(IState instance, IReadOnlyCollection<IReducer<TData>> reducers, MutatingEngine<MutatingContext<TData>> mutatingEngine, IDisposable toDispose, Action<IQuery> setQuery)
+        public StateContainer(IState instance, IReadOnlyCollection<IReducer<TData>> reducers, QueryableMutatingEngine<MutatingContext<TData>> mutatingEngine, IDisposable toDispose)
             : base(instance)
         {
             _toDispose = toDispose;
-            _setQuery = setQuery;
             Reducers = reducers;
             MutatingEngine = mutatingEngine;
         }
@@ -40,15 +38,15 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
             if (reducers.Count == 0)
                 return null;
 
-            _setQuery(action.Query);
-
-            return MutatingEngine.CreateMutate(action.ActionName, data =>
+            return MutatingEngine.CreateMutate(action.ActionName, action.Query, async data =>
             {
                 try
                 {
                     var isFail = false;
-                    foreach (var result in reducers.Select(reducer => reducer.Reduce(data, action)))
+                    foreach (var reducer in reducers)
                     {
+                        var result = await reducer.Reduce(data, action);
+
                         if (!result.IsOk)
                             isFail = true;
 
@@ -62,7 +60,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                 {
                     onCompled();
                 }
-            }, action.Query.ToHash());
+            });
         }
 
         public override void Dispose() 

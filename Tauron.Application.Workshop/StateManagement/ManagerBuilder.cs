@@ -4,6 +4,7 @@ using System.Linq;
 using Autofac;
 using CacheManager.Core;
 using JetBrains.Annotations;
+using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Workshop.StateManagement.Builder;
 using Tauron.Application.Workshop.StateManagement.Dispatcher;
 
@@ -39,7 +40,7 @@ namespace Tauron.Application.Workshop.StateManagement
             return builder;
         }
 
-        public IStateBuilder<TData> WithDataSource<TData>(Func<IStateDataSource<TData>> source) 
+        public IStateBuilder<TData> WithDataSource<TData>(Func<IQueryableDataSource<TData>> source) 
             where TData : class, IStateEntity
         {
             var builder = new StateBuilder<TData>(source);

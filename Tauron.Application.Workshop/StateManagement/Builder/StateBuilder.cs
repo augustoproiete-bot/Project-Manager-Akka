@@ -18,7 +18,7 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
     public sealed class StateBuilder<TData> : StateBuilderBase, IStateBuilder<TData>
         where TData : class, IStateEntity
     {
-        private readonly Func<IStateDataSource<TData>> _source;
+        private readonly Func<IQueryableDataSource<TData>> _source;
         private readonly List<Func<IReducer<TData>>> _reducers = new List<Func<IReducer<TData>>>();
 
         private Type? _state;
@@ -26,7 +26,7 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
         private Action<ConfigurationBuilderCachePart>? _cacheConfigurator;
         private string? _key;
 
-        public StateBuilder(Func<IStateDataSource<TData>> source)
+        public StateBuilder(Func<IQueryableDataSource<TData>> source)
             => _source = source;
 
         public IStateBuilder<TData> WithStateType<TState>()
@@ -89,9 +89,10 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
                 });
             }
 
+
+
             var cacheKey = $"{_state.Name}--{Guid.NewGuid():N}";
             var dataSource = new CachedDataSource<TData>(cacheKey, cache, _source());
-
 
             var dataEngine = MutatingEngine.From(dataSource, engine);
 
@@ -102,10 +103,16 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
 
             targetState ??= _state.FastCreateInstance(dataEngine) as IState;
 
-            if (targetState == null)
-                throw new InvalidOperationException("Failed to Create State");
+            switch (targetState)
+            {
+                case ICanQuery<TData> canQuery:
+                    canQuery.DataSource(dataSource);
+                    break;
+                case null:
+                    throw new InvalidOperationException("Failed to Create State");
+            }
 
-            var container = new StateContainer<TData>(targetState, _reducers.Select(r => r()).ToImmutableList(), dataEngine, dataSource, dataSource.Apply);
+            var container = new StateContainer<TData>(targetState, _reducers.Select(r => r()).ToImmutableList(), dataEngine, dataSource);
 
             return (container, _key ?? string.Empty);
         }
