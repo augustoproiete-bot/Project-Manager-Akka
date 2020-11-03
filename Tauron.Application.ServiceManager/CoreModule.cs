@@ -36,13 +36,7 @@ namespace Tauron.Application.ServiceManager
             builder.RegisterView<SetupBuilderView, SetupBuilderViewModel>();
 
             builder.RegisterInstance(DialogCoordinator.Instance).As<IDialogCoordinator>();
-
-            builder.RegisterType<AppConfiguration>().As<ISettingProviderConfiguration>();
-
-            builder.RegisterType<DefaultActorRef<SettingsManager>>().As<IDefaultActorRef<SettingsManager>>()
-               .OnActivating(i => i.Instance.Init("Settings-Manager"))
-               .OnRelease(sm => sm.Actor.Tell(PoisonPill.Instance))
-               .SingleInstance();
+            builder.RegisterSettingsManager(s => s.WithProvider<AppConfiguration>());
         }
     }
 }
