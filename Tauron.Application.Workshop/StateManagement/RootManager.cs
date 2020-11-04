@@ -87,7 +87,7 @@ namespace Tauron.Application.Workshop.StateManagement
                 sender = context.Self;
 
             var effects = new EffectInvoker(_effects.Where(e => e.ShouldReactToAction(action)), action, this);
-            var resultInvoker = new ResultInvoker(effects, _engine, sender, sendBack ?? _sendBackSetting);
+            var resultInvoker = new ResultInvoker(effects, _engine, sender, sendBack ?? _sendBackSetting, action);
 
             foreach (var dataMutation in _states.Select(sc => sc.TryDipatch(action, resultInvoker.AddResult, resultInvoker.WorkCompled)))
             {
@@ -114,13 +114,15 @@ namespace Tauron.Application.Workshop.StateManagement
             private readonly MutatingEngine _mutatingEngine;
             private readonly IActorRef _sender;
             private readonly bool _sendBack;
+            private readonly IStateAction _action;
 
-            public ResultInvoker(EffectInvoker effectInvoker, MutatingEngine mutatingEngine, IActorRef sender, bool sendBack)
+            public ResultInvoker(EffectInvoker effectInvoker, MutatingEngine mutatingEngine, IActorRef sender, bool sendBack, IStateAction action)
             {
                 _effectInvoker = effectInvoker;
                 _mutatingEngine = mutatingEngine;
                 _sender = sender;
                 _sendBack = sendBack;
+                _action = action;
             }
 
 
@@ -143,7 +145,7 @@ namespace Tauron.Application.Workshop.StateManagement
                     errors.AddRange(result.Errors ?? Array.Empty<string>());
                 }
 
-                _sender.Tell(fail ? OperationResult.Failure(errors) : OperationResult.Success(), ActorRefs.NoSender);
+                _sender.Tell(fail ? OperationResult.Failure(errors) : OperationResult.Success(_action), ActorRefs.NoSender);
             }
 
             public void PushWork()

@@ -16,6 +16,6 @@ namespace Tauron.Application.Workshop.StateManagement.DataFactorys
 
         public override bool CanSupply(Type dataType) => _factories.Any(f => f.CanSupply(dataType));
 
-        public override Func<IQueryableDataSource<TData>> Create<TData>() => _factories.First(f => f.CanSupply(typeof(TData))).Create<TData>();
+        public override Func<IExtendedDataSource<TData>> Create<TData>() => _factories.First(f => f.CanSupply(typeof(TData))).Create<TData>();
     }
 }

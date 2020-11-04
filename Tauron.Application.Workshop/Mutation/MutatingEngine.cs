@@ -84,15 +84,15 @@ namespace Tauron.Application.Workshop.Mutation
     }
 
     [PublicAPI]
-    public sealed class QueryableMutatingEngine<TData> : MutatingEngine, IEventSourceable<TData>
+    public sealed class ExtendedMutatingEngine<TData> : MutatingEngine, IEventSourceable<TData>
         where TData : class
     {
         private readonly Task<IActorRef> _mutator;
-        private readonly IQueryableDataSource<TData> _dataSource;
+        private readonly IExtendedDataSource<TData> _dataSource;
         private readonly WorkspaceSuperviser _superviser;
         private readonly ResponderList _responder;
 
-        internal QueryableMutatingEngine(Task<IActorRef> mutator, IQueryableDataSource<TData> dataSource, WorkspaceSuperviser superviser)
+        internal ExtendedMutatingEngine(Task<IActorRef> mutator, IExtendedDataSource<TData> dataSource, WorkspaceSuperviser superviser)
             : base(mutator, superviser)
         {
             _mutator = mutator;
@@ -106,13 +106,13 @@ namespace Tauron.Application.Workshop.Mutation
 
         public IDataMutation CreateMutate(string name, IQuery query, Func<TData, TData?> transform)
         {
-            void Runner() => _responder.Push(query, transform(_dataSource.GetData(query)));
-            return new DataMutation<TData>(Runner, name, query.ToHash());
+            async Task Runner() => await _responder.Push(query, transform(await _dataSource.GetData(query)));
+            return new AsyncDataMutation<TData>(Runner, name, query.ToHash());
         }
 
         public IDataMutation CreateMutate(string name, IQuery query, Func<TData, Task<TData?>> transform)
         {
-            async Task Runner() => _responder.Push(query, await transform(_dataSource.GetData(query)));
+            async Task Runner() => await _responder.Push(query, await transform(await _dataSource.GetData(query)));
             return new AsyncDataMutation<TData>(Runner, name, query.ToHash());
         }
 
@@ -122,9 +122,9 @@ namespace Tauron.Application.Workshop.Mutation
         private sealed class ResponderList : IRespondHandler<TData>
         {
             private readonly List<Action<TData>> _handler = new List<Action<TData>>();
-            private readonly Action<IQuery, TData> _root;
+            private readonly Func<IQuery, TData, Task> _root;
 
-            public ResponderList(Action<IQuery, TData> root) => _root = root;
+            public ResponderList(Func<IQuery, TData, Task> root) => _root = root;
 
             public void Register(Action<TData> responder)
             {
@@ -134,11 +134,11 @@ namespace Tauron.Application.Workshop.Mutation
                 }
             }
 
-            public void Push(IQuery query, TData? data)
+            public async Task Push(IQuery query, TData? data)
             {
                 if (data == null) return;
 
-                _root(query, data);
+                await _root(query, data);
                 lock (_handler)
                 {
                     foreach (var action in _handler)
@@ -160,18 +160,18 @@ namespace Tauron.Application.Workshop.Mutation
             return new MutatingEngine(mutator, superviser);
         }
 
-        public static QueryableMutatingEngine<TData> From<TData>(IQueryableDataSource<TData> source, WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null)
+        public static ExtendedMutatingEngine<TData> From<TData>(IExtendedDataSource<TData> source, WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null)
             where TData : class
         {
             var mutatorProps = Props.Create<MutationActor>();
             mutatorProps = configurate?.Invoke(mutatorProps) ?? mutatorProps;
 
             var mutator = superviser.Create(mutatorProps, "Mutator");
-            return new QueryableMutatingEngine<TData>(mutator, source, superviser);
+            return new ExtendedMutatingEngine<TData>(mutator, source, superviser);
         }
 
-        public static QueryableMutatingEngine<TData> From<TData>(IQueryableDataSource<TData> source, MutatingEngine parent)
-            where TData : class => new QueryableMutatingEngine<TData>(parent._mutator, source, parent._superviser);
+        public static ExtendedMutatingEngine<TData> From<TData>(IExtendedDataSource<TData> source, MutatingEngine parent)
+            where TData : class => new ExtendedMutatingEngine<TData>(parent._mutator, source, parent._superviser);
 
         public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null) 
             where TData : class

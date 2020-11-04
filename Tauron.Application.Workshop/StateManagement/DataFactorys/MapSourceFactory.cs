@@ -11,7 +11,7 @@ namespace Tauron.Application.Workshop.StateManagement.DataFactorys
         public ConcurrentDictionary<Type, Func<object>> Map { get; private set; } = new ConcurrentDictionary<Type, Func<object>>();
 
         public void Register<TSource, TData>(Func<TSource> factory)
-            where TSource : IQueryableDataSource<TData>
+            where TSource : IExtendedDataSource<TData>
         {
             var creator = new Func<object>(() => factory());
 
@@ -20,10 +20,10 @@ namespace Tauron.Application.Workshop.StateManagement.DataFactorys
 
         public override bool CanSupply(Type dataType) => Map.ContainsKey(dataType);
 
-        public override Func<IQueryableDataSource<TData>> Create<TData>()
+        public override Func<IExtendedDataSource<TData>> Create<TData>()
         {
             if (Map.TryGetValue(typeof(TData), out var fac))
-                return () => (IQueryableDataSource<TData>) fac();
+                return () => (IExtendedDataSource<TData>) fac();
 
             throw new InvalidOperationException("Not Supported Data Type Mapping");
         }

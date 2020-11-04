@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Threading;
-using Akka.Util;
 using Autofac;
 using JetBrains.Annotations;
 using Tauron.Application.AkkNode.Services.Core;

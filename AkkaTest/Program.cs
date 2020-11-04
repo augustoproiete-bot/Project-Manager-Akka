@@ -27,7 +27,7 @@ namespace AkkaTest
     {
         public sealed class UserSourceFactory : IDataSourceFactory
         {
-            private sealed class UserDataSource : IQueryableDataSource<UserData>
+            private sealed class UserDataSource : IExtendedDataSource<UserData>
             {
                 private static readonly UserData Empty = new UserData(string.Empty, DateTime.MinValue, DateTime.MinValue, false, false, string.Empty, true);
 
@@ -36,13 +36,13 @@ namespace AkkaTest
 
                 public UserDataSource(ConcurrentDictionary<string, UserData> user) => _user = user;
 
-                public UserData GetData(IQuery query)
+                public Task<UserData> GetData(IQuery query)
                 {
                     switch (query)
                     {
                         case UserQuery q:
                             if (_user.TryGetValue(q.Name, out _next))
-                                return _next;
+                                return Task.FromResult(_next);
                             _next = _user.Values.FirstOrDefault(u => u.Name == q.Name);
                             break;
                         case StringQuery info:
@@ -53,43 +53,43 @@ namespace AkkaTest
                             break;
                     }
 
-                    return _next ?? Empty;
+                    return Task.FromResult(_next ?? Empty);
                 }
 
-                public void SetData(IQuery query, UserData data)
+                public Task SetData(IQuery query, UserData data)
                 {
                     if (data.IsDeleted)
                         _user.TryRemove(data.Id, out _);
                     else
                         _user.AddOrUpdate(data.Id, data, (s, userData) => data.SetUnchanged());
+
+                    return Task.CompletedTask;
                 }
 
             }
 
-            private sealed class UsersDataSource : IQueryableDataSource<UserList>
+            private sealed class UsersDataSource : IExtendedDataSource<UserList>
             {
                 private readonly ConcurrentDictionary<string, UserData> _userDatas;
 
                 public UsersDataSource(ConcurrentDictionary<string, UserData> userDatas) => _userDatas = userDatas;
 
-                public UserList GetData(IQuery query) => new UserList(_userDatas.Values);
+                public Task<UserList> GetData(IQuery query) => Task.FromResult(new UserList(_userDatas.Values));
 
-                public void SetData(IQuery query, UserList data)
-                {
-                }
+                public Task SetData(IQuery query, UserList data) => Task.CompletedTask;
             }
 
             private readonly ConcurrentDictionary<string, UserData> _userDatas = new ConcurrentDictionary<string, UserData>();
 
-            public Func<IQueryableDataSource<TData>> Create<TData>()
+            public Func<IExtendedDataSource<TData>> Create<TData>()
                 where TData : class, IStateEntity
             {
                 var type = typeof(TData);
 
                 if (type == typeof(UserData))
-                    return () => (new UserDataSource(_userDatas)).As<IQueryableDataSource<TData>>()!;
+                    return () => (new UserDataSource(_userDatas)).As<IExtendedDataSource<TData>>()!;
                 if (type == typeof(UserList))
-                    return () => (new UsersDataSource(_userDatas)).As<IQueryableDataSource<TData>>()!;
+                    return () => (new UsersDataSource(_userDatas)).As<IExtendedDataSource<TData>>()!;
 
                 throw new InvalidOperationException("No Data Source Found");
             }
@@ -336,7 +336,7 @@ namespace AkkaTest
         [State]
         public sealed class KillState : StateBase<UserData>
         {
-            public KillState(QueryableMutatingEngine<MutatingContext<UserData>> engine, ActorSystem system)
+            public KillState(ExtendedMutatingEngine<MutatingContext<UserData>> engine, ActorSystem system)
                 : base(engine)
             {
                 engine.EventSource<UserData, KillChange>().RespondOn(c => system.Terminate());
@@ -351,7 +351,7 @@ namespace AkkaTest
             [Cache(UseParent = true)]
             public static void ConfigurateCache(ConfigurationBuilderCachePart config) => config.WithDictionaryHandle();
 
-            public UserStade(QueryableMutatingEngine<MutatingContext<UserData>> engine)
+            public UserStade(ExtendedMutatingEngine<MutatingContext<UserData>> engine)
                 : base(engine)
             {
                 QueryUserName = engine.EventSource<UserData, QueryUserChange>();
@@ -369,7 +369,7 @@ namespace AkkaTest
         [State]
         public sealed class UsersStade : StateBase<UserList>
         {
-            public UsersStade(QueryableMutatingEngine<MutatingContext<UserList>> engine) 
+            public UsersStade(ExtendedMutatingEngine<MutatingContext<UserList>> engine) 
                 : base(engine)
                 => QueryUsers = engine.EventSource<UserList, QueryUsersChange>();
 

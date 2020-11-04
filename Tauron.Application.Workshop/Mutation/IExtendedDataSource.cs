@@ -2,7 +2,7 @@
 
 namespace Tauron.Application.Workshop.Mutation
 {
-    public interface IQueryableDataSource<TData>
+    public interface IExtendedDataSource<TData>
     {
         Task<TData> GetData(IQuery query);
 

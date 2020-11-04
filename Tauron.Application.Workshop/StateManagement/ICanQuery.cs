@@ -7,7 +7,7 @@ namespace Tauron.Application.Workshop.StateManagement
     public interface ICanQuery<TData>
         where TData : class, IStateEntity
     {
-        void DataSource(IQueryableDataSource<MutatingContext<TData>> source);
+        void DataSource(IExtendedDataSource<MutatingContext<TData>> source);
 
         Task<TData?> Query(IQuery query);
     }

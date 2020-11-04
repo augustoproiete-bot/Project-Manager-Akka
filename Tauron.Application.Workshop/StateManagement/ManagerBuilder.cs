@@ -40,7 +40,7 @@ namespace Tauron.Application.Workshop.StateManagement
             return builder;
         }
 
-        public IStateBuilder<TData> WithDataSource<TData>(Func<IQueryableDataSource<TData>> source) 
+        public IStateBuilder<TData> WithDataSource<TData>(Func<IExtendedDataSource<TData>> source) 
             where TData : class, IStateEntity
         {
             var builder = new StateBuilder<TData>(source);

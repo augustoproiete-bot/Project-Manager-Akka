@@ -8,24 +8,21 @@ namespace Tauron.Application.Workshop.StateManagement
     [PublicAPI]
     public abstract class StateBase<TData> : IState<TData>, ICanQuery<TData> where TData : class, IStateEntity
     {
-        private IQueryableDataSource<MutatingContext<TData>>? _source;
+        private IExtendedDataSource<MutatingContext<TData>>? _source;
 
         public IEventSource<TData> OnChange { get; }
 
-        protected StateBase(QueryableMutatingEngine<MutatingContext<TData>> engine)
+        protected StateBase(ExtendedMutatingEngine<MutatingContext<TData>> engine)
         {
             OnChange = engine.EventSource(c => c.Data);
         }
 
-        void ICanQuery<TData>.DataSource(IQueryableDataSource<MutatingContext<TData>> source) => _source = source;
+        void ICanQuery<TData>.DataSource(IExtendedDataSource<MutatingContext<TData>> source) => _source = source;
 
-        public Task<TData?> Query(IQuery query)
+        public async Task<TData?> Query(IQuery query)
         {
-            return Task.Run(() =>
-            {
-                var source = _source;
-                return source?.GetData(query).Data;
-            });
+            var source = _source;
+            return source == null ? null : (await source.GetData(query)).Data;
         }
     }
 }

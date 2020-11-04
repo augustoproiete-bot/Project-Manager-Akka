@@ -22,25 +22,32 @@ namespace Tauron.Application.Wpf.Model
 
         public IExposedReceiveActor Target { get; }
 
-        public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>>? canExecute = null)
+        public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>> canExecute)
         {
             _command = Delegate.Combine(_command, execute);
 
             return canExecute != null ? WithCanExecute(canExecute) : this;
         }
-
+        
         public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>> canExecute)
         {
             _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
 
             return WithCanExecute(canExecute);
         }
-
-        public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, CommandQuery>? canExecute = null)
+        
+        public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, CommandQuery> canExecute)
         {
             _command = Delegate.Combine(_command, execute);
 
             return canExecute != null ? WithCanExecute(canExecute) : this;
+        }
+
+        public CommandRegistrationBuilder WithExecute(Action<object?> execute)
+        {
+            _command = Delegate.Combine(_command, execute);
+
+            return this;
         }
 
         public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, CommandQuery> canExecute)

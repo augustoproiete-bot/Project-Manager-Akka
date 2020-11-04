@@ -80,4 +80,9 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Core\Managment\Reducer\" />
+    <Folder Include="Core\Managment\States\" />
+  </ItemGroup>
+
 </Project>
