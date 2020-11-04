@@ -13,7 +13,7 @@ namespace Tauron.Application.Wpf.Model
     [PublicAPI]
     public abstract class StateUIActor : UiActor
     {
-        private readonly Dictionary<Type, Action<OperationResult>> _compledActions = new Dictionary<Type, Action<OperationResult>>();
+        private readonly Dictionary<Type, Action<IOperationResult>> _compledActions = new Dictionary<Type, Action<IOperationResult>>();
 
         public IActionInvoker ActionInvoker { get; }
 
@@ -23,9 +23,22 @@ namespace Tauron.Application.Wpf.Model
             Receive<IOperationResult>(OnOperationCompled);
         }
 
-        protected virtual void OnOperationCompled(IOperationResult obj)
+        protected virtual void OnOperationCompled(IOperationResult result)
         {
-            
+            var actionType = result.Outcome?.GetType();
+
+            if (actionType?.IsAssignableTo<IStateAction>() == true)
+            {
+                if (_compledActions.TryGetValue(actionType, out var action))
+                    action(result);
+            }
+        }
+
+        public void WhenActionComnpled<TAction>(Action<IOperationResult> opsAction)
+            where TAction : IStateAction
+        {
+            var key = typeof(TAction);
+            _compledActions[key] = opsAction.Combine(_compledActions.GetValueOrDefault(key))!;
         }
 
         public UIStateConfiguration<TState> WhenStateChanges<TState>(string? name = null) 
@@ -150,6 +163,10 @@ namespace Tauron.Application.Wpf.Model
             });
 
             var testProp = isDeleted.ToProperty("Test2", data => data.IsDeleted, data => data.Id == "1");
+            var testProp3 = RegisterProperty<string>("Test3");
+
+            WhenActionComnpled<TestAction>(r => testProp3.Property.Set(r.Error));
+
 
             NewCommad
                .WithCanExecute(b => b.FromProperty(testProp))

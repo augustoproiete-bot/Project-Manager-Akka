@@ -19,9 +19,9 @@ namespace Tauron.Operations
     {
         public static IOperationResult Success(object? result = null) => new OperationResult(true, null, result);
 
-        public static IOperationResult Failure(string error) => new OperationResult(false, new []{ error }, null);
+        public static IOperationResult Failure(string error, object? outcome = null) => new OperationResult(false, new []{ error }, outcome);
 
-        public static IOperationResult Failure(IEnumerable<string> errors) => new OperationResult(false, errors.ToArray(), null);
+        public static IOperationResult Failure(IEnumerable<string> errors, object? outcome = null) => new OperationResult(false, errors.ToArray(), outcome);
         public static IOperationResult Failure(params string[] errors) => new OperationResult(false, errors, null);
 
         public static IOperationResult Failure(Exception? error) => new OperationResult(false, new []{ error.Unwrap()?.Message ?? "Unkowen" }, null);

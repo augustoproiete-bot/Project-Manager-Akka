@@ -145,7 +145,7 @@ namespace Tauron.Application.Workshop.StateManagement
                     errors.AddRange(result.Errors ?? Array.Empty<string>());
                 }
 
-                _sender.Tell(fail ? OperationResult.Failure(errors) : OperationResult.Success(_action), ActorRefs.NoSender);
+                _sender.Tell(fail ? OperationResult.Failure(errors, _action) : OperationResult.Success(_action), ActorRefs.NoSender);
             }
 
             public void PushWork()
