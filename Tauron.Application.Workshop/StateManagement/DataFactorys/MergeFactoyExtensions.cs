@@ -2,8 +2,7 @@
 
 namespace Tauron.Application.Workshop.StateManagement.DataFactorys
 {
-    [PublicAPI]
-    public static class MergeFactoyExtensions
+    public partial class MergeFactory
     {
         public static AdvancedDataSourceFactory Merge(params AdvancedDataSourceFactory[] factories)
         {

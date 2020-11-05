@@ -82,6 +82,7 @@
 
   <ItemGroup>
     <Folder Include="Core\Managment\Events\" />
+    <Folder Include="Core\Managment\Data\" />
     <Folder Include="Core\Managment\Reducer\" />
   </ItemGroup>
 

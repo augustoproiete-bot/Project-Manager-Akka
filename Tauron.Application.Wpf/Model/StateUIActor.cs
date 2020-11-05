@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Windows.Threading;
 using Autofac;
 using JetBrains.Annotations;
-using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Workshop.StateManagement;
 using Tauron.Operations;
@@ -131,46 +130,6 @@ namespace Tauron.Application.Wpf.Model
                 return uiActor;
 
             throw new InvalidOperationException("command Builder is not a State Actor");
-        }
-    }
-
-    class MyClass : StateUIActor
-    {
-        public sealed class TestAction : IStateAction
-        {
-            public string ActionName { get; } = string.Empty;
-            public IQuery Query { get; } = null!;
-        }
-
-        public sealed class TestData : IStateEntity
-        {
-            public bool IsDeleted { get; }
-            public string Id { get; }
-        }
-
-        public sealed class TestState : StateBase<TestData>
-        {
-            public TestState([NotNull] [ItemNotNull] ExtendedMutatingEngine<MutatingContext<TestData>> engine) : base(engine)
-            {
-            }
-        }
-
-        public MyClass([NotNull] ILifetimeScope lifetimeScope, [NotNull] Dispatcher dispatcher, [NotNull] IActionInvoker actionInvoker) : base(lifetimeScope, dispatcher, actionInvoker)
-        {
-            var isDeleted = WhenStateChanges<TestState>().FromEvent(s => s.OnChange, configuration =>
-            {
-                configuration.ToProperty("Test1", data => data.Id).WithDefaultValue("Unbekannt");
-            });
-
-            var testProp = isDeleted.ToProperty("Test2", data => data.IsDeleted, data => data.Id == "1");
-            var testProp3 = RegisterProperty<string>("Test3");
-
-            WhenActionComnpled<TestAction>(r => testProp3.Property.Set(r.Error));
-
-
-            NewCommad
-               .WithCanExecute(b => b.FromProperty(testProp))
-               .ToStateAction<TestAction>();
         }
     }
 }
