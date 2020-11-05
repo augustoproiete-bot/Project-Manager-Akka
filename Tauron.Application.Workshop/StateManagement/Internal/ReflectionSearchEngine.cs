@@ -8,6 +8,7 @@ using FluentValidation;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.StateManagement.Attributes;
+using Tauron.Application.Workshop.StateManagement.DataFactorys;
 
 namespace Tauron.Application.Workshop.StateManagement.Internal
 {
@@ -37,6 +38,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
             var types = _assembly.GetTypes();
             var states = new List<(Type, string?)>();
             var reducers = new GroupDictionary<Type, Type>();
+            var factorys = new List<AdvancedDataSourceFactory>();
 
             foreach (var type in types)
             {
@@ -56,8 +58,17 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                         case BelogsToStateAttribute belogsTo:
                             reducers.Add(belogsTo.StateType, type);
                             break;
+                        case DataSourceAttribute _:
+                            factorys.Add((AdvancedDataSourceFactory)(_context?.ResolveOptional(type) ?? Activator.CreateInstance(type)));
+                            break;
                     }
                 }
+            }
+
+            if (factorys.Count != 0)
+            {
+                factorys.Add((AdvancedDataSourceFactory)factory);
+                factory = MergeFactory.Merge(factorys.ToArray());
             }
 
             foreach (var (type, key) in states)

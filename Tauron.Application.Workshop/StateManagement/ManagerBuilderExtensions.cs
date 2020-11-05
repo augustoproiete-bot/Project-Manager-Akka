@@ -9,6 +9,7 @@ using Autofac.Core;
 using Autofac.Features.ResolveAnything;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.StateManagement.Builder;
+using Tauron.Application.Workshop.StateManagement.DataFactorys;
 using Tauron.Application.Workshop.StateManagement.Internal;
 
 namespace Tauron.Application.Workshop.StateManagement
@@ -100,7 +101,7 @@ namespace Tauron.Application.Workshop.StateManagement
             => AddFromAssembly(builder, typeof(TType).Assembly, context);
 
         public static ManagerBuilder AddFromAssembly(this ManagerBuilder builder, Assembly assembly, IComponentContext context) 
-            => AddFromAssembly(builder, assembly, context.Resolve<IDataSourceFactory>(), context);
+            => AddFromAssembly(builder, assembly, MergeFactory.Merge(context.Resolve<IEnumerable<IDataSourceFactory>>().Cast<AdvancedDataSourceFactory>().ToArray()), context);
 
         public static IConcurrentDispatcherConfugiration WithConcurentDispatcher(this ManagerBuilder builder)
         {
