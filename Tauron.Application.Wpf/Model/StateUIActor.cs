@@ -33,6 +33,11 @@ namespace Tauron.Application.Wpf.Model
             }
         }
 
+        public TState? GetState<TState>(string key = "") where TState : class
+        {
+            return ActionInvoker.GetState<TState>(key);
+        }
+
         public void WhenActionComnpled<TAction>(Action<IOperationResult> opsAction)
             where TAction : IStateAction
         {

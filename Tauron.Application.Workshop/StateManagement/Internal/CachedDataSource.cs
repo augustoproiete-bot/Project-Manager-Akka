@@ -43,7 +43,14 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
 
             await _original.SetData(query, entity);
         }
-        
-        public void Dispose() => _cache?.Dispose();
+
+        public Task OnCompled(IQuery query) => _original.OnCompled(query);
+
+        public void Dispose()
+        {
+            _cache?.Dispose();
+            if(_original is IDisposable source)
+                source.Dispose();
+        }
     }
 }

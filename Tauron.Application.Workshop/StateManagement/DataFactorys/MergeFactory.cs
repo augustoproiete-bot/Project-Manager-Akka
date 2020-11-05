@@ -7,7 +7,7 @@ using Tauron.Application.Workshop.Mutation;
 namespace Tauron.Application.Workshop.StateManagement.DataFactorys
 {
     [PublicAPI]
-    public partial sealed class MergeFactory : AdvancedDataSourceFactory
+    public sealed partial class MergeFactory : AdvancedDataSourceFactory
     {
         private ConcurrentBag<AdvancedDataSourceFactory> _factories = new ConcurrentBag<AdvancedDataSourceFactory>();
 

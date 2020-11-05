@@ -66,6 +66,10 @@ namespace AkkaTest
                     return Task.CompletedTask;
                 }
 
+                public Task OnCompled(IQuery query)
+                {
+                    return Task.CompletedTask;
+                }
             }
 
             private sealed class UsersDataSource : IExtendedDataSource<UserList>
@@ -77,6 +81,10 @@ namespace AkkaTest
                 public Task<UserList> GetData(IQuery query) => Task.FromResult(new UserList(_userDatas.Values));
 
                 public Task SetData(IQuery query, UserList data) => Task.CompletedTask;
+                public Task OnCompled(IQuery query)
+                {
+                    return Task.CompletedTask;
+                }
             }
 
             private readonly ConcurrentDictionary<string, UserData> _userDatas = new ConcurrentDictionary<string, UserData>();

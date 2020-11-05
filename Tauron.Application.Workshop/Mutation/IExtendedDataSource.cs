@@ -7,5 +7,7 @@ namespace Tauron.Application.Workshop.Mutation
         Task<TData> GetData(IQuery query);
 
         Task SetData(IQuery query, TData data);
+
+        Task OnCompled(IQuery query);
     }
 }

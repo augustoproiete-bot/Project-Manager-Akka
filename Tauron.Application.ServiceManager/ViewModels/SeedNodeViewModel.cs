@@ -13,6 +13,7 @@ using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
+using Tauron.Application.Workshop.StateManagement;
 using Tauron.Application.Wpf;
 using Tauron.Application.Wpf.Dialogs;
 using Tauron.Application.Wpf.Model;
@@ -31,10 +32,10 @@ namespace Tauron.Application.ServiceManager.ViewModels
     }
 
     [UsedImplicitly]
-    public class SeedNodeViewModel : UiActor
+    public class SeedNodeViewModel : StateUIActor
     {
-        public SeedNodeViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config, CommonAppInfo info) 
-            : base(lifetimeScope, dispatcher)
+        public SeedNodeViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config, CommonAppInfo info, IActionInvoker invoker) 
+            : base(lifetimeScope, dispatcher, invoker)
         {
             #region Init
 

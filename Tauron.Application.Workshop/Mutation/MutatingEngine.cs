@@ -98,7 +98,7 @@ namespace Tauron.Application.Workshop.Mutation
             _mutator = mutator;
             _dataSource = dataSource;
             _superviser = superviser;
-            _responder = new ResponderList(_dataSource.SetData);
+            _responder = new ResponderList(_dataSource.SetData, dataSource.OnCompled);
         }
 
         public void Mutate(string name, IQuery query, Func<TData, TData?> transform)
@@ -106,13 +106,13 @@ namespace Tauron.Application.Workshop.Mutation
 
         public IDataMutation CreateMutate(string name, IQuery query, Func<TData, TData?> transform)
         {
-            async Task Runner() => await _responder.Push(query, transform(await _dataSource.GetData(query)));
+            async Task Runner() => await _responder.Push(query, async () => transform(await _dataSource.GetData(query)));
             return new AsyncDataMutation<TData>(Runner, name, query.ToHash());
         }
 
         public IDataMutation CreateMutate(string name, IQuery query, Func<TData, Task<TData?>> transform)
         {
-            async Task Runner() => await _responder.Push(query, await transform(await _dataSource.GetData(query)));
+            async Task Runner() => await _responder.Push(query, async () => await transform(await _dataSource.GetData(query)));
             return new AsyncDataMutation<TData>(Runner, name, query.ToHash());
         }
 
@@ -123,8 +123,13 @@ namespace Tauron.Application.Workshop.Mutation
         {
             private readonly List<Action<TData>> _handler = new List<Action<TData>>();
             private readonly Func<IQuery, TData, Task> _root;
+            private readonly Func<IQuery, Task> _completer;
 
-            public ResponderList(Func<IQuery, TData, Task> root) => _root = root;
+            public ResponderList(Func<IQuery, TData, Task> root, Func<IQuery, Task> completer)
+            {
+                _root = root;
+                _completer = completer;
+            }
 
             public void Register(Action<TData> responder)
             {
@@ -134,15 +139,24 @@ namespace Tauron.Application.Workshop.Mutation
                 }
             }
 
-            public async Task Push(IQuery query, TData? data)
+            public async Task Push(IQuery query, Func<Task<TData?>> dataFunc)
             {
-                if (data == null) return;
-
-                await _root(query, data);
-                lock (_handler)
+                try
                 {
-                    foreach (var action in _handler)
-                        action(data);
+                    var data = await dataFunc();
+
+                    if (data == null) return;
+
+                    await _root(query, data);
+                    lock (_handler)
+                    {
+                        foreach (var action in _handler)
+                            action(data);
+                    }
+                }
+                finally
+                {
+                    await _completer(query);
                 }
             }
         }
