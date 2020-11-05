@@ -37,6 +37,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
             var types = _assembly.GetTypes();
             var states = new List<(Type, string?)>();
             var reducers = new GroupDictionary<Type, Type>();
+            var processors = new List<Type>();
 
             foreach (var type in types)
             {
@@ -56,6 +57,9 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                         case BelogsToStateAttribute belogsTo:
                             reducers.Add(belogsTo.StateType, type);
                             break;
+                        case ProcessorAttribute _:
+                            processors.Add(type);
+                            break;
                     }
                 }
             }
@@ -69,6 +73,9 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                 var actualMethod = ConfigurateStateMethod.MakeGenericMethod(dataType);
                 actualMethod.Invoke(this, new object?[] {type, builder, factory, reducers, key});
             }
+
+            foreach (var processor in processors) 
+                builder.Superviser.CreateAnonym(processor, $"Processor--{processor.Name}");
         }
 
         private void ConfigurateState<TData>(Type target, ManagerBuilder builder, IDataSourceFactory factory, GroupDictionary<Type, Type> reducerMap, string? key)

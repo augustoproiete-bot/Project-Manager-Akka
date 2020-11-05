@@ -20,17 +20,18 @@ namespace Tauron.Application.Workshop.StateManagement
             return managerBuilder.Build(null, null);
         }
 
-        private readonly WorkspaceSuperviser _superviser;
+        public WorkspaceSuperviser Superviser { get; }
 
         private Func<IStateDispatcherConfigurator> _dispatcherFunc = () => new DefaultStateDispatcher();
         private readonly List<Func<IEffect>> _effects = new List<Func<IEffect>>();
         private readonly List<Func<IMiddleware>> _middlewares = new List<Func<IMiddleware>>();
         private readonly List<StateBuilderBase> _states = new List<StateBuilderBase>();
+
         private Action<ConfigurationBuilderCachePart>? _globalCache;
         private bool _sendBackSetting;
 
         internal ManagerBuilder(WorkspaceSuperviser superviser) 
-            => _superviser = superviser;
+            => Superviser = superviser;
 
         public IWorkspaceMapBuilder<TData> WithWorkspace<TData>(Func<WorkspaceBase<TData>> source)
             where TData : class
@@ -93,7 +94,7 @@ namespace Tauron.Application.Workshop.StateManagement
                     additionalMiddlewares.AddRange(componentContext.Resolve<IEnumerable<IMiddleware>>());
             }
 
-            return new RootManager(_superviser, _dispatcherFunc(), _states, 
+            return new RootManager(Superviser, _dispatcherFunc(), _states, 
                 _effects.Select(e => e()).Concat(additionalEffects), 
                 _middlewares.Select(m => m()).Concat(additionalMiddlewares),
                 _globalCache, _sendBackSetting, componentContext);

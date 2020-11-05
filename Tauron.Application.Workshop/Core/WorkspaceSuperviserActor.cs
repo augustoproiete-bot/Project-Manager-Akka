@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 using Akka.Actor;
+using Akka.DI.Core;
 using Tauron.Akka;
 using Tauron.Application.Workshop.Mutation;
 
@@ -12,7 +13,7 @@ namespace Tauron.Application.Workshop.Core
 
         public WorkspaceSuperviserActor()
         {
-            Receive<SuperviseActor>(CreateActor);
+            Receive<SuperviseActorBase>(CreateActor);
 
             Receive<WatchIntrest>(wi =>
             {
@@ -28,15 +29,23 @@ namespace Tauron.Application.Workshop.Core
             });
         }
 
-        private void CreateActor(SuperviseActor obj)
+        private void CreateActor(SuperviseActorBase obj)
         {
+            Props? props = null;
+            
             try
             {
-                Sender.Tell(new NewActor(Context.ActorOf(obj.Props, obj.Name)));
+                props = obj.Props(Context);
+                var newActor = Context.ActorOf(props, obj.Name);
+
+                if(Sender.IsNobody()) return;
+                Sender.Tell(new NewActor(newActor));
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error on Create an new Actor {TypeName}", obj.Props.TypeName);
+                Log.Error(e, "Error on Create an new Actor {TypeName}", props?.TypeName ?? "Unkowen");
+
+                if(Sender.IsNobody()) return;
                 Sender.Tell(new NewActor(ActorRefs.Nobody));
             }
         }
@@ -50,17 +59,33 @@ namespace Tauron.Application.Workshop.Core
                     Directive.Stop.When<DeathPactException>()));
         }
 
-        internal sealed class SuperviseActor
+        internal abstract class SuperviseActorBase
         {
-            public Props Props { get; }
+            public abstract Func<IUntypedActorContext, Props> Props { get; }
 
             public string Name { get; }
 
-            public SuperviseActor(Props props, string name)
+            protected SuperviseActorBase(string name) => Name = name;
+        }
+
+        internal sealed class SupervisePropsActor : SuperviseActorBase
+        {
+            public SupervisePropsActor(Props props, string name)
+                : base(name)
             {
-                Props = props;
-                Name = name;
+                Props = _ => props;
             }
+
+            public override Func<IUntypedActorContext, Props> Props { get; }
+        }
+
+        internal sealed class SuperviseDiActor : SuperviseActorBase
+        {
+            private readonly Type _actorType;
+
+            public SuperviseDiActor(Type actorType, string name) : base(name) => _actorType = actorType;
+
+            public override Func<IUntypedActorContext, Props> Props => c => c.System.DI().Props(_actorType);
         }
 
         internal sealed class NewActor
