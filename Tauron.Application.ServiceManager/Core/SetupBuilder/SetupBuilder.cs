@@ -15,6 +15,7 @@ using Tauron.Application.Master.Commands.Deployment.Repository;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.Managment.Events;
 using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
+using Tauron.Application.Workshop.StateManagement;
 using Tauron.Temp;
 using LogEvent = Serilog.Events.LogEvent;
 
@@ -35,8 +36,8 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         private readonly AppConfig _config;
         private readonly DeploymentApi _api;
         private readonly RepositoryApi _repository;
+        private readonly IActionInvoker _actionInvoker;
         private readonly DataTransferManager _dataTransfer;
-        private readonly ActorSystem _actorSystem;
 
         private Action<string> _log;
         private ImmutableList<string> _seeds = ImmutableList<string>.Empty;
@@ -44,7 +45,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
         private void LogMessage(string template, params object[] args)
             => _logger.Information(template, args);
 
-        public SetupBuilder(string hostName, string? seedHostName, AppConfig config, Action<string> log, ActorSystem actorSystem, DeploymentApi api, RepositoryApi repository)
+        public SetupBuilder(string hostName, string? seedHostName, AppConfig config, Action<string> log, ActorSystem actorSystem, DeploymentApi api, RepositoryApi repository, IActionInvoker actionInvoker)
         {
             _logger = new LoggerConfiguration().WriteTo.Logger(Log.ForContext<SetupBuilder>()).WriteTo.Sink(new DelegateSink(s => _log!(s))).CreateLogger();
             _dataTransfer = DataTransferManager.New(actorSystem);
@@ -56,9 +57,9 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
             };
             _config = config;
             _log = log;
-            _actorSystem = actorSystem;
             _api = api;
             _repository = repository;
+            _actionInvoker = actionInvoker;
         }
 
         public async Task<BuildResult?> Run(Action<string> log, string identifer, string endPoint)
@@ -99,7 +100,7 @@ namespace Tauron.Application.ServiceManager.Core.SetupBuilder
                 using var zip = new ZipArchive(zipFile.Stream, ZipArchiveMode.Create, true);
                 zip.AddFilesFromDictionary(buildPath.FullPath);
                 
-                return new BuildResult(zipFile, () => seedUrl.When(s => !string.IsNullOrWhiteSpace(s), s => _actorSystem.EventStream?.Publish(new AddSeedUrl(s!))));
+                return new BuildResult(zipFile, () => seedUrl.When(s => !string.IsNullOrWhiteSpace(s), s => _actionInvoker.Run(new AddSeedUrlAction(s!), false)));
 
             }
             catch (Exception e)

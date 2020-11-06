@@ -19,8 +19,6 @@ namespace Tauron.Application.ServiceManager.ViewModels
         public ConfigurationViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig appConfig, DeploymentServices deploymentServices) 
             : base(lifetimeScope, dispatcher)
         {
-            //TODO Global Configuration Update
-
             void ConfigurationChanged(string text)
             {
                 if(text == appConfig.CurrentConfig) return;

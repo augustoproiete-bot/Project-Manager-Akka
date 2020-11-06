@@ -1,4 +1,5 @@
-﻿using Akka.Actor;
+﻿using System.Collections.Immutable;
+using Akka.Actor;
 using Akka.Cluster;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.Managment.Events;
@@ -12,14 +13,16 @@ namespace Tauron.Application.ServiceManager.Core.Managment.Data
         bool IStateEntity.IsDeleted => false;
         string IStateEntity.Id => nameof(ClusterConfiguration);
 
-        public AppConfig Config { get; }
+        private AppConfig Config { get; }
 
-        public Cluster Cluster { get; }
+        public ImmutableList<string> Seeds => Config.SeedUrls;
+
+        public string SelfAdress { get; }
 
         public ClusterConfiguration(AppConfig config, ActorSystem system)
         {
             Config = config;
-            Cluster = Cluster.Get(system);
+            SelfAdress = Cluster.Get(system).SelfAddress.ToString();
         }
 
         public ClusterConfiguration Apply(MutatingChange apply)

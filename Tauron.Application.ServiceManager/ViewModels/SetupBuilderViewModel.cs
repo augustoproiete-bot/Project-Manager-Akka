@@ -11,12 +11,13 @@ using Tauron.Application.Master.Commands.Deployment.Repository;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.Model;
 using Tauron.Application.ServiceManager.Core.SetupBuilder;
+using Tauron.Application.Workshop.StateManagement;
 using Tauron.Application.Wpf.Model;
 
 namespace Tauron.Application.ServiceManager.ViewModels
 {
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedWithFixedConstructorSignature)]
-    public sealed class SetupBuilderViewModel : UiActor
+    public sealed class SetupBuilderViewModel : StateUIActor
     {
         private readonly AppConfig _config;
         private readonly HostApi _api;
@@ -26,8 +27,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
         private EventSubscribtion? _subscribtion;
 
-        public SetupBuilderViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config, DeploymentServices deploymentServices) 
-            : base(lifetimeScope, dispatcher)
+        public SetupBuilderViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config, DeploymentServices deploymentServices, IActionInvoker actionInvoker) 
+            : base(lifetimeScope, dispatcher, actionInvoker)
         {
             _config = config;
             _server = new SetupServer(s => UICall(() => TerminalLines!.Add(s)), Context.System.Settings.Config);
@@ -89,7 +90,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
             UICall(TerminalLines.Clear);
 
-            var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, _config, s => UICall(() => TerminalLines.Add(s)), Context.System, _deploymentApi, _repositoryApi);
+            var builder = new SetupBuilder(hostName, AddSeed.Value ? seedHostName : null, _config, s => UICall(() => TerminalLines.Add(s)), Context.System, _deploymentApi, _repositoryApi, ActionInvoker);
             var id = Guid.NewGuid().ToString().Substring(0, 5);
 
             _server.AddPendingInstallations(id, builder, AddShortcut);
