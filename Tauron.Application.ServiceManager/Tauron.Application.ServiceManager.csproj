@@ -80,9 +80,4 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Core\Managment\Events\" />
-    <Folder Include="Core\Managment\Reducer\" />
-  </ItemGroup>
-
 </Project>

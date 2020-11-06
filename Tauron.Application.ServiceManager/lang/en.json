@@ -54,6 +54,7 @@
   "SeedNodeView_Error_EmptyHostName": "Name cannot be empty.",
   "SetupBuilderView_Error_EmptyHostName": "Name cannot be empty.",
   "SetupBuilderView_AddShortcut": "Create AutoStart shortcut",
+  "SeedProcessor_AddSeedUrl_InvalidFromat": "The address has the wrong format.",
   "Common_Error": "Error",
   "Common_Warning": "Warning",
   "Common_Unkowen": "Unkowen",

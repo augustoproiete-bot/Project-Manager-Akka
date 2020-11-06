@@ -13,6 +13,7 @@ using Tauron.Application.Master.Commands.Deployment.Build;
 using Tauron.Application.Master.Commands.Deployment.Build.Commands;
 using Tauron.Application.Master.Commands.Deployment.Repository;
 using Tauron.Application.ServiceManager.Core.Configuration;
+using Tauron.Application.ServiceManager.Core.Managment.Events;
 using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
 using Tauron.Temp;
 using LogEvent = Serilog.Events.LogEvent;

@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Windows.Threading;
 using Akka.Actor;
 using Akka.Cluster;
-using Akka.Event;
 using Autofac;
 using JetBrains.Annotations;
-using Tauron.Akka;
 using Tauron.Application.ServiceManager.Core.Configuration;
-using Tauron.Application.ServiceManager.Core.Model;
-using Tauron.Application.ServiceManager.ViewModels.ApplicationModelData;
+using Tauron.Application.ServiceManager.Core.Managment.Events;
+using Tauron.Application.ServiceManager.Core.Managment.States;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
 using Tauron.Application.Workshop.StateManagement;
 using Tauron.Application.Wpf;
@@ -34,52 +31,26 @@ namespace Tauron.Application.ServiceManager.ViewModels
     [UsedImplicitly]
     public class SeedNodeViewModel : StateUIActor
     {
-        public SeedNodeViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config, CommonAppInfo info, IActionInvoker invoker) 
+        public SeedNodeViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config, IActionInvoker invoker) 
             : base(lifetimeScope, dispatcher, invoker)
         {
             #region Init
-
-            void TryJoin()
-            {
-                info.ConnectionState = ConnectionState.Connecting;
-                Log.Info("Trying Join to Cluster");
-                var cluster = Cluster.Get(Context.System);
-
-                if (cluster.State.Members.Count != 0)
-                {
-                    info.ConnectionState = ConnectionState.Online;
-                    Log.Info("Cluster Joins is already Compled");
-                    return;
-                }
-
-                var source = new CancellationTokenSource(TimeSpan.FromMinutes(1));
-                cluster.JoinSeedNodesAsync(Models.Select(m => Address.Parse(m.Url)), source.Token)
-                   .ContinueWith(t =>
-                                 {
-                                     source.Dispose();
-                                     info.ConnectionState = t.IsCompletedSuccessfully ? ConnectionState.Online : ConnectionState.Offline;
-                                 });
-            }
-
+            
             Models = this.RegisterUiCollection<SeedUrlModel>(nameof(Models))
                .AndAsync()
                .AndInitialElements(config.SeedUrls.Select(SeedUrlModel.New));
 
-            if (Models.Count > 0)
-                TryJoin();
-            else
-                Cluster.Get(Context.System).JoinSeedNodes(new[] {Cluster.Get(Context.System).SelfAddress});
+            DispatchAction(new TryJoinAction(), false);
 
             #endregion;
 
             #region Add Seed
 
-            void AddSeedEntry(DialogSeedEntry entry)
+            void AddSeedEntry(AddSeedUrlEvent entry)
             {
-                entry.Url.WhenNotEmpty(s =>
+                entry.SeedUrl.WhenNotEmpty(s =>
                                        {
                                            Log.Info("Add Seed Node to List {URL}", s);
-                                           config.SeedUrls = config.SeedUrls.Add(s);
                                            Models.Add(
                                                new SeedUrlModel(s),
                                                c =>
@@ -96,44 +67,35 @@ namespace Tauron.Application.ServiceManager.ViewModels
                                        });
             }
 
-            this.SubscribeToEvent<AddSeedUrl>(e => AddSeedEntry(new DialogSeedEntry(e.Url)));
-
+            WhenStateChanges<SeedState>().FromEvent(s => s.AddSeed).ToAction(AddSeedEntry);
+            
             NewCommad
                .ThenFlow(
-                    this.ShowDialog<IAddSeedUrlDialog, DialogSeedEntry, IEnumerable<DialogSeedEntry>>(
-                        () => Models.Select(m => new DialogSeedEntry(m.Url))),
-                    b => b.Action(AddSeedEntry))
+                    this.ShowDialog<IAddSeedUrlDialog, DialogSeedEntry, IEnumerable<DialogSeedEntry>>(() => Models.Select(m => new DialogSeedEntry(m.Url))),
+                    b => b.Action(e => DispatchAction(new AddSeedUrlAction(e.Url))))
                .ThenRegister("AddSeedUrl");
 
             #endregion
 
             #region Remove Seed
 
-            void DoRemove(SeedUrlModel model)
+            void DoRemove(RemoveSeedUrlEvent evt)
             {
-                Log.Info("Removing Seed {URL}", model.Url);
-                config.SeedUrls = config.SeedUrls.Remove(model.Url);
-                Models.Remove(model);
-
-                if (Models.Count == 0)
-                    Cluster.Get(Context.System).LeaveAsync();
+                Log.Info("Removing Seed {URL}", evt.SeedUrl);
+                Models.Remove(Models.First(m => m.Url == evt.SeedUrl));
             }
 
             SelectIndex = RegisterProperty<int>(nameof(SelectIndex));
 
             NewCommad
                .WithCanExecute(b => b.FromProperty(SelectIndex, i => i > -1))
-               .ThenFlow(() => Models.ElementAt(SelectIndex),
-                    b => b.Action(DoRemove))
+               .ToStateAction(() => new RemoveSeedUrlAction(Models.ElementAt(SelectIndex).Url))
                .ThenRegister("RemoveSeed");
 
-            #endregion
-        }
+            WhenStateChanges<SeedState>().FromEvent(e => e.RemoveSeed)
+               .ToAction(DoRemove);
 
-        protected override void PreStart()
-        {
-            Context.System.EventStream.Subscribe<AddSeedUrl>(Self);
-            base.PreStart();
+            #endregion
         }
 
         public UICollectionProperty<SeedUrlModel> Models { get; }

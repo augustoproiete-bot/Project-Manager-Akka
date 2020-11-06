@@ -98,6 +98,12 @@ namespace Tauron.Application.Wpf.Model
 
                 return propertyConfig;
             }
+
+            public void ToAction(Action<TEvent> action)
+            {
+                _eventSource.RespondOn(_actor.Self);
+                _actor.Receive(action);
+            }
         }
     }
 
@@ -108,10 +114,10 @@ namespace Tauron.Application.Wpf.Model
             where TStateAction : IStateAction, new() 
             => ToStateAction(builder, _ => new TStateAction());
 
-        public static CommandRegistrationBuilder ToStateAction(this CommandRegistrationBuilder builder, Func<IStateAction> action) 
+        public static CommandRegistrationBuilder ToStateAction(this CommandRegistrationBuilder builder, Func<IStateAction?> action) 
             => ToStateAction(builder, _ => action());
 
-        public static CommandRegistrationBuilder ToStateAction<TParameter>(this CommandRegistrationBuilder builder, Func<TParameter, IStateAction> action)
+        public static CommandRegistrationBuilder ToStateAction<TParameter>(this CommandRegistrationBuilder builder, Func<TParameter, IStateAction?> action)
         {
             return ToStateAction(builder, o =>
             {
@@ -122,11 +128,17 @@ namespace Tauron.Application.Wpf.Model
             });
         }
 
-        public static CommandRegistrationBuilder ToStateAction(this CommandRegistrationBuilder builder, Func<object?, IStateAction> action)
+        public static CommandRegistrationBuilder ToStateAction(this CommandRegistrationBuilder builder, Func<object?, IStateAction?> action)
         {
             var invoker = TryCast(builder);
 
-            return builder.WithExecute(o => invoker.DispatchAction(action(o)));
+            return builder.WithExecute(o =>
+            {
+                var stateAction = action(o);
+                if(stateAction == null) return;
+
+                invoker.DispatchAction(stateAction);
+            });
         }
 
         private static StateUIActor TryCast(CommandRegistrationBuilder builder)

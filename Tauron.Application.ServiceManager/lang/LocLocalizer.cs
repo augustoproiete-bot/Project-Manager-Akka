@@ -251,6 +251,16 @@ namespace Tauron.Application.Localizer.Generated
 			public string ErrorEmptyHostName => __ErrorEmptyHostName.Result;
 			public string AddShortcut => __AddShortcut.Result;
 		}
+		public sealed class SeedProcessorRes
+		{
+			private readonly Task<string> __AddSeedUrlInvalidFromat;
+			public SeedProcessorRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__AddSeedUrlInvalidFromat = LocLocalizer.ToString(loc.RequestTask("SeedProcessor_AddSeedUrl_InvalidFromat"));
+			}
+			public string AddSeedUrlInvalidFromat => __AddSeedUrlInvalidFromat.Result;
+		}
 		public sealed class CommonRes
 		{
 			private readonly Task<string> __Error;
@@ -299,6 +309,7 @@ namespace Tauron.Application.Localizer.Generated
 			 InitialDialog = new InitialDialogRes(system);
 			 ConfigurationView = new ConfigurationViewRes(system);
 			 SetupBuilderView = new SetupBuilderViewRes(system);
+			 SeedProcessor = new SeedProcessorRes(system);
 			 Common = new CommonRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
@@ -312,6 +323,7 @@ namespace Tauron.Application.Localizer.Generated
 		public InitialDialogRes InitialDialog { get; }
 		public ConfigurationViewRes ConfigurationView { get; }
 		public SetupBuilderViewRes SetupBuilderView { get; }
+		public SeedProcessorRes SeedProcessor { get; }
 		public CommonRes Common { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);

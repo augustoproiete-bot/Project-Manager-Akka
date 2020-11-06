@@ -54,6 +54,7 @@
   "SeedNodeView_Error_EmptyHostName": "Name darf nicht Leer sein.",
   "SetupBuilderView_Error_EmptyHostName": "Name darf nicht Leer sein.",
   "SetupBuilderView_AddShortcut": "Autostart Verknüpfung Erstellen",
+  "SeedProcessor_AddSeedUrl_InvalidFromat": "Die Adresse hat das Falsche Format.",
   "Common_Error": "Fehler",
   "Common_Warning": "Warnung",
   "Common_Unkowen": "Unbekannt",
