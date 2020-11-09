@@ -15,6 +15,7 @@
     <PackageReference Include="Castle.Core" Version="4.4.1" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0-dev-00839" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0-dev-00880" />
+    <PackageReference Include="SimSharp" Version="3.3.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +24,10 @@
     <ProjectReference Include="..\Tauron.Application.Master.Commands\Tauron.Application.Master.Commands.csproj" />
     <ProjectReference Include="..\Tauron.Application.Workshop\Tauron.Application.Workshop.csproj" />
     <ProjectReference Include="..\Tauron.Application.Wpf\Tauron.Application.Wpf.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Table\Schema\" />
   </ItemGroup>
 
 </Project>

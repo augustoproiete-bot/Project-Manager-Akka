@@ -16,10 +16,10 @@ namespace Tauron.Application.Master.Commands.Administration.Host
 
         private static HostApi? _hostApi;
 
-        public static HostApi CreateOrGet(IActorRefFactory actorRefFactory)
+        public static HostApi CreateOrGet(ActorSystem actorRefFactory)
         {
             lock (_lock)
-                return _hostApi ??= new HostApi(actorRefFactory.ActorOf(Props.Create(() => new HostApiManagerActor())));
+                return _hostApi ??= new HostApi(actorRefFactory.ActorOf(HostApiManagerActor.CreateProps()));
         }
 
         private readonly IActorRef _actorRef;

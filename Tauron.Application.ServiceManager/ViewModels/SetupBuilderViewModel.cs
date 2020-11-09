@@ -43,7 +43,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
             TerminalLines = this.RegisterUiCollection<string>(nameof(TerminalLines)).AndAsync();
 
             var hostEntrys = new HashSet<string>();
-            _api = HostApi.CreateOrGet(Context);
+            _api = HostApi.CreateOrGet(Context.System);
             Receive<HostEntryChanged>(e =>
             {
                 if(string.IsNullOrWhiteSpace(e.Name))

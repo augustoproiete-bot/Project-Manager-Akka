@@ -29,7 +29,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
             CurrentTab = RegisterProperty<int>(nameof(CurrentTab));
 
-            var hostApi = HostApi.CreateOrGet(Context);
+            var hostApi = HostApi.CreateOrGet(Context.System);
 
             AddResource(hostApi.Event<HostEntryChanged>());
 

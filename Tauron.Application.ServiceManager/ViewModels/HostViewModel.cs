@@ -32,7 +32,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
                     eventSystem.Publish(new DisplayApplications((string) o));
             });
 
-            HostApi hostConnector = HostApi.CreateOrGet(Context);
+            HostApi hostConnector = HostApi.CreateOrGet(Context.System);
 
             var commandExecutor = Context.ActorOf(Props.Create<CommandExutor>(), "HostCommand-Executor");
 

@@ -11,11 +11,14 @@ namespace Tauron.Application.Master.Commands.Administration.Host
 {
     public sealed class HostApiManagerActor : ExposedReceiveActor//, IWithTimers
     {
+        public static Props CreateProps() 
+            => Props.Create(() => new HostApiSuperviser());
+
         private readonly Dictionary<ActorPath, HostEntry> _entries = new Dictionary<ActorPath, HostEntry>();
 
         //public ITimerScheduler Timers { get; set; } = null!;
 
-        public HostApiManagerActor()
+        private HostApiManagerActor()
         {
             var subscribeAbility = new SubscribeAbility(this);
             subscribeAbility.NewSubscription += subscribe =>
@@ -91,6 +94,24 @@ namespace Tauron.Application.Master.Commands.Administration.Host
             {
                 Name = name;
                 Actor = actor;
+            }
+        }
+
+        private sealed class HostApiSuperviser : UntypedActor
+        {
+            private readonly IActorRef _hostApi;
+
+            public HostApiSuperviser() => _hostApi = Context.ActorOf(() => new HostApiManagerActor(), "Manager");
+
+            protected override void OnReceive(object message) => _hostApi.Forward(message);
+
+            protected override SupervisorStrategy SupervisorStrategy()
+            {
+                return new OneForOneStrategy(
+                    Decider.From(Directive.Resume,
+                        Directive.Stop.When<ActorInitializationException>(),
+                        Directive.Stop.When<ActorKilledException>(),
+                        Directive.Stop.When<DeathPactException>()));
             }
         }
     }
