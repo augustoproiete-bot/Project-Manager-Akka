@@ -27,6 +27,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
 
         private EventSubscribtion? _subscribtion;
 
+        //TODO Refactor for StateManager
+
         public SetupBuilderViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config, DeploymentServices deploymentServices, IActionInvoker actionInvoker) 
             : base(lifetimeScope, dispatcher, actionInvoker)
         {

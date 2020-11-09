@@ -1,102 +1,27 @@
 ﻿using System;
-using System.Text;
+using System.Linq;
 using System.Windows.Threading;
 using Akka.Configuration;
 using Akka.Event;
 using Autofac;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Clusters;
-using Tauron.Application.ServiceManager.Core.Configuration;
-using Tauron.Application.ServiceManager.Core.Model;
-using Tauron.Application.ServiceManager.Properties;
+using Tauron.Application.ServiceManager.Core.Managment.Events;
+using Tauron.Application.ServiceManager.Core.Managment.States;
 using Tauron.Application.ServiceManager.ViewModels.SetupDialog;
+using Tauron.Application.Workshop.StateManagement;
 using Tauron.Application.Wpf.Model;
+using Tauron.Operations;
 
 namespace Tauron.Application.ServiceManager.ViewModels
 {
-    public sealed class ConfigurationViewModel : UiActor
+    public sealed class ConfigurationViewModel : StateUIActor
     {
-        public ConfigurationViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig appConfig, DeploymentServices deploymentServices) 
-            : base(lifetimeScope, dispatcher)
+        public ConfigurationViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IActionInvoker actionInvoker) 
+            : base(lifetimeScope, dispatcher, actionInvoker)
         {
-            void ConfigurationChanged(string text)
-            {
-                if(text == appConfig.CurrentConfig) return;
-                
-                try
-                {
-                    Log.Info("Update Configuration");
-                    ConfigurationFactory.ParseString(text);
-                    appConfig.CurrentConfig = text;
-                    deploymentServices.PushNewConfigString(text);
-                    ErrorText += string.Empty;
-                }
-                catch(Exception e)
-                {
-                    Log.Info(e, "Configuration Update Invalid");
-                    ErrorText += e.Message;
-                }
-            }
-
-            string? ValidateMongoConnection(string url)
-            {
-                try
-                {
-                    Log.Info("Check Mongo Url {URL}", url);
-
-                    var mongoUrl = MongoUrl.Create(url);
-                    var client = new MongoClient(mongoUrl);
-                    client.ListDatabases().MoveNext();
-                    return client.Cluster.Description.State == ClusterState.Connected ? null : "Cluster Disconnected";
-                }
-                catch (Exception e)
-                {
-                    Log.Warning(e, "Mongo URL Invalid {URL}", url);
-
-                    return e.Message;
-                }
-            }
-
-            void ApplyConfiguration(string connectionUrl)
-            {
-                Log.Info("Update AppBase Configuration");
-
-                const string snapshot = "akka.persistence.snapshot-store.plugin = \"akka.persistence.snapshot-store.mongodb\"";
-                const string journal = "akka.persistence.journal.plugin = \"akka.persistence.journal.mongodb\"";
-                
-                const string connectionSnapshot = "akka.persistence.snapshot-store.mongodb.connection-string = \"{0}\"";
-                const string connectionJournal = "akka.persistence.journal.mongodb.connection-string = \"{0}\"";
-
-                var currentConfiguration = ConfigurationFactory.ParseString(appConfig.CurrentConfig);
-
-                bool hasBase = currentConfiguration.HasPath("akka.persistence.journal.mongodb.connection-string ")
-                                || currentConfiguration.HasPath("akka.persistence.snapshot-store.mongodb.connection-string");
-
-                if (!hasBase)
-                {
-                    Log.Info("Apply Default Configuration");
-                    currentConfiguration = ConfigurationFactory.ParseString(Resources.BaseConfig).WithFallback(currentConfiguration);
-                }
-
-                var builder = new StringBuilder();
-
-                builder
-                    .AppendLine(snapshot)
-                    .AppendLine(journal)
-                    .AppendFormat(connectionSnapshot, connectionUrl).AppendLine()
-                    .AppendFormat(connectionJournal, connectionUrl).AppendLine();
-
-                currentConfiguration = ConfigurationFactory.ParseString(builder.ToString()).WithFallback(currentConfiguration);
-
-                ConfigText += currentConfiguration.ToString(true);
-                Log.Info("AppBase Configuration Updated");
-            }
-
             ErrorText = RegisterProperty<string>(nameof(ErrorText));
 
             ConfigText = RegisterProperty<string>(nameof(ConfigText))
-                .OnChange(ConfigurationChanged)
-                .WithDefaultValue(appConfig.CurrentConfig)
                 .WithValidator(s =>
                 {
                     try
@@ -109,6 +34,9 @@ namespace Tauron.Application.ServiceManager.ViewModels
                         return e.Message;
                     }
                 });
+
+            GetState<ServicesConfigState>().Query(EmptyQuery.Instance)
+               .ContinueWith(c => ConfigText.Set(c.Result?.BaseConfiguration));
 
             IsSetupVisible = RegisterProperty<bool>(nameof(IsSetupVisible));
 
@@ -136,28 +64,23 @@ namespace Tauron.Application.ServiceManager.ViewModels
                     }
                 });
 
+            void ValidateMongoUrl()
+            {
+                var result = ServicesConfigState.MongoUrlValidator.Validate(ConnectionString.Value);
+                if (result.IsValid)
+                    ErrorText += string.Empty;
+                else
+                    ErrorText += result.Errors.FirstOrDefault()?.ErrorMessage ?? string.Empty;
+            }
+
             NewCommad
                .WithCanExecute(b => b.FromProperty(ConnectionString.IsValid))
-               .WithExecute(() => ErrorText += ValidateMongoConnection(ConnectionString) ?? string.Empty)
+               .WithExecute(ValidateMongoUrl)
                .ThenRegister("ValidateConnection");
 
             NewCommad
                .WithCanExecute(b => b.FromProperty(ConnectionString.IsValid))
-               .WithExecute(() =>
-                {
-                    try
-                    {
-                        Log.Info("Apply Connection");
-                        ValidateMongoConnection(ConnectionString);
-                        ApplyConfiguration(ConnectionString);
-                        Log.Info("Apply Connection Compled");
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Info(e, "Apply Connection Failed");
-                        ErrorText += e.Message;
-                    }
-                })
+               .ToStateAction(() => new ApplyMongoUrlAction(ConnectionString.Value))
                .ThenRegister("ApplyConnection");
         }
 
@@ -168,6 +91,16 @@ namespace Tauron.Application.ServiceManager.ViewModels
         public UIProperty<string> ErrorText { get; set; }
 
         public UIProperty<string> ConfigText { get; set; }
+
+        protected override void OnOperationCompled(IOperationResult result)
+        {
+            base.OnOperationCompled(result);
+
+            if (result.Ok)
+                ErrorText += string.Empty;
+            else if (string.IsNullOrWhiteSpace(result.Error))
+                ErrorText += result.Error ?? string.Empty;
+        }
 
         protected override void PostStop()
         {

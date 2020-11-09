@@ -11,7 +11,7 @@ namespace Tauron.Application.Wpf.Model
     public sealed class FluentCollectionPropertyRegistration<TData>
     {
         private readonly UiActor _actor;
-        private readonly ObservableCollection<TData> _collection = new ObservableCollection<TData>();
+        private ObservableCollection<TData> _collection = new ObservableCollection<TData>();
         private bool _isAsync;
 
         internal FluentCollectionPropertyRegistration(string name, UiActor actor)
@@ -24,14 +24,22 @@ namespace Tauron.Application.Wpf.Model
 
         public UIProperty<ObservableCollection<TData>> Property { get; }
 
-        public FluentCollectionPropertyRegistration<TData> AndAsync()
+        public FluentCollectionPropertyRegistration<TData> AndAsync(bool viaCollectionItSelf = false)
         {
             if (_isAsync) return this;
             _isAsync = true;
 
-            _actor.Dispatcher.Invoke(() => BindingOperations.EnableCollectionSynchronization(_collection, _actor));
+            if (viaCollectionItSelf)
+            {
+                _collection = new UIObservableCollection<TData>(_collection);
+                Property.Set(_collection);
+            }
+            else
+            {
+                _actor.Dispatcher.Invoke(() => BindingOperations.EnableCollectionSynchronization(_collection, _actor));
 
-            _actor.RegisterTerminationCallback(a => a.Dispatcher.Invoke(() => BindingOperations.DisableCollectionSynchronization(_collection)));
+                _actor.RegisterTerminationCallback(a => a.Dispatcher.Invoke(() => BindingOperations.DisableCollectionSynchronization(_collection)));
+            }
 
             Property.LockSet();
 

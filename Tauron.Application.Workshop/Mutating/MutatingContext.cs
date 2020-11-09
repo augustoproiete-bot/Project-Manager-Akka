@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using Tauron.Application.Workshop.Mutating.Changes;
 
 namespace Tauron.Application.Workshop.Mutating
@@ -35,6 +36,14 @@ namespace Tauron.Application.Workshop.Mutating
         {
             if (change != null && change != Change && newData is ICanApplyChange<TData> apply)
                 newData = apply.Apply(change);
+
+            if (Change != null && change != null && !ReferenceEquals(Change, change))
+            {
+                if (Change is MultiChange multiChange)
+                    change = new MultiChange(multiChange.Changes.Add(change));
+                else
+                    change = new MultiChange(ImmutableList<MutatingChange>.Empty.Add(change));
+            }
 
             return new MutatingContext<TData>(change, newData);
         }

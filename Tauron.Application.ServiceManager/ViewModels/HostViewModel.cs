@@ -22,10 +22,6 @@ namespace Tauron.Application.ServiceManager.ViewModels
     [UsedImplicitly]
     public sealed class HostViewModel : UiActor
     {
-        private readonly HostApi _hostConnector;
-
-        private EventSubscribtion _eventSubscribtion = EventSubscribtion.Empty;
-
         public HostViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, LocLocalizer localizer) 
             : base(lifetimeScope, dispatcher)
         {
@@ -36,7 +32,7 @@ namespace Tauron.Application.ServiceManager.ViewModels
                     eventSystem.Publish(new DisplayApplications((string) o));
             });
 
-            _hostConnector = HostApi.CreateOrGet(Context);
+            HostApi hostConnector = HostApi.CreateOrGet(Context);
 
             var commandExecutor = Context.ActorOf(Props.Create<CommandExutor>(), "HostCommand-Executor");
 
@@ -59,8 +55,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
                         if (entry == null)
                         {
                             Log.Info("Addinf Host Entry {Path}", he.Path);
-                            HostEntries.Add(new UIHostEntry(he.Path, he.Name, showApps, localizer, _hostConnector, commandExecutor,
-                                InvalidateRequerySuggested, this, _hostConnector));
+                            HostEntries.Add(new UIHostEntry(he.Path, he.Name, showApps, localizer, hostConnector, commandExecutor,
+                                InvalidateRequerySuggested, this, hostConnector));
                         }
                         else
                         {
@@ -70,18 +66,8 @@ namespace Tauron.Application.ServiceManager.ViewModels
                     }
                 });
             });
-        }
 
-        protected override void PreStart()
-        {
-            _eventSubscribtion = _hostConnector.Event<HostEntryChanged>();
-            base.PreStart();
-        }
-
-        protected override void PostStop()
-        {
-            _eventSubscribtion.Dispose();
-            base.PostStop();
+            AddResource(hostConnector.Event<HostEntryChanged>());
         }
 
         public UICollectionProperty<UIHostEntry> HostEntries { get; }

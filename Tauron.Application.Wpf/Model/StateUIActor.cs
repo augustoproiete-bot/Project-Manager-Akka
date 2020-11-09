@@ -10,6 +10,7 @@ using Tauron.Operations;
 namespace Tauron.Application.Wpf.Model
 {
     [PublicAPI]
+    [MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
     public abstract class StateUIActor : UiActor
     {
         private readonly Dictionary<Type, Action<IOperationResult>> _compledActions = new Dictionary<Type, Action<IOperationResult>>();
@@ -33,10 +34,8 @@ namespace Tauron.Application.Wpf.Model
             }
         }
 
-        public TState? GetState<TState>(string key = "") where TState : class
-        {
-            return ActionInvoker.GetState<TState>(key);
-        }
+        public TState GetState<TState>(string key = "") where TState : class 
+            => ActionInvoker.GetState<TState>(key) ?? throw new InvalidOperationException("No such State Found");
 
         public void WhenActionComnpled<TAction>(Action<IOperationResult> opsAction)
             where TAction : IStateAction

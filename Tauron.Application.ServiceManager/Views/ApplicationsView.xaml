@@ -5,9 +5,28 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Tauron.Application.ServiceManager.Views"
              xmlns:tau="http://schemas.TauronWpf.com"
+             xmlns:sync="http://schemas.syncfusion.com/wpf"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
-    </Grid>
+    <sync:TabControlExt TabScrollButtonVisibility="Auto" CloseButtonType="Hide" CloseMode="Hide">
+        <!--Binding the header text for the Tab item-->
+        <sync:TabControlExt.ItemContainerStyle>
+            <Style TargetType="sync:TabItemExt">
+                <Setter Property="HeaderTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Header, Mode=TwoWay}" />
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </sync:TabControlExt.ItemContainerStyle>
+
+        <!--Binding the content for the Tab item-->
+        <sync:TabControlExt.ContentTemplate>
+            <DataTemplate>
+                <TextBlock Text="{Binding Content}" />
+            </DataTemplate>
+        </sync:TabControlExt.ContentTemplate>
+    </sync:TabControlExt>
 </tau:UserControl>

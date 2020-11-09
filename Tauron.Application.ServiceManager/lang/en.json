@@ -55,6 +55,8 @@
   "SetupBuilderView_Error_EmptyHostName": "Name cannot be empty.",
   "SetupBuilderView_AddShortcut": "Create AutoStart shortcut",
   "SeedProcessor_AddSeedUrl_InvalidFromat": "The address has the wrong format.",
+  "ApplicationsView_GlobalManager_Header": "Manage Applications",
+  "ApplicationsView_HostsApplication_Header": "Applications@@004 {0}",
   "Common_Error": "Error",
   "Common_Warning": "Warning",
   "Common_Unkowen": "Unkowen",

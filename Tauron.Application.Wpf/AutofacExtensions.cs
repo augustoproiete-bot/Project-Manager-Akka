@@ -17,7 +17,7 @@ namespace Tauron.Application.Wpf
         {
             AutoViewLocation.AddPair(typeof(TView), typeof(TModel));
 
-            builder.RegisterType<TView>().As<TView>();
+            builder.RegisterType<TView>().As<TView>().InstancePerDependency();
             return builder.RegisterType<ViewModelActorRef<TModel>>().As<IViewModel<TModel>>().Keyed<IViewModel>(typeof(TModel)).InstancePerLifetimeScope()
                 .OnRelease(vm =>
                 {

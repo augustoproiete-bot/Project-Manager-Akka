@@ -4,9 +4,7 @@
     {
         public string HostName { get; }
 
-        public DisplayApplications(string hostName)
-        {
-            HostName = hostName;
-        }
+        public DisplayApplications(string hostName) 
+            => HostName = hostName;
     }
 }

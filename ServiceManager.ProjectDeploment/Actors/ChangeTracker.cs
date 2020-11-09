@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
-using Akka.Actor;
+﻿using Akka.Actor;
 using Akka.Streams;
 using Akka.Streams.Dsl;
 using Tauron.Application.AkkNode.Services;
-using Tauron.Application.AkkNode.Services.Core;
 using Tauron.Application.Master.Commands.Deployment.Build.Data;
 using Tauron.Application.Master.Commands.Deployment.Build.Querys;
 using Tauron.Operations;
@@ -36,7 +33,7 @@ namespace ServiceManager.ProjectDeployment.Actors
                         Log.Error(f.Cause, "Error In Change Tracker");
                         break;
                     case QueueOfferResult.QueueClosed _:
-                        Log.Warning("Unexpectem Chanche Tracker Queue Close.");
+                        Log.Warning("Unexpectem Tracker Queue Close.");
                         break;
                 }
             });

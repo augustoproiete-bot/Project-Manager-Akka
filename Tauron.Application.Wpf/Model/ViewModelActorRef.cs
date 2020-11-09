@@ -18,7 +18,7 @@ namespace Tauron.Application.Wpf.Model
     public sealed class ViewModelActorRef<TModel> : ViewModelActorRef,  IViewModel<TModel>
         where TModel : UiActor
     {
-        private readonly AtomicBoolean _isInitialized = new AtomicBoolean();
+        private bool _isInitialized;
 
         private List<Action>? _waiter = new List<Action>();
         private  IActorRef _actor = ActorRefs.Nobody;
@@ -27,7 +27,7 @@ namespace Tauron.Application.Wpf.Model
 
         public override Type ModelType => typeof(TModel);
 
-        public override bool IsInitialized => _isInitialized.Value;
+        public override bool IsInitialized => _isInitialized;
 
         public override void AwaitInit(Action waiter)
         {
@@ -43,10 +43,10 @@ namespace Tauron.Application.Wpf.Model
         internal override void Init(IActorRef actor)
         {
             Interlocked.Exchange(ref _actor, actor);
-            _isInitialized.GetAndSet(true);
 
             lock (this)
             {
+                _isInitialized = true;
                 foreach (var action in _waiter!) 
                     action();
 

@@ -6,7 +6,6 @@ using Akka.Actor;
 using Akka.Cluster;
 using Autofac;
 using JetBrains.Annotations;
-using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.ServiceManager.Core.Managment.Events;
 using Tauron.Application.ServiceManager.Core.Managment.States;
 using Tauron.Application.ServiceManager.ViewModels.Dialogs;
@@ -31,14 +30,23 @@ namespace Tauron.Application.ServiceManager.ViewModels
     [UsedImplicitly]
     public class SeedNodeViewModel : StateUIActor
     {
-        public SeedNodeViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, AppConfig config, IActionInvoker invoker) 
+        public SeedNodeViewModel(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IActionInvoker invoker) 
             : base(lifetimeScope, dispatcher, invoker)
         {
             #region Init
-            
+
             Models = this.RegisterUiCollection<SeedUrlModel>(nameof(Models))
-               .AndAsync()
-               .AndInitialElements(config.SeedUrls.Select(SeedUrlModel.New));
+               .AndAsync();
+
+            GetState<SeedState>().Query(EmptyQuery.Instance)
+               .ContinueWith(c =>
+                {
+                    if(c.IsCompletedSuccessfully && c.Result != null)
+                        Models.AddRange(c.Result.Seeds.Select(SeedUrlModel.New));
+
+                    Log.Warning("Seed Query for Intitial Data failed");
+                });
+               
 
             DispatchAction(new TryJoinAction(), false);
 

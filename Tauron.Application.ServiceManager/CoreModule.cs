@@ -33,6 +33,8 @@ namespace Tauron.Application.ServiceManager
             builder.RegisterView<ApplicationsView, ApplicationsViewModel>();
             builder.RegisterView<ConfigurationView, ConfigurationViewModel>();
             builder.RegisterView<SetupBuilderView, SetupBuilderViewModel>();
+            builder.RegisterView<ApplicationManagerTabView, ApplicationManagerTabViewModel>();
+            builder.RegisterView<HostApplicationManagerTabView, HostApplicationManagerTabViewModel>().InstancePerDependency();
 
             builder.RegisterInstance(DialogCoordinator.Instance).As<IDialogCoordinator>();
             builder.RegisterSettingsManager(s => s.WithProvider<AppConfiguration>());

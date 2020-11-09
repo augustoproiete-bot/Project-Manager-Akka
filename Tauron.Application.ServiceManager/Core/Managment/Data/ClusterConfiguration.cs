@@ -17,12 +17,12 @@ namespace Tauron.Application.ServiceManager.Core.Managment.Data
 
         public ImmutableList<string> Seeds => Config.SeedUrls;
 
-        public string SelfAdress { get; }
+        public string SelfAddress { get; }
 
         public ClusterConfiguration(AppConfig config, ActorSystem system)
         {
             Config = config;
-            SelfAdress = Cluster.Get(system).SelfAddress.ToString();
+            SelfAddress = Cluster.Get(system).SelfAddress.ToString();
         }
 
         public ClusterConfiguration Apply(MutatingChange apply)

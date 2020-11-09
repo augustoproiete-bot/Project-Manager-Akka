@@ -17,9 +17,9 @@ namespace Tauron.Application.ServiceManager.Core.Managment.Reducer
         [Reducer]
         public static MutatingContext<ClusterConfiguration> TryJoinReducer(MutatingContext<ClusterConfiguration> state, TryJoinAction action)
         {
-            var seeds = state.Data.Config.SeedUrls;
+            var seeds = state.Data.Seeds;
             if (seeds.Count == 0)
-                seeds = seeds.Add(state.Data.Cluster.SelfAddress.ToString());
+                seeds = seeds.Add(state.Data.SelfAddress);
 
             return state.WithChange(new TryJoinEvent(seeds));
         }
@@ -29,14 +29,14 @@ namespace Tauron.Application.ServiceManager.Core.Managment.Reducer
 
         [Reducer]
         public static MutatingContext<ClusterConfiguration> AddSeedUrl(MutatingContext<ClusterConfiguration> state, AddSeedUrlAction action) 
-            => state.Data.Config.SeedUrls.Contains(action.Url) ? state : state.WithChange(new AddSeedUrlEvent(action.Url));
+            => state.Data.Seeds.Contains(action.Url) ? state : state.WithChange(new AddSeedUrlEvent(action.Url));
 
         [Validator]
         public static IValidator<RemoveSeedUrlAction> RemoveSeedValidator { get; } = new RemoveSeedUrlActionValidator();
 
         [Reducer]
         public static MutatingContext<ClusterConfiguration> RemoveSeedUlr(MutatingContext<ClusterConfiguration> state, RemoveSeedUrlAction action) 
-            => !state.Data.Config.SeedUrls.Contains(action.Url) ? state : state.WithChange(new RemoveSeedUrlEvent(action.Url, state.Data.Config.SeedUrls.Count - 1));
+            => !state.Data.Seeds.Contains(action.Url) ? state : state.WithChange(new RemoveSeedUrlEvent(action.Url, state.Data.Seeds.Count - 1));
 
         private sealed class AddSeedUrlActionValidator : AbstractValidator<AddSeedUrlAction>
         {

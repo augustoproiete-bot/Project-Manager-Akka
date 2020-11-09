@@ -1,4 +1,5 @@
-﻿using Akka.Actor;
+﻿using System.Threading.Tasks;
+using Akka.Actor;
 using Tauron.Application.ServiceManager.Core.Configuration;
 using Tauron.Application.Workshop.StateManagement.Attributes;
 using Tauron.Application.Workshop.StateManagement.DataFactorys;
@@ -17,6 +18,6 @@ namespace Tauron.Application.ServiceManager.Core.Managment.Data
             _system = system;
         }
 
-        protected override ClusterConfiguration CreateValue() => new ClusterConfiguration(_config, _system);
+        protected override Task<ClusterConfiguration> CreateValue() => Task.FromResult(new ClusterConfiguration(_config, _system));
     }
 }
