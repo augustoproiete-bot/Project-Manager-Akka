@@ -308,6 +308,16 @@ namespace Tauron.Application.Localizer.Generated
 			public string Next => __Next.Result;
 			public string Apply => __Apply.Result;
 		}
+		public sealed class RepositoryMessagesRes
+		{
+			private readonly Task<string> __GetRepo;
+			public RepositoryMessagesRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__GetRepo = LocLocalizer.ToString(loc.RequestTask("RepositoryMessages_GetRepo"));
+			}
+			public string GetRepo => __GetRepo.Result;
+		}
 		public LocLocalizer(ActorSystem system)
 		{
 			var loc = system.Loc();
@@ -325,6 +335,7 @@ namespace Tauron.Application.Localizer.Generated
 			 SeedProcessor = new SeedProcessorRes(system);
 			 ApplicationsView = new ApplicationsViewRes(system);
 			 Common = new CommonRes(system);
+			 RepositoryMessages = new RepositoryMessagesRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
 		public MemberStatusRes MemberStatus { get; }
@@ -340,6 +351,7 @@ namespace Tauron.Application.Localizer.Generated
 		public SeedProcessorRes SeedProcessor { get; }
 		public ApplicationsViewRes ApplicationsView { get; }
 		public CommonRes Common { get; }
+		public RepositoryMessagesRes RepositoryMessages { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);
 	}
