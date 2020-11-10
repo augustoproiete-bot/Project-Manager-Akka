@@ -311,12 +311,120 @@ namespace Tauron.Application.Localizer.Generated
 		public sealed class RepositoryMessagesRes
 		{
 			private readonly Task<string> __GetRepo;
+			private readonly Task<string> __UpdateRepository;
+			private readonly Task<string> __DownloadRepository;
+			private readonly Task<string> __GetRepositoryFromDatabase;
+			private readonly Task<string> __ExtractRepository;
+			private readonly Task<string> __CompressRepository;
+			private readonly Task<string> __UploadRepositoryToDatabase;
 			public RepositoryMessagesRes(ActorSystem system)
 			{
 				var loc = system.Loc();
 				__GetRepo = LocLocalizer.ToString(loc.RequestTask("RepositoryMessages_GetRepo"));
+				__UpdateRepository = LocLocalizer.ToString(loc.RequestTask("RepositoryMessages_UpdateRepository"));
+				__DownloadRepository = LocLocalizer.ToString(loc.RequestTask("RepositoryMessages_DownloadRepository"));
+				__GetRepositoryFromDatabase = LocLocalizer.ToString(loc.RequestTask("RepositoryMessages_GetRepositoryFromDatabase"));
+				__ExtractRepository = LocLocalizer.ToString(loc.RequestTask("RepositoryMessages_ExtractRepository"));
+				__CompressRepository = LocLocalizer.ToString(loc.RequestTask("RepositoryMessages_CompressRepository"));
+				__UploadRepositoryToDatabase = LocLocalizer.ToString(loc.RequestTask("RepositoryMessages_UploadRepositoryToDatabase"));
 			}
 			public string GetRepo => __GetRepo.Result;
+			public string UpdateRepository => __UpdateRepository.Result;
+			public string DownloadRepository => __DownloadRepository.Result;
+			public string GetRepositoryFromDatabase => __GetRepositoryFromDatabase.Result;
+			public string ExtractRepository => __ExtractRepository.Result;
+			public string CompressRepository => __CompressRepository.Result;
+			public string UploadRepositoryToDatabase => __UploadRepositoryToDatabase.Result;
+		}
+		public sealed class RepoErrorCodesRes
+		{
+			private readonly Task<string> __DuplicateRepository;
+			private readonly Task<string> __InvalidRepoName;
+			private readonly Task<string> __DatabaseNoRepoFound;
+			private readonly Task<string> __GithubNoRepoFound;
+			public RepoErrorCodesRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__DuplicateRepository = LocLocalizer.ToString(loc.RequestTask("RepoErrorCodes_DuplicateRepository"));
+				__InvalidRepoName = LocLocalizer.ToString(loc.RequestTask("RepoErrorCodes_InvalidRepoName"));
+				__DatabaseNoRepoFound = LocLocalizer.ToString(loc.RequestTask("RepoErrorCodes_DatabaseNoRepoFound"));
+				__GithubNoRepoFound = LocLocalizer.ToString(loc.RequestTask("RepoErrorCodes_GithubNoRepoFound"));
+			}
+			public string DuplicateRepository => __DuplicateRepository.Result;
+			public string InvalidRepoName => __InvalidRepoName.Result;
+			public string DatabaseNoRepoFound => __DatabaseNoRepoFound.Result;
+			public string GithubNoRepoFound => __GithubNoRepoFound.Result;
+		}
+		public sealed class DeploymentMessagesRes
+		{
+			private readonly Task<string> __RegisterRepository;
+			private readonly Task<string> __BuildStart;
+			private readonly Task<string> __BuildKilling;
+			private readonly Task<string> __BuildCompled;
+			private readonly Task<string> __BuildExtractingRepository;
+			private readonly Task<string> __BuildRunBuilding;
+			private readonly Task<string> __BuildTryFindProject;
+			public DeploymentMessagesRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__RegisterRepository = LocLocalizer.ToString(loc.RequestTask("DeploymentMessages_RegisterRepository"));
+				__BuildStart = LocLocalizer.ToString(loc.RequestTask("DeploymentMessages_BuildStart"));
+				__BuildKilling = LocLocalizer.ToString(loc.RequestTask("DeploymentMessages_BuildKilling"));
+				__BuildCompled = LocLocalizer.ToString(loc.RequestTask("DeploymentMessages_BuildCompled"));
+				__BuildExtractingRepository = LocLocalizer.ToString(loc.RequestTask("DeploymentMessages_BuildExtractingRepository"));
+				__BuildRunBuilding = LocLocalizer.ToString(loc.RequestTask("DeploymentMessages_BuildRunBuilding"));
+				__BuildTryFindProject = LocLocalizer.ToString(loc.RequestTask("DeploymentMessages_BuildTryFindProject"));
+			}
+			public string RegisterRepository => __RegisterRepository.Result;
+			public string BuildStart => __BuildStart.Result;
+			public string BuildKilling => __BuildKilling.Result;
+			public string BuildCompled => __BuildCompled.Result;
+			public string BuildExtractingRepository => __BuildExtractingRepository.Result;
+			public string BuildRunBuilding => __BuildRunBuilding.Result;
+			public string BuildTryFindProject => __BuildTryFindProject.Result;
+		}
+		public sealed class BuildErrorCodesRes
+		{
+			private readonly Task<string> __GeneralQueryFailed;
+			private readonly Task<string> __QueryAppNotFound;
+			private readonly Task<string> __QueryFileNotFound;
+			private readonly Task<string> __GerneralCommandError;
+			private readonly Task<string> __CommandErrorRegisterRepository;
+			private readonly Task<string> __CommandDuplicateApp;
+			private readonly Task<string> __CommandAppNotFound;
+			private readonly Task<string> __GernalBuildError;
+			private readonly Task<string> __BuildDotnetNotFound;
+			private readonly Task<string> __BuildDotNetFailed;
+			private readonly Task<string> __BuildProjectNotFound;
+			private readonly Task<string> __DatabaseError;
+			public BuildErrorCodesRes(ActorSystem system)
+			{
+				var loc = system.Loc();
+				__GeneralQueryFailed = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_GeneralQueryFailed"));
+				__QueryAppNotFound = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_QueryAppNotFound"));
+				__QueryFileNotFound = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_QueryFileNotFound"));
+				__GerneralCommandError = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_GerneralCommandError"));
+				__CommandErrorRegisterRepository = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_CommandErrorRegisterRepository"));
+				__CommandDuplicateApp = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_CommandDuplicateApp"));
+				__CommandAppNotFound = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_CommandAppNotFound"));
+				__GernalBuildError = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_GernalBuildError"));
+				__BuildDotnetNotFound = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_BuildDotnetNotFound"));
+				__BuildDotNetFailed = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_BuildDotNetFailed"));
+				__BuildProjectNotFound = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_BuildProjectNotFound"));
+				__DatabaseError = LocLocalizer.ToString(loc.RequestTask("BuildErrorCodes_DatabaseError"));
+			}
+			public string GeneralQueryFailed => __GeneralQueryFailed.Result;
+			public string QueryAppNotFound => __QueryAppNotFound.Result;
+			public string QueryFileNotFound => __QueryFileNotFound.Result;
+			public string GerneralCommandError => __GerneralCommandError.Result;
+			public string CommandErrorRegisterRepository => __CommandErrorRegisterRepository.Result;
+			public string CommandDuplicateApp => __CommandDuplicateApp.Result;
+			public string CommandAppNotFound => __CommandAppNotFound.Result;
+			public string GernalBuildError => __GernalBuildError.Result;
+			public string BuildDotnetNotFound => __BuildDotnetNotFound.Result;
+			public string BuildDotNetFailed => __BuildDotNetFailed.Result;
+			public string BuildProjectNotFound => __BuildProjectNotFound.Result;
+			public string DatabaseError => __DatabaseError.Result;
 		}
 		public LocLocalizer(ActorSystem system)
 		{
@@ -336,6 +444,9 @@ namespace Tauron.Application.Localizer.Generated
 			 ApplicationsView = new ApplicationsViewRes(system);
 			 Common = new CommonRes(system);
 			 RepositoryMessages = new RepositoryMessagesRes(system);
+			 RepoErrorCodes = new RepoErrorCodesRes(system);
+			 DeploymentMessages = new DeploymentMessagesRes(system);
+			 BuildErrorCodes = new BuildErrorCodesRes(system);
 		}
 		public MainWindowRes MainWindow { get; }
 		public MemberStatusRes MemberStatus { get; }
@@ -352,6 +463,9 @@ namespace Tauron.Application.Localizer.Generated
 		public ApplicationsViewRes ApplicationsView { get; }
 		public CommonRes Common { get; }
 		public RepositoryMessagesRes RepositoryMessages { get; }
+		public RepoErrorCodesRes RepoErrorCodes { get; }
+		public DeploymentMessagesRes DeploymentMessages { get; }
+		public BuildErrorCodesRes BuildErrorCodes { get; }
 		private static Task<string> ToString(Task<object?> task)
 			=> task.ContinueWith(t => t.Result as string ?? string.Empty);
 	}

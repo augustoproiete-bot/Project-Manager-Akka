@@ -10,7 +10,7 @@
 
         public const string BuildCompled = nameof(BuildCompled);
 
-        public const string BuildTransferRepoistory = nameof(BuildTransferRepoistory);
+        //public const string BuildTransferRepoistory = nameof(BuildTransferRepoistory);
 
         public const string BuildExtractingRepository = nameof(BuildExtractingRepository);
 
