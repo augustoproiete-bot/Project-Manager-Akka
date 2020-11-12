@@ -1,9 +1,12 @@
-﻿using System;
+﻿using Akka.Actor;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Autofac;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -15,82 +18,100 @@ namespace Tauron.Localization.Actor
     {
         private static readonly char[] Sep = {'.'};
 
-        private readonly JsonConfiguration? _configuration;
+        private readonly Maybe<JsonConfiguration> _configuration;
         private readonly Dictionary<string, Dictionary<string, JToken>> _files = new ();
         private bool _isInitialized;
 
-        public JsonLocLocStoreActor(ILifetimeScope scope) 
-            => _configuration = scope.ResolveOptional<JsonConfiguration>();
-
-        protected override object? TryQuery(string name, CultureInfo target)
+        public JsonLocLocStoreActor(ILifetimeScope scope)
         {
-            if (_configuration == null)
-                return null;
+            _configuration = Maybe.NotNull(scope.ResolveOptional<JsonConfiguration>());
 
-            EnsureInitialized();
-
-            do
-            {
-                var obj = LookUp(name, target);
-                if (obj != null)
-                    return obj;
-
-                target = target.Parent;
-            } while (!Equals(target, CultureInfo.InvariantCulture));
-
-            return LookUp(name, CultureInfo.GetCultureInfo(_configuration.Fallback));
+            Self.Tell(new BeginInit());
+            Receive<BeginInit>(EnsureInitialized);
         }
 
-        private object? LookUp(string name, CultureInfo target)
+        protected override Maybe<object> TryQuery(string name, CultureInfo target)
         {
-            if (_configuration == null) return null;
+            var fallBack = GetConfig(j => j.Fallback);
 
-            string language = _configuration.NameMode switch
-            {
-                JsonFileNameMode.Name => target.Name,
-                JsonFileNameMode.TwoLetterIsoLanguageName => target.TwoLetterISOLanguageName,
-                JsonFileNameMode.ThreeLetterIsoLanguageName => target.ThreeLetterISOLanguageName,
-                JsonFileNameMode.ThreeLetterWindowsLanguageName => target.ThreeLetterWindowsLanguageName,
-                JsonFileNameMode.DisplayName => target.DisplayName,
-                JsonFileNameMode.EnglishName => target.EnglishName,
-                _ => throw new InvalidOperationException("No Valid Json File Name Mode")
-            };
+            var data = from cultureInfo in target.ToMaybe()
+                    .Flatten(info => info.Parent.Equals(CultureInfo.InvariantCulture) ? Maybe<CultureInfo>.Nothing : info.Parent.ToMaybe())
+                    select LookUp(name, cultureInfo);
 
-            if (!_files.TryGetValue(language, out var entrys) || !entrys.TryGetValue(name, out var entry) || entry is not JValue value) return null;
-
-            return value.Type == JTokenType.String ? EscapeHelper.Decode(value.Value<string>()) : value.Value;
+            return data.FirstOrDefault(m => m.HasValue)
+                .Or((from info in fallBack select LookUp(name, CultureInfo.GetCultureInfo(info))).Collapse());
         }
 
-        private void EnsureInitialized()
+        private Maybe<object> LookUp(string name, CultureInfo target)
+        {
+            var language = 
+                from mode in GetConfig(c => c.NameMode)
+                select mode switch
+                {
+                    JsonFileNameMode.Name => target.Name,
+                    JsonFileNameMode.TwoLetterIsoLanguageName => target.TwoLetterISOLanguageName,
+                    JsonFileNameMode.ThreeLetterIsoLanguageName => target.ThreeLetterISOLanguageName,
+                    JsonFileNameMode.ThreeLetterWindowsLanguageName => target.ThreeLetterWindowsLanguageName,
+                    JsonFileNameMode.DisplayName => target.DisplayName,
+                    JsonFileNameMode.EnglishName => target.EnglishName,
+                    _ => throw new InvalidOperationException("No Valid Json File Name Mode")
+                };
+
+            var result =
+                from lang in language
+                from data in _files.Lookup(lang)
+                from entry in data.Lookup(name)
+                select Maybe.NotNull(entry as JValue);
+
+
+            return
+                from value in result.Collapse()
+                select Maybe.NotNull(value.Type == JTokenType.String ? EscapeHelper.Decode(value.Value<string>()) : value.Value);
+        }
+
+        private Maybe<TValue> GetConfig<TValue>(Func<JsonConfiguration, TValue> convert)
+            => from config in _configuration
+                select convert(config);
+
+        private void EnsureInitialized(BeginInit trigger)
         {
             if (_isInitialized) return;
-            if (_configuration == null) return;
-            _files.Clear();
 
+            var rootDic = GetConfig(j => j.RootDic);
+            rootDic.Do(_ => _files.Clear());
 
-            foreach (var file in Directory.EnumerateFiles(_configuration.RootDic, "*.json"))
+            var data =
+                from dic in rootDic
+                select
+                    from file in Directory.EnumerateFiles(dic, "*.json")
+                    select
+                        from text in File.ReadAllText(file, Encoding.UTF8).ToMaybe()
+                        let mayName = GetName(file)
+                        from name in mayName
+                        select new {Name = name, Data = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(text)};
+
+            data.Do(d =>
             {
-                //var text = File.ReadAllText(file, Encoding.UTF8);
-                using var stream = new FileStream(file, FileMode.Open);
-                var text = new StreamReader(stream, Encoding.UTF8).ReadToEnd();
-                var name = GetName(file);
-                if (string.IsNullOrWhiteSpace(name)) return;
-
-                _files[name] = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(text);
-            }
+                foreach (var readData in from e in d
+                                     where e.HasValue
+                                     select e.Value) 
+                    _files.Add(readData.Name, readData.Data);
+            });
 
             _isInitialized = true;
         }
 
-        private static string? GetName(string fileName)
+        private static Maybe<string> GetName(string fileName)
         {
             var data = Path.GetFileNameWithoutExtension(fileName).Split(Sep, StringSplitOptions.RemoveEmptyEntries);
-            return data.Length switch
+            return Maybe.NotNull(data.Length switch
             {
                 2 => data[1],
                 1 => data[0],
                 _ => null
-            };
+            });
         }
+
+        private sealed record BeginInit;
     }
 }

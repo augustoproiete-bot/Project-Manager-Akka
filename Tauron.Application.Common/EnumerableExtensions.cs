@@ -17,7 +17,7 @@ namespace Tauron
             return item;
         }
 
-        public static void ShiftElements<T>([CanBeNull] this T[] array, int oldIndex, int newIndex)
+        public static void ShiftElements<T>(this T[]? array, int oldIndex, int newIndex)
         {
             if (array == null) return;
 
@@ -36,21 +36,17 @@ namespace Tauron
             array[newIndex] = tmp;
         }
 
-        public static string Concat(this IEnumerable<string> strings)
-        {
-            return string.Concat(strings);
-        }
+        public static string Concat(this IEnumerable<string> strings) 
+            => string.Concat(strings);
 
-        public static string Concat([NotNull] this IEnumerable<object> objects)
-        {
-            return string.Concat(objects);
-        }
+        public static string Concat([NotNull] this IEnumerable<object> objects) 
+            => string.Concat(objects);
 
-        public static void Foreach<TValue>(this IEnumerable<TValue> enumerator, [NotNull] Action<TValue> action)
-        {
-            foreach (var value in enumerator)
-                action(value);
-        }
+        //public static void Foreach<TValue>(this IEnumerable<TValue> enumerator, [NotNull] Action<TValue> action)
+        //{
+        //    foreach (var value in enumerator)
+        //        action(value);
+        //}
 
         public static IEnumerable<T> SkipLast<T>([NotNull] this IEnumerable<T> source, int count)
         {

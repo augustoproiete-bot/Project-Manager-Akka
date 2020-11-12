@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using Akka.Actor;
+using Functional.Maybe;
 using Tauron.Localization.Provider;
 
 namespace Tauron.Localization.Actor
@@ -14,7 +15,9 @@ namespace Tauron.Localization.Actor
 
         public LocCoordinator(IEnumerable<ILocStoreProducer> producers)
         {
-            producers.Foreach(sp => Context.ActorOf(sp.GetProps(), sp.Name));
+            foreach (var locStoreProducer in producers)
+                Context.ActorOf(locStoreProducer.GetProps(), locStoreProducer.Name);
+
             Receive<RequestLocValue>(RequestLocValueHandler);
             Receive<LocStoreActorBase.QueryResponse>(QueryResponseHandler);
             Receive<SendInvalidate>(Invalidate);
@@ -22,36 +25,39 @@ namespace Tauron.Localization.Actor
 
         private void QueryResponseHandler(LocStoreActorBase.QueryResponse obj)
         {
-            if (!_requests.Remove(obj.Id, out var request)) return;
+            var (result, id) = obj;
 
-            request.Sender.Tell(new ResponseLocValue(obj.Value, request.Key));
+            var action = 
+                from request in _requests.TryRemove(id)
+                let originalSender = request.Sender
+                let requerstKey = request.Key
+                select new Action(() => originalSender.Tell(new ResponseLocValue(result, requerstKey)));
+
+            action.Do(a => a());
         }
 
         private void RequestLocValueHandler(RequestLocValue msg)
         {
-            var request = new Request(Context.Sender, msg.Key);
+            var (key, cultureInfo) = msg;
+            var request = new Request(Context.Sender, key);
             var opId = Guid.NewGuid().ToString();
 
             _requests[opId] = request;
 
             foreach (var actorRef in Context.GetChildren())
-                actorRef.Tell(new LocStoreActorBase.QueryRequest(request.Key, opId, msg.Lang));
+                actorRef.Tell(new LocStoreActorBase.QueryRequest(request.Key, opId, cultureInfo));
 
             Timers.StartSingleTimer(Guid.NewGuid(), new SendInvalidate(opId), TimeSpan.FromSeconds(10));
         }
 
-        private void Invalidate(SendInvalidate op)
-        {
-            if (!_requests.Remove(op.OpId, out var request)) return;
-
-            request.Sender.Tell(new ResponseLocValue(null, request.Key));
-        }
+        private void Invalidate(SendInvalidate op) 
+            => QueryResponseHandler(new LocStoreActorBase.QueryResponse(Maybe<object>.Nothing, op.OpId));
 
         private sealed record SendInvalidate(string OpId);
 
         public sealed record RequestLocValue(string Key, CultureInfo Lang);
 
-        public sealed record ResponseLocValue(object? Result, string Key);
+        public sealed record ResponseLocValue(Maybe<object> Result, string Key);
 
         private sealed record Request(IActorRef Sender, string Key);
     }

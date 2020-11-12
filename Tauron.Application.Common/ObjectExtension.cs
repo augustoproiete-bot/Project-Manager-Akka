@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using Functional.Maybe;
 using JetBrains.Annotations;
 
 namespace Tauron
@@ -33,70 +33,15 @@ namespace Tauron
                     d.Dispose();
             }
         }
+        
+        public static DateTime CutSecond(this DateTime source) 
+            => new DateTime(source.Year, source.Month, source.Day, source.Hour, source.Minute, 0);
 
-        public static TResult To<TInput, TResult>(this TInput input, Func<TInput, TResult> transformer)
-            => transformer(input);
-
-        //public static TResult To<TInput, TResult>(this TInput input, Func<TInput, TResult> transformer)
-        //    where TInput : class where TResult : class
-        //    => transformer(input);
-
-        public static TType DoAnd<TType>(this TType item, params Action<TType>[] todo)
-        {
-            foreach (var action in todo) 
-                action(item);
-            return item;
-        }
-
-        public static void When<TType>(this TType target, Func<TType, bool> when, Action<TType> then)
-        {
-            if (when(target))
-                then(target);
-        }
-
-        public static void When<TType>(this TType target, Func<TType, bool> when, Action then)
-        {
-            if (when(target))
-                then();
-        }
-
-        public static TResult When<TType, TResult>(this TType target, TResult defaultValue, Func<TType, bool> when, Func<TType, TResult> then) 
-            => when(target) ? then(target) : defaultValue;
-
-        public static TResult When<TType, TResult>(this TType target, Func<TType, bool> when, Func<TResult> then, TResult falseValue)
-            => when(target) ? then() : falseValue;
-
-        public static void WhenNotEmpty(this string? target, Action<string> then)
-        {
-            if (string.IsNullOrWhiteSpace(target)) return;
-            then(target);
-        }
-
-        public static T? As<T>(this object? value) where T : class
-        {
-            return value as T;
-        }
-
-        [return: MaybeNull]
-        public static T SafeCast<T>(this object? value)
-        {
-            if (value == null) return default!;
-
-            return (T) value;
-        }
-
-        public static DateTime CutSecond(this DateTime source)
-        {
-            return new DateTime(source.Year, source.Month, source.Day, source.Hour, source.Minute, 0);
-        }
-
-        public static T? GetService<T>(this IServiceProvider provider)
+        public static Maybe<T> GetService<T>(this IServiceProvider provider)
             where T : class
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
-            var temp = provider.GetService(typeof(T));
-
-            return temp as T;
+            return Maybe.Cast<T>(provider.GetService(typeof(T)));
         }
 
         public static bool IsAlive<TType>(this WeakReference<TType> reference) where TType : class
@@ -139,7 +84,7 @@ namespace Tauron
         public static string SFormat(this string format, params object[] args) 
             => string.Format(CultureInfo.InvariantCulture, format, args);
 
-        public static TType? TypedTarget<TType>(this WeakReference<TType> reference) where TType : class 
-            => (reference.TryGetTarget(out var obj) ? obj : null)!;
+        public static Maybe<TType> TypedTarget<TType>(this WeakReference<TType> reference) where TType : class 
+            => (reference.TryGetTarget(out var obj) ? obj.ToMaybe() : Maybe<TType>.Nothing);
     }
 }

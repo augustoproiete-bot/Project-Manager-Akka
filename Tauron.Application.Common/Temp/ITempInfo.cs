@@ -1,4 +1,5 @@
 ﻿using System;
+using Functional.Maybe;
 using JetBrains.Annotations;
 
 namespace Tauron.Temp
@@ -7,6 +8,6 @@ namespace Tauron.Temp
     public interface ITempInfo : IDisposable
     {
         string FullPath { get; }
-        ITempDic? Parent { get; }
+        Maybe<ITempDic> Parent { get; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Functional.Maybe;
 using JetBrains.Annotations;
 
 namespace Tauron.Temp
@@ -22,7 +23,7 @@ namespace Tauron.Temp
         { }
 
         public TempStorage(Func<string> nameProvider, string basePath, bool deleteBasePath)
-            : base(basePath, null, nameProvider, deleteBasePath)
+            : base(basePath, Maybe<ITempDic>.Nothing, nameProvider, deleteBasePath)
         {
             WireUp();
         }

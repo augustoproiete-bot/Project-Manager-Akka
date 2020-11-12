@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using Tauron.Operations;
 
-namespace AkkaTest.Test
+namespace Tauron
 {
     [PublicAPI]
     public interface IResult<TType> : IMaybe<TType>

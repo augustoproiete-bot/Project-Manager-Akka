@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Functional.Maybe;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,7 +10,7 @@ using JetBrains.Annotations;
 namespace Tauron.Application
 {
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-    public sealed class WeakCollection<TType> : IList<TType>
+    public sealed class WeakCollection<TType> : IList<Maybe<TType>>
         where TType : class
     {
         private readonly List<WeakReference<TType>> _internalCollection = new();
@@ -18,89 +19,65 @@ namespace Tauron.Application
 
         public int EffectiveCount => _internalCollection.Count(refer => refer.IsAlive());
 
-        public TType this[int index]
+        public Maybe<TType> this[int index]
         {
-            get => _internalCollection[index].TypedTarget()!;
-            set => _internalCollection[index] = new WeakReference<TType>(value);
+            get => _internalCollection[index].TypedTarget();
+            set => value.Do(v => _internalCollection[index] = new WeakReference<TType>(v));
         }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() 
+            => GetEnumerator();
 
         public int Count => _internalCollection.Count;
 
         public bool IsReadOnly => false;
 
-        public void Add(TType item)
-        {
-            if (item == null) return;
-            _internalCollection.Add(new WeakReference<TType>(item));
-        }
+        public void Add(Maybe<TType> item) 
+            => item.Do(i => _internalCollection.Add(new WeakReference<TType>(i)));
 
         /// <summary>The clear.</summary>
-        public void Clear()
+        public void Clear() 
+            => _internalCollection.Clear();
+
+        public bool Contains(Maybe<TType> item)
         {
-            _internalCollection.Clear();
+            var item1 = item.OrElseDefault();
+            return _internalCollection.Any(it => it.TypedTarget().OrElseDefault() == item1);
         }
 
-        public bool Contains(TType item)
-        {
-            return item != null && _internalCollection.Any(it => it.TypedTarget() == item);
-        }
-
-        public void CopyTo(TType[] array, int arrayIndex)
+        public void CopyTo(Maybe<TType>[] array, int arrayIndex)
         {
             Argument.NotNull(array, nameof(array));
 
-            var index = 0;
-            for (var i = arrayIndex; i < array.Length; i++)
+            for (var i = arrayIndex; i < array.Length; i++) 
+                array[i] = _internalCollection[i].TypedTarget();
+        }
+
+        public IEnumerator<Maybe<TType>> GetEnumerator() 
+            => _internalCollection.Select(reference => reference.TypedTarget()).GetEnumerator();
+
+        public int IndexOf(Maybe<TType> item)
+        {
+            return (from realitem in item
+                select Search(realitem)).OrElse(-1);
+
+            int Search(TType it)
             {
-                TType? target = null;
-                while (target == null && index <= _internalCollection.Count)
+                int index;
+                for (index = 0; index < _internalCollection.Count; index++)
                 {
-                    target = _internalCollection[index].TypedTarget();
-                    index++;
+                    var temp = _internalCollection[index];
+                    if (temp.TypedTarget().OrElseDefault() == it) break;
                 }
 
-                if (target == null) break;
-
-                array[i] = target;
+                return index == _internalCollection.Count ? -1 : index;
             }
         }
 
-        public IEnumerator<TType> GetEnumerator()
+        public void Insert(int index, Maybe<TType> item) 
+            => item.Do(realItem =>_internalCollection.Insert(index, new WeakReference<TType>(realItem)));
+
+        public bool Remove(Maybe<TType> item)
         {
-            return
-                _internalCollection.Select(reference => reference.TypedTarget())
-                    .Where(target => target != null)
-                    .GetEnumerator()!;
-        }
-
-        public int IndexOf(TType item)
-        {
-            if (item == null) return -1;
-
-            int index;
-            for (index = 0; index < _internalCollection.Count; index++)
-            {
-                var temp = _internalCollection[index];
-                if (temp.TypedTarget() == item) break;
-            }
-
-            return index == _internalCollection.Count ? -1 : index;
-        }
-
-        public void Insert(int index, TType item)
-        {
-            if (item == null) return;
-            _internalCollection.Insert(index, new WeakReference<TType>(item));
-        }
-
-        public bool Remove(TType item)
-        {
-            if (item == null) return false;
             var index = IndexOf(item);
             if (index == -1) return false;
 
@@ -108,10 +85,8 @@ namespace Tauron.Application
             return true;
         }
 
-        public void RemoveAt(int index)
-        {
-            _internalCollection.RemoveAt(index);
-        }
+        public void RemoveAt(int index) 
+            => _internalCollection.RemoveAt(index);
 
         public event EventHandler? CleanedEvent;
 
@@ -123,10 +98,8 @@ namespace Tauron.Application
             OnCleaned();
         }
 
-        private void OnCleaned()
-        {
-            CleanedEvent?.Invoke(this, EventArgs.Empty);
-        }
+        private void OnCleaned() 
+            => CleanedEvent?.Invoke(this, EventArgs.Empty);
     }
 
     [DebuggerNonUserCode, PublicAPI]
@@ -175,16 +148,15 @@ namespace Tauron.Application
         {
             lock (this)
             {
-                Items.ToArray()
+                foreach (var weakReference in Items.ToArray()
                     .Where(it => !it.IsAlive)
-                    .ToArray()
-                    .Foreach(
-                        it =>
-                        {
-                            if (it is IDisposable dis) dis.Dispose();
+                    .ToArray())
+                {
+                    if (weakReference is IDisposable dis) dis.Dispose();
 
-                            Items.Remove(it);
-                        });
+                    Items.Remove(weakReference);
+
+                }
             }
         }
     }

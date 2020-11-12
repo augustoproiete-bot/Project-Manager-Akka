@@ -1,47 +1,21 @@
 ﻿using System.Globalization;
 using Akka.Actor;
+using Functional.Maybe;
 
 namespace Tauron.Localization.Actor
 {
-    public abstract class LocStoreActorBase : UntypedActor
+    public abstract class LocStoreActorBase : ReceiveActor
     {
-        protected sealed override void OnReceive(object message)
+        protected LocStoreActorBase()
         {
-            if (message is QueryRequest query)
-                Context.Sender.Tell(new QueryResponse(TryQuery(query.Key, query.CultureInfo), query.Id));
-            else
-                base.Unhandled(message);
+            Receive<QueryRequest>(query => Context.Sender.Tell(new QueryResponse(TryQuery(query.Key, query.CultureInfo), query.Id)));
         }
 
-        protected abstract object? TryQuery(string name, CultureInfo target);
 
-        public sealed class QueryRequest
-        {
-            public QueryRequest(string key, string id, CultureInfo cultureInfo)
-            {
-                Key = key;
-                Id = id;
-                CultureInfo = cultureInfo;
-            }
+        protected abstract Maybe<object> TryQuery(string name, CultureInfo target);
 
-            public string Key { get; }
+        public sealed record QueryRequest(string Key, string Id, CultureInfo CultureInfo);
 
-            public string Id { get; }
-
-            public CultureInfo CultureInfo { get; }
-        }
-
-        public sealed class QueryResponse
-        {
-            public QueryResponse(object? value, string id)
-            {
-                Value = value;
-                Id = id;
-            }
-
-            public object? Value { get; }
-
-            public string Id { get; }
-        }
+        public sealed record QueryResponse(Maybe<object> Value, string Id);
     }
 }

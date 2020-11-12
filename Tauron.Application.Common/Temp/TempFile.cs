@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Functional.Maybe;
 
 namespace Tauron.Temp
 {
@@ -6,7 +7,7 @@ namespace Tauron.Temp
     {
         private Stream? _targetStream;
 
-        public ITempDic Parent { get; }
+        public Maybe<ITempDic> Parent { get; }
 
         public bool NoStreamDispose { get; set; }
 
@@ -16,7 +17,7 @@ namespace Tauron.Temp
 
         public string FullPath { get; }
 
-        public TempFile(string targetPath, ITempDic parent)
+        public TempFile(string targetPath, Maybe<ITempDic> parent)
         {
             Parent = parent;
             FullPath = targetPath;

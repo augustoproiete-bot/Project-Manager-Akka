@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using FastExpressionCompiler;
+using Functional.Maybe;
 using JetBrains.Annotations;
 
 namespace Tauron
@@ -265,8 +265,8 @@ namespace Tauron
 
             return (from mem in type.GetHieratichialMembers(bindingflags)
                     let attr = mem.GetCustomAttribute<TAttribute>()
-                    where attr != null
-                    select Tuple.Create(mem, attr))!;
+                    where attr.HasValue
+                    select Tuple.Create(mem, attr.Value))!;
         }
 
         public static Func<object?, object?[]?, object?> GetMethodInvoker(this MethodInfo info, Func<IEnumerable<Type?>> arguments)
@@ -307,32 +307,31 @@ namespace Tauron
             return member.GetCustomAttributes(type, true);
         }
 
-        public static TAttribute? GetCustomAttribute<TAttribute>(this ICustomAttributeProvider provider)
+        public static Maybe<TAttribute> GetCustomAttribute<TAttribute>(this ICustomAttributeProvider provider)
             where TAttribute : Attribute
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
             return GetCustomAttribute<TAttribute>(provider, true);
         }
 
-        public static TAttribute? GetCustomAttribute<TAttribute>(this ICustomAttributeProvider provider, bool inherit)
+        public static Maybe<TAttribute> GetCustomAttribute<TAttribute>(this ICustomAttributeProvider provider, bool inherit)
             where TAttribute : Attribute
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
 
             var temp = provider.GetCustomAttributes(typeof(TAttribute), inherit).FirstOrDefault();
 
-            return temp as TAttribute;
+            return Maybe.Cast<TAttribute>(temp);
         }
 
-        public static IEnumerable<object?> GetCustomAttributes(this ICustomAttributeProvider provider, params Type[] attributeTypes)
+        public static IEnumerable<object> GetCustomAttributes(this ICustomAttributeProvider provider, params Type[] attributeTypes)
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
 
             return attributeTypes.SelectMany(attributeType => provider.GetCustomAttributes(attributeType, false));
         }
 
-        [return: MaybeNull]
-        public static TType GetInvokeMember<TType>(this MemberInfo info, object instance, params object[]? parameter)
+        public static Maybe<TType> GetInvokeMember<TType>(this MemberInfo info, object instance, params object[]? parameter)
         {
             if (info == null) throw new ArgumentNullException(nameof(info));
 
@@ -340,13 +339,15 @@ namespace Tauron
 
             return info switch
             {
-                PropertyInfo property => FastReflection.Shared.GetPropertyAccessor(property, () => property.GetIndexParameters().Select(pi => pi.ParameterType))(instance, parameter) is TType pType
-                    ? pType
-                    : default,
-                FieldInfo field => FastReflection.Shared.GetFieldAccessor(field)(instance) is TType type ? type : default,
-                MethodInfo methodInfo => FastReflection.Shared.GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, parameter) is TType mType ? mType : default,
-                ConstructorInfo constructorInfo => FastReflection.Shared.GetCreator(constructorInfo)(parameter) is TType cType ? cType : default,
-                _ => default!
+                PropertyInfo property
+                    => Maybe.Cast<TType>(FastReflection.Shared.GetPropertyAccessor(property, () => property.GetIndexParameters().Select(pi => pi.ParameterType))(instance, parameter)),
+                FieldInfo field 
+                    => Maybe.Cast<TType>(FastReflection.Shared.GetFieldAccessor(field)(instance)),
+                MethodInfo methodInfo 
+                    => Maybe.Cast<TType>(FastReflection.Shared.GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, parameter)),
+                ConstructorInfo constructorInfo 
+                    => Maybe.Cast<TType>(FastReflection.Shared.GetCreator(constructorInfo)(parameter)),
+                _ => Maybe<TType>.Nothing
             };
         }
 
@@ -366,11 +367,11 @@ namespace Tauron
             return method.GetParameters().Select(p => p.ParameterType);
         }
 
-        public static PropertyInfo? GetPropertyFromMethod(this MethodInfo method, Type implementingType)
+        public static Maybe<PropertyInfo> GetPropertyFromMethod(this MethodInfo method, Type implementingType)
         {
             if (method == null) throw new ArgumentNullException(nameof(method));
             if (implementingType == null) throw new ArgumentNullException(nameof(implementingType));
-            if (!method.IsSpecialName || method.Name.Length < 4) return null;
+            if (!method.IsSpecialName || method.Name.Length < 4) return Maybe<PropertyInfo>.Nothing;
 
             var isGetMethod = method.Name.Substring(0, 4) == "get_";
             var returnType = isGetMethod ? method.ReturnType : method.GetParameterTypes().Last();
@@ -378,19 +379,19 @@ namespace Tauron
                 ? method.GetParameterTypes()
                 : method.GetParameterTypes().SkipLast(1);
 
-            return implementingType.GetProperty(
+            return Maybe.NotNull(implementingType.GetProperty(
                 method.Name[4..],
                 DefaultBindingFlags,
                 null,
                 returnType,
                 indexerTypes.ToArray(),
-                null);
+                null));
         }
 
-        public static PropertyInfo? GetPropertyFromMethod(this MethodBase method)
+        public static Maybe<PropertyInfo> GetPropertyFromMethod(this MethodBase method)
         {
             if (method == null) throw new ArgumentNullException(nameof(method));
-            return !method.IsSpecialName ? null : method.DeclaringType?.GetProperty(method.Name[4..], DefaultBindingFlags);
+            return !method.IsSpecialName ? Maybe<PropertyInfo>.Nothing : Maybe.NotNull(method.DeclaringType?.GetProperty(method.Name[4..], DefaultBindingFlags));
         }
 
         public static Type GetSetInvokeType(this MemberInfo info)
@@ -428,14 +429,13 @@ namespace Tauron
             return attributes.Length != 0 && attributes.Any(attribute => attribute.Match(attributeToMatch));
         }
 
-        [return: MaybeNull]
-        public static TType InvokeFast<TType>(this MethodBase method, object? instance, params object?[] args)
+        public static Maybe<TType> InvokeFast<TType>(this MethodBase method, object? instance, params object?[] args)
         {
             if (method == null) throw new ArgumentNullException(nameof(method));
             return method switch
             {
-                MethodInfo methodInfo => FastReflection.Shared.GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, args) is TType mR ? mR : default,
-                ConstructorInfo constructorInfo => FastReflection.Shared.GetCreator(constructorInfo)(args) is TType cr ? cr : default,
+                MethodInfo methodInfo => FastReflection.Shared.GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, args) is TType mR ? mR.ToMaybe() : Maybe<TType>.Nothing,
+                ConstructorInfo constructorInfo => FastReflection.Shared.GetCreator(constructorInfo)(args) is TType cr ? cr.ToMaybe() : Maybe<TType>.Nothing,
                 _ => throw new ArgumentException(@"Method Not Supported", nameof(method))
             };
         }
@@ -451,6 +451,19 @@ namespace Tauron
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
             return (TEnum) Enum.Parse(typeof(TEnum), value);
+        }
+
+        public static Maybe<TEnum> TryParseEnum<TEnum>(this string value)
+            where TEnum : struct
+        {
+            try
+            {
+                return Enum.TryParse<TEnum>(value, out var result) ? result.ToMaybe() : Maybe.Nothing<TEnum>();
+            }
+            catch (ArgumentException)
+            {
+                return Maybe.Nothing<TEnum>();
+            }
         }
 
         public static TEnum TryParseEnum<TEnum>(this string value, TEnum defaultValue)
@@ -516,10 +529,10 @@ namespace Tauron
         public static object FastCreate(this ConstructorInfo info, params object[] parms) 
             => FastReflection.Shared.GetCreator(Argument.NotNull(info, nameof(info)))(parms);
 
-        public static object? GetValueFast(this PropertyInfo info, object? instance, params object[] index) 
+        public static Maybe<object> GetValueFast(this PropertyInfo info, object? instance, params object[] index) 
             => FastReflection.Shared.GetPropertyAccessor(Argument.NotNull(info, nameof(info)), () => info.GetIndexParameters().Select(pi => pi.ParameterType))(instance, index);
 
-        public static object? GetValueFast(this FieldInfo info, object? instance) 
+        public static Maybe<object> GetValueFast(this FieldInfo info, object? instance) 
             => FastReflection.Shared.GetFieldAccessor(Argument.NotNull(info, nameof(info)))(instance);
     }
 }

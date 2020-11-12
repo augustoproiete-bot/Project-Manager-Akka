@@ -2,10 +2,13 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using Functional.Maybe;
+using JetBrains.Annotations;
 using Serilog;
 
 namespace Tauron.Temp
 {
+    [PublicAPI]
     public class TempDic : DisposeableBase, ITempDic
     {
         public static readonly ITempDic Null = new TempDic();
@@ -16,10 +19,10 @@ namespace Tauron.Temp
         private readonly ConcurrentDictionary<string, ITempFile> _tempFiles = new();
 
         public string FullPath { get; }
-        public ITempDic? Parent { get; }
+        public Maybe<ITempDic> Parent { get; }
         public bool KeepAlive { get; set; }
 
-        protected TempDic(string fullPath, ITempDic? parent, Func<string> nameGenerator, bool deleteDic)
+        protected TempDic(string fullPath, Maybe<ITempDic> parent, Func<string> nameGenerator, bool deleteDic)
         {
             _nameGenerator = nameGenerator;
             _deleteDic = deleteDic;
@@ -37,6 +40,9 @@ namespace Tauron.Temp
             _nameGenerator = () => string.Empty;
         }
 
+        private Maybe<ITempDic> SelfMaybe()
+            => ((ITempDic)this).ToMaybe();
+
         private void CheckNull()
         {
             if(string.IsNullOrEmpty(FullPath))
@@ -48,7 +54,7 @@ namespace Tauron.Temp
             CheckNull();
             return _tempDics.GetOrAdd(name, s =>
             {
-                var dic = new TempDic(Path.Combine(FullPath, s), this, _nameGenerator, true);
+                var dic = new TempDic(Path.Combine(FullPath, s), SelfMaybe(), _nameGenerator, true);
                 dic.TrackDispose(() => _tempDics.TryRemove(s, out _));
                 return dic;
             });
@@ -59,7 +65,7 @@ namespace Tauron.Temp
             CheckNull();
             return _tempFiles.GetOrAdd(name, s =>
             {
-                var file = new TempFile(Path.Combine(FullPath, s), this);
+                var file = new TempFile(Path.Combine(FullPath, s), SelfMaybe());
                 file.TrackDispose(() => _tempFiles.TryRemove(s, out _));
                 return file;
             });
@@ -94,7 +100,8 @@ namespace Tauron.Temp
             try
             {
                 var dics = _tempDics.Values;
-                dics.Foreach(t => t.KeepAlive = KeepAlive);
+
+                foreach (var tempDic in dics) tempDic.KeepAlive = KeepAlive;
 
                 TryDispose(dics);
                 TryDispose(_tempFiles.Values);
