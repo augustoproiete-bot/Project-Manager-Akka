@@ -32,17 +32,15 @@ namespace Tauron.Host
         public IContainer Continer { get; }
         public ActorSystem ActorSystem { get; }
 
-        public void Dispose()
-        {
-            Continer.Dispose();
-        }
+        public void Dispose() 
+            => Continer.Dispose();
 
         public static IApplicationBuilder Create(string[]? args = null)
         {
             var builder = new Builder();
             builder.UseContentRoot(Directory.GetCurrentDirectory());
             builder
-                .ConfigureAkka(he => ConfigurationFactory.ParseString(" akka { loggers =[\"Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog\"] \n  scheduler { implementation = \"Tauron.Akka.TimerScheduler, Tauron.Application.Common\" } }"))
+                .ConfigureAkka(_ => ConfigurationFactory.ParseString(" akka { loggers =[\"Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog\"] \n  scheduler { implementation = \"Tauron.Akka.TimerScheduler, Tauron.Application.Common\" } }"))
                 .ConfigureAutoFac(cb => cb.RegisterModule<CommonModule>())
                 .Configuration(cb =>
                 {
@@ -80,12 +78,12 @@ namespace Tauron.Host
 
         private sealed class Builder : IApplicationBuilder
         {
-            private readonly List<Action<HostBuilderContext, ActorSystem>> _actorSystemConfig = new List<Action<HostBuilderContext, ActorSystem>>();
-            private readonly List<Func<HostBuilderContext, Config>> _akkaConfig = new List<Func<HostBuilderContext, Config>>();
-            private readonly List<Action<HostBuilderContext, IConfigurationBuilder>> _appConfigs = new List<Action<HostBuilderContext, IConfigurationBuilder>>();
-            private readonly List<Action<IConfigurationBuilder>> _configurationBuilders = new List<Action<IConfigurationBuilder>>();
-            private readonly List<Action<ContainerBuilder>> _containerBuilder = new List<Action<ContainerBuilder>>();
-            private readonly List<Action<HostBuilderContext, LoggerConfiguration>> _logger = new List<Action<HostBuilderContext, LoggerConfiguration>>();
+            private readonly List<Action<HostBuilderContext, ActorSystem>> _actorSystemConfig = new();
+            private readonly List<Func<HostBuilderContext, Config>> _akkaConfig = new();
+            private readonly List<Action<HostBuilderContext, IConfigurationBuilder>> _appConfigs = new();
+            private readonly List<Action<IConfigurationBuilder>> _configurationBuilders = new();
+            private readonly List<Action<ContainerBuilder>> _containerBuilder = new();
+            private readonly List<Action<HostBuilderContext, LoggerConfiguration>> _logger = new();
 
             public IApplicationBuilder ConfigureLogging(Action<HostBuilderContext, LoggerConfiguration> config)
             {

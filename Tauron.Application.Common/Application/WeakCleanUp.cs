@@ -30,7 +30,7 @@ namespace Tauron.Application
 
         public bool Equals(WeakDelegate? other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
 
             return other._reference?.Target == _reference?.Target && other._method == _method;
@@ -40,22 +40,22 @@ namespace Tauron.Application
 
         public static bool operator ==(WeakDelegate? left, WeakDelegate? right)
         {
-            var rightNull = ReferenceEquals(right, null);
+            var rightNull = right is null;
 
             return left?.Equals(right) ?? rightNull;
         }
 
         public static bool operator !=(WeakDelegate left, WeakDelegate right)
         {
-            var rightNull = ReferenceEquals(right, null);
+            var rightNull = right is null;
 
-            if (!ReferenceEquals(left, null)) return !left.Equals(right);
+            if (left is not null) return !left.Equals(right);
             return !rightNull;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
 
             return obj is WeakDelegate @delegate && Equals(@delegate);
@@ -87,7 +87,9 @@ namespace Tauron.Application
 
         private static readonly List<WeakDelegate> Actions = Initialize();
 
+#pragma warning disable IDE0052 // Ungelesene private Member entfernen
         private static Timer? _timer;
+#pragma warning restore IDE0052 // Ungelesene private Member entfernen
 
         public static void RegisterAction([NotNull] Action action)
         {
@@ -103,13 +105,15 @@ namespace Tauron.Application
             return new List<WeakDelegate>();
         }
 
-        private static void InvokeCleanUp(object state)
+        private static void InvokeCleanUp(object? state)
         {
             lock (Actions)
             {
                 var dead = new List<WeakDelegate>();
                 foreach (var weakDelegate in Actions.ToArray())
+                {
                     if (weakDelegate.IsAlive)
+                    {
                         try
                         {
                             weakDelegate.Invoke();
@@ -117,8 +121,10 @@ namespace Tauron.Application
                         catch (ApplicationException)
                         {
                         }
+                    }
                     else
                         dead.Add(weakDelegate);
+                }
 
                 dead.ForEach(del => Actions.Remove(del));
             }

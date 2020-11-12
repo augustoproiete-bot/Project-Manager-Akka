@@ -7,11 +7,11 @@ namespace Tauron.Host
     public class ApplicationLifetime : IHostApplicationLifetime, IApplicationLifetime, IDisposable
     {
         private readonly ILogger _logger = Log.ForContext<ApplicationLifetime>();
-        private readonly CancellationTokenSource _startedSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _startedSource = new();
 
-        private readonly CancellationTokenSource _stoppedSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _stoppedSource = new();
 
-        private readonly CancellationTokenSource _stoppingSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _stoppingSource = new();
 
         public void Shutdown(int exitCode)
         {
@@ -24,6 +24,8 @@ namespace Tauron.Host
             _startedSource.Dispose();
             _stoppingSource.Dispose();
             _stoppedSource.Dispose();
+
+            GC.SuppressFinalize(this);
         }
 
         public CancellationToken ApplicationStarted => _startedSource.Token;
@@ -71,7 +73,7 @@ namespace Tauron.Host
             }
         }
 
-        private void ExecuteHandlers(CancellationTokenSource cancel)
+        private static void ExecuteHandlers(CancellationTokenSource cancel)
         {
             if (!cancel.IsCancellationRequested)
                 cancel.Cancel(false);

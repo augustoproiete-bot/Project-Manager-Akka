@@ -18,15 +18,20 @@ namespace Tauron.Application
     {
         private Entry[] _entrys;
 
-        [NonSerialized] private BlockHelper _helper;
+        [NonSerialized] 
+        private BlockHelper _helper;
 
-        [NonSerialized] private IEqualityComparer<TKey> _keyEquals;
+        [NonSerialized] 
+        private IEqualityComparer<TKey> _keyEquals;
 
-        [NonSerialized] private KeyCollection _keys;
+        [NonSerialized]
+        private KeyCollection _keys;
 
-        [NonSerialized] private ValueCollection _values;
+        [NonSerialized] 
+        private ValueCollection _values;
 
-        [NonSerialized] private int _version;
+        [NonSerialized] 
+        private int _version;
 
         public ObservableDictionary()
         {
@@ -219,15 +224,14 @@ namespace Tauron.Application
             _version++;
 
             CollectionChanged?.Invoke(this, e);
-            ;
         }
 
         private void InvokePropertyChanged()
         {
             OnPropertyChangedExplicit("Item[]");
-            OnPropertyChangedExplicit("Count");
-            OnPropertyChangedExplicit("Keys");
-            OnPropertyChangedExplicit("Values");
+            OnPropertyChangedExplicit(nameof(Count));
+            OnPropertyChangedExplicit(nameof(Keys));
+            OnPropertyChangedExplicit(nameof(Values));
         }
 
         private void OnCollectionAdd(KeyValuePair<TKey, TValue> changed, int index)
@@ -328,23 +332,13 @@ namespace Tauron.Application
         private class KeyCollection : NotifyCollectionChangedBase<TKey>
         {
             public KeyCollection(ObservableDictionary<TKey, TValue> collection)
-                : base(collection)
-            {
-            }
+                : base(collection) { }
 
-            [SuppressMessage("Microsoft.Design", "CA1062:Argumente von öffentlichen Methoden validieren",
-                MessageId = "0")]
-            protected override bool Contains(Entry entry, TKey target)
-            {
-                return entry != null && Dictionary._keyEquals.Equals(entry.Key, target);
-            }
+            protected override bool Contains(Entry entry, TKey target) 
+                => entry != null && Dictionary._keyEquals.Equals(entry.Key, target);
 
-            [SuppressMessage("Microsoft.Design", "CA1062:Argumente von öffentlichen Methoden validieren",
-                MessageId = "0")]
-            protected override TKey Select(Entry entry)
-            {
-                return entry.Key;
-            }
+            protected override TKey Select(Entry entry) 
+                => entry.Key;
         }
 
         [Serializable]
@@ -449,7 +443,7 @@ namespace Tauron.Application
             private void InvokePropertyChanged()
             {
                 OnPropertyChangedExplicit("Item[]");
-                OnPropertyChangedExplicit("Count");
+                OnPropertyChangedExplicit(nameof(Count));
                 OnPropertyChangedExplicit("Keys");
                 OnPropertyChangedExplicit("Values");
             }
@@ -460,23 +454,13 @@ namespace Tauron.Application
         private class ValueCollection : NotifyCollectionChangedBase<TValue>
         {
             public ValueCollection(ObservableDictionary<TKey, TValue> collection)
-                : base(collection)
-            {
-            }
+                : base(collection) { }
 
-            [SuppressMessage("Microsoft.Design", "CA1062:Argumente von öffentlichen Methoden validieren",
-                MessageId = "0")]
-            protected override bool Contains(Entry entry, TValue target)
-            {
-                return EqualityComparer<TValue>.Default.Equals(entry.Value, target);
-            }
+            protected override bool Contains(Entry entry, TValue target) 
+                => EqualityComparer<TValue>.Default.Equals(entry.Value, target);
 
-            [SuppressMessage("Microsoft.Design", "CA1062:Argumente von öffentlichen Methoden validieren",
-                MessageId = "0")]
-            protected override TValue Select(Entry entry)
-            {
-                return entry.Value;
-            }
+            protected override TValue Select(Entry entry) 
+                => entry.Value;
         }
     }
 }

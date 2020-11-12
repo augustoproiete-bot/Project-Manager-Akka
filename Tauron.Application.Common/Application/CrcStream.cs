@@ -55,7 +55,7 @@ namespace Tauron.Application
     [PublicAPI]
     public class CrcStream : Stream
     {
-        private static uint[] _table = GenerateTable();
+        private static readonly uint[] _table = GenerateTable();
 
         private uint _readCrc = 0xFFFFFFFF;
 
@@ -97,20 +97,14 @@ namespace Tauron.Application
         /// </summary>
         public uint WriteCrc => _writeCrc ^ 0xFFFFFFFF;
 
-        public override void Flush()
-        {
-            Stream.Flush();
-        }
+        public override void Flush() 
+            => Stream.Flush();
 
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            return Stream.Seek(offset, origin);
-        }
+        public override long Seek(long offset, SeekOrigin origin) 
+            => Stream.Seek(offset, origin);
 
-        public override void SetLength(long value)
-        {
-            Stream.SetLength(value);
-        }
+        public override void SetLength(long value) 
+            => Stream.SetLength(value);
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -127,7 +121,7 @@ namespace Tauron.Application
         }
 
         [DebuggerStepThrough]
-        private uint CalculateCrc(uint crc, byte[] buffer, int offset, int count)
+        private static uint CalculateCrc(uint crc, byte[] buffer, int offset, int count)
         {
             unchecked
             {
@@ -149,10 +143,12 @@ namespace Tauron.Application
                 {
                     var crc = i;
                     for (var j = 8; j > 0; j--)
+                    {
                         if ((crc & 1) == 1)
                             crc = (crc >> 1) ^ poly;
                         else
                             crc >>= 1;
+                    }
 
                     table[i] = crc;
                 }

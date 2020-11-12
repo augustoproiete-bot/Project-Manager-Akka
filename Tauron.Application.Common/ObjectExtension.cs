@@ -136,14 +136,10 @@ namespace Tauron
         }
 
         [StringFormatMethod("format")]
-        public static string SFormat(this string format, params object[] args)
-        {
-            return string.Format(CultureInfo.InvariantCulture, format, args);
-        }
+        public static string SFormat(this string format, params object[] args) 
+            => string.Format(CultureInfo.InvariantCulture, format, args);
 
-        public static TType? TypedTarget<TType>(this WeakReference<TType> reference) where TType : class
-        {
-            return (reference.TryGetTarget(out var obj) ? obj : null)!;
-        }
+        public static TType? TypedTarget<TType>(this WeakReference<TType> reference) where TType : class 
+            => (reference.TryGetTarget(out var obj) ? obj : null)!;
     }
 }

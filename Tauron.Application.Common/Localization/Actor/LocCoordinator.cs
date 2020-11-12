@@ -8,7 +8,9 @@ namespace Tauron.Localization.Actor
 {
     public sealed class LocCoordinator : ReceiveActor, IWithTimers
     {
-        private readonly Dictionary<string, Request> _requests = new Dictionary<string, Request>();
+        private readonly Dictionary<string, Request> _requests = new ();
+
+        public ITimerScheduler Timers { get; set; } = null!;
 
         public LocCoordinator(IEnumerable<ILocStoreProducer> producers)
         {
@@ -27,7 +29,7 @@ namespace Tauron.Localization.Actor
 
         private void RequestLocValueHandler(RequestLocValue msg)
         {
-            var request = new Request(Context.Sender, msg.key);
+            var request = new Request(Context.Sender, msg.Key);
             var opId = Guid.NewGuid().ToString();
 
             _requests[opId] = request;
@@ -45,54 +47,12 @@ namespace Tauron.Localization.Actor
             request.Sender.Tell(new ResponseLocValue(null, request.Key));
         }
 
-        private sealed class SendInvalidate
-        {
+        private sealed record SendInvalidate(string OpId);
 
-            public string OpId { get; }
+        public sealed record RequestLocValue(string Key, CultureInfo Lang);
 
-            public SendInvalidate(string opId) 
-                => OpId = opId;
-        }
+        public sealed record ResponseLocValue(object? Result, string Key);
 
-        public sealed class RequestLocValue
-        {
-            public RequestLocValue(string name, CultureInfo lang)
-            {
-                key = name;
-                Lang = lang;
-            }
-
-            public string key { get; }
-
-            public CultureInfo Lang { get; }
-        }
-
-        public sealed class ResponseLocValue
-        {
-            public ResponseLocValue(object? result, string key)
-            {
-                Result = result;
-                Key = key;
-            }
-
-            public object? Result { get; }
-
-            public string Key { get; set; }
-        }
-
-        private sealed class Request
-        {
-            public Request(IActorRef sender, string key)
-            {
-                Sender = sender;
-                Key = key;
-            }
-
-            public IActorRef Sender { get; }
-
-            public string Key { get; }
-        }
-
-        public ITimerScheduler Timers { get; set; } = null!;
+        private sealed record Request(IActorRef Sender, string Key);
     }
 }

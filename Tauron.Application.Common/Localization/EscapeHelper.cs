@@ -1,15 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace Tauron.Localization
 {
+    [PublicAPI]
     public class EscapeHelper
     {
         private static class Coder
         {
             private static readonly Dictionary<string, char> Parts
-                = new Dictionary<string, char>
+                = new()
                 {
                     {"001", '\r'},
                     {"002", '\t'},

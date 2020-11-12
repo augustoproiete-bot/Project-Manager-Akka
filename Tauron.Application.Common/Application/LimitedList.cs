@@ -12,10 +12,8 @@ namespace Tauron.Application
         {
         }
 
-        public LimitedList(int limit)
-        {
-            _limit = limit;
-        }
+        public LimitedList(int limit) 
+            => _limit = limit;
 
         public int Limit
         {

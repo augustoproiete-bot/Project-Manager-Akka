@@ -1,97 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Xml;
-using System.Xml.Linq;
-using SimSharp;
+﻿
+using System;
+using AkkaTest.Test;
 
 namespace AkkaTest
 {
     internal static class Program
     {
-        private static void Main(string[] args)
+        private static void Main()
         {
-            new BankRenege().Simulate();
-            return;
+            var test = Result.Create(10); //Maybe.Just(10);
 
-            //using var stream = File.Open("test.xml", FileMode.Create);
-            //var writer = XmlWriter.Create(stream, new XmlWriterSettings
-            //{
-            //    Indent = true
-            //});
-
-            //XDocument.Load(File.Open(@"D:\IMAGES\Daten Algemein\testexport.xml", FileMode.Open)).WriteTo(writer);
-        }
-        public class BankRenege
-        {
-
-            private const int NewCustomers = 10; // Total number of customers
-            private static readonly TimeSpan IntervalCustomers = TimeSpan.FromMinutes(10.0); // Generate new customers roughly every x minutes
-            private static readonly TimeSpan MinPatience = TimeSpan.FromMinutes(1); // Min. customer patience
-            private static readonly TimeSpan MaxPatience = TimeSpan.FromMinutes(3); // Max. customer patience
-
-            private IEnumerable<Event> Source(Simulation env, Resource counter)
-            {
-                for (int i = 0; i < NewCustomers; i++)
-                {
-                    var c = Customer(env, "Customer " + i, counter, TimeSpan.FromMinutes(12.0));
-                    env.Process(c);
-                    yield return env.TimeoutExponential(IntervalCustomers);
-                }
-            }
-
-            private IEnumerable<Event> Customer(Simulation env, string name, Resource counter, TimeSpan meanTimeInBank)
-            {
-                var arrive = env.Now;
-
-                env.Log("{0} {1}: Here I am", arrive, name);
-
-                using (var req = counter.Request())
-                {
-                    // Wait for the counter or abort at the end of our tether
-                    var timeout = env.TimeoutUniform(MinPatience, MaxPatience);
-                    yield return req | timeout;
-
-                    var wait = env.Now - arrive;
-
-                    if (req.IsProcessed)
-                    {
-                        // We got the counter
-                        env.Log("{0} {1}: waited {2}", env.Now, name, wait);
-
-                        yield return env.TimeoutExponential(meanTimeInBank);
-                        env.Log("{0} {1}: Finished", env.Now, name);
-                    }
-                    else
-                    {
-                        // We reneged
-                        env.Log("{0} {1}: RENEGED after {2}", env.Now, name, wait);
-                    }
-                }
-            }
-
-            public void Simulate(int rseed = 41)
-            {
-                // Setup and start the simulation
-                var start = new DateTime(2014, 2, 1);
-                // Create an environment and start the setup process
-                var env = new Simulation(start, rseed, defaultStep: TimeSpan.FromMinutes(1));
-                env.Log("== Bank renege ==");
-                var counter = new Resource(env, capacity: 1)
-                {
-                    BreakOffTime = new SampleMonitor(name: "BreakOffTime", collect: true),
-                    Utilization = new TimeSeriesMonitor(env, name: "Utilization"),
-                    WaitingTime = new SampleMonitor(name: "Waiting time", collect: true),
-                    QueueLength = new TimeSeriesMonitor(env, name: "Queue Length", collect: true),
-                };
-                env.Process(Source(env, counter));
-                
-                env.Log(counter.BreakOffTime.Summarize());
-                env.Log(counter.Utilization.Summarize());
-                env.Log(counter.WaitingTime.Summarize());
-                env.Log(counter.QueueLength.Summarize());
-            }
+            var result = from num in test
+                         let num2 = num + 1
+                         where num > 5
+                         select num + num2;
+            
         }
     }
 }

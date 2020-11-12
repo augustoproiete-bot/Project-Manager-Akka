@@ -5,16 +5,17 @@ using JetBrains.Annotations;
 
 namespace Tauron
 {
+    #pragma warning disable CA1822 // Member als statisch markieren
     [PublicAPI]
     public class SynchronizationContextRemover : INotifyCompletion
     {
-        public static SynchronizationContextRemover Remove => new SynchronizationContextRemover();
+        public static SynchronizationContextRemover Run => new ();
 
         public bool IsCompleted => SynchronizationContext.Current == null;
 
         public void OnCompleted(Action continuation)
         {
-            SynchronizationContext current = SynchronizationContext.Current;
+            SynchronizationContext? current = SynchronizationContext.Current;
             try
             {
                 SynchronizationContext.SetSynchronizationContext(null);
@@ -31,7 +32,9 @@ namespace Tauron
             return this;
         }
 
+
         public void GetResult()
+
         {
         }
     }

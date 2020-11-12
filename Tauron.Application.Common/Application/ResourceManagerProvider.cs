@@ -10,17 +10,13 @@ namespace Tauron.Application
     public static class ResourceManagerProvider
     {
         private static readonly Dictionary<Assembly, ResourceManager> Resources =
-            new Dictionary<Assembly, ResourceManager>();
+            new();
 
-        public static void Register(ResourceManager manager, Assembly key)
-        {
-            Resources[Argument.NotNull(key, nameof(key))] = Argument.NotNull(manager, nameof(manager));
-        }
+        public static void Register(ResourceManager manager, Assembly key) 
+            => Resources[Argument.NotNull(key, nameof(key))] = Argument.NotNull(manager, nameof(manager));
 
-        public static void Remove(Assembly key)
-        {
-            Resources.Remove(key);
-        }
+        public static void Remove(Assembly key) 
+            => Resources.Remove(key);
 
         public static string? FindResource(string name, Assembly? key, bool searchEverywere = true)
         {

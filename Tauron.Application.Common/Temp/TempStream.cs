@@ -70,7 +70,7 @@ namespace Tauron.Temp
         }
 
         /// <inheritdoc />
-        public override bool Equals(object obj) => _wrappedStream.Equals(obj);
+        public override bool Equals(object? obj) => _wrappedStream.Equals(obj);
 
         /// <inheritdoc />
         public override void Flush() => _wrappedStream.Flush();
@@ -104,7 +104,7 @@ namespace Tauron.Temp
         public override void SetLength(long value) => _wrappedStream.SetLength(value);
 
         /// <inheritdoc />
-        public override string ToString() => _wrappedStream.ToString();
+        public override string? ToString() => _wrappedStream.ToString();
 
         /// <inheritdoc />
         public override void Write(byte[] buffer, int offset, int count) => _wrappedStream.Write(buffer, offset, count);

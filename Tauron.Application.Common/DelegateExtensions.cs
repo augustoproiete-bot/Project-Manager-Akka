@@ -12,7 +12,7 @@ namespace Tauron
         public static TDel? Remove<TDel>(this TDel? del1, TDel del2)
             where TDel : Delegate => Delegate.Remove(del1, del2) as TDel;
 
-        public static Transform<TSource> From<TSource>(this Func<TSource> source) => new Transform<TSource>(source);
+        public static Transform<TSource> From<TSource>(this Func<TSource> source) => new(source);
 
         public sealed class Transform<TSource>
         {

@@ -30,7 +30,7 @@ namespace Tauron.Temp
         private void WireUp() 
             => AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
 
-        private void OnProcessExit(object sender, EventArgs e)
+        private void OnProcessExit(object? sender, EventArgs e)
         {
             try
             {

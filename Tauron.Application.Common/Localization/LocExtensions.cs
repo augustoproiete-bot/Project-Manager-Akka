@@ -7,19 +7,13 @@ namespace Tauron.Localization
     [PublicAPI]
     public static class LocExtensions
     {
-        public static void RegisterLocalization(this ActorSystem system)
-        {
-            system.RegisterExtension(new LocExtensionId());
-        }
+        public static void RegisterLocalization(this ActorSystem system) 
+            => system.RegisterExtension(new LocExtensionId());
 
-        public static LocExtensionAdaptor Loc(this ActorSystem system)
-        {
-            return new LocExtensionAdaptor(system.GetExtension<LocExtension>(), system);
-        }
+        public static LocExtensionAdaptor Loc(this ActorSystem system) 
+            => new(system.GetExtension<LocExtension>(), system);
 
-        public static LocExtensionAdaptor Loc(this IActorContext context)
-        {
-            return new LocExtensionAdaptor(context.System.GetExtension<LocExtension>(), context.System);
-        }
+        public static LocExtensionAdaptor Loc(this IActorContext context) 
+            => new(context.System.GetExtension<LocExtension>(), context.System);
     }
 }

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 
 namespace Tauron.Host
 {
+    [PublicAPI]
     public static class HostExtensions
     {
         public static IApplicationBuilder UseContentRoot(this IApplicationBuilder hostBuilder, string contentRoot)

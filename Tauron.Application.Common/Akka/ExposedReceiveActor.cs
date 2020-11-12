@@ -16,7 +16,7 @@ namespace Tauron.Akka
     [PublicAPI]
     public class ExposedReceiveActor : ReceiveActor, IActorDsl, IExposedReceiveActor
     {
-        private List<IDisposable> _resources = new List<IDisposable>();
+        private readonly List<IDisposable> _resources = new();
         private Action<Exception, IActorContext>? _onPostRestart;
         private Action<IActorContext>? _onPostStop;
         private Action<Exception, object, IActorContext>? _onPreRestart;
@@ -144,7 +144,7 @@ namespace Tauron.Akka
 
         protected override SupervisorStrategy SupervisorStrategy() => _strategy ?? base.SupervisorStrategy();
 
-        protected bool CallSafe(Action exec, Action<Exception>? catching = null, Action? finalizing = null)
+        protected static bool CallSafe(Action exec, Action<Exception>? catching = null, Action? finalizing = null)
         {
             try
             {
@@ -162,7 +162,7 @@ namespace Tauron.Akka
             }
         }
 
-        protected bool CallSafe(Action exec, string logMessage, Action? finalizing = null)
+        protected bool CallSafe(Action exec, string logMessage, Action finalizing)
         {
             try
             {
@@ -176,7 +176,7 @@ namespace Tauron.Akka
             }
             finally
             {
-                finalizing?.Invoke();
+                finalizing.Invoke();
             }
         }
 
@@ -194,7 +194,7 @@ namespace Tauron.Akka
             }
         }
 
-        protected void CallSafe(Action exec, string logMessage, Action<bool>? finalizing = null)
+        protected void CallSafe(Action exec, string logMessage, Action<bool> finalizing)
         {
             var error = false;
             try
@@ -208,7 +208,7 @@ namespace Tauron.Akka
             }
             finally
             {
-                finalizing?.Invoke(error);
+                finalizing.Invoke(error);
             }
         }
 

@@ -5,6 +5,12 @@ using JetBrains.Annotations;
 
 namespace Tauron
 {
+    [PublicAPI]
+    public sealed record CopyFromArguments(long TotalLength = -1, int BufferSize = 4096, ProgressChange? ProgressChangeCallback = null, WaitHandle? StopEvent = null)
+    {
+        public TimeSpan ProgressChangeCallbackInterval { get; init; } = TimeSpan.FromSeconds(0.2);
+    }
+
     /// <summary>
     ///     A static class for basic stream operations.
     /// </summary>

@@ -10,17 +10,18 @@ using JetBrains.Annotations;
 namespace Tauron
 {
     [PublicAPI]
-    public static class ReflectionExtensions
+    public sealed class FastReflection
     {
-        private const BindingFlags DefaultBindingFlags =
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        private static readonly Lazy<FastReflection> SharedLazy = new(() => new FastReflection(), true);
 
-        private static Dictionary<ConstructorInfo, Func<object?[]?, object>> _creatorCache = new Dictionary<ConstructorInfo, Func<object?[]?, object>>();
-        private static Dictionary<PropertyInfo, Func<object?, object[], object>> _propertyAccessorCache = new Dictionary<PropertyInfo, Func<object?, object[], object>>();
-        private static Dictionary<FieldInfo, Func<object?, object?>> _fieldAccessorCache = new Dictionary<FieldInfo, Func<object?, object?>>();
-        private static Dictionary<MethodBase, Func<object?, object?[]?, object>> _methodCache = new Dictionary<MethodBase, Func<object?, object?[]?, object>>();
-        private static Dictionary<PropertyInfo, Action<object, object?[]?, object?>> _propertySetterCache = new Dictionary<PropertyInfo, Action<object, object?[]?, object?>>();
-        private static Dictionary<FieldInfo, Action<object?, object?>> _fieldSetterCache = new Dictionary<FieldInfo, Action<object?, object?>>();
+        public static FastReflection Shared => SharedLazy.Value;
+
+        private readonly Dictionary<ConstructorInfo, Func<object?[]?, object>> _creatorCache = new();
+        private readonly Dictionary<PropertyInfo, Func<object?, object[], object>> _propertyAccessorCache = new();
+        private readonly Dictionary<FieldInfo, Func<object?, object?>> _fieldAccessorCache = new();
+        private readonly Dictionary<MethodBase, Func<object?, object?[]?, object>> _methodCache = new();
+        private readonly Dictionary<PropertyInfo, Action<object, object?[]?, object?>> _propertySetterCache = new();
+        private readonly Dictionary<FieldInfo, Action<object?, object?>> _fieldSetterCache = new();
 
         private static Expression[] CreateArgumentExpressions(ParameterInfo[] paramsInfo, Expression param)
         {
@@ -39,7 +40,7 @@ namespace Tauron
             return argsExpressions;
         }
 
-        private static Func<object?[]?, object> GetCreator(ConstructorInfo constructor)
+        public Func<object?[]?, object> GetCreator(ConstructorInfo constructor)
         {
             lock (_creatorCache)
             {
@@ -60,7 +61,7 @@ namespace Tauron
                     var lambda = Expression.Lambda(typeof(Func<object[], object>), newExpression, param);
 
                     // Compile it
-                    var compiled = (Func<object?[]?, object>) lambda.CompileFast();
+                    var compiled = (Func<object?[]?, object>)lambda.CompileFast();
 
                     _creatorCache[constructor] = compiled;
 
@@ -76,7 +77,7 @@ namespace Tauron
                     var lambda = Expression.Lambda(typeof(Func<object[], object>), newExpression, param);
 
                     // Compile it
-                    var compiled = (Func<object?[]?, object>) lambda.CompileFast();
+                    var compiled = (Func<object?[]?, object>)lambda.CompileFast();
 
                     _creatorCache[constructor] = compiled;
 
@@ -86,7 +87,7 @@ namespace Tauron
             }
         }
 
-        public static Func<object?, object[], object?> GetPropertyAccessor(this PropertyInfo info, Func<IEnumerable<Type>> arguments)
+        public Func<object?, object[], object?> GetPropertyAccessor(PropertyInfo info, Func<IEnumerable<Type>> arguments)
         {
             lock (_propertyAccessorCache)
             {
@@ -116,7 +117,7 @@ namespace Tauron
             }
         }
 
-        private static Func<object?, object?> GetFieldAccessor(FieldInfo field)
+        public Func<object?, object?> GetFieldAccessor(FieldInfo field)
         {
             lock (_fieldAccessorCache)
             {
@@ -137,7 +138,7 @@ namespace Tauron
             }
         }
 
-        private static Action<object, object?[]?, object?> GetPropertySetter(PropertyInfo info)
+        public Action<object, object?[]?, object?> GetPropertySetter(PropertyInfo info)
         {
             lock (_propertySetterCache)
             {
@@ -164,7 +165,7 @@ namespace Tauron
             }
         }
 
-        private static Action<object?, object?> GetFieldSetter(FieldInfo info)
+        public Action<object?, object?> GetFieldSetter(FieldInfo info)
         {
             lock (_fieldSetterCache)
             {
@@ -184,8 +185,7 @@ namespace Tauron
             }
         }
 
-
-        public static Func<object?, object?[]?, object?> GetMethodInvoker(this MethodInfo info, Func<IEnumerable<Type?>> arguments)
+        public Func<object?, object?[]?, object?> GetMethodInvoker(MethodInfo info, Func<IEnumerable<Type?>> arguments)
         {
             lock (_methodCache)
             {
@@ -224,7 +224,7 @@ namespace Tauron
             }
         }
 
-        public static Func<object[], object>? GetCreator(Type target, Type[] arguments)
+        public Func<object[], object>? GetCreator(Type target, Type[] arguments)
         {
             // Get constructor information?
             var constructor = target.GetConstructor(arguments);
@@ -233,16 +233,18 @@ namespace Tauron
             return constructor == null ? null : GetCreator(constructor);
         }
 
-        public static object? FastCreateInstance(this Type target, params object[] parm)
-        {
-            return GetCreator(target, parm.Select(o => o.GetType()).ToArray())?.Invoke(parm);
-        }
+        public object? FastCreateInstance(Type target, params object[] parm) 
+            => GetCreator(target, parm.Select(o => o.GetType()).ToArray())?.Invoke(parm);
+    }
+
+    [PublicAPI]
+    public static class ReflectionExtensions
+    {
+        public const BindingFlags DefaultBindingFlags =
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         public static T ParseEnum<T>(this string value, bool ignoreCase)
-            where T : struct
-        {
-            return Enum.TryParse(value, ignoreCase, out T evalue) ? evalue : default;
-        }
+            where T : struct => Enum.TryParse(value, ignoreCase, out T evalue) ? evalue : default;
 
         public static IEnumerable<Tuple<MemberInfo, TAttribute>> FindMemberAttributes<TAttribute>(
             this Type type,
@@ -254,16 +256,21 @@ namespace Tauron
             if (nonPublic) bindingflags |= BindingFlags.NonPublic;
 
             if (!Enum.IsDefined(typeof(BindingFlags), BindingFlags.FlattenHierarchy))
-                return from mem in type.GetMembers(bindingflags)
-                    let attr = CustomAttributeExtensions.GetCustomAttribute<TAttribute>(mem)
-                    where attr != null
-                    select Tuple.Create(mem, attr);
+            {
+                return (from mem in type.GetMembers(bindingflags)
+                        let attr = CustomAttributeExtensions.GetCustomAttribute<TAttribute>(mem)
+                        where attr != null
+                        select Tuple.Create(mem, attr))!;
+            }
 
-            return from mem in type.GetHieratichialMembers(bindingflags)
-                let attr = mem.GetCustomAttribute<TAttribute>()
-                where attr != null
-                select Tuple.Create(mem, attr);
+            return (from mem in type.GetHieratichialMembers(bindingflags)
+                    let attr = mem.GetCustomAttribute<TAttribute>()
+                    where attr != null
+                    select Tuple.Create(mem, attr))!;
         }
+
+        public static Func<object?, object?[]?, object?> GetMethodInvoker(this MethodInfo info, Func<IEnumerable<Type?>> arguments)
+            => FastReflection.Shared.GetMethodInvoker(info, arguments);
 
         public static IEnumerable<MemberInfo> GetHieratichialMembers(this Type? type, BindingFlags flags)
         {
@@ -276,7 +283,6 @@ namespace Tauron
             }
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
         public static IEnumerable<Tuple<MemberInfo, TAttribute>> FindMemberAttributes<TAttribute>(this Type type,
             bool nonPublic) where TAttribute : Attribute
         {
@@ -315,7 +321,7 @@ namespace Tauron
 
             var temp = provider.GetCustomAttributes(typeof(TAttribute), inherit).FirstOrDefault();
 
-            return (TAttribute) temp;
+            return temp as TAttribute;
         }
 
         public static IEnumerable<object?> GetCustomAttributes(this ICustomAttributeProvider provider, params Type[] attributeTypes)
@@ -330,17 +336,16 @@ namespace Tauron
         {
             if (info == null) throw new ArgumentNullException(nameof(info));
 
-            if (parameter == null)
-                parameter = new object[0];
+            parameter ??= Array.Empty<object>();
 
             return info switch
             {
-                PropertyInfo property => GetPropertyAccessor(property, () => property.GetIndexParameters().Select(pi => pi.ParameterType))(instance, parameter) is TType pType
+                PropertyInfo property => FastReflection.Shared.GetPropertyAccessor(property, () => property.GetIndexParameters().Select(pi => pi.ParameterType))(instance, parameter) is TType pType
                     ? pType
                     : default,
-                FieldInfo field => GetFieldAccessor(field)(instance) is TType type ? type : default,
-                MethodInfo methodInfo => GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, parameter) is TType mType ? mType : default,
-                ConstructorInfo constructorInfo => GetCreator(constructorInfo)(parameter) is TType cType ? cType : default,
+                FieldInfo field => FastReflection.Shared.GetFieldAccessor(field)(instance) is TType type ? type : default,
+                MethodInfo methodInfo => FastReflection.Shared.GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, parameter) is TType mType ? mType : default,
+                ConstructorInfo constructorInfo => FastReflection.Shared.GetCreator(constructorInfo)(parameter) is TType cType ? cType : default,
                 _ => default!
             };
         }
@@ -374,7 +379,7 @@ namespace Tauron
                 : method.GetParameterTypes().SkipLast(1);
 
             return implementingType.GetProperty(
-                method.Name.Substring(4),
+                method.Name[4..],
                 DefaultBindingFlags,
                 null,
                 returnType,
@@ -385,23 +390,19 @@ namespace Tauron
         public static PropertyInfo? GetPropertyFromMethod(this MethodBase method)
         {
             if (method == null) throw new ArgumentNullException(nameof(method));
-            return !method.IsSpecialName ? null : method.DeclaringType?.GetProperty(method.Name.Substring(4), DefaultBindingFlags);
+            return !method.IsSpecialName ? null : method.DeclaringType?.GetProperty(method.Name[4..], DefaultBindingFlags);
         }
 
         public static Type GetSetInvokeType(this MemberInfo info)
         {
             if (info == null) throw new ArgumentNullException(nameof(info));
-            switch (info)
+            return info switch
             {
-                case FieldInfo field:
-                    return field.FieldType;
-                case MethodBase method:
-                    return method.GetParameterTypes().Single();
-                case PropertyInfo property:
-                    return property.PropertyType;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                FieldInfo field => field.FieldType,
+                MethodBase method => method.GetParameterTypes().Single(),
+                PropertyInfo property => property.PropertyType,
+                _ => throw new ArgumentOutOfRangeException(nameof(info))
+            };
         }
 
         public static bool HasAttribute<T>(this ICustomAttributeProvider member) where T : Attribute
@@ -433,8 +434,8 @@ namespace Tauron
             if (method == null) throw new ArgumentNullException(nameof(method));
             return method switch
             {
-                MethodInfo methodInfo => GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, args) is TType mR ? mR : default,
-                ConstructorInfo constructorInfo => GetCreator(constructorInfo)(args) is TType cr ? cr : default,
+                MethodInfo methodInfo => FastReflection.Shared.GetMethodInvoker(methodInfo, methodInfo.GetParameterTypes)(instance, args) is TType mR ? mR : default,
+                ConstructorInfo constructorInfo => FastReflection.Shared.GetCreator(constructorInfo)(args) is TType cr ? cr : default,
                 _ => throw new ArgumentException(@"Method Not Supported", nameof(method))
             };
         }
@@ -443,7 +444,7 @@ namespace Tauron
         {
             Argument.NotNull(method, nameof(method));
 
-            GetMethodInvoker(method, method.GetParameterTypes)(instance, args);
+            FastReflection.Shared.GetMethodInvoker(method, method.GetParameterTypes)(instance, args);
         }
 
         public static TEnum ParseEnum<TEnum>(this string value)
@@ -483,7 +484,7 @@ namespace Tauron
                         if (parameter.Length > 1) indexes = parameter.Skip(1).ToArray();
                     }
 
-                    GetPropertySetter(property)(instance, indexes, value);
+                    FastReflection.Shared.GetPropertySetter(property)(instance, indexes, value);
                     break;
                 }
                 case FieldInfo field:
@@ -491,7 +492,7 @@ namespace Tauron
                     object? value = null;
                     if (parameter != null) value = parameter.FirstOrDefault();
 
-                    GetFieldSetter(field)(instance, value);
+                    FastReflection.Shared.GetFieldSetter(field)(instance, value);
                     break;
                 }
                 case MethodInfo method:
@@ -506,29 +507,19 @@ namespace Tauron
             return Enum.TryParse(value, out eEnum);
         }
 
-        public static void SetFieldFast(this FieldInfo field, object target, object? value)
-        {
-            GetFieldSetter(Argument.NotNull(field, nameof(field)))(target, value);
-        }
+        public static void SetFieldFast(this FieldInfo field, object target, object? value) 
+            => FastReflection.Shared.GetFieldSetter(Argument.NotNull(field, nameof(field)))(target, value);
 
-        public static void SetValueFast(this PropertyInfo info, object target, object? value, params object[] index)
-        {
-            GetPropertySetter(Argument.NotNull(info, nameof(info)))(target, index, value);
-        }
+        public static void SetValueFast(this PropertyInfo info, object target, object? value, params object[] index) 
+            => FastReflection.Shared.GetPropertySetter(Argument.NotNull(info, nameof(info)))(target, index, value);
 
-        public static object FastCreate(this ConstructorInfo info, params object[] parms)
-        {
-            return GetCreator(Argument.NotNull(info, nameof(info)))(parms);
-        }
+        public static object FastCreate(this ConstructorInfo info, params object[] parms) 
+            => FastReflection.Shared.GetCreator(Argument.NotNull(info, nameof(info)))(parms);
 
-        public static object? GetValueFast(this PropertyInfo info, object? instance, params object[] index)
-        {
-            return GetPropertyAccessor(Argument.NotNull(info, nameof(info)), () => info.GetIndexParameters().Select(pi => pi.ParameterType))(instance, index);
-        }
+        public static object? GetValueFast(this PropertyInfo info, object? instance, params object[] index) 
+            => FastReflection.Shared.GetPropertyAccessor(Argument.NotNull(info, nameof(info)), () => info.GetIndexParameters().Select(pi => pi.ParameterType))(instance, index);
 
-        public static object? GetValueFast(this FieldInfo info, object? instance)
-        {
-            return GetFieldAccessor(Argument.NotNull(info, nameof(info)))(instance);
-        }
+        public static object? GetValueFast(this FieldInfo info, object? instance) 
+            => FastReflection.Shared.GetFieldAccessor(Argument.NotNull(info, nameof(info)))(instance);
     }
 }

@@ -16,7 +16,7 @@ namespace Tauron.Application
         private readonly string _defaultPath;
         private readonly ILogger _logger = Log.ForContext<TauronProfile>();
 
-        private readonly Dictionary<string, string> _settings = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _settings = new();
 
         protected TauronProfile(string application, string defaultPath)
         {
@@ -45,15 +45,11 @@ namespace Tauron.Application
 
         protected string? FilePath { get; private set; }
 
-        public IEnumerator<string> GetEnumerator()
-        {
-            return _settings.Select(k => k.Key).GetEnumerator();
-        }
+        public IEnumerator<string> GetEnumerator() 
+            => _settings.Select(k => k.Key).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+            => GetEnumerator();
 
         public void Delete()
         {
@@ -120,15 +116,11 @@ namespace Tauron.Application
             return !_settings.ContainsKey(cKey) ? defaultValue : _settings[cKey];
         }
 
-        public virtual int GetValue(int defaultValue, [CallerMemberName] string? key = null)
-        {
-            return int.TryParse(GetValue(null, key), out var result) ? result : defaultValue;
-        }
+        public virtual int GetValue(int defaultValue, [CallerMemberName] string? key = null) 
+            => int.TryParse(GetValue(null, key), out var result) ? result : defaultValue;
 
-        public virtual bool GetValue(bool defaultValue, [CallerMemberName] string? key = null)
-        {
-            return bool.TryParse(GetValue(null, key), out var result) ? result : defaultValue;
-        }
+        public virtual bool GetValue(bool defaultValue, [CallerMemberName] string? key = null) 
+            => bool.TryParse(GetValue(null, key), out var result) ? result : defaultValue;
 
         public virtual void SetVaue(object value, [CallerMemberName] string? key = null)
         {
@@ -136,18 +128,14 @@ namespace Tauron.Application
             Argument.NotNull(value, nameof(value));
             IlligalCharCheck(cKey);
 
-            _settings[cKey] = value.ToString();
+            _settings[cKey] = value.ToString() ?? string.Empty;
             OnPropertyChangedExplicit(cKey);
         }
 
-        private void IlligalCharCheck(string key)
-        {
-            Argument.Check(key.Contains('='), () => new ArgumentException($"The Key ({key}) Contains an Illigal Char: ="));
-        }
+        private static void IlligalCharCheck(string key) 
+            => Argument.Check(key.Contains('='), () => new ArgumentException($"The Key ({key}) Contains an Illigal Char: ="));
 
-        public void Clear()
-        {
-            _settings.Clear();
-        }
+        public void Clear() 
+            => _settings.Clear();
     }
 }

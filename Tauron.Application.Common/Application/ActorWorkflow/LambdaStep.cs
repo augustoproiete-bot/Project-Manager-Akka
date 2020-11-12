@@ -51,10 +51,10 @@ namespace Tauron.Application.ActorWorkflow
             => _onNextElement = _onNextElement.Combine(func);
 
         public void OnExecute(Func<TContext, StepId> func) 
-            => _onExecute = _onExecute.Combine((c, l) => func(c));
+            => _onExecute = _onExecute.Combine((c, _) => func(c));
 
         public void OnNextElement(Func<TContext, StepId> func) 
-            => _onNextElement = _onNextElement.Combine((c, l) =>  func(c));
+            => _onNextElement = _onNextElement.Combine((c, _) =>  func(c));
 
         public void OnFinish(Action<TContext> func) 
             => _onFinish = _onFinish.Combine(func);
@@ -64,6 +64,6 @@ namespace Tauron.Application.ActorWorkflow
 
 
         public LambdaStep<TContext> Build() 
-            => new LambdaStep<TContext>(_onExecute, _onNextElement, _onFinish, _timeout);
+            => new(_onExecute, _onNextElement, _onFinish, _timeout);
     }
 }

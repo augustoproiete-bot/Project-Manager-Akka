@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.Serialization;
 using JetBrains.Annotations;
@@ -13,28 +12,21 @@ namespace Tauron.Application
     [PublicAPI]
     [DebuggerStepThrough]
     public class GroupDictionary<TKey, TValue> : Dictionary<TKey, ICollection<TValue>>
+        where TKey : notnull
         //where TKey : class where TValue : class
     {
-        private readonly SerializationInfo? _info;
-
         private readonly Type _listType;
 
         private Type? _genericTemp;
 
-        public GroupDictionary(Type listType)
-        {
-            _listType = Argument.NotNull(listType, nameof(listType));
-        }
+        public GroupDictionary(Type listType) 
+            => _listType = Argument.NotNull(listType, nameof(listType));
 
-        public GroupDictionary()
-        {
-            _listType = typeof(List<TValue>);
-        }
+        public GroupDictionary() 
+            => _listType = typeof(List<TValue>);
 
-        public GroupDictionary(bool singleList)
-        {
-            _listType = singleList ? typeof(HashSet<TValue>) : typeof(List<TValue>);
-        }
+        public GroupDictionary(bool singleList) 
+            => _listType = singleList ? typeof(HashSet<TValue>) : typeof(List<TValue>);
 
         public GroupDictionary(GroupDictionary<TKey, TValue> groupDictionary)
             : base(groupDictionary)
@@ -43,14 +35,13 @@ namespace Tauron.Application
             _genericTemp = groupDictionary._genericTemp;
         }
 
-#pragma warning disable 628
-        [SuppressMessage("Microsoft.Design", "CA1047:DoNotDeclareProtectedMembersInSealedTypes")]
         protected GroupDictionary(SerializationInfo info, StreamingContext context)
-#pragma warning restore 628
             : base(info, context)
         {
-            _info = info;
-            _listType = (Type) info.GetValue("listType", typeof(Type));
+            if (info.GetValue("listType", typeof(Type)) is not Type listType)
+                throw new InvalidOperationException("List Type not in Serialization info");
+
+            _listType = listType;
         }
 
         public ICollection<TValue> AllValues => new AllValueCollection(this);
@@ -70,7 +61,7 @@ namespace Tauron.Application
         {
             if (!typeof(ICollection<TValue>).IsAssignableFrom(_listType)) throw new InvalidOperationException();
 
-            if (_genericTemp != null) return Activator.CreateInstance(_genericTemp);
+            if (_genericTemp != null) return Activator.CreateInstance(_genericTemp) ?? throw new InvalidOperationException("List Creation Failed");
 
             if (_listType.ContainsGenericParameters)
             {
@@ -91,7 +82,7 @@ namespace Tauron.Application
 
             if (_genericTemp == null) throw new InvalidOperationException();
 
-            return Activator.CreateInstance(_genericTemp);
+            return Activator.CreateInstance(_genericTemp) ?? throw new InvalidOperationException("List Creation Failed");
         }
 
         public void Add(TKey key)
@@ -157,8 +148,10 @@ namespace Tauron.Application
                 var vals = Values.ToArray().GetEnumerator();
                 while (keys.MoveNext() && vals.MoveNext())
                 {
-                    var coll = (ICollection<TValue>) vals.Current;
-                    var currkey = (TKey) keys.Current;
+                    var coll = vals.Current as ICollection<TValue> ?? Array.Empty<TValue>();
+                    if (keys.Current is not TKey currkey)
+                        throw new InvalidCastException();
+
                     ok |= RemoveList(coll, val);
 
                     // ReSharper disable once PossibleNullReferenceException
@@ -208,44 +201,23 @@ namespace Tauron.Application
 
             private IEnumerable<TValue> GetAll => _list.SelectMany(pair => pair.Value);
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             public int Count => GetAll.Count();
 
             public bool IsReadOnly => true;
 
-            public void Add(TValue item)
-            {
-                throw new NotSupportedException();
-            }
+            public void Add(TValue item) => throw new NotSupportedException();
 
-            public void Clear()
-            {
-                throw new NotSupportedException();
-            }
+            public void Clear() => throw new NotSupportedException();
 
-            public bool Contains(TValue item)
-            {
-                return GetAll.Contains(item);
-            }
+            public bool Contains(TValue item) => GetAll.Contains(item);
 
-            public void CopyTo(TValue[] array, int arrayIndex)
-            {
-                GetAll.ToArray().CopyTo(array, arrayIndex);
-            }
+            public void CopyTo(TValue[] array, int arrayIndex) => GetAll.ToArray().CopyTo(array, arrayIndex);
 
-            public IEnumerator<TValue> GetEnumerator()
-            {
-                return GetAll.GetEnumerator();
-            }
+            public IEnumerator<TValue> GetEnumerator() => GetAll.GetEnumerator();
 
-            public bool Remove(TValue item)
-            {
-                throw new NotSupportedException();
-            }
+            public bool Remove(TValue item) => throw new NotSupportedException();
         }
     }
 }

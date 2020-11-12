@@ -12,7 +12,7 @@ namespace Tauron.Akka
         private readonly bool _killOnFirstRespond;
         private readonly ILoggingAdapter _log = Context.GetLogger();
 
-        private readonly Dictionary<Type, Delegate> _registrations = new Dictionary<Type, Delegate>();
+        private readonly Dictionary<Type, Delegate> _registrations = new();
 
         public EventActor(bool killOnFirstRespond) => _killOnFirstRespond = killOnFirstRespond;
 

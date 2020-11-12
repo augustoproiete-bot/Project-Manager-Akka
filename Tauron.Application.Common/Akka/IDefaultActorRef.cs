@@ -8,6 +8,7 @@ namespace Tauron.Akka
     {
     }
 
+    [PublicAPI]
     public sealed class EmptyActor<TActor> : IDefaultActorRef<TActor>
     {
         public IActorRef Actor { get; } = ActorRefs.Nobody;

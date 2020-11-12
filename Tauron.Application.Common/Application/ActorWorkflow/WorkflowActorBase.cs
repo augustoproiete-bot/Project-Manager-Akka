@@ -8,6 +8,7 @@ using Tauron.Application.Workflow;
 
 namespace Tauron.Application.ActorWorkflow
 {
+    [PublicAPI]
     public abstract class LambdaWorkflowActor<TContext> : WorkflowActorBase<LambdaStep<TContext>, TContext>
         where TContext : IWorkflowContext
     {
@@ -27,14 +28,15 @@ namespace Tauron.Application.ActorWorkflow
         protected ILoggingAdapter Log { get; } = Context.GetLogger();
         protected TContext RunContext { get; private set; } = default!;
 
-        private readonly Dictionary<StepId, StepRev<TStep, TContext>> _steps = new Dictionary<StepId, StepRev<TStep, TContext>>();
-        private readonly Dictionary<Type, Delegate> _starter = new Dictionary<Type, Delegate>();
-        private readonly Dictionary<Type, Delegate> _signals = new Dictionary<Type, Delegate>();
+        private readonly Dictionary<StepId, StepRev<TStep, TContext>> _steps = new();
+        private readonly Dictionary<Type, Delegate> _starter = new();
+        private readonly Dictionary<Type, Delegate> _signals = new();
+        private readonly object _timeout = new();
+
         private Action<WorkflowResult<TContext>>? _onFinish;
         
         private bool _running;
         private bool _waiting;
-        private object _timeout = new object();
         private ChainCall? _lastCall;
         private IActorRef? _starterSender;
 
@@ -64,7 +66,9 @@ namespace Tauron.Application.ActorWorkflow
                 if (!_signals.TryGetValue(msg.GetType(), out var del)) return false;
                 Timers.Cancel(_timeout);
 
-                var id = (StepId)del.DynamicInvoke(RunContext, msg);
+                if (del.DynamicInvoke(RunContext, msg) is not StepId id)
+                    throw new InvalidOperationException("Invalid Call of Signal Delegate");
+
                 Self.Tell(new ChainCall(id).WithBase(_lastCall), _starterSender);
 
                 _lastCall = null;
@@ -80,8 +84,8 @@ namespace Tauron.Application.ActorWorkflow
         {
             switch (msg)
             {
-                case ChainCall _:
-                case LoopElement _:
+                case ChainCall:
+                case LoopElement:
                     return true;
                 case WorkflowResult<TContext> result:
                     _onFinish?.Invoke(result);

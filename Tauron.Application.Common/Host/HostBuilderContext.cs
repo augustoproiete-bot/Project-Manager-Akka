@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 
 namespace Tauron.Host
 {
+    [PublicAPI]
     public sealed class HostBuilderContext
     {
         public HostBuilderContext(IDictionary<object, object> properties, IConfiguration configuration, IHostEnvironment hostEnvironment)

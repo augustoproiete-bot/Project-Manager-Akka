@@ -12,8 +12,8 @@ namespace Tauron.Temp
 
         private readonly Func<string> _nameGenerator;
         private readonly bool _deleteDic;
-        private readonly ConcurrentDictionary<string, ITempDic> _tempDics = new ConcurrentDictionary<string, ITempDic>();
-        private readonly ConcurrentDictionary<string, ITempFile> _tempFiles = new ConcurrentDictionary<string, ITempFile>();
+        private readonly ConcurrentDictionary<string, ITempDic> _tempDics = new();
+        private readonly ConcurrentDictionary<string, ITempFile> _tempFiles = new();
 
         public string FullPath { get; }
         public ITempDic? Parent { get; }

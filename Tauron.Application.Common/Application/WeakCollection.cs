@@ -12,12 +12,9 @@ namespace Tauron.Application
     public sealed class WeakCollection<TType> : IList<TType>
         where TType : class
     {
-        private readonly List<WeakReference<TType>> _internalCollection = new List<WeakReference<TType>>();
+        private readonly List<WeakReference<TType>> _internalCollection = new();
 
-        public WeakCollection()
-        {
-            WeakCleanUp.RegisterAction(CleanUp);
-        }
+        public WeakCollection() => WeakCleanUp.RegisterAction(CleanUp);
 
         public int EffectiveCount => _internalCollection.Count(refer => refer.IsAlive());
 
@@ -132,7 +129,7 @@ namespace Tauron.Application
         }
     }
 
-    [DebuggerNonUserCode]
+    [DebuggerNonUserCode, PublicAPI]
     public class WeakReferenceCollection<TType> : Collection<TType>
         where TType : IWeakReference
     {

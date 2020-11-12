@@ -16,13 +16,11 @@ namespace Tauron.Localization.Actor
         private static readonly char[] Sep = {'.'};
 
         private readonly JsonConfiguration? _configuration;
-        private readonly Dictionary<string, Dictionary<string, JToken>> _files = new Dictionary<string, Dictionary<string, JToken>>();
+        private readonly Dictionary<string, Dictionary<string, JToken>> _files = new ();
         private bool _isInitialized;
 
-        public JsonLocLocStoreActor(ILifetimeScope scope)
-        {
-            _configuration = scope.ResolveOptional<JsonConfiguration>();
-        }
+        public JsonLocLocStoreActor(ILifetimeScope scope) 
+            => _configuration = scope.ResolveOptional<JsonConfiguration>();
 
         protected override object? TryQuery(string name, CultureInfo target)
         {
@@ -55,18 +53,12 @@ namespace Tauron.Localization.Actor
                 JsonFileNameMode.ThreeLetterWindowsLanguageName => target.ThreeLetterWindowsLanguageName,
                 JsonFileNameMode.DisplayName => target.DisplayName,
                 JsonFileNameMode.EnglishName => target.EnglishName,
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new InvalidOperationException("No Valid Json File Name Mode")
             };
 
-            if (_files.TryGetValue(language, out var entrys) &&
-                entrys.TryGetValue(name, out var entry) && entry is JValue value)
-            {
-                if (value.Type == JTokenType.String)
-                    return EscapeHelper.Decode(value.Value<string>());
-                return value.Value;
-            }
+            if (!_files.TryGetValue(language, out var entrys) || !entrys.TryGetValue(name, out var entry) || entry is not JValue value) return null;
 
-            return null;
+            return value.Type == JTokenType.String ? EscapeHelper.Decode(value.Value<string>()) : value.Value;
         }
 
         private void EnsureInitialized()
@@ -90,7 +82,7 @@ namespace Tauron.Localization.Actor
             _isInitialized = true;
         }
 
-        private string? GetName(string fileName)
+        private static string? GetName(string fileName)
         {
             var data = Path.GetFileNameWithoutExtension(fileName).Split(Sep, StringSplitOptions.RemoveEmptyEntries);
             return data.Length switch

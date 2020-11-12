@@ -11,7 +11,6 @@ namespace Tauron
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterSource<AnyConcreteTypeNotAlreadyRegisteredSource>();
-            builder.RegisterType<SynchronizationContextRemover>().AsSelf();
             builder.RegisterType<LocJsonProvider>().As<ILocStoreProducer>();
 
             builder.RegisterGeneric(typeof(ActorRefFactory<>)).AsSelf();

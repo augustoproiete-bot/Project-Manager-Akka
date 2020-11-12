@@ -13,10 +13,10 @@ namespace Tauron.Akka
     [PublicAPI]
     public sealed class TimerScheduler : SchedulerBase, IDateTimeOffsetNowTimeProvider, IDisposable
     {
-        private static readonly Stopwatch Stopwatch = new Stopwatch();
+        private static readonly Stopwatch Stopwatch = new();
 
-        private readonly ConcurrentDictionary<string, Registration> _registrations = new ConcurrentDictionary<string, Registration>();
-        private readonly BlockingCollection<(Action, IDisposable)> _toRun = new BlockingCollection<(Action, IDisposable)>();
+        private readonly ConcurrentDictionary<string, Registration> _registrations = new();
+        private readonly BlockingCollection<(Action, IDisposable)> _toRun = new();
         private int _isDiposed;
 
         public TimerScheduler(Config scheduler, ILoggingAdapter log)
@@ -25,6 +25,7 @@ namespace Tauron.Akka
             Task.Factory.StartNew(() =>
             {
                 foreach (var action in _toRun.GetConsumingEnumerable())
+                {
                     try
                     {
                         action.Item1();
@@ -34,6 +35,7 @@ namespace Tauron.Akka
                         Log.Error(e, "Error On Shedule Task");
                         action.Item2.Dispose();
                     }
+                }
 
                 _toRun.Dispose();
             }, TaskCreationOptions.LongRunning);

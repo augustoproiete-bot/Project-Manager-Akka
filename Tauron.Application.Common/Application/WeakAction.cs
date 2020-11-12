@@ -9,8 +9,6 @@ namespace Tauron.Application
     [PublicAPI]
     public sealed class WeakAction
     {
-        private readonly Type _delegateType;
-
         private readonly Type?[] _parames;
 
         public WeakAction(object? target, MethodInfo method, Type? parameterType)
@@ -21,26 +19,28 @@ namespace Tauron.Application
             MethodInfo = Argument.NotNull(method, nameof(method));
             _parames = new[] {parameterType};
 
-            _delegateType = parameterType == null
-                ? typeof(Action)
-                : typeof(Action<>).MakeGenericType(parameterType);
+            //_delegateType = parameterType == null
+            //    ? typeof(Action)
+            //    : typeof(Action<>).MakeGenericType(parameterType);
 
             ParameterCount = parameterType == null ? 0 : 1;
         }
 
-        public WeakAction([CanBeNull] object target, [NotNull] MethodInfo method)
+        public WeakAction(object? target, MethodInfo method)
         {
             MethodInfo = Argument.NotNull(method, nameof(method));
             if (target != null)
                 TargetObject = new WeakReference(target);
 
-            _parames = method.GetParameters().OrderBy(parm => parm.Position).Select(parm => parm.ParameterType).ToArray();
-            var returntype = method.ReturnType;
-            _delegateType = returntype == typeof(void)
-                ? FactoryDelegateType("System.Action", _parames.ToArray())
-                : FactoryDelegateType("System.Func", _parames.Concat(new[] {returntype}).ToArray());
+            var parames = method.GetParameters().OrderBy(parm => parm.Position).Select(parm => parm.ParameterType).ToArray();
+            _parames = parames;
 
-            ParameterCount = _parames.Length;
+            //var returntype = method.ReturnType;
+            //_delegateType = returntype == typeof(void)
+            //    ? FactoryDelegateType("System.Action", parames.ToArray())
+            //    : FactoryDelegateType("System.Func", parames.Concat(new[] {returntype}).ToArray());
+
+            ParameterCount = parames.Length;
         }
 
         public int ParameterCount { get; private set; }
@@ -58,7 +58,7 @@ namespace Tauron.Application
         {
             unchecked
             {
-                int? value = TargetObject?.Target.GetHashCode();
+                var value = TargetObject?.Target?.GetHashCode();
 
                 return ((MethodInfo != null ? MethodInfo.GetHashCode() : 0) * 397) ^ (value == null ? 0 : value.Value);
             }
@@ -70,9 +70,9 @@ namespace Tauron.Application
             return temp?.Invoke(target, parms);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
             return obj is WeakAction action && Equals(action);
         }
@@ -85,24 +85,24 @@ namespace Tauron.Application
                 : null;
         }
 
-        [NotNull]
-        private static Type FactoryDelegateType([NotNull] string name, [NotNull] Type?[] types)
-        {
-            Argument.NotNull(types, nameof(types));
-            Argument.NotNull(name, nameof(name));
+        //[NotNull]
+        //private static Type FactoryDelegateType([NotNull] string name, Type[] types)
+        //{
+        //    Argument.NotNull(types, nameof(types));
+        //    Argument.NotNull(name, nameof(name));
 
-            var type = Type.GetType(name + "`" + types.Length);
-            if (type != null)
-                return types.Length > 0 ? type.MakeGenericType(types) : Argument.CheckResult(Type.GetType(name), "Delegate Type Was Null");
+        //    var type = Type.GetType(name + "`" + types.Length);
+        //    if (type != null)
+        //        return types.Length > 0 ? type.MakeGenericType(types) : Argument.CheckResult(Type.GetType(name), "Delegate Type Was Null");
 
-            throw new InvalidOperationException();
-        }
+        //    throw new InvalidOperationException();
+        //}
     }
 
     [PublicAPI]
     public class WeakActionEvent<T>
     {
-        private readonly List<WeakAction> _delegates = new List<WeakAction>();
+        private readonly List<WeakAction> _delegates = new();
 
         public WeakActionEvent()
         {

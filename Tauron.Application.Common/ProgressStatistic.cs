@@ -7,12 +7,11 @@ namespace Tauron
 {
     public class ProgressEventArgs : EventArgs
     {
-        public ProgressEventArgs(ProgressStatistic progressStatistic)
-        {
-            ProgressStatistic = progressStatistic;
-        }
+        public ProgressEventArgs(ProgressStatistic progressStatistic) 
+            => ProgressStatistic = progressStatistic;
 
-        [PublicAPI] public ProgressStatistic ProgressStatistic { get; }
+        [PublicAPI] 
+        public ProgressStatistic ProgressStatistic { get; }
     }
 
     [Serializable]
@@ -188,18 +187,12 @@ namespace Tauron
                 if (TotalBytesToRead == -1)
                     return TimeSpan.MaxValue;
 
-                double bytesPerSecond;
-                switch (UsedEstimatingMethod)
+                var bytesPerSecond = UsedEstimatingMethod switch
                 {
-                    case EstimatingMethod.AverageBytesPerSecond:
-                        bytesPerSecond = AverageBytesPerSecond;
-                        break;
-                    case EstimatingMethod.CurrentBytesPerSecond:
-                        bytesPerSecond = CurrentBytesPerSecond;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                    EstimatingMethod.AverageBytesPerSecond => AverageBytesPerSecond,
+                    EstimatingMethod.CurrentBytesPerSecond => CurrentBytesPerSecond,
+                    _ => throw new InvalidOperationException("No Correct Estimating method")
+                };
 
                 var seconds = (TotalBytesToRead - BytesRead) / bytesPerSecond;
                 if (seconds > 60 * 60 * 24 * 200) //over 200 Days -> infinite

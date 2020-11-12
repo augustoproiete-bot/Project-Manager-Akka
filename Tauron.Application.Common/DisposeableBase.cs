@@ -8,7 +8,7 @@ namespace Tauron
     [PublicAPI]
     public abstract class DisposeableBase : IDisposable
     {
-        private AtomicBoolean _isDisposed = new AtomicBoolean();
+        private readonly AtomicBoolean _isDisposed = new();
         private Action? _tracker;
 
         public bool IsDisposed => _isDisposed.Value;
@@ -20,8 +20,11 @@ namespace Tauron
         }
 
 
-        public void Dispose() 
-            => Dispose(true);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         public void TrackDispose(Action action)
             => _tracker = _tracker.Combine(action);
