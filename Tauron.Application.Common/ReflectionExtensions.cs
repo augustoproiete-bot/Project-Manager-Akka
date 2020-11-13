@@ -458,11 +458,11 @@ namespace Tauron
         {
             try
             {
-                return Enum.TryParse<TEnum>(value, out var result) ? result.ToMaybe() : Maybe.Nothing<TEnum>();
+                return Enum.TryParse<TEnum>(value, out var result) ? result.ToMaybe() : Maybe<TEnum>.Nothing;
             }
             catch (ArgumentException)
             {
-                return Maybe.Nothing<TEnum>();
+                return Maybe<TEnum>.Nothing;
             }
         }
 
@@ -530,9 +530,9 @@ namespace Tauron
             => FastReflection.Shared.GetCreator(Argument.NotNull(info, nameof(info)))(parms);
 
         public static Maybe<object> GetValueFast(this PropertyInfo info, object? instance, params object[] index) 
-            => FastReflection.Shared.GetPropertyAccessor(Argument.NotNull(info, nameof(info)), () => info.GetIndexParameters().Select(pi => pi.ParameterType))(instance, index);
+            => Maybe.NotNull(FastReflection.Shared.GetPropertyAccessor(Argument.NotNull(info, nameof(info)), () => info.GetIndexParameters().Select(pi => pi.ParameterType))(instance, index));
 
         public static Maybe<object> GetValueFast(this FieldInfo info, object? instance) 
-            => FastReflection.Shared.GetFieldAccessor(Argument.NotNull(info, nameof(info)))(instance);
+            => Maybe.NotNull(FastReflection.Shared.GetFieldAccessor(Argument.NotNull(info, nameof(info)))(instance));
     }
 }

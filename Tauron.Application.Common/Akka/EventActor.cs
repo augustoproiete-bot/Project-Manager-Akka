@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Akka.Actor;
 using Akka.Event;
+using Akka.Util.Internal;
+using Functional.Maybe;
 using JetBrains.Annotations;
 
 namespace Tauron.Akka
@@ -14,18 +16,23 @@ namespace Tauron.Akka
 
         private readonly Dictionary<Type, Delegate> _registrations = new();
 
-        public EventActor(bool killOnFirstRespond) => _killOnFirstRespond = killOnFirstRespond;
+        private EventActor(bool killOnFirstRespond) => _killOnFirstRespond = killOnFirstRespond;
 
-        public static IEventActor From(IActorRef actorRef) 
-            => new HookEventActor(actorRef);
+        public static Maybe<IEventActor> From(IActorRef actorRef) 
+            => new HookEventActor(actorRef).ToMaybe<IEventActor>();
 
-        public static IEventActor Create(IActorRefFactory system, string? name, bool killOnFirstResponse = false) 
-            => new HookEventActor(system.ActorOf(Props.Create(() => new EventActor(killOnFirstResponse)), name));
-
-        public static IEventActor Create<TPayload>(IActorRefFactory system, Action<TPayload> handler, bool killOnFirstResponse = false)
+        public static Maybe<IEventActor> Create(IActorRefFactory system, Maybe<string> name, bool killOnFirstResponse = false)
         {
-            var temp = Create(system, null, killOnFirstResponse);
-            temp.Register(HookEvent.Create(handler));
+            return
+                from realName in name.Or(string.Empty.ToMaybe())
+                let actor = system.ActorOf(Props.Create(() => new EventActor(killOnFirstResponse)), realName)
+                select (IEventActor)new HookEventActor(actor);
+        }
+
+        public static Maybe<IEventActor> Create<TPayload>(IActorRefFactory system, Action<TPayload> handler, bool killOnFirstResponse = false)
+        {
+            var temp = Create(system, Maybe<string>.Nothing, killOnFirstResponse);
+            temp.Do(a => a.Register(HookEvent.Create(handler)));
             return temp;
         }
 
@@ -34,15 +41,16 @@ namespace Tauron.Akka
             switch (message)
             {
                 case HookEvent hookEvent:
-                    if (_registrations.TryGetValue(hookEvent.Target, out var del))
-                        del = Delegate.Combine(del, hookEvent.Invoker);
-                    else
-                        del = hookEvent.Invoker;
 
-                    _registrations[hookEvent.Target] = del;
+                    var targetDelegate =
+                        from del in _registrations.Lookup(hookEvent.Target)
+                        select Delegate.Combine(del, hookEvent.Invoker);
+
+                    _registrations.AddOrSet(hookEvent.Target, targetDelegate.OrElse(hookEvent.Invoker));
                     break;
                 default:
                     var msgType = message.GetType();
+                    
                     if (_registrations.TryGetValue(msgType, out var callDel))
                     {
                         try

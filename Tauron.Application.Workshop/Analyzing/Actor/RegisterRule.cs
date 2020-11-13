@@ -2,14 +2,6 @@
 
 namespace Tauron.Application.Workshop.Analyzing.Actor
 {
-    public sealed class RegisterRule<TWorkspace, TData>
-        where TWorkspace : WorkspaceBase<TData> where TData : class
-    {
-        public RegisterRule(IRule<TWorkspace, TData> rule)
-        {
-            Rule = rule;
-        }
-
-        public IRule<TWorkspace, TData> Rule { get; }
-    }
+    public sealed record RegisterRule<TWorkspace, TData>(IRule<TWorkspace, TData> Rule)
+        where TWorkspace : WorkspaceBase<TData> where TData : class;
 }

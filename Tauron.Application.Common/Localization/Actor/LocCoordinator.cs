@@ -55,7 +55,7 @@ namespace Tauron.Localization.Actor
 
         private sealed record SendInvalidate(string OpId);
 
-        public sealed record RequestLocValue(string Key, CultureInfo Lang);
+        public sealed record RequestLocValue(string Key, Maybe<CultureInfo> Lang);
 
         public sealed record ResponseLocValue(Maybe<object> Result, string Key);
 

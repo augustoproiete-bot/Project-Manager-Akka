@@ -30,22 +30,23 @@ namespace Tauron.Localization.Actor
             Receive<BeginInit>(EnsureInitialized);
         }
 
-        protected override Maybe<object> TryQuery(string name, CultureInfo target)
+        protected override Maybe<object> TryQuery(string name, Maybe<CultureInfo> target)
         {
             var fallBack = GetConfig(j => j.Fallback);
 
-            var data = from cultureInfo in target.ToMaybe()
+            var data = from cultureInfo in target
                     .Flatten(info => info.Parent.Equals(CultureInfo.InvariantCulture) ? Maybe<CultureInfo>.Nothing : info.Parent.ToMaybe())
-                    select LookUp(name, cultureInfo);
+                    select LookUp(name, target);
 
             return data.FirstOrDefault(m => m.HasValue)
-                .Or((from info in fallBack select LookUp(name, CultureInfo.GetCultureInfo(info))).Collapse());
+                .Or((from info in fallBack select LookUp(name, CultureInfo.GetCultureInfo(info).ToMaybe())).Collapse());
         }
 
-        private Maybe<object> LookUp(string name, CultureInfo target)
+        private Maybe<object> LookUp(string name, Maybe<CultureInfo> targetMaybe)
         {
             var language = 
                 from mode in GetConfig(c => c.NameMode)
+                from target in targetMaybe
                 select mode switch
                 {
                     JsonFileNameMode.Name => target.Name,

@@ -1,14 +1,18 @@
-﻿namespace Tauron.Application.Workshop.Analyzing
+﻿using Functional.Maybe;
+using JetBrains.Annotations;
+
+namespace Tauron.Application.Workshop.Analyzing
 {
-    public sealed class Issue
+    [PublicAPI]
+    public sealed record Issue(string RuleName, string IssueType, string Project, Maybe<object> Data)
     {
         public sealed class IssueCompleter
         {
             private readonly string _type;
             private readonly string _project;
-            private readonly object? _data;
+            private readonly Maybe<object> _data;
 
-            public IssueCompleter(string type, string project, object? data)
+            public IssueCompleter(string type, string project, Maybe<object> data)
             {
                 _type = type;
                 _project = project;
@@ -16,26 +20,11 @@
             }
 
             public Issue Build(string ruleName)
-                => new Issue(_type, _data, _project, ruleName);
+                => new (ruleName, _type, _project, _data);
         }
 
-        private Issue(string issueType, object? data, string project, string ruleName)
-        {
-            IssueType = issueType;
-            Data = data;
-            Project = project;
-            RuleName = ruleName;
-        }
-
-        public string RuleName { get; }
-
-        public string IssueType { get; }
-
-        public string Project { get; }
-
-        public object? Data { get; }
 
         public static IssueCompleter New(string type)
-            => new IssueCompleter(type, string.Empty, null);
+            => new IssueCompleter(type, string.Empty, Maybe<object>.Nothing);
     }
 }

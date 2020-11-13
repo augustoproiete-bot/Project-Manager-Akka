@@ -1,6 +1,6 @@
 ﻿namespace Tauron.Application.Workshop.Mutating.Changes
 {
-    public abstract class MutatingChange
+    public abstract record MutatingChange
     {
         public virtual TChange? Cast<TChange>()
             where TChange : MutatingChange

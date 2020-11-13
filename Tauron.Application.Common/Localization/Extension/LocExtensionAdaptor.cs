@@ -21,27 +21,30 @@ namespace Tauron.Localization.Extension
             _extension = Argument.NotNull(extension, nameof(extension));
         }
 
-        public void Request(string name, Action<object?> valueResponse, CultureInfo? info = null)
+        public void Request(string name, Action<object?> valueResponse, Maybe<CultureInfo> info = default)
         {
-            var hook = EventActor.Create(_system, null, true);
-            hook.Register(HookEvent.Create<LocCoordinator.ResponseLocValue>(res => valueResponse(res.Result)));
-            hook.Send(_extension.LocCoordinator, new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture));
+            var hook = EventActor.Create(_system, Maybe<string>.Nothing, true);
+            hook.Do(h =>
+            {
+                h.Register(HookEvent.Create<LocCoordinator.ResponseLocValue>(res => valueResponse(res.Result)));
+                h.Send(_extension.LocCoordinator, new LocCoordinator.RequestLocValue(name, info.Or(CultureInfo.CurrentUICulture)));
+            });
         }
 
-        public Maybe<object> Request(string name, CultureInfo? info = null) 
-            => _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture)).Result.Result;
+        public Maybe<object> Request(string name, Maybe<CultureInfo> info = default) 
+            => _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info.Or(CultureInfo.CurrentUICulture))).Result.Result;
 
-        public Task<Maybe<object>> RequestTask(string name, CultureInfo? info = null) 
-            => _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info ?? CultureInfo.CurrentUICulture))
+        public Task<Maybe<object>> RequestTask(string name, Maybe<CultureInfo> info = default) 
+            => _extension.LocCoordinator.Ask<LocCoordinator.ResponseLocValue>(new LocCoordinator.RequestLocValue(name, info.Or(CultureInfo.CurrentUICulture)))
                 .ContinueWith(t => t.Result.Result);
 
-        public Maybe<string> RequestString(string name, CultureInfo? info = null)
+        public Maybe<string> RequestString(string name, Maybe<CultureInfo> info = default)
         {
             return (from o in  Request(name, info)
                 select o.ToString() ?? string.Empty)!;
         }
 
-        public void RequestString(string name, Action<string> valueResponse, CultureInfo? info = null) 
+        public void RequestString(string name, Action<string> valueResponse, Maybe<CultureInfo> info = default) 
             => Request(name, o => valueResponse(o?.ToString() ?? string.Empty), info);
     }
 }

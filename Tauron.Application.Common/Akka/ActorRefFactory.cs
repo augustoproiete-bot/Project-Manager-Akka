@@ -9,15 +9,11 @@ namespace Tauron.Akka
     {
         private readonly ActorSystem _system;
 
-        public ActorRefFactory(ActorSystem system)
-        {
-            _system = system;
-        }
+        public ActorRefFactory(ActorSystem system) 
+            => _system = system;
 
-        public IActorRef Create(bool sync, string? name = null)
-        {
-            return _system.ActorOf(CreateProps(sync), name);
-        }
+        public IActorRef Create(bool sync, string? name = null) 
+            => _system.ActorOf(CreateProps(sync), name);
 
         public Props CreateProps(bool sync)
         {

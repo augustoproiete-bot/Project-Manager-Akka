@@ -55,6 +55,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Common",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Settings", "Tauron.Application.Settings\Tauron.Application.Settings.csproj", "{4FDBA9D6-4D7A-41AF-8720-6F2F45170B47}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tauron.Application.Workshop", "Tauron.Application.Workshop\Tauron.Application.Workshop.csproj", "{D75AA171-14A5-4FC4-A53D-2BD7E7EA2EB1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -129,6 +131,10 @@ Global
 		{4FDBA9D6-4D7A-41AF-8720-6F2F45170B47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4FDBA9D6-4D7A-41AF-8720-6F2F45170B47}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4FDBA9D6-4D7A-41AF-8720-6F2F45170B47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D75AA171-14A5-4FC4-A53D-2BD7E7EA2EB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D75AA171-14A5-4FC4-A53D-2BD7E7EA2EB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D75AA171-14A5-4FC4-A53D-2BD7E7EA2EB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D75AA171-14A5-4FC4-A53D-2BD7E7EA2EB1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -158,6 +164,7 @@ Global
 		{E8855451-9C4C-4EC8-91D7-98A4D3B1DD76} = {F5B1D267-145D-48AF-B4B5-7CC3826EB197}
 		{6DB916C6-66AE-48EB-BA20-D984B1FC28F0} = {E8855451-9C4C-4EC8-91D7-98A4D3B1DD76}
 		{4FDBA9D6-4D7A-41AF-8720-6F2F45170B47} = {E8855451-9C4C-4EC8-91D7-98A4D3B1DD76}
+		{D75AA171-14A5-4FC4-A53D-2BD7E7EA2EB1} = {E8855451-9C4C-4EC8-91D7-98A4D3B1DD76}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F63AD2ED-4320-43AB-8761-A3FEBC507539}

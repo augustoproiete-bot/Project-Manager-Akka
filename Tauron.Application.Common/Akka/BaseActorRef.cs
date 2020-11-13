@@ -10,10 +10,8 @@ namespace Tauron.Akka
     {
         private readonly ActorRefFactory<TActor> _builder;
 
-        protected BaseActorRef(ActorRefFactory<TActor> actorBuilder)
-        {
-            _builder = actorBuilder;
-        }
+        protected BaseActorRef(ActorRefFactory<TActor> actorBuilder) 
+            => _builder = actorBuilder;
 
         public bool IsInitialized { get; private set; }
 
@@ -25,25 +23,17 @@ namespace Tauron.Akka
 
         public event Action? Initialized;
 
-        public void Tell(object message, IActorRef sender)
-        {
-            Actor.Tell(message, sender);
-        }
+        public void Tell(object message, IActorRef sender) 
+            => Actor.Tell(message, sender);
 
-        public bool Equals(IActorRef? other)
-        {
-            return Actor.Equals(other);
-        }
+        public bool Equals(IActorRef? other) 
+            => Actor.Equals(other);
 
-        public int CompareTo(IActorRef? other)
-        {
-            return Actor.CompareTo(other);
-        }
+        public int CompareTo(IActorRef? other) 
+            => Actor.CompareTo(other);
 
-        public int CompareTo(object? obj)
-        {
-            return Actor.CompareTo(obj);
-        }
+        public int CompareTo(object? obj) 
+            => Actor.CompareTo(obj);
 
         public virtual void Init(string? name = null)
         {

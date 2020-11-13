@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Functional.Maybe;
+using System;
 using System.Collections.Generic;
 using Akka.Actor;
 using JetBrains.Annotations;
@@ -17,11 +18,11 @@ namespace Tauron.Application.Workshop.Analyzing.Rules
                 => constructor(this);
         }
 
-        protected TWorkspace Workspace { get; private set; } = null!;
+        protected Maybe<TWorkspace> Workspace { get; private set; }
 
         public abstract string Name { get; }
 
-        public IActorRef Init(IActorRefFactory superviser, TWorkspace workspace)
+        public Maybe<IActorRef> Init(IActorRefFactory superviser, Maybe<TWorkspace> workspace)
         {
             Workspace = workspace;
             return superviser.ActorOf(() => new InternalRuleActor(ActorConstruct), Name);

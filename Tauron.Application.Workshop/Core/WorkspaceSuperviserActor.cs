@@ -2,6 +2,8 @@
 using System.Collections.Immutable;
 using Akka.Actor;
 using Akka.DI.Core;
+using Akka.Event;
+using Functional.Maybe;
 using Tauron.Akka;
 using Tauron.Application.Workshop.Mutation;
 
@@ -31,19 +33,22 @@ namespace Tauron.Application.Workshop.Core
 
         private void CreateActor(SuperviseActorBase obj)
         {
-            Props? props = null;
+            Maybe<Props> props = default;
             
             try
             {
-                props = obj.Props(Context);
-                var newActor = Context.ActorOf(props, obj.Name);
+                props = obj.Props(Context).Or(DeadLetters.DeadLetter);
+
+                var actor =
+                    from prop in props
+                    select new NewActor(Context.ActorOf(prop, obj.Name));
 
                 if(Sender.IsNobody()) return;
-                Sender.Tell(new NewActor(newActor));
+                Sender.MayTell(actor);
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error on Create an new Actor {TypeName}", props?.TypeName ?? "Unkowen");
+                Log.Error(e, "Error on Create an new Actor {TypeName}", props.OrElseDefault()?.TypeName ?? "Unkowen");
 
                 if(Sender.IsNobody()) return;
                 Sender.Tell(new NewActor(ActorRefs.Nobody));
@@ -59,9 +64,20 @@ namespace Tauron.Application.Workshop.Core
                     Directive.Stop.When<DeathPactException>()));
         }
 
+        private sealed class DeadLetters : ActorBase
+        {
+            public static readonly Props DeadLetter = Props.Create<DeadLetters>();
+
+            protected override bool Receive(object message)
+            {
+                Unhandled(message);
+                return true;
+            }
+        }
+
         internal abstract class SuperviseActorBase
         {
-            public abstract Func<IUntypedActorContext, Props> Props { get; }
+            public abstract Func<IUntypedActorContext, Maybe<Props>> Props { get; }
 
             public string Name { get; }
 
@@ -70,13 +86,13 @@ namespace Tauron.Application.Workshop.Core
 
         internal sealed class SupervisePropsActor : SuperviseActorBase
         {
-            public SupervisePropsActor(Props props, string name)
+            public SupervisePropsActor(Maybe<Props> props, string name)
                 : base(name)
             {
                 Props = _ => props;
             }
 
-            public override Func<IUntypedActorContext, Props> Props { get; }
+            public override Func<IUntypedActorContext, Maybe<Props>> Props { get; }
         }
 
         internal sealed class SuperviseDiActor : SuperviseActorBase
@@ -85,14 +101,9 @@ namespace Tauron.Application.Workshop.Core
 
             public SuperviseDiActor(Type actorType, string name) : base(name) => _actorType = actorType;
 
-            public override Func<IUntypedActorContext, Props> Props => c => c.System.DI().Props(_actorType);
+            public override Func<IUntypedActorContext, Maybe<Props>> Props => c => c.System.DI().Props(_actorType).ToMaybe();
         }
 
-        internal sealed class NewActor
-        {
-            public IActorRef ActorRef { get; }
-
-            public NewActor(IActorRef actorRef) => ActorRef = actorRef;
-        }
+        internal sealed record NewActor(IActorRef ActorRef);
     }
 }

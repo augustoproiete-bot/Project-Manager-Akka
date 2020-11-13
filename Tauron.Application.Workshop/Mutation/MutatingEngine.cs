@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Core;
 using Tauron.Application.Workshop.Mutating;
@@ -36,22 +37,22 @@ namespace Tauron.Application.Workshop.Mutation
         }
 
 
-        public void Mutate(string name, Func<TData, TData?> transform, object? hash = null) 
+        public void Mutate(string name, Func<TData, Maybe<TData>> transform, Maybe<object> hash = default) 
             => Mutate(CreateMutate(name, transform, hash));
 
-        public IDataMutation CreateMutate(string name, Func<TData, TData?> transform, object? hash = null)
+        public IDataMutation CreateMutate(string name, Func<TData, Maybe<TData>> transform, Maybe<object> hash = default)
         {
             void Runner() => _responder.Push(transform(_dataSource.GetData()));
-            return new DataMutation<TData>(Runner, name, hash);
+            return new DataMutation(Runner, name, hash);
         }
 
-        public IDataMutation CreateMutate(string name, Func<TData, Task<TData?>> transform, object? hash = null)
+        public IDataMutation CreateMutate(string name, Func<TData, Task<Maybe<TData>>> transform, Maybe<object> hash = default)
         {
             async Task Runner() => _responder.Push(await transform(_dataSource.GetData()));
-            return new AsyncDataMutation<TData>(Runner, name, hash);
+            return new AsyncDataMutation(Runner, name, hash);
         }
 
-        public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null) 
+        public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Maybe<Func<TData, bool>> where = default) 
             => new EventSource<TRespond, TData>(_superviser, _mutator, transformer, where, _responder);
         
         private sealed class ResponderList : IRespondHandler<TData>

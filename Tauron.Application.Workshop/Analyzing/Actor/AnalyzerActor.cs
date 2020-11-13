@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Functional.Maybe;
+using System;
 using Akka.Actor;
 using Tauron.Application.Workshop.Mutation;
 
@@ -9,9 +10,9 @@ namespace Tauron.Application.Workshop.Analyzing.Actor
     {
         private readonly Action<RuleIssuesChanged<TWorkspace, TData>> _issesAction;
 
-        private readonly TWorkspace _workspace;
+        private readonly Maybe<TWorkspace> _workspace;
 
-        public AnalyzerActor(TWorkspace workspace, Action<RuleIssuesChanged<TWorkspace, TData>> issesAction)
+        public AnalyzerActor(Maybe<TWorkspace> workspace, Action<RuleIssuesChanged<TWorkspace, TData>> issesAction)
         {
             _workspace = workspace;
             _issesAction = issesAction;
@@ -21,13 +22,11 @@ namespace Tauron.Application.Workshop.Analyzing.Actor
 
             Receive<WatchIntrest>(wi => Context.WatchWith(wi.Target, new HandlerTerminated(wi.OnRemove)));
             Receive<HandlerTerminated>(ht => ht.Remover());
-            Receive<Terminated>(t => { });
+            Receive<Terminated>(_ => { });
         }
 
-        private void RuleIssuesChanged(RuleIssuesChanged<TWorkspace, TData> obj)
-        {
-            _issesAction(obj);
-        }
+        private void RuleIssuesChanged(RuleIssuesChanged<TWorkspace, TData> obj) 
+            => _issesAction(obj);
 
         private void RegisterRule(RegisterRule<TWorkspace, TData> obj)
         {
@@ -35,14 +34,6 @@ namespace Tauron.Application.Workshop.Analyzing.Actor
             rule.Init(Context, _workspace);
         }
 
-        private sealed class HandlerTerminated
-        {
-            public HandlerTerminated(Action remover)
-            {
-                Remover = remover;
-            }
-
-            public Action Remover { get; }
-        }
+        private sealed record HandlerTerminated(Action Remover);
     }
 }

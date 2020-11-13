@@ -1,7 +1,9 @@
 ﻿using Autofac;
+using JetBrains.Annotations;
 
 namespace Tauron.Application.Settings
 {
+    [PublicAPI]
     public sealed class SettingsConfiguration
     {
         private readonly ContainerBuilder _builder;

@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Util.Internal;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Core;
 
@@ -43,7 +44,7 @@ namespace Tauron.Application.Workshop.Mutation
         {
             _intrests.ForEach(ar => ar.Tell(respond));
             _action?.Invoke(respond);
-            _sourcesActions.Foreach(p => p.Key.Tell(IncommingEvent.From(respond, p.Value)));
+            _sourcesActions.ForEach(p => p.Key.Tell(IncommingEvent.From(respond, p.Value)));
         }
     }
 }

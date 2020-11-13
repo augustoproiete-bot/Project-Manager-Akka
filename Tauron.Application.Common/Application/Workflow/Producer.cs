@@ -18,12 +18,10 @@ namespace Tauron.Application.Workflow
 
         private StepId _lastId;
 
-        protected Producer()
-        {
-            _states = new Dictionary<StepId, StepRev<TState, TContext>>();
-        }
+        protected Producer() 
+            => _states = new Dictionary<StepId, StepRev<TState, TContext>>();
 
-        public void Begin(StepId id, [NotNull] TContext context)
+        public void Begin(StepId id, TContext context)
         {
             Argument.NotNull(context, nameof(context));
 
@@ -40,7 +38,7 @@ namespace Tauron.Application.Workflow
             return _lastId.Name == StepId.Finish.Name || _lastId.Name == StepId.Fail.Name;
         }
 
-        protected virtual bool Process(StepId id, [NotNull] TContext context)
+        protected virtual bool Process(StepId id, TContext context)
         {
             Argument.NotNull(context, nameof(context));
 
@@ -93,7 +91,7 @@ namespace Tauron.Application.Workflow
             return result;
         }
 
-        private bool ProgressConditions([NotNull] StepRev<TState, TContext> rev, TContext context)
+        private bool ProgressConditions(StepRev<TState, TContext> rev, TContext context)
         {
             var std = (from con in rev.Conditions
                 let stateId = con.Select(rev.Step, context)
@@ -119,10 +117,8 @@ namespace Tauron.Application.Workflow
         }
 
         [NotNull]
-        public StepConfiguration<TState, TContext> GetStateConfiguration(StepId id)
-        {
-            return new StepConfiguration<TState, TContext>(_states[id]);
-        }
+        public StepConfiguration<TState, TContext> GetStateConfiguration(StepId id) 
+            => new StepConfiguration<TState, TContext>(_states[id]);
     }
 
     [PublicAPI]
@@ -130,10 +126,8 @@ namespace Tauron.Application.Workflow
     {
         private readonly StepRev<TState, TContext> _context;
 
-        internal StepConfiguration([NotNull] StepRev<TState, TContext> context)
-        {
-            _context = context;
-        }
+        internal StepConfiguration([NotNull] StepRev<TState, TContext> context) 
+            => _context = context;
 
         [NotNull]
         public StepConfiguration<TState, TContext> WithCondition([NotNull] ICondition<TContext> condition)

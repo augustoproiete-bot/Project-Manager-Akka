@@ -1,10 +1,12 @@
 ﻿using System;
 using Akka.Actor;
 using Autofac;
+using JetBrains.Annotations;
 using Tauron.Akka;
 
 namespace Tauron.Application.Settings
 {
+    [PublicAPI]
     public static class SettingsManagerExtensions
     {
         public static void RegisterSettingsManager(this ContainerBuilder builder, Action<SettingsConfiguration>? config = null)

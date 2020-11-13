@@ -30,7 +30,8 @@ namespace Tauron.Application
     {
         private readonly Dictionary<Type, object> _events = new();
 
-        public TEventType GetEvent<TEventType, TPayload>() where TEventType : SharedEvent<TPayload>, new()
+        public TEventType GetEvent<TEventType, TPayload>() 
+            where TEventType : SharedEvent<TPayload>, new()
         {
             var t = typeof(TEventType);
             if (!_events.ContainsKey(t)) _events[t] = new TEventType();

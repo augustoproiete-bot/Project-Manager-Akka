@@ -1,15 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Immutable;
+using JetBrains.Annotations;
 
 namespace Tauron.Application.Workshop.Mutating.Changes
 {
-    public sealed class MultiChange : MutatingChange
+    [PublicAPI]
+    public sealed record MultiChange(ImmutableList<MutatingChange> Changes) : MutatingChange
     {
-        public ImmutableList<MutatingChange> Changes { get; }
-
-        public MultiChange(ImmutableList<MutatingChange> changes) => Changes = changes;
-
         public override TChange Cast<TChange>()
         {
             foreach (var change in Changes)

@@ -141,7 +141,7 @@ namespace Tauron.Host
                 return new ActorApplication(continer, system);
             }
 
-            private string GetActorSystemName(IConfiguration config, IHostEnvironment environment)
+            private static string GetActorSystemName(IConfiguration config, IHostEnvironment environment)
             {
                 var name = config["actorsystem"];
                 return !string.IsNullOrWhiteSpace(name) 
@@ -168,7 +168,7 @@ namespace Tauron.Host
                 return builder.Build();
             }
 
-            private IHostEnvironment CreateHostingEnvironment(IConfiguration hostConfiguration)
+            private static IHostEnvironment CreateHostingEnvironment(IConfiguration hostConfiguration)
             {
                 var hostingEnvironment = new HostEnviroment
                 {
@@ -192,7 +192,7 @@ namespace Tauron.Host
                 return configurationBuilder.Build();
             }
 
-            private HostBuilderContext CreateHostBuilderContext(IHostEnvironment environment, IConfiguration configuration)
+            private static HostBuilderContext CreateHostBuilderContext(IHostEnvironment environment, IConfiguration configuration)
             {
                 return new HostBuilderContext(new Dictionary<object, object>(), configuration, environment);
             }

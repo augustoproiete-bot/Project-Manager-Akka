@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Akka;
 
@@ -49,19 +49,18 @@ namespace Tauron.Application.Settings
             Interlocked.Exchange(ref _dic, result);
         }
 
-        [return: MaybeNull]
-        protected TValue GetValue<TValue>(Func<string, TValue> converter, TValue defaultValue = default, [CallerMemberName] string? name = null)
+        protected Maybe<TValue?> GetValue<TValue>(Func<string, TValue> converter, TValue defaultValue = default, [CallerMemberName] string? name = null)
         {
             try
             {
                 _loader.Wait();
                 if (string.IsNullOrEmpty(name)) return default;
 
-                return _dic.TryGetValue(name, out var value) ? converter(value) : defaultValue;
+                return (_dic.TryGetValue(name, out var value) ? converter(value) : defaultValue).ToMaybe()!;
             }
             catch
             {
-                return defaultValue;
+                return defaultValue.ToMaybe()!;
             }
         }
 

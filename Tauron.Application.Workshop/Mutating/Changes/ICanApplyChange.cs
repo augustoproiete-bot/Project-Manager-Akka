@@ -1,6 +1,6 @@
 ﻿namespace Tauron.Application.Workshop.Mutating.Changes
 {
-    public interface ICanApplyChange<TData>
+    public interface ICanApplyChange<out TData>
     {
         TData Apply(MutatingChange apply);
     }

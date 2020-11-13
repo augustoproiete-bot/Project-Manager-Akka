@@ -12,9 +12,9 @@ namespace Tauron.Localization.Actor
         }
 
 
-        protected abstract Maybe<object> TryQuery(string name, CultureInfo target);
+        protected abstract Maybe<object> TryQuery(string name, Maybe<CultureInfo> target);
 
-        public sealed record QueryRequest(string Key, string Id, CultureInfo CultureInfo);
+        public sealed record QueryRequest(string Key, string Id, Maybe<CultureInfo> CultureInfo);
 
         public sealed record QueryResponse(Maybe<object> Value, string Id);
     }

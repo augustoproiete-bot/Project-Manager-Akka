@@ -1,4 +1,5 @@
 ﻿using Akka.Actor;
+using Functional.Maybe;
 
 namespace Tauron.Application.Workshop.Analyzing.Rules
 {
@@ -7,6 +8,6 @@ namespace Tauron.Application.Workshop.Analyzing.Rules
     {
         string Name { get; }
 
-        IActorRef Init(IActorRefFactory superviser, TWorkspace workspace);
+        Maybe<IActorRef> Init(IActorRefFactory superviser, Maybe<TWorkspace> workspace);
     }
 }

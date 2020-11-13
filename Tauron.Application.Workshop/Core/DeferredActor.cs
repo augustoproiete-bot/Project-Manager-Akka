@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Actor.Dsl;
-using Tauron.Akka;
 
 namespace Tauron.Application.Workshop.Core
 {
