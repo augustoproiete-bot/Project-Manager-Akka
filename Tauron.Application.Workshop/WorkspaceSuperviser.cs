@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Functional.Maybe;
+using JetBrains.Annotations;
 using Tauron.Application.Workshop.Core;
 using Tauron.Application.Workshop.Mutation;
 
 namespace Tauron.Application.Workshop
 {
+    [PublicAPI]
     public sealed class WorkspaceSuperviser
     {
         private IActorRef Superviser { get; }
@@ -15,7 +18,7 @@ namespace Tauron.Application.Workshop
 
         internal WorkspaceSuperviser() => Superviser = ActorRefs.Nobody;
 
-        public async Task<IActorRef> Create(Props props, string name)
+        public async Task<IActorRef> Create(Maybe<Props> props, string name)
         {
             var result = await Superviser.Ask<WorkspaceSuperviserActor.NewActor>(new WorkspaceSuperviserActor.SupervisePropsActor(props, name));
             return result.ActorRef;
@@ -27,7 +30,7 @@ namespace Tauron.Application.Workshop
             return result.ActorRef;
         }
 
-        public void CreateAnonym(Props props, string name)
+        public void CreateAnonym(Maybe<Props> props, string name)
         {
             Superviser.Tell(new WorkspaceSuperviserActor.SupervisePropsActor(props, name), ActorRefs.NoSender);
         }

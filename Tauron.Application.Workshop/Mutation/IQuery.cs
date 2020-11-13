@@ -1,7 +1,9 @@
-﻿namespace Tauron.Application.Workshop.Mutation
+﻿using Functional.Maybe;
+
+namespace Tauron.Application.Workshop.Mutation
 {
     public interface IQuery
     {
-        string ToHash();
+        Maybe<string> ToHash();
     }
 }

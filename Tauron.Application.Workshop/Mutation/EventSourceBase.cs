@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Util.Internal;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Core;
 
@@ -14,9 +15,9 @@ namespace Tauron.Application.Workshop.Mutation
     {
         private readonly WorkspaceSuperviser _superviser;
 
-        private Action<TRespond>? _action;
+        private Action<Maybe<TRespond>>? _action;
         private ImmutableList<IActorRef> _intrests = ImmutableList<IActorRef>.Empty;
-        private ImmutableDictionary<IActorRef, Action<TRespond>> _sourcesActions = ImmutableDictionary<IActorRef, Action<TRespond>>.Empty;
+        private ImmutableDictionary<IActorRef, Action<Maybe<TRespond>>> _sourcesActions = ImmutableDictionary<IActorRef, Action<Maybe<TRespond>>>.Empty;
 
         protected EventSourceBase(Task<IActorRef> mutator, WorkspaceSuperviser superviser)
             : base(mutator) 
@@ -29,7 +30,7 @@ namespace Tauron.Application.Workshop.Mutation
             _superviser.WatchIntrest(new WatchIntrest(() => Interlocked.Exchange(ref _intrests, _intrests.Remove(actorRef)), actorRef));
         }
 
-        public void RespondOn(IActorRef? source, Action<TRespond> action)
+        public void RespondOn(IActorRef? source, Action<Maybe<TRespond>> action)
         {
             if (source.IsNobody())
                 _action = _action.Combine(action);
@@ -40,8 +41,10 @@ namespace Tauron.Application.Workshop.Mutation
             }
         }
 
-        protected void Send(TRespond respond)
+        protected void Send(Maybe<TRespond> respond)
         {
+            if(respond.IsNothing()) return;
+
             _intrests.ForEach(ar => ar.Tell(respond));
             _action?.Invoke(respond);
             _sourcesActions.ForEach(p => p.Key.Tell(IncommingEvent.From(respond, p.Value)));

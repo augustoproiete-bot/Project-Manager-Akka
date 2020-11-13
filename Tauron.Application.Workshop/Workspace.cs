@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using Functional.Maybe;
+using JetBrains.Annotations;
 using Tauron.Application.Workshop.Analyzing;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutating.Changes;
@@ -21,15 +22,15 @@ namespace Tauron.Application.Workshop
 
         protected MutatingEngine<TData> Engine { get; }
 
-        TData IDataSource<TData>.GetData() 
+        Maybe<TData> IDataSource<TData>.GetData() 
             => GetDataInternal();
 
-        void IDataSource<TData>.SetData(TData data) 
+        void IDataSource<TData>.SetData(Maybe<TData> data) 
             => SetDataInternal(data);
 
-        protected abstract TData GetDataInternal();
+        protected abstract Maybe<TData> GetDataInternal();
 
-        protected abstract void SetDataInternal(TData data);
+        protected abstract void SetDataInternal(Maybe<TData> data);
     }
 
     [PublicAPI]
@@ -44,6 +45,9 @@ namespace Tauron.Application.Workshop
         public IAnalyzer<TThis, MutatingContext<TRawData>> Analyzer { get; }
 
         public void Reset(TRawData newData) 
-            => Engine.Mutate(nameof(Reset), data => data.Update(new ResetChange(), newData));
+            => Engine.Mutate(nameof(Reset), 
+                mayData =>
+                    from data in mayData
+                    select data.Update(new ResetChange(), newData));
     }
 }

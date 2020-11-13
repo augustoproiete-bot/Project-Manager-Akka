@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Dsl;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Akka;
 
@@ -26,7 +27,7 @@ namespace Tauron
             : base(flow)
         {
             if(forward)
-                flow.Register(ad => ad.Receive<TTarget>((msg, context) => target().Forward(msg)));
+                flow.Register(ad => ad.Receive<TTarget>((msg, _) => target().Forward(msg)));
             else
                 flow.Register(ad => ad.Receive<TTarget>((msg, context) => target().Tell(msg, context.Self)));
         }
@@ -40,16 +41,16 @@ namespace Tauron
 
         public ActorFlowBuilder<TStart> Flow { get; protected set; }
 
-        public FuncTargetSelector<TRecieve, TNext, TStart> Func<TNext>(Func<TRecieve, TNext> transformer)
+        public FuncTargetSelector<TRecieve, TNext, TStart> Func<TNext>(Func<TRecieve, Maybe<TNext>> transformer)
             => new FuncTargetSelector<TRecieve, TNext, TStart>(Flow, transformer);
 
-        public AsyncFuncTargetSelector<TRecieve, TNext, TStart> Func<TNext>(Func<TRecieve, Task<TNext>> transformer)
+        public AsyncFuncTargetSelector<TRecieve, TNext, TStart> Func<TNext>(Func<TRecieve, Task<Maybe<TNext>>> transformer)
             => new AsyncFuncTargetSelector<TRecieve, TNext, TStart>(Flow, transformer);
 
-        public FuncTargetSelector<TRecieve, TNext, TStart> Func<TNext>(Func<TNext> transformer)
+        public FuncTargetSelector<TRecieve, TNext, TStart> Func<TNext>(Func<Maybe<TNext>> transformer)
             => new FuncTargetSelector<TRecieve, TNext, TStart>(Flow, _ => transformer());
 
-        public AsyncFuncTargetSelector<TRecieve, TNext, TStart> Func<TNext>(Func<Task<TNext>> transformer)
+        public AsyncFuncTargetSelector<TRecieve, TNext, TStart> Func<TNext>(Func<Task<Maybe<TNext>>> transformer)
             => new AsyncFuncTargetSelector<TRecieve, TNext, TStart>(Flow, _ => transformer());
 
         public ActionFinisher<TRecieve, TStart> Action(Action<TRecieve> act) 
@@ -113,7 +114,7 @@ namespace Tauron
 
         public TRespond ToSender() => ToRef(new RefFunc(RefFuncMode.Sender).Send);
 
-        public TRespond ToRef(IActorRef actorRef) => ToRef(c => actorRef);
+        public TRespond ToRef(IActorRef actorRef) => ToRef(_ => actorRef);
 
         public abstract TRespond ToRef(Func<IActorContext, IActorRef> actorRef);
 
@@ -166,9 +167,9 @@ namespace Tauron
     public sealed class FuncTargetSelector<TRecieve, TNext, TStart> 
         : AbastractTargetSelectorForward<ReceiveBuilder<TRecieve, TNext, TStart>, TStart, FuncTargetSelector<TRecieve, TNext, TStart>>
     {
-        private readonly Func<TRecieve, TNext> _transformer;
+        private readonly Func<TRecieve, Maybe<TNext>> _transformer;
 
-        public FuncTargetSelector(ActorFlowBuilder<TStart> flow, Func<TRecieve, TNext> transformer)
+        public FuncTargetSelector(ActorFlowBuilder<TStart> flow, Func<TRecieve, Maybe<TNext>> transformer)
             : base(flow) =>
             _transformer = transformer;
 
@@ -183,9 +184,9 @@ namespace Tauron
     public sealed class AsyncFuncTargetSelector<TRecieve, TNext, TStart> 
         : AbastractTargetSelectorForward<AyncReceiveBuilder<TRecieve, TNext, TStart>, TStart, AsyncFuncTargetSelector<TRecieve, TNext, TStart>>
     {
-        private readonly Func<TRecieve, Task<TNext>> _transformer;
+        private readonly Func<TRecieve, Task<Maybe<TNext>>> _transformer;
 
-        public AsyncFuncTargetSelector(ActorFlowBuilder<TStart> flow, Func<TRecieve, Task<TNext>> transformer)
+        public AsyncFuncTargetSelector(ActorFlowBuilder<TStart> flow, Func<TRecieve, Task<Maybe<TNext>>> transformer)
             : base(flow)
         {
             _transformer = transformer;
@@ -270,22 +271,23 @@ namespace Tauron
             public async Task Run(TRecieve recieve, IActorContext context) => await _runner(context, recieve);
         }
 
-        private sealed class ReceiveHelper
-        {
-            private readonly EnterFlow<TStart> _invoker;
+        //private sealed class ReceiveHelper
+        //{
+        //    private readonly EnterFlow<TStart> _invoker;
 
-            public ReceiveHelper(EnterFlow<TStart> invoker)
-            {
-                _invoker = invoker;
-            }
+        //    public ReceiveHelper(EnterFlow<TStart> invoker)
+        //    {
+        //        _invoker = invoker;
+        //    }
 
-            public void Send(TStart msg, IActorContext context)
-            {
-                _invoker(msg);
-            }
-        }
+        //    public void Send(TStart msg, IActorContext context)
+        //    {
+        //        _invoker(msg);
+        //    }
+        //}
     }
 
+    [PublicAPI]
     public abstract class ReceiveBuilderBase<TNext, TStart>
     {
         protected ReceiveBuilderBase(ActorFlowBuilder<TStart> flow)
@@ -302,13 +304,13 @@ namespace Tauron
     [PublicAPI]
     public class ReceiveBuilder<TReceive, TNext, TStart> : ReceiveBuilderBase<TNext, TStart>
     {
-        public ReceiveBuilder(ActorFlowBuilder<TStart> flow, Func<IActorContext, IActorRef> target, Func<TReceive, TNext> transformer, bool shouldForward)
+        public ReceiveBuilder(ActorFlowBuilder<TStart> flow, Func<IActorContext, IActorRef> target, Func<TReceive, Maybe<TNext>> transformer, bool shouldForward)
             : base(flow)
         {
             flow.Register(a => a.Receive<TReceive>(new Receive(target, transformer, shouldForward).Run));
         }
 
-        public ReceiveBuilder(ActorFlowBuilder<TStart> flow, Func<TReceive, IActorRef> target, Func<TReceive, TNext> transformer, bool shouldForward)
+        public ReceiveBuilder(ActorFlowBuilder<TStart> flow, Func<TReceive, IActorRef> target, Func<TReceive, Maybe<TNext>> transformer, bool shouldForward)
             : base(flow)
         {
             flow.Register(a => a.Receive<TReceive>(new ReceiveFromMessage(target, transformer, shouldForward).Run));
@@ -317,10 +319,10 @@ namespace Tauron
         private sealed class Receive
         {
             private readonly Func<IActorContext, IActorRef> _target;
-            private readonly Func<TReceive, TNext> _transformer;
+            private readonly Func<TReceive, Maybe<TNext>> _transformer;
             private readonly bool _shouldForward;
 
-            public Receive(Func<IActorContext, IActorRef> target, Func<TReceive, TNext> transformer, bool shouldForward)
+            public Receive(Func<IActorContext, IActorRef> target, Func<TReceive, Maybe<TNext>> transformer, bool shouldForward)
             {
                 _target = target;
                 _transformer = transformer;
@@ -331,21 +333,24 @@ namespace Tauron
             public void Run(TReceive rec, IActorContext context)
             {
                 var result = _transformer(rec);
-                if (result == null) return;
-                if(_shouldForward)
-                    _target(context).Forward(result);
-                else
-                    _target(context).Tell(result, context.Self);
+
+                result.Do(res =>
+                {
+                    if (_shouldForward)
+                        _target(context).Forward(res);
+                    else
+                        _target(context).Tell(res, context.Self);
+                });
             }
         }
 
         private sealed class ReceiveFromMessage
         {
             private readonly Func<TReceive, IActorRef> _target;
-            private readonly Func<TReceive, TNext> _transformer;
+            private readonly Func<TReceive, Maybe<TNext>> _transformer;
             private readonly bool _shouldForward;
 
-            public ReceiveFromMessage(Func<TReceive, IActorRef> target, Func<TReceive, TNext> transformer, bool shouldForward)
+            public ReceiveFromMessage(Func<TReceive, IActorRef> target, Func<TReceive, Maybe<TNext>> transformer, bool shouldForward)
             {
                 _target = target;
                 _transformer = transformer;
@@ -356,11 +361,14 @@ namespace Tauron
             public void Run(TReceive rec, IActorContext context)
             {
                 var result = _transformer(rec);
-                if (result == null) return;
-                if (_shouldForward)
-                    _target(rec).Forward(result);
-                else
-                    _target(rec).Tell(result, context.Self);
+
+                result.Do(res =>
+                {
+                    if (_shouldForward)
+                        _target(rec).Forward(res);
+                    else
+                        _target(rec).Tell(res, context.Self);
+                });
             }
         }
 
@@ -373,7 +381,7 @@ namespace Tauron
     [PublicAPI]
     public class AyncReceiveBuilder<TReceive, TNext, TStart> : ReceiveBuilderBase<TNext, TStart>
     {
-        public AyncReceiveBuilder(ActorFlowBuilder<TStart> flow, Func<IActorContext, IActorRef> target, Func<TReceive, Task<TNext>> transformer, bool shouldForward)
+        public AyncReceiveBuilder(ActorFlowBuilder<TStart> flow, Func<IActorContext, IActorRef> target, Func<TReceive, Task<Maybe<TNext>>> transformer, bool shouldForward)
             : base(flow)
         {
             flow.Register(a => a.ReceiveAsync<TReceive>(new Receive(target, transformer, shouldForward).Run));
@@ -382,10 +390,10 @@ namespace Tauron
         private sealed class Receive
         {
             private readonly Func<IActorContext, IActorRef> _target;
-            private readonly Func<TReceive, Task<TNext>> _transformer;
+            private readonly Func<TReceive, Task<Maybe<TNext>>> _transformer;
             private readonly bool _shouldForward;
 
-            public Receive(Func<IActorContext, IActorRef> target, Func<TReceive, Task<TNext>> transformer, bool shouldForward)
+            public Receive(Func<IActorContext, IActorRef> target, Func<TReceive, Task<Maybe<TNext>>> transformer, bool shouldForward)
             {
                 _target = target;
                 _transformer = transformer;
@@ -395,11 +403,14 @@ namespace Tauron
             public async Task Run(TReceive rec, IActorContext context)
             {
                 var result = await _transformer(rec);
-                if (result == null) return;
-                if(_shouldForward)
-                    _target(context).Forward(result);
-                else
-                    _target(context).Tell(result, context.Self);
+
+                result.Do(res =>
+                {
+                    if (_shouldForward)
+                        _target(context).Forward(res);
+                    else
+                        _target(context).Tell(res, context.Self);
+                });
             }
         }
     }
@@ -457,7 +468,7 @@ namespace Tauron
             if (_recieves > 0)
                 func = new EntryPoint(ExposedReceiveActor.ExposedContext.Self).Tell;
 
-            return _delgators.Aggregate(func, (current, delgator) => current.Combine(delgator())) ?? (s => { });
+            return _delgators.Aggregate(func, (current, delgator) => current.Combine(delgator())) ?? (_ => { });
         }
 
         public TReturn OnTrigger<TReturn>(Func<EnterFlow<TStart>, TReturn> config) => config(Build());

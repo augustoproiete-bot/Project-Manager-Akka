@@ -37,46 +37,48 @@ namespace Tauron.Application.Workshop.Mutation
         }
 
 
-        public void Mutate(string name, Func<TData, Maybe<TData>> transform, Maybe<object> hash = default) 
+        public void Mutate(string name, Func<Maybe<TData>, Maybe<TData>> transform, Maybe<object> hash = default) 
             => Mutate(CreateMutate(name, transform, hash));
 
-        public IDataMutation CreateMutate(string name, Func<TData, Maybe<TData>> transform, Maybe<object> hash = default)
+        public IDataMutation CreateMutate(string name, Func<Maybe<TData>, Maybe<TData>> transform, Maybe<object> hash = default)
         {
             void Runner() => _responder.Push(transform(_dataSource.GetData()));
             return new DataMutation(Runner, name, hash);
         }
 
-        public IDataMutation CreateMutate(string name, Func<TData, Task<Maybe<TData>>> transform, Maybe<object> hash = default)
+        public IDataMutation CreateMutate(string name, Func<Maybe<TData>, Task<Maybe<TData>>> transform, Maybe<object> hash = default)
         {
             async Task Runner() => _responder.Push(await transform(_dataSource.GetData()));
             return new AsyncDataMutation(Runner, name, hash);
         }
 
-        public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Maybe<Func<TData, bool>> where = default) 
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Maybe<Func<Maybe<TData>, bool>> where) 
             => new EventSource<TRespond, TData>(_superviser, _mutator, transformer, where, _responder);
-        
+
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Func<Maybe<TData>, bool> where) => EventSource(transformer, where.ToMaybe());
+
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer) => EventSource(transformer, Maybe<Func<Maybe<TData>, bool>>.Nothing);
+
         private sealed class ResponderList : IRespondHandler<TData>
         {
-            private readonly List<Action<TData>> _handler = new List<Action<TData>>();
-            private readonly Action<TData> _root;
+            private readonly List<Action<Maybe<TData>>> _handler = new();
+            private readonly Action<Maybe<TData>> _root;
 
-            public ResponderList(Action<TData> root) => _root = root;
+            public ResponderList(Action<Maybe<TData>> root) => _root = root;
 
-            public void Register(Action<TData> responder)
+            public void Register(Action<Maybe<TData>> responder)
             {
                 lock (_handler)
-                {
                     _handler.Add(responder);
-                }
             }
 
-            public void Push(TData? data)
+            public void Push(Maybe<TData> data)
             {
-                if(data == null) return;
+                if (data.IsNothing()) return;
 
-                _root(data);
                 lock (_handler)
                 {
+                    _root(data);
                     foreach (var action in _handler)
                         action(data);
                 }
@@ -102,51 +104,52 @@ namespace Tauron.Application.Workshop.Mutation
             _responder = new ResponderList(_dataSource.SetData, dataSource.OnCompled);
         }
 
-        public void Mutate(string name, IQuery query, Func<TData, TData?> transform)
+        public void Mutate(string name, IQuery query, Func<Maybe<TData>, Maybe<TData>> transform)
             => Mutate(CreateMutate(name, query, transform));
 
-        public IDataMutation CreateMutate(string name, IQuery query, Func<TData, TData?> transform)
+        public IDataMutation CreateMutate(string name, IQuery query, Func<Maybe<TData>, Maybe<TData>> transform)
         {
             async Task Runner() => await _responder.Push(query, async () => transform(await _dataSource.GetData(query)));
-            return new AsyncDataMutation<TData>(Runner, name, query.ToHash());
+            return new AsyncDataMutation(Runner, name, query.ToHash().Cast<string, object>());
         }
 
-        public IDataMutation CreateMutate(string name, IQuery query, Func<TData, Task<TData?>> transform)
+        public IDataMutation CreateMutate(string name, IQuery query, Func<Maybe<TData>, Task<Maybe<TData>>> transform)
         {
             async Task Runner() => await _responder.Push(query, async () => await transform(await _dataSource.GetData(query)));
-            return new AsyncDataMutation<TData>(Runner, name, query.ToHash());
+            return new AsyncDataMutation(Runner, name, query.ToHash().Cast<string, object>());
         }
 
-        public IEventSource<TRespond> EventSource<TRespond>(Func<TData, TRespond> transformer, Func<TData, bool>? where = null)
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Maybe<Func<Maybe<TData>, bool>> where)
             => new EventSource<TRespond, TData>(_superviser, _mutator, transformer, where, _responder);
+
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Func<Maybe<TData>, bool> where) => EventSource(transformer, where.ToMaybe());
+
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer) => EventSource(transformer, Maybe<Func<Maybe<TData>, bool>>.Nothing);
 
         private sealed class ResponderList : IRespondHandler<TData>
         {
-            private readonly List<Action<TData>> _handler = new List<Action<TData>>();
-            private readonly Func<IQuery, TData, Task> _root;
+            private readonly List<Action<Maybe<TData>>> _handler = new();
+            private readonly Func<IQuery, Maybe<TData>, Task> _root;
             private readonly Func<IQuery, Task> _completer;
 
-            public ResponderList(Func<IQuery, TData, Task> root, Func<IQuery, Task> completer)
+            public ResponderList(Func<IQuery, Maybe<TData>, Task> root, Func<IQuery, Task> completer)
             {
                 _root = root;
                 _completer = completer;
             }
 
-            public void Register(Action<TData> responder)
+            public void Register(Action<Maybe<TData>> responder)
             {
                 lock (_handler)
-                {
                     _handler.Add(responder);
-                }
             }
 
-            public async Task Push(IQuery query, Func<Task<TData?>> dataFunc)
+            public async Task Push(IQuery query, Func<Task<Maybe<TData>>> dataFunc)
             {
                 try
                 {
                     var data = await dataFunc();
-
-                    if (data == null) return;
+                    if (data.IsNothing()) return;
 
                     await _root(query, data);
                     lock (_handler)
@@ -226,6 +229,15 @@ namespace Tauron.Application.Workshop.Mutation
     {
         public static IEventSource<TEvent> EventSource<TData, TEvent>(this IEventSourceable<MutatingContext<TData>> engine)
             where TEvent : MutatingChange
-            => engine.EventSource(c => c.GetChange<TEvent>(), c => c.Change?.Cast<TEvent>() != null);
+            => engine.EventSource(
+                c =>
+                    from con in c
+                    select con.GetChange<TEvent>(),
+                c =>
+                (
+                    from con in c
+                    select con.Change is TEvent
+                ).OrElse(false)
+            );
     }
 }

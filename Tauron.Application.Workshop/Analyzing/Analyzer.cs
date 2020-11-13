@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Analyzing.Actor;
 using Tauron.Application.Workshop.Analyzing.Core;
