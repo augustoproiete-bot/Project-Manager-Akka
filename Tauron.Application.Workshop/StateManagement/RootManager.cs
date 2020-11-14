@@ -59,7 +59,7 @@ namespace Tauron.Application.Workshop.StateManagement
             where TState : class
         {
             var searchResult =
-                from key in mayKey
+                from key in mayKey.Or(string.Empty)
                 from state in _stateContainers.Lookup(key)
                 select
                 (
