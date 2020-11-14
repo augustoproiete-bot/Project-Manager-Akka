@@ -16,7 +16,7 @@ namespace Tauron.Application.Workshop.Analyzing
     public sealed class Analyzer<TWorkspace, TData> : DeferredActor, IAnalyzer<TWorkspace, TData> 
         where TWorkspace : WorkspaceBase<TData> where TData : class
     {
-        private readonly HashSet<string> _rules = new HashSet<string>();
+        private readonly HashSet<string> _rules = new();
 
         internal Analyzer(Task<IActorRef> actor, IEventSource<IssuesEvent> source)
             : base(actor) => Issues = source;
@@ -42,12 +42,12 @@ namespace Tauron.Application.Workshop.Analyzing
     [PublicAPI]
     public static class Analyzer
     {
-        public static IAnalyzer<TWorkspace, TData> From<TWorkspace, TData>(TWorkspace workspace, WorkspaceSuperviser superviser)
+        public static IAnalyzer<TWorkspace, TData> From<TWorkspace, TData>(Maybe<TWorkspace> workspace, WorkspaceSuperviser superviser)
             where TWorkspace : WorkspaceBase<TData> where TData : class
         {
             var evtSource = new SourceFabricator<TWorkspace, TData>();
 
-            var actor = superviser.Create(Props.Create(() => new AnalyzerActor<TWorkspace, TData>(workspace, evtSource.Send)), "AnalyzerActor");
+            var actor = superviser.Create(Props.Create(() => new AnalyzerActor<TWorkspace, TData>(workspace, evtSource.Send)).ToMaybe(), "AnalyzerActor");
             evtSource.Init(actor, superviser);
 
             return new Analyzer<TWorkspace, TData>(actor, evtSource.EventSource ?? throw new InvalidOperationException("Create Analyzer"));

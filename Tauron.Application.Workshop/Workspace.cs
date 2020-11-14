@@ -40,7 +40,7 @@ namespace Tauron.Application.Workshop
     {
         protected Workspace(WorkspaceSuperviser superviser)
             : base(superviser) =>
-            Analyzer = Analyzing.Analyzer.From<TThis, MutatingContext<TRawData>>((TThis) this, superviser);
+            Analyzer = Analyzing.Analyzer.From<TThis, MutatingContext<TRawData>>(this.ToMaybe().Cast<Workspace<TThis, TRawData>, TThis>(), superviser);
 
         public IAnalyzer<TThis, MutatingContext<TRawData>> Analyzer { get; }
 

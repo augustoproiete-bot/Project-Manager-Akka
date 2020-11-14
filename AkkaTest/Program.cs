@@ -1,8 +1,6 @@
 ﻿
 using System;
-using Functional.Maybe;
-using Newtonsoft.Json;
-using Tauron;
+using LanguageExt;
 
 namespace AkkaTest
 {
@@ -10,10 +8,12 @@ namespace AkkaTest
     {
         private static void Main()
         {
-            var test = "Hallo Welt".ToMaybe();
+            //https://yoan-thirion.medium.com/functional-programming-made-easy-in-c-with-language-ext-c4e9d4a512ac
+            //https://github.com/louthy/language-ext
 
-            var testData = JsonConvert.SerializeObject(test);
-            test = JsonConvert.DeserializeObject<Maybe<string>>(testData);
+            string? test = Console.ReadLine();
+
+            test.ToTryOption()
         }
     }
 }
