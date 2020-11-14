@@ -5,12 +5,12 @@ using System.Linq;
 using System.Threading;
 using Akka.Actor;
 using Akka.Actor.Internal;
+using Akka.Util.Internal;
 using Autofac;
-using CacheManager.Core;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Workshop.StateManagement.Builder;
-using Tauron.Application.Workshop.StateManagement.Cache;
 using Tauron.Application.Workshop.StateManagement.Dispatcher;
 using Tauron.Application.Workshop.StateManagement.Internal;
 using Tauron.Operations;
@@ -28,22 +28,18 @@ namespace Tauron.Application.Workshop.StateManagement
         private readonly IMiddleware[] _middlewares;
 
         internal RootManager(WorkspaceSuperviser superviser, IStateDispatcherConfigurator stateDispatcher, IEnumerable<StateBuilderBase> states,
-            IEnumerable<IEffect?> effects, IEnumerable<IMiddleware?> middlewares, Action<ConfigurationBuilderCachePart>? globalCache, bool sendBackSetting, 
-            IComponentContext? componentContext)
+            IEnumerable<IEffect?> effects, IEnumerable<IMiddleware?> middlewares, bool sendBackSetting, Maybe<IComponentContext> componentContext)
         {
             _sendBackSetting = sendBackSetting;
             _engine = MutatingEngine.Create(superviser, stateDispatcher.Configurate);
             _effects = effects.Where(e => e != null).ToArray()!;
             _middlewares = middlewares.Where(m => m != null).ToArray()!;
-
-            ICache<object?>? cache = null;
-            if(globalCache != null)
-                cache = new SyncCache<object?>(CacheFactory.Build(globalCache));
-
+            
             foreach (var stateBuilder in states)
             {
-                var (container, key) = stateBuilder.Materialize(_engine, cache, componentContext);
-                _stateContainers.GetOrAdd(key, _ => new ConcurrentBag<StateContainer>()).Add(container);
+                var (container, key) = stateBuilder.Materialize(_engine, componentContext);
+
+                _stateContainers.GetOrAdd(key.OrElse(string.Empty), _ => new ConcurrentBag<StateContainer>()).Add(container);
             }
 
             _states = _stateContainers.SelectMany(b => b.Value).ToArray();
@@ -55,23 +51,24 @@ namespace Tauron.Application.Workshop.StateManagement
                 middleware.AfterInitializeAllMiddlewares();
         }
 
-        public TState? GetState<TState>()
+        public Maybe<TState> GetState<TState>()
             where TState : class
-            => GetState<TState>("");
+            => GetState<TState>(Maybe<string>.Nothing);
 
-        public TState? GetState<TState>(string key)
+        public Maybe<TState> GetState<TState>(Maybe<string> mayKey)
             where TState : class
         {
-            if (_stateContainers.TryGetValue(key, out var bag))
-            {
-                foreach (var stateContainer in bag)
-                {
-                    if (stateContainer.Instance is TState state)
-                        return state;
-                }
-            }
+            var searchResult =
+                from key in mayKey
+                from state in _stateContainers.Lookup(key)
+                select
+                (
+                    from container in state
+                    where container.Instance is TState
+                    select (TState) container.Instance
+                ).FirstMaybe();
 
-            return null;
+            return searchResult;
         }
 
         public void Run(IStateAction action, bool? sendBack)
@@ -79,7 +76,7 @@ namespace Tauron.Application.Workshop.StateManagement
             if(_middlewares.Any(m => !m.MayDispatchAction(action)))
                 return;
 
-            _middlewares.Foreach(m => m.BeforeDispatch(action));
+            _middlewares.ForEach(m => m.BeforeDispatch(action));
 
             var sender = ActorRefs.NoSender;
             var context = InternalCurrentActorCellKeeper.Current;
@@ -89,6 +86,7 @@ namespace Tauron.Application.Workshop.StateManagement
             var effects = new EffectInvoker(_effects.Where(e => e.ShouldReactToAction(action)), action, this);
             var resultInvoker = new ResultInvoker(effects, _engine, sender, sendBack ?? _sendBackSetting, action);
 
+            _middlewares.ForEach(m => m.BeforeDispatch(action));
             foreach (var dataMutation in _states.Select(sc => sc.TryDipatch(action, resultInvoker.AddResult, resultInvoker.WorkCompled)))
             {
                 if(dataMutation == null) continue;
@@ -102,14 +100,14 @@ namespace Tauron.Application.Workshop.StateManagement
         {
             if (!disposing) return;
             
-            _stateContainers.Values.Foreach(s => s.Foreach(d => d.Dispose()));
+            _stateContainers.Values.ForEach(s => s.ForEach(d => d.Dispose()));
             _stateContainers.Clear();
         }
 
         private sealed class ResultInvoker : ISyncMutation
         {
             private int _pending;
-            private readonly ConcurrentBag<IReducerResult> _results = new ConcurrentBag<IReducerResult>();
+            private readonly ConcurrentBag<IReducerResult> _results = new();
             private readonly EffectInvoker _effectInvoker;
             private readonly MutatingEngine _mutatingEngine;
             private readonly IActorRef _sender;
@@ -142,10 +140,10 @@ namespace Tauron.Application.Workshop.StateManagement
                     if(result.IsOk) continue;
 
                     fail = true;
-                    errors.AddRange(result.Errors ?? Array.Empty<string>());
+                    errors.AddRange(result.Errors.OrElse(Array.Empty<string>));
                 }
 
-                _sender.Tell(fail ? OperationResult.Failure(errors, _action) : OperationResult.Success(_action), ActorRefs.NoSender);
+                _sender.Tell(fail ? OperationResult.Failure(errors.Select(s => new Error(null, s)), _action) : OperationResult.Success(_action), ActorRefs.NoSender);
             }
 
             public void PushWork()

@@ -30,15 +30,11 @@ namespace Tauron.Application.Workshop
             return result.ActorRef;
         }
 
-        public void CreateAnonym(Maybe<Props> props, string name)
-        {
-            Superviser.Tell(new WorkspaceSuperviserActor.SupervisePropsActor(props, name), ActorRefs.NoSender);
-        }
+        public void CreateAnonym(Maybe<Props> props, string name) 
+            => Superviser.Tell(new WorkspaceSuperviserActor.SupervisePropsActor(props, name), ActorRefs.NoSender);
 
-        public void CreateAnonym(Type actor, string name)
-        {
-            Superviser.Tell(new WorkspaceSuperviserActor.SuperviseDiActor(actor, name), ActorRefs.NoSender);
-        }
+        public void CreateAnonym(Type actor, string name) 
+            => Superviser.Tell(new WorkspaceSuperviserActor.SuperviseDiActor(actor, name), ActorRefs.NoSender);
 
         public void WatchIntrest(WatchIntrest intrest)
             => Superviser.Tell(intrest);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentValidation;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutating;
 
@@ -10,12 +11,11 @@ namespace Tauron.Application.Workshop.StateManagement
 {
     [PublicAPI]
     public abstract class Reducer<TAction, TData> : IReducer<TData>
-        where TData : IStateEntity
         where TAction : IStateAction
     {
         public virtual IValidator<TAction>? Validator { get; }
 
-        public virtual async Task<ReducerResult<TData>> Reduce(MutatingContext<TData> state, IStateAction action)
+        public virtual async Task<Maybe<ReducerResult<TData>>> Reduce(Maybe<MutatingContext<TData>> state, IStateAction action)
         {
             try
             {
@@ -32,18 +32,18 @@ namespace Tauron.Application.Workshop.StateManagement
             }
         }
 
-        protected abstract Task<ReducerResult<TData>> Reduce(MutatingContext<TData> state, TAction action);
+        protected abstract Task<Maybe<ReducerResult<TData>>> Reduce(Maybe<MutatingContext<TData>> state, TAction action);
 
-        protected ReducerResult<TData> Sucess(MutatingContext<TData> data)
+        protected Maybe<ReducerResult<TData>> Sucess(Maybe<MutatingContext<TData>> data)
             => ReducerResult.Sucess(data);
 
-        protected ReducerResult<TData> Fail(MutatingContext<TData> data, IEnumerable<string> errors)
+        protected Maybe<ReducerResult<TData>> Fail(Maybe<MutatingContext<TData>> data, IEnumerable<string> errors)
             => ReducerResult.Fail(data, errors);
 
-        protected Task<ReducerResult<TData>> SucessAsync(MutatingContext<TData> data)
+        protected Task<Maybe<ReducerResult<TData>>> SucessAsync(Maybe<MutatingContext<TData>> data)
             => Task.FromResult(ReducerResult.Sucess(data));
 
-        protected Task<ReducerResult<TData>> FailAsync(MutatingContext<TData> data, IEnumerable<string> errors)
+        protected Task<Maybe<ReducerResult<TData>>> FailAsync(Maybe<MutatingContext<TData>> data, IEnumerable<string> errors)
             => Task.FromResult(ReducerResult.Fail(data, errors));
 
         public virtual bool ShouldReduceStateForAction(IStateAction action) => action is TAction;

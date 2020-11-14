@@ -1,14 +1,15 @@
-﻿using JetBrains.Annotations;
+﻿using Functional.Maybe;
+using JetBrains.Annotations;
 
 namespace Tauron.Application.Workshop.StateManagement
 {
     [PublicAPI]
     public interface IActionInvoker
     {
-        TState? GetState<TState>()
+        Maybe<TState> GetState<TState>()
             where TState : class;
 
-        TState? GetState<TState>(string key)
+        Maybe<TState> GetState<TState>(Maybe<string> key)
             where TState : class;
 
         void Run(IStateAction action, bool? sendBack = null);

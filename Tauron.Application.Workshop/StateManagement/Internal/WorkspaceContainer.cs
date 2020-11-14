@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using Functional.Maybe;
 using Tauron.Application.Workshop.Mutation;
 
 namespace Tauron.Application.Workshop.StateManagement.Internal
@@ -59,7 +60,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                 }
                 catch (Exception e)
                 {
-                    _result(new ErrorResult(e));
+                    _result(ErrorResult.From(e));
                     throw;
                 }
                 finally
@@ -68,14 +69,11 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                 }
             }
 
-            private sealed class ErrorResult : IReducerResult
+            private sealed record ErrorResult(Maybe<string[]> Errors) : IReducerResult
             {
                 public bool IsOk => false;
 
-                public string[]? Errors { get; }
-
-                public ErrorResult(Exception e) 
-                    => Errors = new[] {e.Message};
+                public static ErrorResult From(Exception e) => new (new[] {e.Message}.ToMaybe());
             }
         }
     }

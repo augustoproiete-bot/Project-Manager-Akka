@@ -1,6 +1,7 @@
 ﻿using System;
 using Akka.Actor;
 using Akka.Routing;
+using Functional.Maybe;
 using Tauron.Application.Workshop.StateManagement.Dispatcher;
 
 namespace Tauron.Application.Workshop.StateManagement.Builder
@@ -12,12 +13,12 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
         private sealed class ActualDispatcher : IStateDispatcherConfigurator
         {
             private readonly int _instances;
-            private readonly Resizer? _resizer;
+            private readonly Maybe<Resizer> _resizer;
             private readonly SupervisorStrategy _supervisorStrategy;
-            private readonly string? _dispatcher;
-            private readonly Func<Props, Props>? _custom;
+            private readonly Maybe<string> _dispatcher;
+            private readonly Maybe<Func<Props, Props>> _custom;
 
-            public ActualDispatcher(int instances, Resizer? resizer, SupervisorStrategy supervisorStrategy, string? dispatcher, Func<Props, Props>? custom)
+            public ActualDispatcher(int instances, Maybe<Resizer> resizer, SupervisorStrategy supervisorStrategy, Maybe<string> dispatcher, Maybe<Func<Props, Props>> custom)
             {
                 _instances = instances;
                 _resizer = resizer;
@@ -31,13 +32,13 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
                 var route = new SmallestMailboxPool(_instances)
                    .WithSupervisorStrategy(_supervisorStrategy);
 
-                if (_resizer == null)
-                    route = route.WithResizer(_resizer);
-                if (!string.IsNullOrWhiteSpace(_dispatcher))
-                    route = route.WithDispatcher(_dispatcher);
+                if (_resizer.IsSomething())
+                    route = route.WithResizer(_resizer.Value);
+                if (_dispatcher.IsSomething() && !string.IsNullOrWhiteSpace(_dispatcher.Value))
+                    route = route.WithDispatcher(_dispatcher.Value);
                 
                 mutator = mutator.WithRouter(route);
-                return _custom != null ? _custom(mutator) : mutator;
+                return _custom.IsSomething() ? _custom.Value(mutator) : mutator;
             }
         }
     }

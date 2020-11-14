@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autofac;
-using CacheManager.Core;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Workshop.StateManagement.Builder;
@@ -17,17 +17,16 @@ namespace Tauron.Application.Workshop.StateManagement
         {
             var managerBuilder = new ManagerBuilder(superviser);
             builder(managerBuilder);
-            return managerBuilder.Build(null, null);
+            return managerBuilder.Build(Maybe<IComponentContext>.Nothing, Maybe<AutofacOptions>.Nothing);
         }
 
         public WorkspaceSuperviser Superviser { get; }
 
         private Func<IStateDispatcherConfigurator> _dispatcherFunc = () => new DefaultStateDispatcher();
-        private readonly List<Func<IEffect>> _effects = new List<Func<IEffect>>();
-        private readonly List<Func<IMiddleware>> _middlewares = new List<Func<IMiddleware>>();
-        private readonly List<StateBuilderBase> _states = new List<StateBuilderBase>();
+        private readonly List<Func<IEffect>> _effects = new();
+        private readonly List<Func<IMiddleware>> _middlewares = new();
+        private readonly List<StateBuilderBase> _states = new();
 
-        private Action<ConfigurationBuilderCachePart>? _globalCache;
         private bool _sendBackSetting;
 
         internal ManagerBuilder(WorkspaceSuperviser superviser) 
@@ -42,7 +41,7 @@ namespace Tauron.Application.Workshop.StateManagement
         }
 
         public IStateBuilder<TData> WithDataSource<TData>(Func<IExtendedDataSource<TData>> source) 
-            where TData : class, IStateEntity
+            where TData : class
         {
             var builder = new StateBuilder<TData>(source);
             _states.Add(builder);
@@ -73,31 +72,26 @@ namespace Tauron.Application.Workshop.StateManagement
             return this;
         }
 
-        public ManagerBuilder WithGlobalCache(Action<ConfigurationBuilderCachePart>? config)
+        internal RootManager Build(Maybe<IComponentContext> mayComponentContext, Maybe<AutofacOptions> mayAutofacOptions)
         {
-            _globalCache = config;
-            return this;
-        }
+            List<IEffect> additionalEffects = new();
+            List<IMiddleware> additionalMiddlewares = new();
 
-        internal RootManager Build(IComponentContext? componentContext, AutofacOptions? autofacOptions)
-        {
-            List<IEffect> additionalEffects = new List<IEffect>();
-            List<IMiddleware> additionalMiddlewares = new List<IMiddleware>();
+            var componets =
+                from componentContext in mayComponentContext
+                from options in mayAutofacOptions.Or(AutofacOptions.Default)
+                select (componentContext.Resolve<IEnumerable<IEffect>>(), componentContext.Resolve<IEnumerable<IMiddleware>>());
 
-            if (componentContext != null)
+            componets.Do(add =>
             {
-                autofacOptions ??= new AutofacOptions();
+                var (effects, middlewares) = add;
 
-                if(autofacOptions.ResolveEffects)
-                    additionalEffects.AddRange(componentContext.Resolve<IEnumerable<IEffect>>());
-                if(autofacOptions.ResolveMiddleware)
-                    additionalMiddlewares.AddRange(componentContext.Resolve<IEnumerable<IMiddleware>>());
-            }
-
-            return new RootManager(Superviser, _dispatcherFunc(), _states, 
-                _effects.Select(e => e()).Concat(additionalEffects), 
-                _middlewares.Select(m => m()).Concat(additionalMiddlewares),
-                _globalCache, _sendBackSetting, componentContext);
+                additionalEffects.AddRange(effects);
+                additionalMiddlewares.AddRange(middlewares);
+            });
+            
+            return new RootManager(Superviser, _dispatcherFunc(), _states, _effects.Select(e => e()).Concat(additionalEffects), 
+                _middlewares.Select(m => m()).Concat(additionalMiddlewares), _sendBackSetting, mayComponentContext);
         }
     }
 }

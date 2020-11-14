@@ -35,7 +35,7 @@ namespace Tauron.Application
                     select Maybe.NotNull(rm.GetString(name))
                 ).Collapse();
 
-                var slowTry =
+                Maybe<string> SlowTry() =>
                 (
                     from searchEverywere in maySearchEverywere.Or(true)
                     where searchEverywere
@@ -50,7 +50,7 @@ namespace Tauron.Application
                         )
                 ).Collapse();
 
-                return fastTry.Or(slowTry);
+                return fastTry.Or(SlowTry);
             }
         }
     }

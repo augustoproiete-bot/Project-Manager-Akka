@@ -1,42 +1,32 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Functional.Maybe;
 using Tauron.Application.Workshop.Mutating;
 
 namespace Tauron.Application.Workshop.StateManagement
 {
     public static class ReducerResult
     {
-        public static ReducerResult<TData> Sucess<TData>(MutatingContext<TData> data)
-            => new ReducerResult<TData>(data, null);
+        public static Maybe<ReducerResult<TData>> Sucess<TData>(Maybe<MutatingContext<TData>> data)
+            => new ReducerResult<TData>(data, Maybe<string[]>.Nothing).ToMaybe();
 
-        public static ReducerResult<TData> Fail<TData>(MutatingContext<TData> data, IEnumerable<string> errors)
+        public static Maybe<ReducerResult<TData>> Fail<TData>(Maybe<MutatingContext<TData>> data, IEnumerable<string> errors)
         {
             if(errors is string[] array)
-                return new ReducerResult<TData>(data, array);
+                return new ReducerResult<TData>(data, array.ToMaybe()).ToMaybe();
 
-            return new ReducerResult<TData>(data, errors.ToArray());
+            return new ReducerResult<TData>(data, errors.ToArray().ToMaybe()).ToMaybe();
         }
     }
 
     public interface IReducerResult
     {
         bool IsOk { get; }
-        string[]? Errors { get; }
+        Maybe<string[]> Errors { get; }
     }
 
-    public sealed class ReducerResult<TData> : IReducerResult
+    public sealed record ReducerResult<TData>(Maybe<MutatingContext<TData>> Data, Maybe<string[]> Errors) : IReducerResult
     {
-        public MutatingContext<TData> Data { get; }
-
-        public string[]? Errors { get; }
-
-        public bool IsOk => Errors == null;
-
-
-        internal ReducerResult(MutatingContext<TData> data, string[]? errors)
-        {
-            Data = data;
-            Errors = errors;
-        }
+        public bool IsOk => Errors.IsNothing();
     }
 }

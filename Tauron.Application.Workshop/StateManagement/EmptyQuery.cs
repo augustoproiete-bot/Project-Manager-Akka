@@ -1,23 +1,13 @@
-﻿using Tauron.Application.Workshop.Mutation;
+﻿using Functional.Maybe;
+using Tauron.Application.Workshop.Mutation;
 
 namespace Tauron.Application.Workshop.StateManagement
 {
-    public sealed class EmptyQuery : IQuery
+    public sealed record EmptyQuery(Maybe<string> Hash) : IQuery
     {
-        public static readonly EmptyQuery Instance = new EmptyQuery();
+        public static readonly EmptyQuery Instance = new(Maybe<string>.Nothing);
+        
+        public Maybe<string> ToHash() => Hash.Or(nameof(EmptyQuery));
 
-        private readonly string? _hash;
-
-        public string ToHash() => _hash ?? nameof(EmptyQuery);
-
-        private EmptyQuery()
-        {
-            
-        }
-
-        private EmptyQuery(string? hash) => _hash = hash;
-
-        public EmptyQuery WithHash(string hash)
-            => new EmptyQuery(hash);
     }
 }

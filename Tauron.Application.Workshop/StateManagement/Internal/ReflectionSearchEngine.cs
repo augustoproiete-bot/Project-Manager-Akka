@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Autofac;
 using CacheManager.Core;
 using FluentValidation;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.StateManagement.Attributes;
@@ -20,7 +21,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
         private readonly Assembly _assembly;
         private readonly IComponentContext? _context;
 
-        public ReflectionSearchEngine(Assembly assembly, IComponentContext? context)
+        public ReflectionSearchEngine(Assembly assembly, Maybe<IComponentContext> context)
         {
             _assembly = assembly;
             _context = context;

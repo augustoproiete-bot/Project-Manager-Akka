@@ -1,6 +1,8 @@
 ﻿using System;
 using Akka.Actor;
 using Akka.Routing;
+using Akka.Util.Internal;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.StateManagement.Dispatcher;
 
@@ -12,38 +14,38 @@ namespace Tauron.Application.Workshop.StateManagement.Builder
     {
         protected int Instances = 2;
         protected SupervisorStrategy SupervisorStrategy = Pool.DefaultSupervisorStrategy;
-        protected Resizer? Resizer;
-        protected string? Dispatcher;
-        protected Func<Props, Props>? Custom;
+        protected Maybe<Resizer> Resizer;
+        protected Maybe<string> Dispatcher;
+        protected Maybe<Func<Props, Props>> Custom;
 
         public TConfig NrOfInstances(int number)
         {
             Instances = number;
-            return this.As<TConfig>()!;
+            return this.AsInstanceOf<TConfig>()!;
         }
 
         public TConfig WithSupervisorStrategy(SupervisorStrategy strategy)
         {
             SupervisorStrategy = strategy; 
-            return this.As<TConfig>()!;
+            return this.AsInstanceOf<TConfig>()!;
         }
 
         public TConfig WithResizer(Resizer resizer)
         {
-            Resizer = resizer;
-            return this.As<TConfig>()!;
+            Resizer = resizer.ToMaybe();
+            return this.AsInstanceOf<TConfig>()!;
         }
 
         public TConfig WithAkkaDispatcher(string name)
         {
-            Dispatcher = name;
-            return this.As<TConfig>()!;
+            Dispatcher = name.ToMaybe();
+            return this.AsInstanceOf<TConfig>()!;
         }
 
         public TConfig WithCustomization(Func<Props, Props> custom)
         {
-            Custom = Custom.Combine(custom);
-            return this.As<TConfig>()!;
+            Custom = Maybe.NotNull(Custom.OrElseDefault().Combine(custom));
+            return this.AsInstanceOf<TConfig>()!;
         }
 
         public abstract IStateDispatcherConfigurator Create();

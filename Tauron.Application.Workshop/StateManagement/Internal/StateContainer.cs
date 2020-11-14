@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Functional.Maybe;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutation;
 
@@ -24,7 +25,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
         private IReadOnlyCollection<IReducer<TData>> Reducers { get; }
         private ExtendedMutatingEngine<MutatingContext<TData>> MutatingEngine { get; }
 
-        public StateContainer(IState instance, IReadOnlyCollection<IReducer<TData>> reducers, ExtendedMutatingEngine<MutatingContext<TData>> mutatingEngine, IDisposable toDispose)
+        public StateContainer(Maybe<IState> instance, IReadOnlyCollection<IReducer<TData>> reducers, ExtendedMutatingEngine<MutatingContext<TData>> mutatingEngine, IDisposable toDispose)
             : base(instance)
         {
             _toDispose = toDispose;
