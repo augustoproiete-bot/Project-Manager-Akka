@@ -1,23 +1,29 @@
 ﻿using System;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workflow;
+using static Tauron.Preload;
 
 namespace Tauron.Application.ActorWorkflow
 {
+    public delegate Maybe<StepId> LambdaExecution<TContext>(LambdaStep<TContext> step, Maybe<TContext> mayContext);
+
+    public delegate void LambdaFinish<TContext>(Maybe<TContext> mayContext);
+
     [PublicAPI]
     public sealed class LambdaStep<TContext> : IStep<TContext>, IHasTimeout
     {
-        private readonly Func<TContext, LambdaStep<TContext>, StepId>? _onExecute;
-        private readonly Func<TContext, LambdaStep<TContext>, StepId>? _onNextElement;
-        private readonly Action<TContext>? _onFinish;
+        private readonly Maybe<LambdaExecution<TContext>> _onExecute;
+        private readonly Maybe<LambdaExecution<TContext>> _onNextElement;
+        private readonly Maybe<LambdaFinish<TContext>> _onFinish;
 
-        public string ErrorMessage { get; set; } = string.Empty;
+        public Maybe<string> ErrorMessage { get; set; }
         
 
-        public LambdaStep(Func<TContext, 
-                LambdaStep<TContext>, StepId>? onExecute = null, 
-            Func<TContext, LambdaStep<TContext>, StepId>? onNextElement = null, 
-            Action<TContext>? onFinish = null, TimeSpan? timeout = null)
+        public LambdaStep(
+                Maybe<LambdaExecution<TContext>> onExecute = default, 
+                Maybe<LambdaExecution<TContext>> onNextElement = default, 
+                Maybe<LambdaFinish<TContext>> onFinish = default, Maybe<TimeSpan> timeout = default)
         {
             Timeout = timeout;
             _onExecute = onExecute;
@@ -25,41 +31,56 @@ namespace Tauron.Application.ActorWorkflow
             _onFinish = onFinish;
         }
 
-        public StepId OnExecute(TContext context) => _onExecute?.Invoke(context, this) ?? StepId.None;
+        public Maybe<StepId> OnExecute(Maybe<TContext> context)
+        {
+            return Collapse(from exec in _onExecute
+                            select exec(this, context))
+               .Or(May(StepId.None));
+        }
 
-        public StepId NextElement(TContext context) => _onNextElement?.Invoke(context, this) ?? StepId.None;
+        public Maybe<StepId> NextElement(Maybe<TContext> context)
+        {
+            return Collapse(from exec in _onNextElement
+                            select exec(this, context))
+               .Or(May(StepId.None));
+        }
 
-        public void OnExecuteFinish(TContext context) => _onFinish?.Invoke(context);
-        public TimeSpan? Timeout { get; }
+        public void OnExecuteFinish(Maybe<TContext> context)
+        {
+            Do(from finish in _onFinish 
+               select Use(() => finish(context)));
+        }
 
-        public void SetError(string error)
+        public Maybe<TimeSpan> Timeout { get; }
+
+        public void SetError(Maybe<string> error)
             => ErrorMessage = error;
     }
 
     [PublicAPI]
     public sealed class LambdaStepConfiguration<TContext>
     {
-        private Func<TContext, LambdaStep<TContext>, StepId>? _onExecute;
-        private Func<TContext, LambdaStep<TContext>, StepId>? _onNextElement;
-        private Action<TContext>? _onFinish;
-        private TimeSpan? _timeout;
+        private Maybe<LambdaExecution<TContext>> _onExecute;
+        private Maybe<LambdaExecution<TContext>> _onNextElement;
+        private Maybe<LambdaFinish<TContext>> _onFinish;
+        private Maybe<TimeSpan> _timeout;
 
-        public void OnExecute(Func<TContext, LambdaStep<TContext>, StepId> func) 
+        public void OnExecute(Maybe<LambdaExecution<TContext>> func) 
             => _onExecute = _onExecute.Combine(func);
 
-        public void OnNextElement(Func<TContext, LambdaStep<TContext>, StepId> func) 
+        public void OnNextElement(Maybe<LambdaExecution<TContext>> func) 
             => _onNextElement = _onNextElement.Combine(func);
 
-        public void OnExecute(Func<TContext, StepId> func) 
-            => _onExecute = _onExecute.Combine((c, _) => func(c));
+        public void OnExecute(Maybe<Func<Maybe<TContext>, Maybe<StepId>>> mayFunc)
+            => OnExecute(mayFunc.Select(func => new LambdaExecution<TContext>((_, context) => func(context))));
 
-        public void OnNextElement(Func<TContext, StepId> func) 
-            => _onNextElement = _onNextElement.Combine((c, _) =>  func(c));
+        public void OnNextElement(Maybe<Func<Maybe<TContext>, Maybe<StepId>>> mayFunc)
+            => OnNextElement(mayFunc.Select(func => new LambdaExecution<TContext>((_, context) => func(context))));
 
-        public void OnFinish(Action<TContext> func) 
+        public void OnFinish(Maybe<LambdaFinish<TContext>> func) 
             => _onFinish = _onFinish.Combine(func);
 
-        public void WithTimeout(TimeSpan timeout)
+        public void WithTimeout(Maybe<TimeSpan> timeout)
             => _timeout = timeout;
 
 

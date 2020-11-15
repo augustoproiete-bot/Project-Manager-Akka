@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using Functional.Maybe;
 using JetBrains.Annotations;
+using static Tauron.Preload;
 
 namespace Tauron.Localization
 {
@@ -21,24 +22,20 @@ namespace Tauron.Localization
 
             private const char EscapeStart = '@';
 
-            private static string? GetPartforChar(char @char) => Parts.FirstOrDefault(ep => ep.Value == @char).Key;
+            private static Maybe<string> GetPartforChar(char @char) 
+                => Parts.FirstMaybe(p => p.Value == @char).Select(c => c.Key);
 
-            private static char? GetPartforSequence(string @char)
-            {
-                if (Parts.TryGetValue(@char, out var escape))
-                    return escape;
-
-                return null;
-            }
+            private static Maybe<char> GetPartforSequence(string @char) 
+                => Parts.Lookup(@char);
 
             public static string Encode(IEnumerable<char> toEncode)
             {
                 var builder = new StringBuilder();
                 foreach (var @char in toEncode)
                 {
-                    var part = GetPartforChar(@char);
-                    if (part == null) builder.Append(@char);
-                    else builder.Append(EscapeStart, 2).Append(part);
+                    Match(GetPartforChar(@char), 
+                        c => builder.Append(EscapeStart, 2).Append(c), 
+                        () => builder.Append(@char));
                 }
 
                 return builder.ToString();
@@ -64,9 +61,10 @@ namespace Tauron.Localization
                         if (pos != 3) continue;
 
                         var part = GetPartforSequence(sequence);
-                        if (part == null) builder.Append(temp).Append(sequence);
-                        else builder.Append(part);
-
+                        var temp1 = temp;
+                        var sequence1 = sequence;
+                        Match(part, p => builder.Append(p), () => builder.Append(temp1).Append(sequence1));
+                        
                         flag = false;
                         flag2 = false;
                         pos = 0;

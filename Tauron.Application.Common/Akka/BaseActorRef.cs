@@ -1,6 +1,8 @@
 ﻿using System;
 using Akka.Actor;
+using Functional.Maybe;
 using JetBrains.Annotations;
+using static Tauron.Preload;
 
 namespace Tauron.Akka
 {
@@ -13,55 +15,75 @@ namespace Tauron.Akka
         protected BaseActorRef(ActorRefFactory<TActor> actorBuilder) 
             => _builder = actorBuilder;
 
-        public bool IsInitialized { get; private set; }
+        public Maybe<bool> IsInitialized { get; private set; } = May(false);
 
         protected virtual bool IsSync => false;
 
-        public IActorRef Actor { get; private set; } = ActorRefs.Nobody;
+        public Maybe<IActorRef> Actor { get; private set; } = Maybe<IActorRef>.Nothing;
 
-        public ActorPath Path => Actor.Path;
+        public Maybe<ActorPath> Path => from act in Actor
+                                        select act.Path;
 
         public event Action? Initialized;
 
         public void Tell(object message, IActorRef sender) 
-            => Actor.Tell(message, sender);
+            => Do(Actor, a => a.Tell(message, sender));
 
-        public bool Equals(IActorRef? other) 
-            => Actor.Equals(other);
+        public bool Equals(IActorRef? other)
+            => OrElse(from act in Actor
+                      from otherAct in May(other)
+                      where act.Equals(otherAct)
+                      select true, false);
 
         public int CompareTo(IActorRef? other) 
-            => Actor.CompareTo(other);
+            => CompareTo(other as object);
 
-        public int CompareTo(object? obj) 
-            => Actor.CompareTo(obj);
+        public int CompareTo(object? obj)
+            => OrElse(from act in Actor
+                      from other in May(obj)
+                      select act.CompareTo(other), 0);
 
-        public virtual void Init(string? name = null)
-        {
-            CheckIsInit();
-            Actor = _builder.Create(IsSync, name);
-            IsInitialized = true;
-            Initialized?.Invoke();
-        }
+        public virtual void Init(string? name = null) 
+            => IniCore((b, s) => _builder.Create(b, s), name);
 
         public virtual void Init(IActorRefFactory factory, string? name = null)
         {
-            CheckIsInit();
-            Actor = factory.ActorOf(_builder.CreateProps(IsSync), name);
-            IsInitialized = true;
-            Initialized?.Invoke();
+            IniCore((sync, parmName) => from prop in _builder.CreateProps(sync)
+                                        select factory.ActorOf(prop, parmName), name);
+        }
+
+        protected virtual void IniCore(Func<bool, string?, Maybe<IActorRef>> create, string? name)
+        {
+            Actor =
+                from _ in CheckIsInit()
+                from actor in create(IsSync, name)
+                select actor;
+
+            IsInitialized = Or(from _ in Actor
+                               select true, false);
+
+            Do(from init in IsInitialized
+               where init
+               from initAction in MayNotNull(Initialized)
+               select Use(initAction));
         }
 
         protected void ResetInternal()
         {
-            Actor.Tell(PoisonPill.Instance);
-            Actor = ActorRefs.Nobody;
-            IsInitialized = false;
+            IsInitialized = May(false);
+
+            Do(from act in Actor 
+               select Use(() => act.Tell(PoisonPill.Instance)));
+
+            Actor = Maybe<IActorRef>.Nothing;
         }
 
-        protected void CheckIsInit()
+        protected Maybe<Unit> CheckIsInit()
         {
-            if (IsInitialized)
+            if (IsInitialized.OrElse(false))
                 throw new InvalidOperationException("ActorRef is Init");
+
+            return Unit.MayInstance;
         }
     }
 }

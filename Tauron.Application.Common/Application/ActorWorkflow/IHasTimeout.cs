@@ -1,9 +1,10 @@
 ﻿using System;
+using Functional.Maybe;
 
 namespace Tauron.Application.ActorWorkflow
 {
     public interface IHasTimeout
     {
-        TimeSpan? Timeout { get; }
+        Maybe<TimeSpan> Timeout { get; }
     }
 }

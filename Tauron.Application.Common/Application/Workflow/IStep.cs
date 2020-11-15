@@ -1,15 +1,17 @@
-﻿namespace Tauron.Application.Workflow
+﻿using Functional.Maybe;
+
+namespace Tauron.Application.Workflow
 {
-    public interface IStep<in TContext>
+    public interface IStep<TContext>
     {
-        string ErrorMessage { get; }
+        Maybe<string> ErrorMessage { get; }
 
         //StepId Id { get; }
 
-        StepId OnExecute(TContext context);
+        Maybe<StepId> OnExecute(Maybe<TContext> context);
 
-        StepId NextElement(TContext context);
+        Maybe<StepId> NextElement(Maybe<TContext> context);
 
-        void OnExecuteFinish(TContext context);
+        void OnExecuteFinish(Maybe<TContext> context);
     }
 }

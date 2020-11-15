@@ -1,4 +1,5 @@
 ﻿using Akka.Actor;
+using Functional.Maybe;
 using JetBrains.Annotations;
 
 namespace Tauron.Akka
@@ -6,7 +7,7 @@ namespace Tauron.Akka
     [PublicAPI]
     public interface IInitableActorRef
     {
-        IActorRef Actor { get; }
+        Maybe<IActorRef> Actor { get; }
 
         void Init(string? name = null);
 

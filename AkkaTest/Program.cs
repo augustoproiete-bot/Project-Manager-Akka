@@ -1,6 +1,6 @@
-﻿
-using System;
-using LanguageExt;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace AkkaTest
 {
@@ -8,12 +8,14 @@ namespace AkkaTest
     {
         private static void Main()
         {
-            //https://yoan-thirion.medium.com/functional-programming-made-easy-in-c-with-language-ext-c4e9d4a512ac
-            //https://github.com/louthy/language-ext
+            IEnumerable<object> test = new object[] {"Hallo Welt", 10, "Hallo Welt 2"};
 
-            string? test = Console.ReadLine();
-
-            test.ToTryOption()
+            foreach (var te in from ele in test
+                               where ele is string
+                               select (string)ele)
+            {
+                Console.WriteLine(te);
+            }
         }
     }
 }

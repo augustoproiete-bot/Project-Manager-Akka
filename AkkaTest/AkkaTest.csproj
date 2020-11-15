@@ -16,15 +16,15 @@
     <None Remove="Test\Schema\**" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!--<ItemGroup>
     <DotNetCliToolReference Include="dotnet-codegen" Version="0.6.1" />
-  </ItemGroup>
+  </ItemGroup>-->
 
 
   <ItemGroup>
-    <PackageReference Include="LanguageExt.Core" Version="3.5.24-beta" />
+    <!--<PackageReference Include="LanguageExt.Core" Version="3.5.24-beta" />
     <PackageReference Include="LanguageExt.CodeGen" Version="3.5.24-beta" PrivateAssets="all" />
-    <PackageReference Include="CodeGeneration.Roslyn.BuildTime" Version="0.7.5-alpha" PrivateAssets="all" />
+    <PackageReference Include="CodeGeneration.Roslyn.BuildTime" Version="0.7.5-alpha" PrivateAssets="all" />-->
 
     <PackageReference Include="Akka.DI.Core" Version="1.4.11" />
     <PackageReference Include="Akka.Logger.Serilog" Version="1.4.11" />

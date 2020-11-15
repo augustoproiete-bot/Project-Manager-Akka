@@ -1,5 +1,7 @@
 ﻿using System;
+using Functional.Maybe;
 using JetBrains.Annotations;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Workflow
 {
@@ -11,20 +13,14 @@ namespace Tauron.Application.Workflow
             Target = StepId.None;
         }
 
-        public Func<TContext, IStep<TContext>, bool>? Guard { get; set; }
+        public Maybe<Func<Maybe<TContext>, IStep<TContext>, bool>> Guard { get; set; }
 
         public StepId Target { get; set; }
 
-        public StepId Select(IStep<TContext> lastStep, TContext context)
-        {
-            if (Guard == null || Guard(context, lastStep)) return Target;
+        public StepId Select(IStep<TContext> lastStep, Maybe<TContext> context) 
+            => OrElse(Match(Guard, g => g(context, lastStep) ? Target : StepId.None, () => May(Target)), StepId.None);
 
-            return StepId.None;
-        }
-
-        public override string ToString()
-        {
-            return "Target: " + Target;
-        }
+        public override string ToString() 
+            => "Target: " + Target;
     }
 }

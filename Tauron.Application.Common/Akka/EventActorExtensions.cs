@@ -20,7 +20,6 @@ namespace Tauron.Akka
         public static Maybe<IEventActor> GetOrCreateEventActor(this IUntypedActorContext system, Maybe<string> name, bool killOnFirstResponse = false)
             => from realName in name
                from child in system.TryGetChild(name)
-
                select child.IsNobody()
                    ? EventActor.Create(system, name, killOnFirstResponse)
                    : EventActor.From(child);

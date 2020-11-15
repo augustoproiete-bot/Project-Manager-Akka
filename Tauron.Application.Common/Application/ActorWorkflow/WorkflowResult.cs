@@ -1,7 +1,8 @@
-﻿using JetBrains.Annotations;
+﻿using Functional.Maybe;
+using JetBrains.Annotations;
 
 namespace Tauron.Application.ActorWorkflow
 {
     [PublicAPI]
-    public sealed record WorkflowResult<TContext>(bool Succesfully, string Error, TContext Context);
+    public sealed record WorkflowResult<TContext>(bool Succesfully, Maybe<string> Error, Maybe<TContext> Context);
 }
