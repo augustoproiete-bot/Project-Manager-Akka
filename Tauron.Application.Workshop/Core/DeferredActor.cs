@@ -1,52 +1,75 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Functional.Maybe;
+using Serilog;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Workshop.Core
 {
-    public abstract class DeferredActor
+    public abstract class DeferredActor : StatefulObject<DeferredActor.State>
     {
-        private ImmutableList<object>? _stash;
-        private Task? _actorTask;
+        public record State(ImmutableList<object>? Stash, IActorRef Actor);
 
-        private IActorRef _actorRef = ActorRefs.Nobody;
-        protected IActorRef Actor => _actorRef;
+        protected IActorRef Actor => ObjectState.Actor;
 
-        protected DeferredActor(Task<IActorRef> actor)
-        {
-            _actorTask = actor.ContinueWith(OnCompleded);
-            _stash = ImmutableList<object>.Empty;
-        }
+        protected DeferredActor(Task<IActorRef> actor) 
+            : base(new State(ImmutableList<object>.Empty, ActorRefs.Nobody), true)
+            => actor.ContinueWith(OnCompleded);
 
         private void OnCompleded(Task<IActorRef> obj)
         {
-            lock (this)
+            static Maybe<Unit> TellAll(IActorRef actor, IEnumerable<object> messages)
             {
-                _actorRef = obj.Result;
-                foreach (var message in _stash ?? ImmutableList<object>.Empty) 
-                    _actorRef.Tell(message);
+                foreach (var message in messages) actor.Tell(message);
+                return Unit.MayInstance;
+            }
 
-                _stash = null;
-                _actorTask = null;
+            try
+            {
+                Run(s =>
+                    from state in s
+                    let actor = obj.Result
+                    from stash in MayNotNull(state.Stash) 
+                    from _ in TellAll(actor, stash) 
+                    select state with{Stash = null, Actor = actor});
+            }
+            catch (Exception e)
+            {
+                Log.Logger.ForContext(GetType()).Error(e, "Error on Initializing Actor");
             }
         }
 
         protected void TellToActor(object msg)
         {
+            static Maybe<bool> TryTell(IActorRef mayActor, object msg)
+            {
+                var tell =
+                    from actor in MayActor(mayActor)
+                    select actor;
+
+                return Match(tell,
+                    actor =>
+                    {
+                        actor.Tell(msg);
+                        return true;
+                    },
+                    () => May(false));
+            }
+
             if (!Actor.IsNobody())
                 Actor.Tell(msg);
             else
             {
-                lock (this)
-                {
-                    if (!Actor.IsNobody())
-                    {
-                        Actor.Tell(msg);
-                        return;
-                    }
-
-                    _stash = _stash?.Add(msg) ?? ImmutableList<object>.Empty.Add(msg);
-                }
+                Run(s =>
+                    from state in s
+                    from result in TryTell(state.Actor, msg)
+                    where !result
+                    from stash in MayNotNull(state.Stash)
+                    select state with{Stash = stash.Add(msg)}
+                    );
             }
         }
     }

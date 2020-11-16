@@ -9,7 +9,6 @@ namespace Tauron.Application.Workshop.Analyzing.Actor
         where TWorkspace : WorkspaceBase<TData> where TData : class
     {
         private readonly Action<RuleIssuesChanged<TWorkspace, TData>> _issesAction;
-
         private readonly Maybe<TWorkspace> _workspace;
 
         public AnalyzerActor(Maybe<TWorkspace> workspace, Action<RuleIssuesChanged<TWorkspace, TData>> issesAction)

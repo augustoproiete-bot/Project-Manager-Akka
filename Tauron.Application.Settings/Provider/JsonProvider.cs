@@ -10,23 +10,29 @@ namespace Tauron.Application.Settings.Provider
     [PublicAPI]
     public sealed class JsonProvider : ISettingProvider
     {
-        private readonly string _fileName;
+        private readonly Maybe<string> _fileName;
 
-        public JsonProvider(string fileName)
+        public JsonProvider(Maybe<string> fileName)
         {
-            var dic = Path.GetDirectoryName(Path.GetFullPath(fileName));
-            if (!string.IsNullOrWhiteSpace(dic) && !Directory.Exists(dic))
-                Directory.CreateDirectory(dic);
+            Do(from dic in IO.Path.GetDirectoryName(IO.Path.GetFullPath(fileName))
+                where !Directory.Exists(dic)
+               select Directory.CreateDirectory(dic));
 
-            _fileName = Path.GetFullPath(fileName);
+            _fileName = IO.Path.GetFullPath(fileName);
         }
 
-        public Maybe<ImmutableDictionary<string, string>> Load() 
-            => File.Exists(_fileName) 
-                ? JsonConvert.DeserializeObject<ImmutableDictionary<string, string>>(File.ReadAllText(_fileName)) 
-                : ImmutableDictionary<string, string>.Empty;
+        public Maybe<ImmutableDictionary<string, string>> Load()
+            =>  from exists in IO.File.Exists(_fileName)
+                where exists
+                from file in _fileName
+                select JsonConvert.DeserializeObject<ImmutableDictionary<string, string>>(File.ReadAllText(file));
 
-        public Maybe<ImmutableDictionary<string, string>> Save(ImmutableDictionary<string, string> data) 
-            => File.WriteAllText(_fileName, JsonConvert.SerializeObject(data));
+        public Maybe<ImmutableDictionary<string, string>> Save(ImmutableDictionary<string, string> data)
+            => from file in _fileName
+                select Use(() =>
+                {
+                    File.WriteAllText(file, JsonConvert.SerializeObject(data));
+                    return data;
+                });
     }
 }

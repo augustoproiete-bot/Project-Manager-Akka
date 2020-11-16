@@ -10,44 +10,47 @@ namespace Tauron
     [PublicAPI]
     public abstract class StatefulObject<TState>
     {
-        protected ObjectState<TState> ObjectState { get; private set; }
+        private ObjectState<TState> _objectState;
 
-        protected StatefulObject(bool isLocked = false) 
-            => ObjectState = isLocked ? new LockedObjectState<TState>(new object(), CreateInitialState()) : new ObjectState<TState>(CreateInitialState());
+        protected TState ObjectState => _objectState.Data;
 
-        protected abstract TState CreateInitialState();
+
+        protected StatefulObject(TState initialState, bool isLocked = false) 
+            => _objectState = isLocked ? new LockedObjectState<TState>(new object(), initialState) : new ObjectState<TState>(initialState);
 
         protected void Run(Func<Maybe<TState>, Maybe<TState>> operation)
         {
-            if (ObjectState is LockedObjectState<TState> lockedObject)
+            if (_objectState is LockedObjectState<TState> lockedObject)
             {
                 lock (lockedObject.Lock)
-                    ObjectState = lockedObject.Run(operation);
+                    _objectState = lockedObject.Run(operation);
             }
             else
-                ObjectState = ObjectState.Run(operation);
+                _objectState = _objectState.Run(operation);
         }
     }
 
     [PublicAPI]
     public abstract class StatefulReceiveActor<TState> : ExposedReceiveActor
     {
-        protected ObjectState<TState> ObjectState { get; private set; }
+        private ObjectState<TState> _objectState;
 
-        protected StatefulReceiveActor(bool isLocked = false)
-            => ObjectState = isLocked ? new LockedObjectState<TState>(new object(), CreateInitialState()) : new ObjectState<TState>(CreateInitialState());
+        protected TState ObjectState => _objectState.Data;
 
-        protected abstract TState CreateInitialState();
+        protected StatefulReceiveActor(TState initialState, bool isLocked = false)
+            => _objectState = isLocked ? new LockedObjectState<TState>(new object(), initialState) : new ObjectState<TState>(initialState);
 
-        protected void Run(Func<Maybe<TState>, Maybe<TState>> operation)
+        protected TState Run(Func<Maybe<TState>, Maybe<TState>> operation)
         {
-            if (ObjectState is LockedObjectState<TState> lockedObject)
+            if (_objectState is LockedObjectState<TState> lockedObject)
             {
                 lock (lockedObject.Lock)
-                    ObjectState = lockedObject.Run(operation);
+                    _objectState = lockedObject.Run(operation);
             }
             else
-                ObjectState = ObjectState.Run(operation);
+                _objectState = _objectState.Run(operation);
+
+            return _objectState.Data;
         }
 
 

@@ -1,49 +1,41 @@
 ﻿using System.Collections.Immutable;
-using Akka.Actor;
-using Akka.Event;
 using Functional.Maybe;
 using static Tauron.Preload;
 
 namespace Tauron.Application.Settings
 {
-    public sealed class SettingFile : ReceiveActor
+    public sealed class SettingFile : StatefulReceiveActor<SettingFile.State>
     {
-        private readonly ILoggingAdapter _log = Context.GetLogger();
-        private readonly ISettingProvider _provider;
-        private ImmutableDictionary<string, string> _data = ImmutableDictionary<string, string>.Empty;
-        private bool _isLoaded;
+        public record State(ISettingProvider Provider, ImmutableDictionary<string, string> Data, bool IsLoaded);
 
         public SettingFile(ISettingProvider provider)
+            : base(new State(provider, ImmutableDictionary<string, string>.Empty, false))
         {
-            _provider = provider;
-
             Receive<RequestAllValues>(RequestAllValues);
             Receive<SetSettingValue>(SetSettingValue);
         }
 
-        private void SetSettingValue(SetSettingValue obj)
+        private Maybe<State> SetSettingValue(SetSettingValue obj, Maybe<State> mayState)
         {
             var (scope, name, value) = obj;
 
-            Do(from _ in To(_log).Info("Set Setting Value and Save {Scope}:{Key}--{Value}", scope, name, value)
-               let data = _data.SetItem(name, value)
-               select _provider.Save(data),
-                d => _data = d);
+            return 
+                from state in mayState
+                from _ in To(Log).Info("Set Setting Value and Save {Scope}:{Key}--{Value}", scope, name, value)
+                from data in state.Provider.Save(state.Data.SetItem(name, value))
+                select state with{Data = data};
         }
 
         private void RequestAllValues(RequestAllValues obj)
         {
-            Do(from isLoaded in May(_isLoaded)
-               where !_isLoaded
-               from _ in To(_log).Info("Load Settings Value")
-               select _provider.Load(),
-                dic =>
-                {
-                    _data = dic;
-                    _isLoaded = true;
-                });
-
-            Context.Sender.Tell(_data);
+            Tell(Context.Sender,
+            Run(s =>
+                from state in s 
+                where !state.IsLoaded
+                from _ in To(Log).Info("Load Settings Value")
+                from data in state.Provider.Load() 
+                select state with{Data = data, IsLoaded = true})
+                .Data);
         }
     }
 }

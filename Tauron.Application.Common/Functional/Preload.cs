@@ -33,6 +33,32 @@ namespace Tauron
                     => from path in mayPath
                        select IOPath.GetFullPath(path);
             }
+
+            [PublicAPI]
+            public static class Directory
+            {
+                public static Maybe<bool> Exists(Maybe<string> mayPath)
+                    => from path in mayPath
+                        select IODic.Exists(path);
+
+                public static Maybe<System.IO.DirectoryInfo> CreateDirectory(Maybe<string> mayPath)
+                    => from path in mayPath
+                        select IODic.CreateDirectory(path);
+            }
+
+            [PublicAPI]
+            public static class File
+            {
+                public static Maybe<bool> Exists(Maybe<string> mayPath)
+                    => from path in mayPath
+                        select IOFile.Exists(path);
+
+                public static Unit WriteAllText(string fileName, string content)
+                {
+                    IOFile.WriteAllText(fileName, content);
+                    return Unit.Instance;
+                }
+            }
         }
 
         public static FuncLog To(ILoggingAdapter adapter)

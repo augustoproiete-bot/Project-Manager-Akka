@@ -13,7 +13,5 @@ namespace Tauron
         }
     }
 
-    public record LockedObjectState<TState>(object Lock, TState Data) : ObjectState<TState>(Data)
-    {
-    }
+    public record LockedObjectState<TState>(object Lock, TState Data) : ObjectState<TState>(Data);
 }
