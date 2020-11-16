@@ -2,15 +2,42 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Akka.Actor;
+using Akka.Event;
 using Functional.Either;
 using Functional.Maybe;
 using JetBrains.Annotations;
+using IOPath = System.IO.Path;
+using IOFile = System.IO.File;
+using IODic = System.IO.Directory;
 
 namespace Tauron
 {
     [PublicAPI]
     public static class Preload
     {
+        //var dic = Path.GetDirectoryName(Path.GetFullPath(fileName));
+        //    if (!string.IsNullOrWhiteSpace(dic) && !Directory.Exists(dic))
+        //Directory.CreateDirectory(dic);
+
+        public static class IO
+        {
+            [PublicAPI]
+            public static class Path
+            {
+                public static Maybe<string> GetDirectoryName(Maybe<string> mayDic)
+                    => from dic in mayDic
+                       select MayNotNull(IOPath.GetDirectoryName(dic));
+
+                public static Maybe<string> GetFullPath(Maybe<string> mayPath)
+                    => from path in mayPath
+                       select IOPath.GetFullPath(path);
+            }
+        }
+
+        public static FuncLog To(ILoggingAdapter adapter)
+            => new(adapter);
+
         public static TResult Throw<TResult>(Maybe<TResult> may, Func<Exception> error) 
             => may.OrElse(error);
 
@@ -78,6 +105,9 @@ namespace Tauron
             }
         }
 
+        public static Maybe<IActorRef> MayActor(IActorRef? actor) 
+            => actor.IsNobody() ? Maybe<IActorRef>.Nothing : actor.ToMaybe()!;
+
         public static Maybe<TValue> May<TValue>(TValue value)
             => value.ToMaybe();
 
@@ -93,6 +123,9 @@ namespace Tauron
         public static Maybe<TValue> MayNotNull<TValue>(TValue? value)
             where TValue : class => value?.ToMaybe() ?? Maybe<TValue>.Nothing;
 
+        public static Maybe<string> MayNotEmpyt(string? value)
+            => string.IsNullOrWhiteSpace(value) ? Maybe<string>.Nothing : value.ToMaybe();
+
         public static Maybe<TValue> MayNotNull<TValue>(Func<TValue?> value)
             where TValue : class
             => value()?.ToMaybe() ?? Maybe<TValue>.Nothing;
@@ -106,6 +139,20 @@ namespace Tauron
         public static Unit Use(Action action)
         {
             action();
+            return Unit.Instance;
+        }
+
+        public static Unit Tell(IActorRef actor, object msg)
+        {
+            if(!actor.IsNobody())
+                actor.Tell(msg);
+            return Unit.Instance;
+        }
+
+        public static Unit Forward(IActorRef actor, object msg)
+        {
+            if (!actor.IsNobody())
+                actor.Forward(msg);
             return Unit.Instance;
         }
 
@@ -139,10 +186,19 @@ namespace Tauron
         public static Maybe<TResult> Match<TType, TResult>(Maybe<TType> may, Func<TType, TResult> some, Func<Maybe<TResult>> non)
             => may.Match(some, non);
 
+        public static Task<TResult> MatchAsync<TType, TResult>(Maybe<TType> may, Func<TType, Task<TResult>> some, Func<Task<TResult>> non)
+            => may.MatchAsync(some, non);
+
         public static void Match<TType>(Maybe<Maybe<TType>> may, Action<TType> some, Action non)
             => may.Collapse().Match(some, non);
         public static Maybe<TResult> Match<TType, TResult>(Maybe<Maybe<TType>> may, Func<TType, TResult> some, Func<Maybe<TResult>> non)
             => may.Collapse().Match(some, non);
+
+        public static Maybe<TResult> Match<TType, TError, TResult>(Either<TType, TError> may, Func<TType, Maybe<TResult>> some, Func<TError, Maybe<TResult>> non)
+            => may.Match(some, non);
+
+        public static Maybe<TType> Match<TType, TError>(Either<Maybe<TType>, TError> may, Func<TError, Maybe<TType>> non)
+            => may.Match(v => v, non);
 
         public static TResult OrElse<TResult>(Maybe<TResult> may, TResult result)
             => may.OrElse(result);
@@ -198,6 +254,13 @@ namespace Tauron
             postRun();
 
             return result;
+        }
+
+
+        public static Maybe<Unit> WaitTask(Task target)
+        {
+            target.Wait();
+            return Unit.MayInstance;
         }
     }
 }

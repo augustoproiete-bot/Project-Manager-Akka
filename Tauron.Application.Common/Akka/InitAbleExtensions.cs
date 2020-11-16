@@ -10,9 +10,12 @@ namespace Tauron.Akka
     [PublicAPI]
     public static class InitableExtensions
     {
-        public static Maybe<Task<TResult>> Ask<TResult>(this IInitableActorRef model, object message, TimeSpan? timeout = null)
-            => from act in model.Actor
-               select act.Ask<TResult>(message, timeout);
+        public static async Task<TResult> Ask<TResult>(this IInitableActorRef model, object message, TimeSpan? timeout = null)
+        {
+            return await MatchAsync(model.Actor,
+                r => r.Ask<TResult>(message, timeout),
+                () => Task.FromException<TResult>(new InvalidOperationException("Actor not Initialized")));
+        }
 
         public static Maybe<Unit> Tell(this IInitableActorRef model, object msg)
             => Tell(model, msg, ActorRefs.NoSender);

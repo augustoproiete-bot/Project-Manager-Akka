@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using Akka.Actor;
+using Functional.Maybe;
 using JetBrains.Annotations;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Settings
 {
@@ -17,24 +19,17 @@ namespace Tauron.Application.Settings
             Receive<RequestAllValues>(RequestAllValues);
         }
 
-        private bool GetChild(string name, out IActorRef actor)
-        {
-            actor = Context.Child(name);
-            return actor.Equals(ActorRefs.Nobody);
-        }
+        private Maybe<IActorRef> GetChild(string name)
+            => MayActor(Context.Child(name));
+
 
         private void RequestAllValues(RequestAllValues obj)
-        {
-            if (GetChild(obj.SettingScope, out var actor))
-                Context.Sender.Tell(ImmutableDictionary<string, string>.Empty);
-            else
-                actor.Forward(obj);
-        }
+            => Match(GetChild(obj.SettingScope),
+                actor => actor.Forward(obj),
+                () => Context.Sender.Tell(ImmutableDictionary<string, string>.Empty));
 
         private void SetSettingValue(SetSettingValue obj)
-        {
-            if (!GetChild(obj.SettingsScope, out var actor))
-                actor.Forward(obj);
-        }
+            => Do(from actor in GetChild(obj.SettingsScope)
+                  select Forward(actor, obj));
     }
 }

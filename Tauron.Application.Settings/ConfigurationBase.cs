@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Functional.Maybe;
 using JetBrains.Annotations;
+using Serilog;
 using Tauron.Akka;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Settings
 {
@@ -44,38 +47,36 @@ namespace Tauron.Application.Settings
 
         private async Task LoadValues()
         {
-            var result = await _actor.Ask<ImmutableDictionary<string, string>>(new RequestAllValues(_scope));
-
-            Interlocked.Exchange(ref _dic, result);
-        }
-
-        protected Maybe<TValue?> GetValue<TValue>(Func<string, TValue> converter, TValue defaultValue = default, [CallerMemberName] string? name = null)
-        {
             try
             {
-                _loader.Wait();
-                if (string.IsNullOrEmpty(name)) return default;
-
-                return (_dic.TryGetValue(name, out var value) ? converter(value) : defaultValue).ToMaybe()!;
+                var result = await _actor.Ask<ImmutableDictionary<string, string>>(new RequestAllValues(_scope));
+                Interlocked.Exchange(ref _dic, result);
             }
-            catch
+            catch (Exception e)
             {
-                return defaultValue.ToMaybe()!;
+                Log.Logger.ForContext(GetType()).Error(e, "Error On Load Data");
             }
+        }
+
+        protected Maybe<TValue> GetValue<TValue>(Func<string, TValue> converter, TValue defaultValue = default, [CallerMemberName] string? name = null)
+        {
+            var result = Try(() =>
+                from _ in WaitTask(_loader)
+                from key in MayNotNull(name)
+                from data in _dic.Lookup(key)
+                select converter(data));
+
+            return Or(Match(result, _ => May(defaultValue)), May(defaultValue))!;
         }
 
         protected void SetValue(string value, [CallerMemberName] string? name = null)
         {
-            if (_isBlocked)
-                return;
-
-            if (string.IsNullOrEmpty(name)) return;
-
-            ImmutableInterlocked.AddOrUpdate(ref _dic, name, value, (s, s1) => value);
-
-            _actor.Tell(new SetSettingValue(_scope, name, value));
-
-            OnPropertyChanged(name);
+            Do(from block in May(_isBlocked)
+               where !block
+               from key in MayNotNull(name)
+               from _ in May(ImmutableInterlocked.AddOrUpdate(ref _dic, key, value, (_, _) => value))
+               from _ in _actor.Tell(new SetSettingValue(_scope, key, value))
+               select MayOnPropertyChanged(key));
         }
     }
 }

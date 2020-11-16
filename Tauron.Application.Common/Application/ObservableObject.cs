@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using Functional.Maybe;
 using JetBrains.Annotations;
 
 namespace Tauron.Application
@@ -29,6 +30,16 @@ namespace Tauron.Application
         [NotifyPropertyChangedInvocator]
         public virtual void OnPropertyChanged([CallerMemberName] string? eventArgs = null) 
             => OnPropertyChanged(new PropertyChangedEventArgs(Argument.NotNull(eventArgs!, nameof(eventArgs))));
+
+        public virtual Maybe<Unit> MayOnPropertyChanged([CallerMemberName] string? eventArgs = null)
+        {
+            if(string.IsNullOrWhiteSpace(eventArgs))
+                return Maybe<Unit>.Nothing;
+
+            OnPropertyChanged(new PropertyChangedEventArgs(eventArgs));
+
+            return Unit.MayInstance;
+        }
 
         public void SetProperty<TType>(ref TType property, TType value, [CallerMemberName] string? name = null)
         {

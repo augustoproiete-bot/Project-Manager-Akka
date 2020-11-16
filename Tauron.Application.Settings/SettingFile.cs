@@ -1,6 +1,8 @@
 ﻿using System.Collections.Immutable;
 using Akka.Actor;
 using Akka.Event;
+using Functional.Maybe;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Settings
 {
@@ -21,19 +23,25 @@ namespace Tauron.Application.Settings
 
         private void SetSettingValue(SetSettingValue obj)
         {
-            _log.Info("Set Setting Value and Save {Scope}:{Key}--{Value}", obj.SettingsScope, obj.Name, obj.Value);
-            _data = _data.SetItem(obj.Name, obj.Value);
-            _provider.Save(_data);
+            var (scope, name, value) = obj;
+
+            Do(from _ in To(_log).Info("Set Setting Value and Save {Scope}:{Key}--{Value}", scope, name, value)
+               let data = _data.SetItem(name, value)
+               select _provider.Save(data),
+                d => _data = d);
         }
 
         private void RequestAllValues(RequestAllValues obj)
         {
-            if (!_isLoaded)
-            {
-                _log.Info("Load Settings Value");
-                _data = _provider.Load();
-                _isLoaded = true;
-            }
+            Do(from isLoaded in May(_isLoaded)
+               where !_isLoaded
+               from _ in To(_log).Info("Load Settings Value")
+               select _provider.Load(),
+                dic =>
+                {
+                    _data = dic;
+                    _isLoaded = true;
+                });
 
             Context.Sender.Tell(_data);
         }
