@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -12,10 +13,15 @@ using Tauron.Application.Workshop.StateManagement.Attributes;
 using Tauron.Application.Workshop.StateManagement.DataFactorys;
 using static Tauron.Preload;
 
+using TypeLst = System.Collections.Immutable.ImmutableList<System.Type>;
+using TypeGroupDic = System.Collections.Immutable.ImmutableDictionary<System.Type, System.Collections.Immutable.ImmutableList<System.Type>>;
+
 namespace Tauron.Application.Workshop.StateManagement.Internal
 {
     public class ReflectionSearchEngine
     {
+        private sealed record ReflectionData(ImmutableList<(Type State, Maybe<string> Key)> States, TypeGroupDic Reducers, ImmutableList<Func<Maybe<AdvancedDataSourceFactory>>> Factorys, TypeLst Processors);
+
         private static readonly MethodInfo ConfigurateStateMethod = typeof(ReflectionSearchEngine).GetMethod(nameof(ConfigurateState), BindingFlags.Instance | BindingFlags.NonPublic)
          ?? throw new InvalidOperationException("Method not Found");
 
@@ -30,6 +36,8 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
 
         public void Add(ManagerBuilder builder, IDataSourceFactory factory)
         {
+            var data = new ReflectionData(TypeLst.Empty, TypeGroupDic.Empty, ImmutableList<Func<Maybe<AdvancedDataSourceFactory>>>.Empty, TypeLst.Empty);
+
             Func<Maybe<TType>> CreateFactory<TType>(Type target)
             {
                 Maybe<TType> TryCreate()
@@ -46,29 +54,28 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                 return () => Or(TryResolve, TryCreate);
             }
 
-            var types = _assembly.GetTypes();
-            var states = new List<(Type, string?)>();
-            var reducers = new GroupDictionary<Type, Type>();
-            var factorys = new List<Func<Maybe<AdvancedDataSourceFactory>>>();
-            var processors = new List<Type>();
-
-            foreach (var type in types)
+            void ApplyAttribute(Type targetType, object attr)
             {
-                foreach (var customAttribute in type.GetCustomAttributes(false))
+                TypeGroupDic AddToDic(TypeGroupDic dic, Type key) 
+                    => dic.ContainsKey(key) 
+                        ? dic.SetItem(key, dic[key].Add(targetType)) 
+                        : dic.Add(key, TypeLst.Empty.Add(targetType));
+
+                ReflectionData Switch(ReflectionData data)
                 {
-                    switch (customAttribute)
+                    switch (attr)
                     {
                         case StateAttribute state:
-                            states.Add((type, state.Key));
-                            break;
-                        case EffectAttribute _:
-                            builder.WithEffect(CreateFactory<IEffect>(type));
-                            break;
+                             return data with{ States = data.States.Add((targetType, MayNotEmpty(state.Key))) };
+                        case EffectAttribute:
+                            builder.WithEffect(CreateFactory<IEffect>(targetType));
+                            return data;
                         case MiddlewareAttribute _:
-                            builder.WithMiddleware(CreateFactory<IMiddleware>(type));
-                            break;
+                            builder.WithMiddleware(CreateFactory<IMiddleware>(targetType));
+                            return data;
                         case BelogsToStateAttribute belogsTo:
-                            reducers.Add(belogsTo.StateType, type);
+                            return data with{Reducers = data}
+                                reducers.Add(belogsTo.StateType, type);
                             break;
                         case DataSourceAttribute _:
                             factorys.Add(CreateFactory<AdvancedDataSourceFactory>(type));
@@ -76,29 +83,41 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                         case ProcessorAttribute _:
                             processors.Add(type);
                             break;
+                        default:
+                            return data;
                     }
                 }
             }
 
-            if (factorys.Count != 0)
+            var types = _assembly.GetTypes();
+
+            foreach (var type in types)
             {
-                var factory1 = factory;
-                factorys.Add(() => factory1.MaybeCast<IDataSourceFactory, AdvancedDataSourceFactory>());
-                factory = MergeFactory.Merge(factorys.Select(f => f()));
+                foreach (var customAttribute in type.GetCustomAttributes(false))
+                {
+                    ApplyAttribute(customAttribute);
+                }
             }
 
-            foreach (var (type, key) in states)
-            {
-                if(type == null || type.BaseType?.IsGenericType != true || type.BaseType?.GetGenericTypeDefinition() != typeof(StateBase<>)) 
-                    continue;
+            //if (factorys.Count != 0)
+            //{
+            //    var factory1 = factory;
+            //    factorys.Add(() => factory1.MaybeCast<IDataSourceFactory, AdvancedDataSourceFactory>());
+            //    factory = MergeFactory.Merge(factorys.Select(f => f()));
+            //}
 
-                var dataType = type.BaseType.GetGenericArguments()[0];
-                var actualMethod = ConfigurateStateMethod.MakeGenericMethod(dataType);
-                actualMethod.Invoke(this, new object?[] {type, builder, factory, reducers, key});
-            }
+            //foreach (var (type, key) in states)
+            //{
+            //    if(type == null || type.BaseType?.IsGenericType != true || type.BaseType?.GetGenericTypeDefinition() != typeof(StateBase<>)) 
+            //        continue;
 
-            foreach (var processor in processors) 
-                builder.Superviser.CreateAnonym(processor, $"Processor--{processor.Name}");
+            //    var dataType = type.BaseType.GetGenericArguments()[0];
+            //    var actualMethod = ConfigurateStateMethod.MakeGenericMethod(dataType);
+            //    actualMethod.Invoke(this, new object?[] {type, builder, factory, reducers, key});
+            //}
+
+            //foreach (var processor in processors) 
+            //    builder.Superviser.CreateAnonym(processor, $"Processor--{processor.Name}");
         }
 
         private void ConfigurateState<TData>(Type target, ManagerBuilder builder, IDataSourceFactory factory, GroupDictionary<Type, Type> reducerMap, string? key)

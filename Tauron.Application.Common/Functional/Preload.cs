@@ -145,7 +145,7 @@ namespace Tauron
         public static Maybe<TValue> MayNotNull<TValue>(TValue? value)
             where TValue : class => value?.ToMaybe() ?? Maybe<TValue>.Nothing;
 
-        public static Maybe<string> MayNotEmpyt(string? value)
+        public static Maybe<string> MayNotEmpty(string? value)
             => string.IsNullOrWhiteSpace(value) ? Maybe<string>.Nothing : value.ToMaybe();
 
         public static Maybe<TValue> MayNotNull<TValue>(Func<TValue?> value)
@@ -192,6 +192,13 @@ namespace Tauron
 
         public static Maybe<T> Collapse<T>(Maybe<Maybe<T>> maybe)
             => maybe.Collapse();
+
+        public static TData Do<TData>(TData data, Func<Maybe<TData>, Maybe<TData>> modify)
+        {
+            var result = modify(data.ToMaybe());
+
+            return result.IsSomething() ? result.Value : data;
+        }
 
         public static void Do<TResult>(Maybe<TResult> may) {}
 
