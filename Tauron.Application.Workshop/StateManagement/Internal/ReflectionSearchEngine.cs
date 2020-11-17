@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
-using CacheManager.Core;
 using FluentValidation;
 using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.StateManagement.Attributes;
 using Tauron.Application.Workshop.StateManagement.DataFactorys;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Workshop.StateManagement.Internal
 {
@@ -19,7 +20,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
          ?? throw new InvalidOperationException("Method not Found");
 
         private readonly Assembly _assembly;
-        private readonly IComponentContext? _context;
+        private readonly Maybe<IComponentContext> _context;
 
         public ReflectionSearchEngine(Assembly assembly, Maybe<IComponentContext> context)
         {
@@ -29,17 +30,26 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
 
         public void Add(ManagerBuilder builder, IDataSourceFactory factory)
         {
-            Func<TType> CreateFactory<TType>(Type target)
+            Func<Maybe<TType>> CreateFactory<TType>(Type target)
             {
-                if (_context != null)
-                    return () => (TType) (_context.ResolveOptional(target) ?? Activator.CreateInstance(target));
-                return () => (TType)Activator.CreateInstance(target);
+                Maybe<TType> TryCreate()
+                    => from obj in MayNotNull(FastReflection.Shared.FastCreateInstance(target))
+                       where obj is TType
+                       select (TType) obj;
+
+                Maybe<TType> TryResolve()
+                    => from context in _context
+                       from obj in MayNotNull(context.ResolveOptional(target))
+                       where obj is TType
+                       select (TType) obj;
+
+                return () => Or(TryResolve, TryCreate);
             }
 
             var types = _assembly.GetTypes();
             var states = new List<(Type, string?)>();
             var reducers = new GroupDictionary<Type, Type>();
-            var factorys = new List<AdvancedDataSourceFactory>();
+            var factorys = new List<Func<Maybe<AdvancedDataSourceFactory>>>();
             var processors = new List<Type>();
 
             foreach (var type in types)
@@ -61,7 +71,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                             reducers.Add(belogsTo.StateType, type);
                             break;
                         case DataSourceAttribute _:
-                            factorys.Add((AdvancedDataSourceFactory)(_context?.ResolveOptional(type) ?? Activator.CreateInstance(type)));
+                            factorys.Add(CreateFactory<AdvancedDataSourceFactory>(type));
                             break;
                         case ProcessorAttribute _:
                             processors.Add(type);
@@ -72,8 +82,9 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
 
             if (factorys.Count != 0)
             {
-                factorys.Add((AdvancedDataSourceFactory)factory);
-                factory = MergeFactory.Merge(factorys.ToArray());
+                var factory1 = factory;
+                factorys.Add(() => factory1.MaybeCast<IDataSourceFactory, AdvancedDataSourceFactory>());
+                factory = MergeFactory.Merge(factorys.Select(f => f()));
             }
 
             foreach (var (type, key) in states)

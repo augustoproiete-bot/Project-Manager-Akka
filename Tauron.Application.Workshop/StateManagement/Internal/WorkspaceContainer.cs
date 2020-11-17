@@ -12,7 +12,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
         private readonly WorkspaceBase<TData> _source;
 
         public WorkspaceContainer(ImmutableDictionary<Type, Func<WorkspaceBase<TData>, IStateAction, IDataMutation>> map, WorkspaceBase<TData> source)
-            : base(source)
+            : base(((IState)source).ToMaybe())
         {
             _map = map;
             _source = source;

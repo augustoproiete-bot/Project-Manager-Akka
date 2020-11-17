@@ -9,7 +9,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
 {
     [PublicAPI]
     public sealed class ContextDataSource<TData> : IExtendedDataSource<MutatingContext<TData>>, IDisposable
-        where TData : class, IStateEntity
+        where TData : class
     {
         private readonly IExtendedDataSource<TData> _original;
 

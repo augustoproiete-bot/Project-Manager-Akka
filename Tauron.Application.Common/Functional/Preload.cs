@@ -16,10 +16,6 @@ namespace Tauron
     [PublicAPI]
     public static class Preload
     {
-        //var dic = Path.GetDirectoryName(Path.GetFullPath(fileName));
-        //    if (!string.IsNullOrWhiteSpace(dic) && !Directory.Exists(dic))
-        //Directory.CreateDirectory(dic);
-
         public static class IO
         {
             [PublicAPI]
@@ -162,12 +158,6 @@ namespace Tauron
         public static Task StartLongTask(Action action)
             => Task.Factory.StartNew(action, TaskCreationOptions.LongRunning);
 
-        public static Unit Use(Action action)
-        {
-            action();
-            return Unit.Instance;
-        }
-
         public static Unit Tell(IActorRef actor, object msg)
         {
             if(!actor.IsNobody())
@@ -182,9 +172,15 @@ namespace Tauron
             return Unit.Instance;
         }
 
+        public static Unit Use(Action action)
+        {
+            action();
+            return Unit.Instance;
+        }
+        
         public static TResult Use<TResult>(Func<TResult> action)
             => action();
-
+        
         public static Maybe<Unit> MayUse(Action action)
         {
             action();
@@ -248,6 +244,9 @@ namespace Tauron
         public static Maybe<TResult> Or<TResult>(Maybe<TResult> may, Maybe<Maybe<TResult>> res)
             => may.Or(res.Collapse());
 
+        public static Maybe<TResult> Or<TResult>(Func<Maybe<TResult>> may1, Func<Maybe<TResult>> may2)
+            => may1().Or(may2);
+        
         public static Maybe<TResult> Any<TResult>(IEnumerable<Func<Maybe<TResult>>> maybes)
         {
             foreach (var maybeFunc in maybes)

@@ -2,35 +2,43 @@
 using System.Collections.Immutable;
 using Akka.Actor;
 using Akka.DI.Core;
-using Akka.Event;
+using Akka.Util.Internal;
 using Functional.Maybe;
-using Tauron.Akka;
 using Tauron.Application.Workshop.Mutation;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Workshop.Core
 {
-    public sealed class WorkspaceSuperviserActor : ExposedReceiveActor
+    public sealed class WorkspaceSuperviserActor : StatefulReceiveActor<WorkspaceSuperviserActor.State>
     {
-        private ImmutableDictionary<IActorRef, Action> _intrest = ImmutableDictionary<IActorRef, Action>.Empty;
-
+        public sealed record State(ImmutableDictionary<IActorRef, Action> Intrests);
+        
         public WorkspaceSuperviserActor()
+            : base(new State(ImmutableDictionary<IActorRef, Action>.Empty))
         {
             Receive<SuperviseActorBase>(CreateActor);
 
-            Receive<WatchIntrest>(wi =>
-            {
-                ImmutableInterlocked.AddOrUpdate(ref _intrest, wi.Target, _ => wi.OnRemove, (_, action) => action.Combine(wi.OnRemove) ?? wi.OnRemove);
-                Context.Watch(wi.Target);
-            });
-            Receive<Terminated>(t =>
-            {
-                if (!_intrest.TryGetValue(t.ActorRef, out var action)) return;
-
-                action();
-                _intrest = _intrest.Remove(t.ActorRef);
-            });
+            Receive<WatchIntrest>((wi, s)
+                                      => from state in s
+                                         from _ in ContextWatch(wi.Target)
+                                         let data = state.Intrests
+                                         select state with{ Intrests = Update(data, wi.Target, wi.OnRemove)});
+            Receive<Terminated>((t, s)
+                                    => from state in s
+                                       from remover in state.Intrests.Lookup(t.ActorRef)
+                                       from _ in May(Use(remover))
+                                       select state with{Intrests = state.Intrests.Remove(t.ActorRef)});
         }
 
+        private static ImmutableDictionary<IActorRef, Action> Update(ImmutableDictionary<IActorRef, Action> data, IActorRef actor, Action remover) 
+            => data.ContainsKey(actor) ? data.SetItem(actor, data[actor].Combine(remover)) : data.Add(actor, remover);
+
+        private static Maybe<Unit> ContextWatch(IActorRef actorRef)
+        {
+            Context.Watch(actorRef);
+            return Unit.MayInstance;
+        }
+        
         private void CreateActor(SuperviseActorBase obj)
         {
             Maybe<Props> props = default;
@@ -64,16 +72,16 @@ namespace Tauron.Application.Workshop.Core
                     Directive.Stop.When<DeathPactException>()));
         }
 
-        private sealed class DeadLetters : ActorBase
-        {
-            public static readonly Props DeadLetter = Props.Create<DeadLetters>();
-
-            protected override bool Receive(object message)
-            {
-                Unhandled(message);
-                return true;
-            }
-        }
+         private sealed class DeadLetters : ActorBase
+         {
+             public static readonly Props DeadLetter = Props.Create<DeadLetters>();
+        
+             protected override bool Receive(object message)
+             {
+                 Unhandled(message);
+                 return true;
+             }
+         }
 
         internal abstract class SuperviseActorBase
         {

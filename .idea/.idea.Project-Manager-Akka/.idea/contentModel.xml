@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\Users\user\AppData\Local\JetBrains\Rider2020.3\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\user\AppData\Local\JetBrains\Rider2020.3\resharper-host\Local\Transient\Rider\v203\SolutionCaches\_Project-Manager-Akka.1664018066.00" t="ExcludeRecursive" />
+    <e p="C:\Users\user\Source\Repos\Project-Manager-Akka" t="IncludeFlat">
+      <e p="AkkaTest" t="IncludeRecursive">
+        <e p="AkkaTest.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net5.0" t="Include">
+              <e p="AkkaTest.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Program.cs" t="Include" />
+        <e p="Properties" t="Include">
+          <e p="launchSettings.json" t="Include" />
+        </e>
+        <e p="Test" t="Include" />
+      </e>
+      <e p="Apps" t="Include">
+        <e p="Backend" t="Include">
+          <e p="DevTools" t="Include" />
+          <e p="ServiceHost" t="Include" />
+        </e>
+        <e p="Fontend" t="Include">
+          <e p="ServiceManager" t="Include" />
+        </e>
+        <e p="Shared" t="Include" />
+        <e p="Test" t="Include">
+          <e p="TestService" t="Include" />
+        </e>
+      </e>
+      <e p="AutoUpdateRunner" t="IncludeRecursive">
+        <e p="AutoUpdateRunner.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="DeploymentServer" t="IncludeRecursive">
+        <e p="DeploymentServer.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="ExpressionEvaluatorTestService" t="IncludeRecursive">
+        <e p="ExpressionEvaluatorTestService.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="ExpressionEvaluatorTestService.Api" t="IncludeRecursive">
+        <e p="ExpressionEvaluatorTestService.Api.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="packages" t="ExcludeRecursive" />
+      <e p="Project-Manager-Akka.sln" t="IncludeFlat" />
+      <e p="RepositoryServer" t="IncludeRecursive">
+        <e p="RepositoryServer.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="ServiceHost" t="IncludeRecursive">
+        <e p="ServiceHost.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="ServiceManager.ProjectDeploment" t="IncludeRecursive">
+        <e p="ServiceManager.ProjectDeploment.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="ServiceManager.ProjectRepository" t="IncludeRecursive">
+        <e p="ServiceManager.ProjectRepository.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="ServiceManagerIpProbe" t="IncludeRecursive">
+        <e p="ServiceManagerIpProbe.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="Servicemnager.Networking" t="IncludeRecursive">
+        <e p="Servicemnager.Networking.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="Shared" t="Include" />
+      <e p="Tauron.Application.Common" t="IncludeRecursive">
+        <e p="ActionDispose.cs" t="Include" />
+        <e p="ActorFlowBuilder - Backup.cs" t="Include" />
+        <e p="ActorFlowBuilder.cs" t="Include" />
+        <e p="Akka" t="Include">
+          <e p="ActorRefFactory.cs" t="Include" />
+          <e p="ActorRefFactoryExtensions.cs" t="Include" />
+          <e p="BaseActorRef.cs" t="Include" />
+          <e p="DefaultActorRef.cs" t="Include" />
+          <e p="EventActor.cs" t="Include" />
+          <e p="EventActorExtensions.cs" t="Include" />
+          <e p="ExposedReceiveActor.cs" t="Include" />
+          <e p="ExposedReceiveActorExtensions.cs" t="Include" />
+          <e p="HookEvent.cs" t="Include" />
+          <e p="IDefaultActorRef.cs" t="Include" />
+          <e p="IEventActor.cs" t="Include" />
+          <e p="InitableActorRef.cs" t="Include" />
+          <e p="InitableExtensions.cs" t="Include" />
+          <e p="ISyncActorRef.cs" t="Include" />
+          <e p="SyncActorRef.cs" t="Include" />
+          <e p="TimerScheduler.cs" t="Include" />
+        </e>
+        <e p="Application" t="Include">
+          <e p="ActorWorkflow" t="Include">
+            <e p="IHasTimeout.cs" t="Include" />
+            <e p="IWorkflowContext.cs" t="Include" />
+            <e p="LambdaStep.cs" t="Include" />
+            <e p="WorkflowActorBase.cs" t="Include" />
+            <e p="WorkflowResult.cs" t="Include" />
+          </e>
+          <e p="CrcStream.cs" t="Include" />
+          <e p="GenericWeakReference.cs" t="Include" />
+          <e p="GroupDirectory.cs" t="Include" />
+          <e p="INotifyPropertyChangedMethod.cs" t="Include" />
+          <e p="ITauronEnviroment.cs" t="Include" />
+          <e p="LimitedList.cs" t="Include" />
+          <e p="ObservableDictionary.cs" t="Include" />
+          <e p="ObservableObject.cs" t="Include" />
+          <e p="ResourceManagerProvider.cs" t="Include" />
+          <e p="ShearedEvent.cs" t="Include" />
+          <e p="TauronEnviroment.cs" t="Include" />
+          <e p="TauronProfile.cs" t="Include" />
+          <e p="WeakAction.cs" t="Include" />
+          <e p="WeakCleanUp.cs" t="Include" />
+          <e p="WeakCollection.cs" t="Include" />
+          <e p="Workflow" t="Include">
+            <e p="ICondition.cs" t="Include" />
+            <e p="IStep.cs" t="Include" />
+            <e p="Producer.cs" t="Include" />
+            <e p="SimpleCondition.cs" t="Include" />
+            <e p="StepId.cs" t="Include" />
+          </e>
+        </e>
+        <e p="Argument.cs" t="Include" />
+        <e p="Async.cs" t="Include" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="CommonModule.cs" t="Include" />
+        <e p="CriticalExceptions.cs" t="Include" />
+        <e p="DelegateExtensions.cs" t="Include" />
+        <e p="DisposeableBase.cs" t="Include" />
+        <e p="EnumerableExtensions.cs" t="Include" />
+        <e p="Functional" t="Include">
+          <e p="CollectionExtensions.cs" t="Include" />
+          <e p="EitherExtension.cs" t="Include" />
+          <e p="F.cs" t="Include" />
+          <e p="FuncLog.cs" t="Include" />
+          <e p="Maybe.cs" t="Include" />
+          <e p="Preload.cs" t="Include" />
+          <e p="Result.cs" t="Include" />
+          <e p="State" t="Include">
+            <e p="ObjectState.cs" t="Include" />
+            <e p="StatefulObject.cs" t="Include" />
+          </e>
+          <e p="Unit.cs" t="Include" />
+        </e>
+        <e p="Host" t="Include">
+          <e p="ActorApplication.cs" t="Include" />
+          <e p="ApplicationLifetime.cs" t="Include" />
+          <e p="CommonLifetime.cs" t="Include" />
+          <e p="Environments.cs" t="Include" />
+          <e p="Extensions.cs" t="Include" />
+          <e p="HostBuilderContext.cs" t="Include" />
+          <e p="HostDefaults.cs" t="Include" />
+          <e p="HostEnviroment.cs" t="Include" />
+          <e p="HostEnvironmentEnvExtensions.cs" t="Include" />
+          <e p="HostExtensions.cs" t="Include" />
+          <e p="IApplicationBuilder.cs" t="Include" />
+          <e p="IApplicationLifetime.cs" t="Include" />
+          <e p="IAppRoute.cs" t="Include" />
+          <e p="IHostApplicationLifetime.cs" t="Include" />
+          <e p="IHostEnvironment.cs" t="Include" />
+          <e p="IHostLifetime.cs" t="Include" />
+          <e p="StartupBase.cs" t="Include" />
+        </e>
+        <e p="IOExtensions.cs" t="Include" />
+        <e p="IWeakReference.cs" t="Include" />
+        <e p="Localization" t="Include">
+          <e p="Actor" t="Include">
+            <e p="JsonLocLocStoreActor.cs" t="Include" />
+            <e p="LocCoordinator.cs" t="Include" />
+            <e p="LocStoreActorBase.cs" t="Include" />
+          </e>
+          <e p="EscapeHelper.cs" t="Include" />
+          <e p="Extension" t="Include">
+            <e p="LocExtension.cs" t="Include" />
+            <e p="LocExtensionAdaptor.cs" t="Include" />
+          </e>
+          <e p="JsonConfiguration.cs" t="Include" />
+          <e p="LocExtensionId.cs" t="Include" />
+          <e p="LocExtensions.cs" t="Include" />
+          <e p="Provider" t="Include">
+            <e p="ILocStoreProducer.cs" t="Include" />
+            <e p="LocJsonProvider.cs" t="Include" />
+          </e>
+        </e>
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net5.0" t="Include">
+              <e p="Tauron.Application.Common.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="ObjectExtension.cs" t="Include" />
+        <e p="Operations" t="Include">
+          <e p="OperationResult.cs" t="Include" />
+        </e>
+        <e p="ProgressChange.cs" t="Include" />
+        <e p="ProgressStatistic.cs" t="Include" />
+        <e p="ReadOnlyEnumerator.cs" t="Include" />
+        <e p="ReflectionExtensions.cs" t="Include" />
+        <e p="SecurityHelper.cs" t="Include" />
+        <e p="SerializationExtensions.cs" t="Include" />
+        <e p="StreamHelper.cs" t="Include" />
+        <e p="SynchronizationContextRemover.cs" t="Include" />
+        <e p="Tauron.Application.Common.csproj" t="IncludeRecursive" />
+        <e p="Tauron.Application.Common.csproj.DotSettings" t="Include" />
+        <e p="Temp" t="Include">
+          <e p="ITempDic.cs" t="Include" />
+          <e p="ITempFile.cs" t="Include" />
+          <e p="ITempInfo.cs" t="Include" />
+          <e p="TempDic.cs" t="Include" />
+          <e p="TempFile.cs" t="Include" />
+          <e p="TempStorage.cs" t="Include" />
+          <e p="TempStream.cs" t="Include" />
+        </e>
+      </e>
+      <e p="Tauron.Application.Localizer" t="IncludeRecursive">
+        <e p="Tauron.Application.Localizer.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="Tauron.Application.Localizer.DataModel" t="IncludeRecursive">
+        <e p="Tauron.Application.Localizer.DataModel.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="Tauron.Application.Localizer.UIModels" t="IncludeRecursive">
+        <e p="Tauron.Application.Localizer.UIModels.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="Tauron.Application.ServiceManager" t="IncludeRecursive">
+        <e p="Tauron.Application.ServiceManager.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="Tauron.Application.Settings" t="IncludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="ConfigurationBase.cs" t="Include" />
+        <e p="ISettingProvider.cs" t="Include" />
+        <e p="ISettingProviderConfiguration.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net5.0" t="Include">
+              <e p="Tauron.Application.Settings.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Provider" t="Include">
+          <e p="JsonProvider.cs" t="Include" />
+        </e>
+        <e p="RequestAllValues.cs" t="Include" />
+        <e p="SetSettingValue.cs" t="Include" />
+        <e p="SettingFile.cs" t="Include" />
+        <e p="SettingsConfiguration.cs" t="Include" />
+        <e p="SettingsManager.cs" t="Include" />
+        <e p="SettingsManagerExtensions.cs" t="Include" />
+        <e p="Tauron.Application.Settings.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="Tauron.Application.Workshop" t="IncludeRecursive">
+        <e p="Analyzing" t="Include">
+          <e p="Actor" t="Include">
+            <e p="AnalyzerActor.cs" t="Include" />
+            <e p="RegisterRule.cs" t="Include" />
+            <e p="RuleIssuesChanged.cs" t="Include" />
+          </e>
+          <e p="Analyzer.cs" t="Include" />
+          <e p="Core" t="Include">
+            <e p="AnalyzerEventSource.cs" t="Include" />
+          </e>
+          <e p="IAnalyzer.cs" t="Include" />
+          <e p="Issue.cs" t="Include" />
+          <e p="IssuesEvent.cs" t="Include" />
+          <e p="Rules" t="Include">
+            <e p="IRule.cs" t="Include" />
+            <e p="RuleBase.cs" t="Include" />
+          </e>
+        </e>
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="Core" t="Include">
+          <e p="DeferredActor.cs" t="Include" />
+          <e p="WorkspaceSuperviserActor.cs" t="Include" />
+        </e>
+        <e p="EventSourceExtensions.cs" t="Include" />
+        <e p="Mutating" t="Include">
+          <e p="Changes" t="Include">
+            <e p="ICanApplyChange.cs" t="Include" />
+            <e p="MultiChange.cs" t="Include" />
+            <e p="MutatingChange.cs" t="Include" />
+            <e p="ResetChange.cs" t="Include" />
+          </e>
+          <e p="MutatingContext.cs" t="Include" />
+        </e>
+        <e p="Mutation" t="Include">
+          <e p="DataMutation.cs" t="Include" />
+          <e p="EventSource.cs" t="Include" />
+          <e p="EventSourceBase.cs" t="Include" />
+          <e p="IDataSource.cs" t="Include" />
+          <e p="IEventSource.cs" t="Include" />
+          <e p="IEventSourceable.cs" t="Include" />
+          <e p="IExtendedDataSource.cs" t="Include" />
+          <e p="IQuery.cs" t="Include" />
+          <e p="IRespondHandler.cs" t="Include" />
+          <e p="MutatingEngine.cs" t="Include" />
+          <e p="MutationActor.cs" t="Include" />
+          <e p="WatchIntrest.cs" t="Include" />
+        </e>
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net5.0" t="Include">
+              <e p="Tauron.Application.Workshop.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="StateManagement" t="Include">
+          <e p="Attributes" t="Include">
+            <e p="BelogsToStateAttribute.cs" t="Include" />
+            <e p="DataSourceAttribute.cs" t="Include" />
+            <e p="EffectAttribute.cs" t="Include" />
+            <e p="MiddlewareAttribute.cs" t="Include" />
+            <e p="ProcessorAttribute.cs" t="Include" />
+            <e p="ReducerAttribute.cs" t="Include" />
+            <e p="StateAttribute.cs" t="Include" />
+            <e p="ValidatorAttribute.cs" t="Include" />
+          </e>
+          <e p="AutofacOptions.cs" t="Include" />
+          <e p="Builder" t="Include">
+            <e p="ConcurrentDispatcherConfugiration.cs" t="Include" />
+            <e p="ConsistentHashDispatcherConfiguration.cs" t="Include" />
+            <e p="DispatcherPoolConfigurationBase.cs" t="Include" />
+            <e p="IConcurrentDispatcherConfugiration.cs" t="Include" />
+            <e p="IConsistentHashDispatcherPoolConfiguration.cs" t="Include" />
+            <e p="IDispatcherPoolConfiguration.cs" t="Include" />
+            <e p="IStateBuilder.cs" t="Include" />
+            <e p="IWorkspaceMapBuilder.cs" t="Include" />
+            <e p="StateBuilder.cs" t="Include" />
+            <e p="WorkspaceMapBuilder.cs" t="Include" />
+          </e>
+          <e p="Cache" t="Include">
+            <e p="ParentCache.cs" t="Include" />
+            <e p="ParentCacheHandle.cs" t="Include" />
+            <e p="ParentExtensions.cs" t="Include" />
+            <e p="SyncCache.cs" t="Include" />
+          </e>
+          <e p="DataFactorys" t="Include">
+            <e p="AdvancedDataSourceFactory.cs" t="Include" />
+            <e p="MapSourceFactory.cs" t="Include" />
+            <e p="MergeFactory.cs" t="Include" />
+            <e p="MergeFactoyExtensions.cs" t="Include" />
+            <e p="SingleValueDataFactory.cs" t="Include" />
+          </e>
+          <e p="Dispatcher" t="Include">
+            <e p="ConcurentStateDispatcher.cs" t="Include" />
+            <e p="ConsistentHashStateDispatcher.cs" t="Include" />
+            <e p="DefaultStateDispatcher.cs" t="Include" />
+            <e p="IStateDispatcherConfigurator.cs" t="Include" />
+          </e>
+          <e p="EmptyQuery.cs" t="Include" />
+          <e p="IActionInvoker.cs" t="Include" />
+          <e p="ICanQuery.cs" t="Include" />
+          <e p="IChangeTrackable.cs" t="Include" />
+          <e p="IDataSourceFactory.cs" t="Include" />
+          <e p="IEffect.cs" t="Include" />
+          <e p="IMiddleware.cs" t="Include" />
+          <e p="Internal" t="Include">
+            <e p="ContextDataSource.cs" t="Include" />
+            <e p="ReflectionSearchEngine.cs" t="Include" />
+            <e p="StateContainer.cs" t="Include" />
+            <e p="WorkspaceContainer.cs" t="Include" />
+          </e>
+          <e p="IReducer.cs" t="Include" />
+          <e p="IState.cs" t="Include" />
+          <e p="IStateAction.cs" t="Include" />
+          <e p="ManagerBuilder.cs" t="Include" />
+          <e p="ManagerBuilderExtensions.cs" t="Include" />
+          <e p="Reducer.cs" t="Include" />
+          <e p="ReducerResult.cs" t="Include" />
+          <e p="RootManager.cs" t="Include" />
+          <e p="SimpleStateAction.cs" t="Include" />
+          <e p="StateBase.cs" t="Include" />
+        </e>
+        <e p="Tauron.Application.Workshop.csproj" t="IncludeRecursive" />
+        <e p="Workspace.cs" t="Include" />
+        <e p="WorkspaceSuperviser.cs" t="Include" />
+      </e>
+    </e>
+  </component>
+</project>

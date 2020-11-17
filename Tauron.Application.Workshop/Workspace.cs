@@ -5,6 +5,7 @@ using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutating.Changes;
 using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Workshop.StateManagement;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Workshop
 {

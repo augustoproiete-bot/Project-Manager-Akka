@@ -1,10 +1,12 @@
-﻿using JetBrains.Annotations;
+﻿using System.Collections.Generic;
+using Functional.Maybe;
+using JetBrains.Annotations;
 
 namespace Tauron.Application.Workshop.StateManagement.DataFactorys
 {
     public partial class MergeFactory
     {
-        public static AdvancedDataSourceFactory Merge(params AdvancedDataSourceFactory[] factories)
+        public static AdvancedDataSourceFactory Merge(params Maybe<AdvancedDataSourceFactory>[] factories)
         {
             var foundFac = factories.FindIndex(a => a is MergeFactory);
             MergeFactory factory;
@@ -22,6 +24,11 @@ namespace Tauron.Application.Workshop.StateManagement.DataFactorys
             }
 
             return factory;
+        }
+
+        public static AdvancedDataSourceFactory Merge(IEnumerable<Maybe<AdvancedDataSourceFactory>> factorys)
+        {
+            
         }
     }
 }

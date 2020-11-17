@@ -22,10 +22,10 @@ namespace Tauron.Application.Workshop.StateManagement
 
         public WorkspaceSuperviser Superviser { get; }
 
-        private Func<IStateDispatcherConfigurator> _dispatcherFunc = () => new DefaultStateDispatcher();
-        private readonly List<Func<IEffect>> _effects = new();
-        private readonly List<Func<IMiddleware>> _middlewares = new();
-        private readonly List<StateBuilderBase> _states = new();
+        private          Func<IStateDispatcherConfigurator> _dispatcherFunc = () => new DefaultStateDispatcher();
+        private readonly List<Func<Maybe<IEffect>>>         _effects        = new();
+        private readonly List<Func<Maybe<IMiddleware>>>     _middlewares    = new();
+        private readonly List<StateBuilderBase>             _states         = new();
 
         private bool _sendBackSetting;
 
@@ -54,13 +54,13 @@ namespace Tauron.Application.Workshop.StateManagement
             return this;
         }
 
-        public ManagerBuilder WithMiddleware(Func<IMiddleware> middleware)
+        public ManagerBuilder WithMiddleware(Func<Maybe<IMiddleware>> middleware)
         {
             _middlewares.Add(middleware);
             return this;
         }
 
-        public ManagerBuilder WithEffect(Func<IEffect> effect)
+        public ManagerBuilder WithEffect(Func<Maybe<IEffect>> effect)
         {
             _effects.Add(effect);
             return this;
@@ -84,14 +84,26 @@ namespace Tauron.Application.Workshop.StateManagement
 
             componets.Do(add =>
             {
-                var (effects, middlewares) = add;
+                var (addEffects, addMiddlewares) = add;
 
-                additionalEffects.AddRange(effects);
-                additionalMiddlewares.AddRange(middlewares);
+                additionalEffects.AddRange(addEffects);
+                additionalMiddlewares.AddRange(addMiddlewares);
             });
+
+            var middlewares =
+                from middleware in _middlewares
+                let inst = middleware().OrElseDefault()
+                where inst != null
+                select inst;
+
+            var effects =
+                from effect in _effects
+                let inst = effect().OrElseDefault()
+                where inst != null
+                select inst;
             
-            return new RootManager(Superviser, _dispatcherFunc(), _states, _effects.Select(e => e()).Concat(additionalEffects), 
-                _middlewares.Select(m => m()).Concat(additionalMiddlewares), _sendBackSetting, mayComponentContext);
+            return new RootManager(Superviser, _dispatcherFunc(), _states, effects.Concat(additionalEffects), 
+                middlewares.Concat(additionalMiddlewares), _sendBackSetting, mayComponentContext);
         }
     }
 }

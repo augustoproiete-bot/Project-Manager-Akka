@@ -4,14 +4,15 @@ using System.Linq;
 using Functional.Maybe;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutation;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Workshop.StateManagement.Internal
 {
     public abstract class StateContainer : IDisposable
     {
-        public IState Instance { get; }
+        public Maybe<IState> Instance { get; }
 
-        protected StateContainer(IState instance) 
+        protected StateContainer(Maybe<IState> instance) 
             => Instance = instance;
 
         public abstract IDataMutation? TryDipatch(IStateAction action, Action<IReducerResult> sendResult, Action onCompled);
@@ -39,30 +40,37 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
             if (reducers.Count == 0)
                 return null;
 
-            return MutatingEngine.CreateMutate(action.ActionName, action.Query, async data =>
-            {
-                try
-                {
-                    var isFail = false;
-                    foreach (var reducer in reducers)
-                    {
-                        var result = await reducer.Reduce(data, action);
+            return MutatingEngine.CreateMutate(action.ActionName, action.Query,
+                                               async data =>
+                                               {
+                                                   try
+                                                   {
+                                                       var isFail = false;
+                                                       foreach (var reducer in reducers)
+                                                       {
+                                                           var mayResult = await reducer.Reduce(data, action);
 
-                        if (!result.IsOk)
-                            isFail = true;
+                                                           var tempData =
+                                                               Collapse(from result in mayResult
+                                                                        from _ in MayUse(() => sendResult(result))
+                                                                        where result.IsOk
+                                                                        select result.Data);
 
-                        sendResult(result);
-                        data = result.Data;
-                    }
+                                                           if (tempData.IsNothing())
+                                                               isFail = true;
 
-                    return isFail ? null : data;
-                }
-                finally
-                {
-                    onCompled();
-                }
-            });
+                                                           data = tempData.Or(data);
+                                                       }
+
+                                                       return isFail ? Maybe<MutatingContext<TData>>.Nothing : data;
+                                                   }
+                                                   finally
+                                                   {
+                                                       onCompled();
+                                                   }
+                                               });
         }
+
 
         public override void Dispose() 
             => _toDispose.Dispose();

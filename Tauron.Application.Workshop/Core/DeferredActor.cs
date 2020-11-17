@@ -9,14 +9,15 @@ using static Tauron.Preload;
 
 namespace Tauron.Application.Workshop.Core
 {
-    public abstract class DeferredActor : StatefulObject<DeferredActor.State>
+    public abstract class DeferredActor<TState> : StatefulObject<TState>
+        where TState : DeferredActor<TState>.DeferredActorState
     {
-        public record State(ImmutableList<object>? Stash, IActorRef Actor);
+        public record DeferredActorState(ImmutableList<object>? Stash, IActorRef Actor);
 
         protected IActorRef Actor => ObjectState.Actor;
 
-        protected DeferredActor(Task<IActorRef> actor) 
-            : base(new State(ImmutableList<object>.Empty, ActorRefs.Nobody), true)
+        protected DeferredActor(Task<IActorRef> actor, TState initialState) 
+            : base(initialState, true)
             => actor.ContinueWith(OnCompleded);
 
         private void OnCompleded(Task<IActorRef> obj)

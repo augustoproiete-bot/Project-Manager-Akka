@@ -64,8 +64,9 @@ namespace Tauron.Application.Workshop.StateManagement
                 select
                 (
                     from container in state
-                    where container.Instance is TState
-                    select (TState) container.Instance
+                    let inst = container.Instance.OrElseDefault()
+                    where inst is TState
+                    select (TState) inst
                 ).FirstMaybe();
 
             return searchResult;
@@ -170,7 +171,7 @@ namespace Tauron.Application.Workshop.StateManagement
 
             public object ConsistentHashKey => "RootManagerInternals";
             public string Name => "Invoke Effects";
-            public Action Run => () => _effects.Foreach(e => e.Handle(_action, _invoker));
+            public Action Run => () => _effects.ForEach(e => e.Handle(_action, _invoker));
 
             public EffectInvoker(IEnumerable<IEffect> effects, IStateAction action, IActionInvoker invoker)
             {

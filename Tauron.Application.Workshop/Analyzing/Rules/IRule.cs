@@ -3,7 +3,7 @@ using Functional.Maybe;
 
 namespace Tauron.Application.Workshop.Analyzing.Rules
 {
-    public interface IRule<in TWorkspace, TData>
+    public interface IRule<TWorkspace, TData>
         where TWorkspace : WorkspaceBase<TData> where TData : class
     {
         string Name { get; }

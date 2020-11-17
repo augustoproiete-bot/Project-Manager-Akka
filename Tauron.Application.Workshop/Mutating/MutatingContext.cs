@@ -45,6 +45,9 @@ namespace Tauron.Application.Workshop.Mutating
             data = Data;
         }
 
+        public MutatingContext<TData> Update(MutatingChange newChange, TData newData) 
+            => Update(newChange.ToMaybe(), newData);
+
         public MutatingContext<TData> Update(Maybe<MutatingChange> mayNewChange, TData newData)
         {
             if (newData is ICanApplyChange<TData> apply)

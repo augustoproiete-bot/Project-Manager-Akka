@@ -1,43 +1,77 @@
 ﻿using System;
 using System.Collections.Immutable;
-using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Util.Internal;
 using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Core;
+using static Tauron.Preload;
 
 namespace Tauron.Application.Workshop.Mutation
 {
     [PublicAPI]
-    public abstract class EventSourceBase<TRespond> : DeferredActor, IEventSource<TRespond>
+    public abstract class EventSourceBase<TRespond> : DeferredActor<EventSourceBase<TRespond>.EventSourceState>, IEventSource<TRespond>
     {
+        public sealed record EventSourceState(ImmutableList<object>? Stash, IActorRef Actor, Action<Maybe<TRespond>>? Action, ImmutableList<IActorRef> Intrests, 
+                                              ImmutableDictionary<IActorRef, Action<Maybe<TRespond>>> SourceActions)
+            : DeferredActorState(Stash, Actor)
+        {
+            public EventSourceState()
+                : this(ImmutableList<object>.Empty, ActorRefs.Nobody, null, ImmutableList<IActorRef>.Empty, ImmutableDictionary<IActorRef, Action<Maybe<TRespond>>>.Empty)
+            {
+                
+            }
+        }
+        
+        
         private readonly WorkspaceSuperviser _superviser;
 
-        private Action<Maybe<TRespond>>? _action;
-        private ImmutableList<IActorRef> _intrests = ImmutableList<IActorRef>.Empty;
-        private ImmutableDictionary<IActorRef, Action<Maybe<TRespond>>> _sourcesActions = ImmutableDictionary<IActorRef, Action<Maybe<TRespond>>>.Empty;
-
         protected EventSourceBase(Task<IActorRef> mutator, WorkspaceSuperviser superviser)
-            : base(mutator) 
+            : base(mutator, new EventSourceState()) 
             => _superviser = superviser;
-
+        
         public void RespondOn(IActorRef actorRef)
         {
-            lock(this)
-                Interlocked.Exchange(ref _intrests, _intrests.Add(actorRef));
-            _superviser.WatchIntrest(new WatchIntrest(() => Interlocked.Exchange(ref _intrests, _intrests.Remove(actorRef)), actorRef));
+            WatchIntrest CreateIntrest()
+            {
+                return new(actorRef,
+                           () => Run(s =>
+                                         from state in s
+                                         select state with{Intrests = state.Intrests.Remove(actorRef)}));
+            }
+            
+            Run(s =>
+                    from state in s
+                    from _ in MayUse(() => _superviser.WatchIntrest(CreateIntrest()))
+                    select state with{Intrests = state.Intrests.Add(actorRef)});
         }
 
         public void RespondOn(IActorRef? source, Action<Maybe<TRespond>> action)
         {
+            WatchIntrest CreateIntrest()
+            {
+                return new(source,
+                           () => Run(s =>
+                                         from state in s
+                                         select state with{SourceActions = state.SourceActions.Remove(source)}));
+            }
+            
             if (source.IsNobody())
-                _action = _action.Combine(action);
+            {
+                Run(s =>
+                        from state in s 
+                        select state with{Action = state.Action.Combine(action)});
+            }
             else
             {
-                ImmutableInterlocked.AddOrUpdate(ref _sourcesActions!, source, _ => action, (_, old) => old.Combine(action) ?? action);
-                _superviser.WatchIntrest(new WatchIntrest(() => ImmutableInterlocked.TryRemove(ref _sourcesActions!, source, out _), source!));
+                Run(s =>
+                        from state in s
+                        from _ in MayUse(() => _superviser.WatchIntrest(CreateIntrest()))
+                        let list = state.SourceActions
+                        select state with{ SourceActions = list.ContainsKey(source)
+                                                               ? list.SetItem(source, list[source].Combine(action))
+                                                               : list.SetItem(source, action)});
             }
         }
 
@@ -45,9 +79,11 @@ namespace Tauron.Application.Workshop.Mutation
         {
             if(respond.IsNothing()) return;
 
-            _intrests.ForEach(ar => ar.Tell(respond));
-            _action?.Invoke(respond);
-            _sourcesActions.ForEach(p => p.Key.Tell(IncommingEvent.From(respond, p.Value)));
+            var current = ObjectState;
+            
+            current.Intrests.ForEach(ar => ar.Tell(respond));
+            current.Action?.Invoke(respond);
+            current.SourceActions.ForEach(p => p.Key.Tell(IncommingEvent.From(respond, p.Value)));
         }
     }
 }
