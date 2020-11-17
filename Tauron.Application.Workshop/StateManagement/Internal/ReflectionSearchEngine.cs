@@ -102,7 +102,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
         }
 
         private void ConfigurateState<TData>(Type target, ManagerBuilder builder, IDataSourceFactory factory, GroupDictionary<Type, Type> reducerMap, string? key)
-            where TData : class, IStateEntity
+            where TData : class
         {
             var config = builder.WithDataSource(factory.Create<TData>());
 
@@ -110,18 +110,6 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                 config.WithKey(key);
 
             config.WithStateType(target);
-            if (target.GetCustomAttribute(typeof(CacheAttribute)) is CacheAttribute cache && cache.UseParent)
-                config.WithParentCache();
-
-            foreach (var methodInfo in target.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
-            {
-                if (!(methodInfo.GetCustomAttribute(typeof(CacheAttribute)) is CacheAttribute metCache)) continue;
-                
-                if (metCache.UseParent)
-                    config.WithParentCache();
-
-                config.WithCache((Action<ConfigurationBuilderCachePart>) Delegate.CreateDelegate(typeof(Action<ConfigurationBuilderCachePart>), methodInfo));
-            }
 
             if (!reducerMap.TryGetValue(target, out var reducers)) return;
             
@@ -172,19 +160,19 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                 //Sync Version
                 var returnType = reducer.ReturnType;
                 if (returnType == typeof(MutatingContext<TData>))
-                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(MutatingContext<TData>));
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(Maybe<MutatingContext<TData>>), actionType, typeof(Maybe<MutatingContext<TData>>));
                 else if (returnType == typeof(ReducerResult<TData>))
-                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(ReducerResult<TData>));
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(Maybe<MutatingContext<TData>>), actionType, typeof(Maybe<ReducerResult<TData>>));
                 else if (returnType.IsAssignableTo<TData>())
-                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(TData));
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(Maybe<MutatingContext<TData>>), actionType, typeof(Maybe<TData>));
 
                 //AsyncVersion
                 if (returnType == typeof(Task<MutatingContext<TData>>))
-                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(Task<MutatingContext<TData>>));
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(Maybe<MutatingContext<TData>>), actionType, typeof(Task<Maybe<MutatingContext<TData>>>));
                 else if (returnType == typeof(Task<ReducerResult<TData>>))
-                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(Task<ReducerResult<TData>>));
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(Maybe<MutatingContext<TData>>), actionType, typeof(Task<Maybe<ReducerResult<TData>>>));
                 else if (returnType.IsAssignableTo<Task<TData>>())
-                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(MutatingContext<TData>), actionType, typeof(Task<TData>));
+                    delegateType = typeof(Func<,,>).MakeGenericType(typeof(Maybe<MutatingContext<TData>>), actionType, typeof(Task<Maybe<TData>>));
 
                 if (delegateType == null)
                     continue;
@@ -196,17 +184,18 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
 
                 var constructedReducer = typeof(DelegateReducer<,>).MakeGenericType(actionType, typeof(TData));
                 var reducerInstance = Activator.CreateInstance(constructedReducer, acrualDelegate, validator);
-
+                if (reducerInstance == null)
+                    throw new InvalidOperationException($"Reducer Creation Failed {constructedReducer}");
+                
                 config.WithReducer(() => (IReducer<TData>) reducerInstance);
             }
         }
 
         [UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
-        private sealed class DelegateReducer<TAction, TData> : Reducer<TAction, TData> 
-            where TData : IStateEntity 
+        private sealed class DelegateReducer<TAction, TData> : Reducer<TAction, TData>
             where TAction : IStateAction
         {
-            private readonly Func<MutatingContext<TData>, TAction, Task<ReducerResult<TData>>> _action;
+            private readonly Func<Maybe<MutatingContext<TData>>, TAction, Task<Maybe<ReducerResult<TData>>>> _action;
 
             public DelegateReducer(Func<MutatingContext<TData>, TAction, ReducerResult<TData>> action, IValidator<TAction>? validation)
             {
@@ -246,7 +235,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
 
             public override IValidator<TAction>? Validator { get; }
 
-            protected override async Task<ReducerResult<TData>> Reduce(MutatingContext<TData> state, TAction action) 
+            protected override async Task<Maybe<ReducerResult<TData>>> Reduce(Maybe<MutatingContext<TData>> state, TAction action) 
                 => await _action(state, action);
         }
     }

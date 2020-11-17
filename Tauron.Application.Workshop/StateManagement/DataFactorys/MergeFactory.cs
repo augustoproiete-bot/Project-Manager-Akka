@@ -13,8 +13,12 @@ namespace Tauron.Application.Workshop.StateManagement.DataFactorys
     {
         private readonly ConcurrentBag<AdvancedDataSourceFactory> _factories = new();
 
-        public void Register(AdvancedDataSourceFactory factory) 
-            => _factories.Add(factory);
+        public void Register(AdvancedDataSourceFactory factory)
+        {
+            if(factory is MergeFactory mergeFactory)
+                RegisterMany(mergeFactory._factories);
+            _factories.Add(factory);
+        }
 
         public void RegisterMany(IEnumerable<AdvancedDataSourceFactory> factories)
             => factories.ForEach(f => _factories.Add(f));
