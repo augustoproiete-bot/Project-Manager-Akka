@@ -10,7 +10,7 @@ namespace Tauron.Akka
 {
     public interface IExposedReceiveActor
     {
-        IActorDsl Exposed { get; }
+        public IActorDsl Exposed { get; }
     }
 
     [PublicAPI]

@@ -1,32 +1,67 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Akka.Actor;
+using Akka.Actor.Dsl;
 using Akka.Util;
 using Akka.Util.Internal;
 using Autofac;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Commands;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Wpf.Model
 {
-    [PublicAPI]
-    public abstract class UiActor : ExposedReceiveActor
+    public abstract class UiActor : StatefulUiActor<EmptyState>
     {
-        private readonly Dictionary<string, CommandRegistration> _commandRegistrations = new();
-        private readonly GroupDictionary<string, InvokeHelper>   _eventRegistrations   = new();
-        private readonly Dictionary<string, PropertyData>        _propertys            = new();
-        private          bool                                    _isSeald;
-
-        protected UiActor(ILifetimeScope lifetimeScope, Dispatcher dispatcher)
+        protected UiActor(ILifetimeScope lifetimeScope, Dispatcher dispatcher) 
+            : base(lifetimeScope, dispatcher)
         {
+        }
+    }
+
+    public interface IUiActor : IExposedReceiveActor
+    {
+        ILifetimeScope LifetimeScope { get; }
+        Dispatcher Dispatcher { get; }
+        void InvalidateRequerySuggested();
+        void Flow<TStart>(Action<ActorFlowBuilder<TStart>> builder);
+        EnterFlow<TStart> EnterFlow<TStart>(Action<ActorFlowBuilder<TStart>> builder);
+
+        FluentPropertyRegistration<TData> RegisterProperty<TData>(string name);
+
+        void ThrowIsSeald();
+
+        void RegisterProperty(UIPropertyBase prop);
+
+        void RegisterTerminationCallback(Action<IUiActor> callback);
+    }
+
+    [PublicAPI]
+    public abstract class StatefulUiActor<TState> : StatefulReceiveActor<TState>, IUiActor where TState : new()
+    {
+        private sealed record UiActorData(ImmutableDictionary<string, CommandRegistration> CommandRegistrations, ImmutableGroupDictionary<string, InvokeHelper> EventRegistrations,
+            ImmutableDictionary<string, PropertyData> Propertys, bool IsSealed);
+
+        private readonly StatefulObjectLogic<UiActorData> _actorData;
+
+        protected StatefulUiActor(ILifetimeScope lifetimeScope, Dispatcher dispatcher)
+            : base(new TState())
+        {
+            _actorData = new StatefulObjectLogic<UiActorData>(new UiActorData(
+                ImmutableDictionary<string, CommandRegistration>.Empty,
+                ImmutableGroupDictionary<string, InvokeHelper>.Empty,
+                ImmutableDictionary<string, PropertyData>.Empty, false));
+
             LifetimeScope = lifetimeScope;
             Dispatcher    = dispatcher;
             InitHandler();
@@ -38,13 +73,15 @@ namespace Tauron.Application.Wpf.Model
 
         public override void AroundPreStart()
         {
-            _isSeald = true;
+            _actorData.Run(d =>
+                from state in d
+                select state with{IsSealed = true});
             base.AroundPreStart();
         }
 
-        internal void ThrowIsSeald()
+        public void ThrowIsSeald()
         {
-            if (_isSeald)
+            if (_actorData.ObjectState.IsSealed)
                 throw new InvalidOperationException("The Ui Actor is immutale");
         }
 
@@ -53,7 +90,7 @@ namespace Tauron.Application.Wpf.Model
             Receive<CanCommandExecuteRequest>(CanCommandExecute);
             Receive<CommandExecuteEvent>(CommandExecute);
             Receive<ControlSetEvent>(msg => SetControl(msg.Name, msg.Element));
-            Receive<MakeEventHook>(msg => Context.Sender.Tell(Context.GetOrCreateEventActor(msg.Name + "-EventActor")));
+            Receive<MakeEventHook>(msg => Context.Sender.Tell(Context.GetOrCreateEventActor(May(msg.Name + "-EventActor"))));
             Receive<ExecuteEventExent>(ExecuteEvent);
             Receive<GetValueRequest>(GetPropertyValue);
             ReceiveAsync<InitEvent>(async evt => await InitializeAsync(evt));
@@ -74,31 +111,9 @@ namespace Tauron.Application.Wpf.Model
 
         #endregion
 
-        private sealed class PropertyTermination
-        {
-            public PropertyTermination(IActorRef actorRef, string name)
-            {
-                ActorRef = actorRef;
-                Name     = name;
-            }
+        private sealed record CommandRegistration(Action<Maybe<object>> Command, Maybe<CommandQuery> CanExecute);
 
-            public IActorRef ActorRef { get; }
-
-            public string Name { get; }
-        }
-
-        private sealed class CommandRegistration
-        {
-            public CommandRegistration(Action<object?> command, CommandQuery? canExecute)
-            {
-                Command    = command;
-                CanExecute = canExecute;
-            }
-
-            public Action<object?> Command { get; }
-
-            public CommandQuery? CanExecute { get; }
-        }
+        private sealed record PropertyTermination(IActorRef ActorRef, string Name);
 
         private sealed class InvokeHelper
         {
@@ -144,13 +159,14 @@ namespace Tauron.Application.Wpf.Model
 
             public UIPropertyBase PropertyBase { get; }
 
-            public string? Error { get; set; }
+            public Maybe<string> Error { get; set; }
 
             public List<IActorRef> Subscriptors { get; } = new();
 
-            public void SetValue(object value)
+            public void SetValue(Maybe<object?> value)
             {
-                PropertyBase.SetValue(value);
+                if(value.IsSomething())
+                    PropertyBase.SetValue(value);
             }
         }
 
@@ -184,9 +200,9 @@ namespace Tauron.Application.Wpf.Model
                 }
             }
 
-            public override void Execute(object parameter) => _self.Tell(new CommandExecuteEvent(_name, parameter));
+            public override void Execute(object? parameter) => _self.Tell(new CommandExecuteEvent(_name, MayNotNull(parameter)));
 
-            public override bool CanExecute(object parameter) => _canExecute;
+            public override bool CanExecute(object? parameter) => _canExecute;
 
             public void Deactivate()
             {
@@ -196,11 +212,7 @@ namespace Tauron.Application.Wpf.Model
             }
         }
 
-        private sealed class ReviveActor
-        {
-            public ReviveActor(KeyValuePair<string, PropertyData>[] data) => Data = data;
-            public KeyValuePair<string, PropertyData>[] Data { get; }
-        }
+        private sealed record ReviveActor(KeyValuePair<string, PropertyData>[] Data);
 
         #region Dispatcher
 
@@ -212,10 +224,8 @@ namespace Tauron.Application.Wpf.Model
             Dispatcher.Invoke(() => executor(context));
         }
 
-        protected void UICall(Action executor)
-        {
-            Dispatcher.Invoke(executor);
-        }
+        protected void UICall(Action executor) 
+            => Dispatcher.Invoke(executor);
 
         protected Task<T> UICall<T>(Func<Task<T>> executor) => Dispatcher.Invoke(executor);
 
@@ -232,13 +242,16 @@ namespace Tauron.Application.Wpf.Model
         private void CommandExecute(CommandExecuteEvent obj)
         {
             var (name, parameter) = obj;
-            if (_commandRegistrations.TryGetValue(name, out var registration))
-            {
-                Log.Info("Execute Command {Commanf}", name);
-                registration.Command(parameter);
-            }
-            else
-                Log.Error("Command not Found {Name}", name);
+
+            var mayRegistration = _actorData.ObjectState.CommandRegistrations.Lookup(name);
+
+            Match(mayRegistration,
+                registration =>
+                {
+                    Log.Info("Execute Command {Commanf}", name);
+                    registration.Command(parameter);
+                },
+                () => Log.Error("Command not Found {Name}", name));
 
             Dispatcher.Invoke(CommandManager.InvalidateRequerySuggested);
         }
@@ -246,40 +259,53 @@ namespace Tauron.Application.Wpf.Model
         private void CanCommandExecute(CanCommandExecuteRequest obj)
         {
             var (name, _) = obj;
-            if (!_commandRegistrations.TryGetValue(name, out var registration))
-            {
-                Log.Warning("No Command Found {Name}", name);
-                Context.Sender.Tell(new CanCommandExecuteRespond(name, () => false));
-            }
-            else
-            {
-                var invoker = registration.CanExecute;
-                Context.Sender.Tell(invoker == null ? new CanCommandExecuteRespond(name, () => true) : new CanCommandExecuteRespond(name, () => invoker.Run()));
-            }
-        }
 
+            var mayRegistration = _actorData.ObjectState.CommandRegistrations.Lookup(name);
+
+            Match(mayRegistration,
+                registration =>
+                {
+                    var invoker = registration.CanExecute;
+
+                    Tell(Context.Sender,
+                        Match(invoker,
+                            q => new CanCommandExecuteRespond(name, q.Run),
+                            () => May(new CanCommandExecuteRespond(name, () => true))));
+                },
+                () =>
+                {
+                    Log.Warning("No Command Found {Name}", name);
+                    Tell(Context.Sender, new CanCommandExecuteRespond(name, () => false));
+                });
+
+        }
+        
         protected void InvokeCommand(string name)
         {
-            if (!_commandRegistrations.TryGetValue(name, out var cr))
-                return;
-
-            if (cr.CanExecute?.Run() ?? true)
-                cr.Command(null);
+            Do(from registration in _actorData.ObjectState.CommandRegistrations.Lookup(name)
+                from query in Either(registration.CanExecute, TrueQuery.Instance)
+                where query.Run()
+                select Action(() => registration.Command(Maybe<object>.Nothing)));
         }
 
         protected CommandRegistrationBuilder NewCommad
             => new((key, command, canExecute) =>
                    {
                        var data = new PropertyData(new UIProperty<ICommand>(key)
-                                                   {
-                                                       InternalValue = new ActorCommand(key, Context.Self, canExecute, Dispatcher)
-                                                   }.LockSet());
+                       {
+                           InternalValue = May<object?>(new ActorCommand(key, Context.Self, canExecute, Dispatcher))
+                       }.LockSet());
 
-                       _propertys.Add(key, data);
+                       _actorData.Run(s =>
+                           from state in s
+                           select state with
+                               {
+                               Propertys = state.Propertys.Add(key, data),
+                               CommandRegistrations = state.CommandRegistrations.Add(key, new CommandRegistration(command, MayNotNull(canExecute)))
+                               });
 
                        PropertyValueChanged(data);
 
-                       _commandRegistrations.Add(key, new CommandRegistration(command, canExecute));
                    }, this);
 
         public void InvalidateRequerySuggested()
@@ -300,16 +326,16 @@ namespace Tauron.Application.Wpf.Model
 
         protected override void PreRestart(Exception reason, object message)
         {
-            foreach (var registration in _commandRegistrations)
+            foreach (var registration in _actorData.ObjectState.CommandRegistrations)
             {
-                _propertys[registration.Key]
+                _actorData.ObjectState.Propertys[registration.Key]
                    .PropertyBase
                    .InternalValue
                    .AsInstanceOf<ActorCommand>()
                    .Deactivate();
             }
 
-            Self.Tell(new ReviveActor(_propertys.ToArray()));
+            Self.Tell(new ReviveActor(_actorData.ObjectState.Propertys.ToArray()));
 
             base.PreRestart(reason, message);
         }
@@ -321,16 +347,22 @@ namespace Tauron.Application.Wpf.Model
         protected override void PostStop()
         {
             Log.Info("UiActor Terminated {ActorType}", GetType());
-            _commandRegistrations.Clear();
-            _eventRegistrations.Clear();
-            _propertys.Clear();
+
+            _actorData.Run(s =>
+                from state in s
+                select state with
+                    {
+                    CommandRegistrations = ImmutableDictionary<string, CommandRegistration>.Empty,
+                    EventRegistrations = ImmutableGroupDictionary<string, InvokeHelper>.Empty,
+                    Propertys = ImmutableDictionary<string, PropertyData>.Empty
+                    });
 
             base.PostStop();
         }
 
-        private Action<UiActor>? _terminationCallback;
+        private Action<IUiActor>? _terminationCallback;
 
-        internal void RegisterTerminationCallback(Action<UiActor> callback)
+        void IUiActor.RegisterTerminationCallback(Action<IUiActor> callback)
         {
             if (_terminationCallback == null)
                 _terminationCallback = callback;
@@ -340,13 +372,10 @@ namespace Tauron.Application.Wpf.Model
 
         protected void ShowWindow<TWindow>()
             where TWindow : Window
-        {
-            Dispatcher.Invoke(() => LifetimeScope.Resolve<TWindow>().Show());
-        }
+            => Dispatcher.Invoke(() => LifetimeScope.Resolve<TWindow>().Show());
 
         protected virtual void Initialize(InitEvent evt)
-        {
-        }
+        { }
 
         protected virtual Task InitializeAsync(InitEvent evt)
         {
@@ -355,8 +384,7 @@ namespace Tauron.Application.Wpf.Model
         }
 
         protected virtual void ControlUnload(UnloadEvent obj)
-        {
-        }
+        { }
 
         protected virtual void InitParentViewModel(InitParentViewModel obj)
         {
@@ -371,28 +399,33 @@ namespace Tauron.Application.Wpf.Model
         private void ExecuteEvent(ExecuteEventExent obj)
         {
             var (eventData, name) = obj;
-            if (_eventRegistrations.TryGetValue(name, out var reg))
-            {
-                Log.Info("Execute Event {Name}", name);
-                reg.ForEach(e => e.Execute(eventData));
-            }
-            else
-                Log.Warning("Event Not found {Name}", name);
+
+            var mayReg = _actorData.ObjectState.EventRegistrations.Lookup(name);
+
+            Match(mayReg,
+                reg =>
+                {
+                    Log.Info("Execute Event {Name}", name);
+                    reg.ForEach(e => e.Execute(eventData));
+                },
+                () => Log.Warning("Event Not found {Name}", name));
         }
 
         protected EventRegistrationBuilder RegisterEvent(string name)
         {
-            return new(name, (s, del) => _eventRegistrations.Add(s, new InvokeHelper(del)));
+            return new(name, (s, del) => _actorData.Run(st =>
+                from state in st
+                select state with{ EventRegistrations = state.EventRegistrations.Add(s, new InvokeHelper(del))}));
         }
 
         #endregion
 
         #region Propertys
 
-        protected internal FluentPropertyRegistration<TData> RegisterProperty<TData>(string name)
+        public FluentPropertyRegistration<TData> RegisterProperty<TData>(string name)
         {
             ThrowIsSeald();
-            if (_propertys.ContainsKey(name))
+            if (_actorData.ObjectState.Propertys.ContainsKey(name))
                 throw new InvalidOperationException("Property is Regitrated");
 
             return new FluentPropertyRegistration<TData>(name, this).WithDefaultValue(default!);
@@ -400,63 +433,76 @@ namespace Tauron.Application.Wpf.Model
 
         private void GetPropertyValue(GetValueRequest obj)
         {
-            Context.Sender.Tell(_propertys.TryGetValue(obj.Name, out var propertyData)
-                                    ? new GetValueResponse(obj.Name, propertyData.PropertyBase.InternalValue)
-                                    : new GetValueResponse(obj.Name, null));
+            var mayProp = _actorData.ObjectState.Propertys.Lookup(obj.Name);
+
+            Tell(Context.Sender,
+                Match(mayProp,
+                    p => new GetValueResponse(obj.Name, p.PropertyBase.InternalValue),
+                    () => new GetValueResponse(obj.Name, Maybe<object?>.Nothing)));
         }
 
         private void SetPropertyValue(SetValue obj)
         {
-            if (!_propertys.TryGetValue(obj.Name, out var propertyData))
-                return;
+            var mayProp = _actorData.ObjectState.Propertys.Lookup(obj.Name);
 
             var (_, value) = obj;
 
-            if (Equals(propertyData.PropertyBase.InternalValue, value)) return;
-
-            propertyData.SetValue(value!);
+            Do(from prop in mayProp 
+                where !Equals(prop.PropertyBase.InternalValue, value)
+               select Action(() => prop.SetValue(value)));
         }
 
         private void PropertyValueChanged(PropertyData propertyData)
         {
             foreach (var actorRef in propertyData.Subscriptors)
-                actorRef.Tell(new PropertyChangedEvent(propertyData.PropertyBase.Name, propertyData.PropertyBase.InternalValue));
+                Tell(actorRef, new PropertyChangedEvent(propertyData.PropertyBase.Name, propertyData.PropertyBase.InternalValue));
 
-            propertyData.Error = propertyData.PropertyBase.Validator?.Invoke(propertyData.PropertyBase.InternalValue);
+            propertyData.Error =
+                from validator in propertyData.PropertyBase.Validator
+                from result in validator(propertyData.PropertyBase.InternalValue)
+                select result;
 
             foreach (var actorRef in propertyData.Subscriptors)
-                actorRef.Tell(new ValidatingEvent(propertyData.Error, propertyData.PropertyBase.Name));
+                Tell(actorRef, new ValidatingEvent(propertyData.Error, propertyData.PropertyBase.Name));
 
-            propertyData.PropertyBase.IsValidSetter(string.IsNullOrWhiteSpace(propertyData.Error));
+            propertyData.PropertyBase.IsValidSetter(propertyData.Error.IsNothing());
         }
 
         private void TrackProperty(TrackPropertyEvent obj, IActorRef sender)
         {
             Log.Info("Track Property {Name}", obj.Name);
 
-            if (!_propertys.TryGetValue(obj.Name, out var prop)) return;
+            var mayProp = _actorData.ObjectState.Propertys.Lookup(obj.Name);
 
-            prop.Subscriptors.Add(sender);
-            Context.WatchWith(sender, new PropertyTermination(Context.Sender, obj.Name));
+            Do(from prop in mayProp 
+                select Action(() =>
+                {
+                    prop.Subscriptors.Add(sender);
+                    Context.WatchWith(sender, new PropertyTermination(Context.Sender, obj.Name));
 
-            if (prop.PropertyBase.InternalValue == null) return;
+                    if (prop.PropertyBase.InternalValue.IsNothing()) return;
 
-            sender.Tell(new PropertyChangedEvent(obj.Name, prop.PropertyBase.InternalValue));
-            sender.Tell(new ValidatingEvent(prop.Error, obj.Name));
+                    sender.Tell(new PropertyChangedEvent(obj.Name, prop.PropertyBase.InternalValue));
+                    sender.Tell(new ValidatingEvent(prop.Error, obj.Name));
+                }));
         }
 
         private void PropertyTerminationHandler(PropertyTermination obj)
         {
-            if (!_propertys.TryGetValue(obj.Name, out var prop)) return;
-            prop.Subscriptors.Remove(obj.ActorRef);
+            var (actorRef, name) = obj;
+
+            Do( from prop in _actorData.ObjectState.Propertys.Lookup(name)
+                select Action(() => prop.Subscriptors.Remove(actorRef)));
         }
 
-        internal void RegisterProperty(UIPropertyBase prop)
+        void IUiActor.RegisterProperty(UIPropertyBase prop)
         {
             var data = new PropertyData(prop);
             data.PropertyBase.PriorityChanged += () => PropertyValueChanged(data);
 
-            _propertys.Add(prop.Name, data);
+            _actorData.Run(s =>
+                from state in s 
+                select state with{Propertys = state.Propertys.Add(prop.Name, data)});
         }
 
         #endregion

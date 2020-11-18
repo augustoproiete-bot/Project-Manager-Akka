@@ -70,7 +70,7 @@ namespace Tauron.Application.Settings
                     from data in ObjectState.Dic.Lookup(key)
                     select converter(data));
 
-                return Or(Match(result, _ => May(defaultValue!)), May(defaultValue!))!;
+                return Either(Match(result, _ => May(defaultValue!)), May(defaultValue!))!;
             }
 
             public void SetValue(string value, string? name)

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using Autofac;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Host;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Wpf.UI
 {
@@ -22,13 +24,16 @@ namespace Tauron.Application.Wpf.UI
             Views[model] = view;
         }
 
-        public IView? ResolveView(object viewModel)
+        public Maybe<IView> ResolveView(object viewModel)
         {
-            if (!(viewModel is IViewModel model))
-                return null;
+            if(viewModel is not IViewModel model)
+                return Maybe<IView>.Nothing;
 
             var type = model.ModelType;
-            return Views.TryGetValue(type, out var view) ? _provider.ResolveOptional(view, new TypedParameter(typeof(IViewModel<>).MakeGenericType(type), viewModel)) as IView : null;
+
+            return from viewType in Views.Lookup(type)
+                from view in MayNotNull(_provider.ResolveOptional(viewType, new TypedParameter(typeof(IViewModel<>).MakeGenericType(type), viewModel)) as IView)
+                select view;
         }
     }
 }

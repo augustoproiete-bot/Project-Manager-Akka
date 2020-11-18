@@ -10,7 +10,8 @@ using JetBrains.Annotations;
 
 namespace Tauron.Application
 {
-    public sealed class ImmutableGroupDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, IImmutableList<TValue>>>, IDictionary<TKey, IImmutableList<TValue>>
+    [PublicAPI]
+    public sealed class ImmutableGroupDictionary<TKey, TValue> : IDictionary<TKey, IImmutableList<TValue>>
         where TKey : notnull
     {
         public static ImmutableGroupDictionary<TKey, TValue> Empty => new();
@@ -62,7 +63,7 @@ namespace Tauron.Application
 
         public IImmutableList<TValue> this[TKey key] => _data[key];
 
-        public IEnumerable<TKey>  Keys => _data.Keys                                
+        public IEnumerable<TKey> Keys => _data.Keys;                            
 
         ICollection<IImmutableList<TValue>> IDictionary<TKey, IImmutableList<TValue>>.Values => _data.Values.ToArray();
 
@@ -81,7 +82,9 @@ namespace Tauron.Application
 
         private ImmutableGroupDictionary<TKey, TValue> GenericAdd(TKey key, IEnumerable<TValue> values)
         {
-            
+            return _data.ContainsKey(key) 
+                ? new ImmutableGroupDictionary<TKey, TValue>(_data.SetItem(key, _data[key].AddRange(values)), _listFactory) 
+                : new ImmutableGroupDictionary<TKey, TValue>(_data.Add(key, _listFactory().AddRange(values)), _listFactory);
         }
 
         public ImmutableGroupDictionary<TKey, TValue> AddRange(IEnumerable<KeyValuePair<TKey, IImmutableList<TValue>>> pairs) 
@@ -90,37 +93,45 @@ namespace Tauron.Application
         public ImmutableGroupDictionary<TKey, TValue> AddRange(IEnumerable<KeyValuePair<TKey, IEnumerable<TValue>>> pairs) 
             => pairs.Aggregate(this, (current, pair) => current.GenericAdd(pair.Key, pair.Value));
 
-        void ICollection<KeyValuePair<TKey, IImmutableList<TValue>>>.Add(KeyValuePair<TKey, IImmutableList<TValue>> item)
+        void ICollection<KeyValuePair<TKey, IImmutableList<TValue>>>.Add(KeyValuePair<TKey, IImmutableList<TValue>> item) 
+            => throw NotSupported();
+
+        void ICollection<KeyValuePair<TKey, IImmutableList<TValue>>>.Clear() 
+            => throw NotSupported();
+
+        public ImmutableGroupDictionary<TKey, TValue> Clear() 
+            => new(_data.Clear(), _listFactory);
+
+        public bool Contains(KeyValuePair<TKey, IImmutableList<TValue>> pair) => _data.Contains(pair);
+        void ICollection<KeyValuePair<TKey, IImmutableList<TValue>>>.CopyTo(KeyValuePair<TKey, IImmutableList<TValue>>[] array, int arrayIndex) 
+            => ((ICollection<KeyValuePair<TKey, IImmutableList<TValue>>>)_data).CopyTo(array, arrayIndex);
+
+        public ImmutableGroupDictionary<TKey, TValue> Remove(TValue value)
         {
-            throw new NotImplementedException();
+            foreach (var (key, list) in _data.Where(pair => pair.Value.Contains(value)))
+                return new ImmutableGroupDictionary<TKey, TValue>(_data.SetItem(key, list.Remove(value)), _listFactory);
+            return this;
         }
 
-        void ICollection<KeyValuePair<TKey, IImmutableList<TValue>>>.Clear()
-        {
-            throw new NotImplementedException();
-        }
+        public ImmutableGroupDictionary<TKey, TValue> Remove(TKey key, TValue value)
+            => !_data.ContainsKey(key)
+                ? this
+                : new ImmutableGroupDictionary<TKey, TValue>(_data.SetItem(key, _data[key].Remove(value)), _listFactory);
 
-        public IImmutableDictionary<TKey, IImmutableList<TValue>>    Clear() => throw new NotImplementedException();
+        public ImmutableGroupDictionary<TKey, TValue> Remove(TKey key) => new(_data.Remove(key), _listFactory);
 
-        public bool                                                  Contains(KeyValuePair<TKey, IImmutableList<TValue>> pair) => throw new NotImplementedException();
-        void ICollection<KeyValuePair<TKey, IImmutableList<TValue>>>.CopyTo(KeyValuePair<TKey, IImmutableList<TValue>>[] array, int arrayIndex)
-        {
-            throw new NotImplementedException();
-        }
+        public ImmutableGroupDictionary<TKey, TValue> RemoveRange(IEnumerable<TKey> keys) => new(_data.RemoveRange(keys), _listFactory);
 
-        public IImmutableDictionary<TKey, IImmutableList<TValue>> Remove(TValue key) => throw new NotImplementedException();
+        public ImmutableGroupDictionary<TKey, TValue> SetItem(TKey key, IImmutableList<TValue> value)
+            => new(_data.SetItem(key, value), _listFactory);
+
+        public ImmutableGroupDictionary<TKey, TValue> SetItem(TKey key, TValue value)
+            => new(_data.SetItem(key, _listFactory().Add(value)), _listFactory);
         
-        public IImmutableDictionary<TKey, IImmutableList<TValue>> Remove(TKey key) => throw new NotImplementedException();
+        public ImmutableGroupDictionary<TKey, TValue> SetItems(IEnumerable<KeyValuePair<TKey, IImmutableList<TValue>>> items) 
+            => new(_data.SetItems(items), _listFactory);
 
-        public IImmutableDictionary<TKey, IImmutableList<TValue>> RemoveRange(IEnumerable<TKey> keys) => throw new NotImplementedException();
-
-        public IImmutableDictionary<TKey, IImmutableList<TValue>> SetItem(TKey key, IImmutableList<TValue> value) => throw new NotImplementedException();
-
-        public IImmutableDictionary<TKey, IImmutableList<TValue>> SetItem(TKey key, TValue value) => throw new NotImplementedException();
-        
-        public IImmutableDictionary<TKey, IImmutableList<TValue>> SetItems(IEnumerable<KeyValuePair<TKey, IImmutableList<TValue>>> items) => throw new NotImplementedException();
-
-        public bool TryGetKey(TKey equalKey, out TKey actualKey) => throw new NotImplementedException();
+        public bool TryGetKey(TKey equalKey, out TKey actualKey) => _data.TryGetKey(equalKey, out actualKey);
     }
 
     [Serializable]

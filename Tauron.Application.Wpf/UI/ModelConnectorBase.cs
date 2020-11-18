@@ -7,6 +7,7 @@ using Serilog;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Wpf.UI
 {
@@ -60,15 +61,14 @@ namespace Tauron.Application.Wpf.UI
 
                 if (Model == null) return;
                 OnLoad();
-
                 //Log.Information("Ask For {Property}", _name);
-                var eventActor = await Model.Actor.Ask<IEventActor>(new MakeEventHook(Name), TimeSpan.FromSeconds(15));
+                var eventActor = await Ask<IEventActor>(Model.Actor, new MakeEventHook(Name), TimeSpan.FromSeconds(15));
                 //Log.Information("Ask Compled For {Property}", _name);
 
                 eventActor.Register(HookEvent.Create<PropertyChangedEvent>(PropertyChangedHandler));
                 eventActor.Register(HookEvent.Create<ValidatingEvent>(ValidateCompled));
 
-                Model.Actor.Tell(new TrackPropertyEvent(Name), eventActor.OriginalRef);
+                Tell(Model.Actor, new TrackPropertyEvent(Name), eventActor.OriginalRef));
 
                 Interlocked.Exchange(ref _eventActor, eventActor);
                 Interlocked.Exchange(ref _isInitializing, 0);

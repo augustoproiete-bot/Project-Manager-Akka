@@ -51,7 +51,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                        where obj is TType
                        select (TType) obj;
 
-                return () => Or(TryResolve, TryCreate);
+                return () => Either(TryResolve, TryCreate);
             }
 
             void ApplyAttribute(Type targetType, object attr)

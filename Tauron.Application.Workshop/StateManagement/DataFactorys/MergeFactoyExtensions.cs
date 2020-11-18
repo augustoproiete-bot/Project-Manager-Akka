@@ -17,7 +17,7 @@ namespace Tauron.Application.Workshop.StateManagement.DataFactorys
             void Apply(Maybe<AdvancedDataSourceFactory> mayFactory)
             {
                 Do(from factory in mayFactory 
-                   select Use(() => target.Register(factory)));
+                   select Action(() => target.Register(factory)));
             }
 
             foreach (var mayFactory in factorys) 

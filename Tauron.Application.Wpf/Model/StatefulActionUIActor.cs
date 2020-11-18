@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Threading;
 using Autofac;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutation;
 using Tauron.Application.Workshop.StateManagement;
@@ -9,13 +10,28 @@ using Tauron.Operations;
 
 namespace Tauron.Application.Wpf.Model
 {
+    public abstract class ActionUIActor : ActionUIActor<EmptyState>
+    {
+        protected ActionUIActor(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IActionInvoker actionInvoker) 
+            : base(lifetimeScope, dispatcher, actionInvoker)
+        {
+        }
+    }
+
+    public interface IActionUIActor : IUiActor
+    {
+        IActionInvoker ActionInvoker { get; }
+
+        void DispatchAction(IStateAction action, bool? sendBack = true);
+    }
+
     [PublicAPI]
     [MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
-    public abstract class StateUIActor : UiActor
+    public abstract class ActionUIActor<TState> : StatefulUiActor<TState>, IActionUIActor where TState : new()
     {
         private readonly Dictionary<Type, Action<IOperationResult>> _compledActions = new();
 
-        protected StateUIActor(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IActionInvoker actionInvoker) : base(lifetimeScope, dispatcher)
+        protected ActionUIActor(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IActionInvoker actionInvoker) : base(lifetimeScope, dispatcher)
         {
             ActionInvoker = actionInvoker;
             Receive<IOperationResult>(OnOperationCompled);
@@ -34,35 +50,35 @@ namespace Tauron.Application.Wpf.Model
             }
         }
 
-        public TState GetState<TState>(string key = "") where TState : class
-            => ActionInvoker.GetState<TState>(key) ?? throw new InvalidOperationException("No such State Found");
+        public TActionState GetState<TActionState>(Maybe<string> key = default) where TActionState : class
+            => ActionInvoker.GetState<TActionState>(key).OrElse(() => new InvalidOperationException("No such State Found"));
 
         public void WhenActionComnpled<TAction>(Action<IOperationResult> opsAction)
             where TAction : IStateAction
         {
             var key = typeof(TAction);
-            _compledActions[key] = opsAction.Combine(_compledActions.GetValueOrDefault(key))!;
+            _compledActions[key] = _compledActions.GetValueOrDefault(key).Combine(opsAction);
         }
 
-        public UIStateConfiguration<TState> WhenStateChanges<TState>(string? name = null)
-            where TState : class => new(ActionInvoker.GetState<TState>(name ?? string.Empty) ?? throw new ArgumentException("No such State Found"), this);
+        public UIStateConfiguration<TActionState> WhenStateChanges<TActionState>(Maybe<string> name = default)
+            where TActionState : class => new(ActionInvoker.GetState<TActionState>(name).OrElse(() => new ArgumentException("No such State Found")), this);
 
         public void DispatchAction(IStateAction action, bool? sendBack = true)
             => ActionInvoker.Run(action, sendBack);
 
         [PublicAPI]
-        public sealed class UIStateConfiguration<TState>
+        public sealed class UIStateConfiguration<TActionState>
         {
-            private readonly StateUIActor _actor;
-            private readonly TState       _state;
+            private readonly ActionUIActor<TState> _actor;
+            private readonly TActionState       _state;
 
-            public UIStateConfiguration(TState state, StateUIActor actor)
+            public UIStateConfiguration(TActionState state, ActionUIActor<TState> actor)
             {
                 _state = state;
                 _actor = actor;
             }
 
-            public UIStateEventConfiguration<TEvent> FromEvent<TEvent>(Func<TState, IEventSource<TEvent>> source, Action<UIStateEventConfiguration<TEvent>>? configAction = null)
+            public UIStateEventConfiguration<TEvent> FromEvent<TEvent>(Func<TActionState, IEventSource<TEvent>> source, Action<UIStateEventConfiguration<TEvent>>? configAction = null)
             {
                 var config = new UIStateEventConfiguration<TEvent>(source(_state), _actor);
                 configAction?.Invoke(config);
@@ -73,16 +89,16 @@ namespace Tauron.Application.Wpf.Model
         [PublicAPI]
         public sealed class UIStateEventConfiguration<TEvent>
         {
-            private readonly StateUIActor         _actor;
+            private readonly ActionUIActor<TState> _actor;
             private readonly IEventSource<TEvent> _eventSource;
 
-            public UIStateEventConfiguration(IEventSource<TEvent> eventSource, StateUIActor actor)
+            public UIStateEventConfiguration(IEventSource<TEvent> eventSource, ActionUIActor<TState> actor)
             {
                 _eventSource = eventSource;
                 _actor       = actor;
             }
 
-            public FluentPropertyRegistration<TData> ToProperty<TData>(string name, Func<TEvent, TData> transform, Func<TEvent, bool>? condition = null)
+            public FluentPropertyRegistration<TData> ToProperty<TData>(string name, Func<Maybe<TEvent>, Maybe<TData>> transform, Func<Maybe<TEvent>, bool>? condition = null)
             {
                 var propertyConfig = _actor.RegisterProperty<TData>(name);
                 var property       = propertyConfig.Property;
@@ -92,7 +108,7 @@ namespace Tauron.Application.Wpf.Model
                                                         if (condition != null && !condition(evt))
                                                             return;
 
-                                                        property.Set(transform(evt));
+                                                        property.Set(transform(evt)!);
                                                     });
 
                 return propertyConfig;
@@ -140,9 +156,9 @@ namespace Tauron.Application.Wpf.Model
                                        });
         }
 
-        private static StateUIActor TryCast(CommandRegistrationBuilder builder)
+        private static IActionUIActor TryCast(CommandRegistrationBuilder builder)
         {
-            if (builder.Target is StateUIActor uiActor)
+            if (builder.Target is IActionUIActor uiActor)
                 return uiActor;
 
             throw new InvalidOperationException("command Builder is not a State Actor");

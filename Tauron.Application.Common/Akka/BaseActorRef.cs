@@ -59,13 +59,13 @@ namespace Tauron.Akka
                 from actor in create(IsSync, name)
                 select actor;
 
-            IsInitialized = Or(from _ in Actor
+            IsInitialized = Either(from _ in Actor
                                select true, false);
 
             Do(from init in IsInitialized
                where init
                from initAction in MayNotNull(Initialized)
-               select Use(initAction));
+               select Action(initAction));
         }
 
         protected void ResetInternal()
@@ -73,7 +73,7 @@ namespace Tauron.Akka
             IsInitialized = May(false);
 
             Do(from act in Actor
-               select Use(() => act.Tell(PoisonPill.Instance)));
+               select Action(() => act.Tell(PoisonPill.Instance)));
 
             Actor = Maybe<IActorRef>.Nothing;
         }

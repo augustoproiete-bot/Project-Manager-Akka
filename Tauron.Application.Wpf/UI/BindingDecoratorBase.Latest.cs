@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -51,7 +52,7 @@ namespace Tauron.Application.Wpf.UI
         /// <param name="target">The binding target of the binding.</param>
         /// <param name="dp">The target property of the binding.</param>
         /// <returns>True if the provider supports all that's needed.</returns>
-        protected virtual bool TryGetTargetItems(IServiceProvider? provider, out DependencyObject? target, out DependencyProperty? dp)
+        protected virtual bool TryGetTargetItems(IServiceProvider? provider, [NotNullWhen(true)]out DependencyObject? target, [NotNullWhen(true)]out DependencyProperty? dp)
         {
             target = null;
             dp     = null;

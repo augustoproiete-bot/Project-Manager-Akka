@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
+using Functional.Maybe;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.Model
@@ -10,15 +11,15 @@ namespace Tauron.Application.Wpf.Model
     [PublicAPI]
     public sealed class FluentCollectionPropertyRegistration<TData>
     {
-        private readonly UiActor                     _actor;
+        private readonly IUiActor                     _actor;
         private          ObservableCollection<TData> _collection = new();
         private          bool                        _isAsync;
 
-        internal FluentCollectionPropertyRegistration(string name, UiActor actor)
+        internal FluentCollectionPropertyRegistration(string name, IUiActor actor)
         {
             _actor   = actor;
             Property = new UIProperty<ObservableCollection<TData>>(name);
-            Property.Set(_collection);
+            Property.Set(_collection.ToMaybe()!);
             actor.RegisterProperty(Property);
         }
 
@@ -32,7 +33,7 @@ namespace Tauron.Application.Wpf.Model
             if (viaCollectionItSelf)
             {
                 _collection = new UIObservableCollection<TData>(_collection);
-                Property.Set(_collection);
+                Property.Set(_collection.ToMaybe()!);
             }
             else
             {

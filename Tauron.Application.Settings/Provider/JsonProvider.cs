@@ -29,7 +29,7 @@ namespace Tauron.Application.Settings.Provider
 
         public Maybe<ImmutableDictionary<string, string>> Save(ImmutableDictionary<string, string> data)
             => from file in _fileName
-                select Use(() =>
+                select Func(() =>
                 {
                     File.WriteAllText(file, JsonConvert.SerializeObject(data));
                     return data;

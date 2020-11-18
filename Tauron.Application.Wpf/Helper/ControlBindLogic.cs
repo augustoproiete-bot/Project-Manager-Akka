@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Media;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Serilog;
+using static Tauron.Prelude;
+// ReSharper disable SuspiciousTypeConversion.Global
 
 namespace Tauron.Application.Wpf.Helper
 {
@@ -23,7 +25,10 @@ namespace Tauron.Application.Wpf.Helper
 
         private Action? _noContext;
 
-        public RootedDataContextPromise(FrameworkElement element) => _element = element;
+        private RootedDataContextPromise(FrameworkElement element) => _element = element;
+
+        public static DataContextPromise CreateFrom(FrameworkElement element)
+            => new RootedDataContextPromise(element);
 
         public override void OnUnload(Action unload)
         {
@@ -66,13 +71,17 @@ namespace Tauron.Application.Wpf.Helper
         private Action?                    _noContext;
         private Action?                    _unload;
 
-        public DisconnectedDataContextRoot(FrameworkElement elementBase)
+        private DisconnectedDataContextRoot(Maybe<FrameworkElement> mayElementBase)
         {
-            var root = ControlBindLogic.FindRoot(elementBase);
+            var mayRoot = ControlBindLogic.FindRoot(mayElementBase.Cast<FrameworkElement, DependencyObject>());
+
+            var elementBase = mayElementBase.Value;
 
             void OnLoad(object sender, RoutedEventArgs args)
             {
                 elementBase.Loaded -= OnLoad;
+
+                var root = mayRoot.OrElseDefault();
 
                 if (root is IView control && root is FrameworkElement {DataContext: IViewModel model})
                 {
@@ -93,6 +102,8 @@ namespace Tauron.Application.Wpf.Helper
         public override void OnContext(Action<IViewModel, IView> modelAction) => _modelAction = modelAction;
 
         public override void OnNoContext(Action noContext) => _noContext = noContext;
+
+        public static DataContextPromise CreateFrom(FrameworkElement element) => new DisconnectedDataContextRoot(May(element));
     }
 
     [PublicAPI]
@@ -167,109 +178,79 @@ namespace Tauron.Application.Wpf.Helper
             _binderList.Remove(key);
         }
 
-        public static IBinderControllable? FindRoot(DependencyObject? affected)
+        public static Maybe<IBinderControllable> FindRoot(Maybe<DependencyObject> mayAffected) 
+            => TryFindGeneric("Root", mayAffected, o => MayNotNull(o as IBinderControllable));
+
+        public static Maybe<IView> FindParentView(Maybe<DependencyObject> affected) 
+            => TryFindGeneric("View", affected, o => MayNotNull(o as IView));
+
+        public static Maybe<IViewModel> FindParentDatacontext(Maybe<DependencyObject> mayAffected) 
+            => TryFindGeneric("DataContext", mayAffected, o => MayNotNull(() => o is FrameworkElement {DataContext: IViewModel model} ? model : null));
+
+        private static Maybe<TResult> TryFindGeneric<TResult>(string searchName, Maybe<DependencyObject> mayAffected, Func<DependencyObject, Maybe<TResult>> convert)
         {
-            
-            Log.Debug("Try Find Root for {Element}", affected?.GetType());
+            var affected = mayAffected.OrElseDefault();
+
+            Log.Debug($"Try Find {searchName} for" + "{Element}", affected?.GetType());
 
             while (affected != null)
             {
-                // ReSharper disable once SuspiciousTypeConversion.Global
-                if (affected is IBinderControllable binder)
+                var result = convert(affected);
+                if (result.IsSomething())
                 {
-                    Log.Debug("Root Found for {Element}", affected.GetType());
-                    return binder;
+                    Log.Debug($"{searchName} Found for" + "{Element}", affected.GetType());
+                    return result;
                 }
 
                 affected = LogicalTreeHelper.GetParent(affected) ?? VisualTreeHelper.GetParent(affected);
             }
 
-            Log.Debug("Root not Found for {Element}", affected?.GetType());
-            return null;
+            Log.Debug($"{searchName} Not Found for" + "{Element}", affected?.GetType());
+            return Maybe<TResult>.Nothing;
         }
 
-        public static IView? FindParentView(DependencyObject? affected)
+        public static Maybe<DataContextPromise> FindDataContext(Maybe<DependencyObject> mayAffected)
         {
-            Log.Debug("Try Find View for {Element}", affected?.GetType());
-            while(affected != null)
-            {
-                affected = LogicalTreeHelper.GetParent(affected) ?? VisualTreeHelper.GetParent(affected);
-                // ReSharper disable once SuspiciousTypeConversion.Global
-                if (!(affected is IView binder)) continue;
+            var tryRoot =
+                from root in FindRoot(mayAffected)
+                where root is FrameworkElement
+                select RootedDataContextPromise.CreateFrom((FrameworkElement) root);
 
-                Log.Debug("View Found for {Element}", affected.GetType());
-                return binder;
-            }
-
-            Log.Debug("View Not Found for {Element}", affected?.GetType());
-            return null;
+            return tryRoot.Or(() =>
+                from affected in mayAffected
+                where affected is FrameworkElement
+                select DisconnectedDataContextRoot.CreateFrom((FrameworkElement) affected));
         }
 
-        public static IViewModel? FindParentDatacontext(DependencyObject? affected)
-        {
-            Log.Debug("Try Find DataContext for {Element}", affected?.GetType());
-
-            while (affected != null)
-            {
-                affected = LogicalTreeHelper.GetParent(affected) ?? VisualTreeHelper.GetParent(affected);
-                
-                if (affected is not FrameworkElement element || element.DataContext is not IViewModel model) continue;
-                
-                Log.Debug("DataContext Found for {Element}", affected.GetType());
-                return model;
-            }
-
-            Log.Debug("DataContext Not Found for {Element}", affected?.GetType());
-            return null;
-        }
-
-        public static bool FindDataContext(DependencyObject? affected, [NotNullWhen(true)] out DataContextPromise? promise)
-        {
-            promise = null;
-            var root = FindRoot(affected);
-            if (root is FrameworkElement element)
-                promise = new RootedDataContextPromise(element);
-            else if (affected is FrameworkElement affectedElement)
-                promise = new DisconnectedDataContextRoot(affectedElement);
-
-
-            return promise != null;
-        }
-
-        public static void MakeLazy(FrameworkElement target, string? newValue, string? oldValue, Action<string?, string?, IBinderControllable, DependencyObject> runner)
+        public static void MakeLazy(FrameworkElement target, Maybe<string> newValue, Maybe<string> oldValue, LazyRunner runner)
         {
             var temp = new LazyHelper(target, newValue, oldValue, runner);
             target.Loaded += temp.ElementOnLoaded;
         }
 
+        public delegate void LazyRunner(Maybe<string> oldValue, Maybe<string> newValue, IBinderControllable target, DependencyObject dependencyObject);
+
         private class LazyHelper
         {
-            private readonly string?                                                         _newValue;
-            private readonly string?                                                         _oldValue;
-            private readonly Action<string?, string?, IBinderControllable, DependencyObject> _runner;
-            private readonly FrameworkElement                                                _target;
+            private readonly Maybe<string> _newValue;
+            private readonly Maybe<string> _oldValue;
+            private readonly LazyRunner _runner;
+            private readonly FrameworkElement _target;
 
-            public LazyHelper(FrameworkElement target, string? newValue, string? oldValue, Action<string?, string?, IBinderControllable, DependencyObject> runner)
+            public LazyHelper(FrameworkElement target, Maybe<string> newValue, Maybe<string> oldValue, LazyRunner runner)
             {
-                _target   = target;
+                _target = target;
                 _newValue = newValue;
                 _oldValue = oldValue;
-                _runner   = runner;
+                _runner = runner;
             }
 
             public void ElementOnLoaded(object sender, RoutedEventArgs e)
             {
-                try
-                {
-                    var root = FindRoot(_target);
-                    if (root == null) return;
-
-                    _runner(_oldValue, _newValue, root, _target);
-                }
-                finally
-                {
-                    _target.Loaded -= ElementOnLoaded;
-                }
+                Finally(() =>
+                    from root in FindRoot(May<DependencyObject>(_target)) 
+                    select Action(() => _runner(_oldValue, _newValue, root, _target)),
+                    () => _target.Loaded -= ElementOnLoaded);
             }
         }
     }

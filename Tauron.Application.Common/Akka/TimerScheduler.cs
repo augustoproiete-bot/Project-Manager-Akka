@@ -47,7 +47,7 @@ namespace Tauron.Akka
         {
             Do(from diposed in May(Interlocked.Exchange(ref _isDiposed, 1))
                where diposed == 0
-               select Use(() =>
+               select Action(() =>
                           {
                               foreach (var registration in _registrations)
                                   registration.Value.Dispose();
@@ -115,7 +115,7 @@ namespace Tauron.Akka
                 var dispose =
                     from cancel in MayNotNull(_cancelable)
                     where cancel.IsCancellationRequested
-                    select Use(() =>
+                    select Prelude.Action(() =>
                                {
                                    _timer.Dispose();
                                    _remove(Id);

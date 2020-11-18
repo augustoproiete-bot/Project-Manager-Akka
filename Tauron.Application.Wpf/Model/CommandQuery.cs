@@ -5,6 +5,13 @@ using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.Model
 {
+    public sealed class TrueQuery : CommandQuery
+    {
+        public static readonly TrueQuery Instance = new();
+
+        public override bool Run() => true;
+    }
+
     public abstract class CommandQuery
     {
         protected Action<bool>? Monitors { get; private set; }

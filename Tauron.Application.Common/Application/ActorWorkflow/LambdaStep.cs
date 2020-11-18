@@ -48,7 +48,7 @@ namespace Tauron.Application.ActorWorkflow
         public void OnExecuteFinish(Maybe<TContext> context)
         {
             Do(from finish in _onFinish 
-               select Use(() => finish(context)));
+               select Action(() => finish(context)));
         }
 
         public Maybe<TimeSpan> Timeout { get; }

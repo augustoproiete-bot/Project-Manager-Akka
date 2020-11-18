@@ -21,7 +21,7 @@ namespace Tauron.Application.ActorWorkflow
             var stepConfiguration = WhenStep(id, stepConfig.Build());
 
             Do(from postStepConfig in mayStepConfig
-               select Use(() => postStepConfig.Invoke(stepConfiguration)));
+               select Action(() => postStepConfig.Invoke(stepConfiguration)));
         }
     }
 
@@ -89,7 +89,7 @@ namespace Tauron.Application.ActorWorkflow
                             var callResult =
                                 from msgKey in May(msg.GetType())
                                 from signal in _signals.Lookup(msgKey)
-                                let _ = Use(() => Timers.Cancel(_timeout))
+                                let _ = Action(() => Timers.Cancel(_timeout))
                                 select TryCall(signal);
 
                             return Match(callResult,
@@ -111,8 +111,8 @@ namespace Tauron.Application.ActorWorkflow
             {
                 ChainCall => May(true),
                 LoopElement => May(true),
-                WorkflowResult<TContext> result => Or(from finish in _onFinish
-                                                      select Use(() =>
+                WorkflowResult<TContext> result => Either(from finish in _onFinish
+                                                      select Func(() =>
                                                       {
                                                           finish.Invoke(result);
                                                           return true;
@@ -120,7 +120,7 @@ namespace Tauron.Application.ActorWorkflow
                 _ => Maybe<bool>.Nothing
             };
 
-            return Or(defaultCall, from del in _starter.Lookup(msg.GetType())
+            return Either(defaultCall, from del in _starter.Lookup(msg.GetType())
                                    select from call in May(del.DynamicInvoke(msg))
                                           select true);
         }
@@ -189,11 +189,11 @@ namespace Tauron.Application.ActorWorkflow
                                             select ProcessStep(sId, stepRev, chain),
                                         () => Do(from state in _runState
                                                  where state == RunState.Running
-                                                 select Use(() => Self.Forward(chain.Next())))),
+                                                 select Action(() => Self.Forward(chain.Next())))),
 
                                 () =>
                                     from id in mayId
-                                    select Use(() =>
+                                    select Func(() =>
                                     {
                                         Log.Warning("No Step Found {Id}", id.Name);
                                         _errorMessage = May(id.Name);
@@ -283,7 +283,7 @@ namespace Tauron.Application.ActorWorkflow
         }
 
         protected void OnFinish(Action<WorkflowResult<TContext>> con)
-            => _onFinish = Or(from del in _onFinish
+            => _onFinish = Either(from del in _onFinish
                               select del.Combine(con), con);
 
         private bool Finish(bool isok, Maybe<StepRev<TStep, TContext>> mayRev = default)
@@ -292,7 +292,7 @@ namespace Tauron.Application.ActorWorkflow
             _runState = May(RunState.Stoped);
 
             Do(from rev in mayRev
-               select Use(() => rev.Step.OnExecuteFinish(RunContext)));
+               select Action(() => rev.Step.OnExecuteFinish(RunContext)));
 
             Self.Forward(new WorkflowResult<TContext>(isok, _errorMessage, RunContext));
             RunContext = Maybe<TContext>.Nothing;
@@ -303,7 +303,7 @@ namespace Tauron.Application.ActorWorkflow
 
         public void Start(Maybe<TContext> context)
         {
-            _starterSender = Or(MayNotNull(Sender), ActorRefs.Nobody);
+            _starterSender = Either(MayNotNull(Sender), ActorRefs.Nobody);
             _runState = May(RunState.Running);
             RunContext = context;
             Self.Forward(new ChainCall(StepId.Start));
@@ -348,7 +348,7 @@ namespace Tauron.Application.ActorWorkflow
             }
 
             public Maybe<StepId> Id
-                => Or(
+                => Either(
                     from pos in Position
                     where pos >= StepIds.Length
                     select StepIds[pos],

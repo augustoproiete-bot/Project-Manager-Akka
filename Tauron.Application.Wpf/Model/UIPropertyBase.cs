@@ -1,4 +1,5 @@
 ﻿using System;
+using Functional.Maybe;
 
 namespace Tauron.Application.Wpf.Model
 {
@@ -18,8 +19,8 @@ namespace Tauron.Application.Wpf.Model
 
         public IQueryProperty<bool> IsValid { get; }
 
-        protected internal object?                 InternalValue { get; internal set; }
-        internal           Func<object?, string?>? Validator     { get; set; }
+        protected internal Maybe<object?>                 InternalValue { get; internal set; }
+        internal           Maybe<Func<Maybe<object>, Maybe<string>>> Validator     { get; set; }
 
         public event Action? PropertyValueChanged;
 
@@ -31,7 +32,7 @@ namespace Tauron.Application.Wpf.Model
             return this;
         }
 
-        protected internal void SetValue(object? value)
+        protected internal void SetValue(Maybe<object?> value)
         {
             if (_isSetLocked) return;
 

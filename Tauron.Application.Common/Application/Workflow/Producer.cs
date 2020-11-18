@@ -29,7 +29,7 @@ namespace Tauron.Application.Workflow
 
             Do(from lastId in _lastId
                where lastId == StepId.Fail
-               select Use(() => throw new InvalidOperationException(_errorMessage.OrElse("Unkowen Error"))));
+               select Action(() => throw new InvalidOperationException(_errorMessage.OrElse("Unkowen Error"))));
         }
 
         [DebuggerStepThrough]
@@ -62,7 +62,7 @@ namespace Tauron.Application.Workflow
                         {
                             var mayLoopId = rev.Step.NextElement(context);
 
-                            mayOk = Or(from loopId in mayLoopId
+                            mayOk = Either(from loopId in mayLoopId
                                        where loopId == StepId.LoopEnd
                                        select false, true);
 
@@ -87,7 +87,7 @@ namespace Tauron.Application.Workflow
 
                 Do(from res in result
                    where res
-                   select Use(() => rev.Step.OnExecuteFinish(context)));
+                   select Action(() => rev.Step.OnExecuteFinish(context)));
 
                 return result;
             }

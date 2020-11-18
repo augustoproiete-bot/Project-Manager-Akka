@@ -175,7 +175,7 @@ namespace Tauron
         public EstimatingMethod UsedEstimatingMethod { get; set; } = EstimatingMethod.CurrentBytesPerSecond;
 
         /// <summary>
-        ///     Gets the estimated duration. Use UsedEstimatingMethod to specify which method will be used for estimating.
+        ///     Gets the estimated duration. Action UsedEstimatingMethod to specify which method will be used for estimating.
         ///     If the operation will take more than 200 days, TimeSpan.MaxValue is returned.
         /// </summary>
         public TimeSpan EstimatedDuration

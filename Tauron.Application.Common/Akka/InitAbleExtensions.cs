@@ -22,6 +22,6 @@ namespace Tauron.Akka
 
         public static Maybe<Unit> Tell(this IInitableActorRef model, object msg, IActorRef sender)
             => from act in model.Actor
-               select Use(() => act.Tell(msg, sender));
+               select Action(() => act.Tell(msg, sender));
     }
 }

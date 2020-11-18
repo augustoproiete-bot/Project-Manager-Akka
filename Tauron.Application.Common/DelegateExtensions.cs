@@ -15,7 +15,7 @@ namespace Tauron
             where TDel : Delegate => Delegate.Remove(del1, del2) as TDel;
 
         public static Maybe<TDel> Combine<TDel>(this Maybe<TDel> mayDel1, Maybe<TDel> mayDel2)
-            where TDel : Delegate => Or(from del1 in mayDel1
+            where TDel : Delegate => Either(from del1 in mayDel1
                                         from del2 in mayDel2
                                         select del1.Combine(del2), mayDel2);
 

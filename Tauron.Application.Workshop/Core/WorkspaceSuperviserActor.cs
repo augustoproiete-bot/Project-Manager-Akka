@@ -26,7 +26,7 @@ namespace Tauron.Application.Workshop.Core
             Receive<Terminated>((t, s)
                                     => from state in s
                                        from remover in state.Intrests.Lookup(t.ActorRef)
-                                       from _ in May(Use(remover))
+                                       from _ in May(Prelude.Action(remover))
                                        select state with{Intrests = state.Intrests.Remove(t.ActorRef)});
         }
 

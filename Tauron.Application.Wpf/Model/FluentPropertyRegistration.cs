@@ -1,12 +1,14 @@
 ﻿using System;
+using Functional.Maybe;
 using JetBrains.Annotations;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Wpf.Model
 {
     [PublicAPI]
     public sealed class FluentPropertyRegistration<TData>
     {
-        internal FluentPropertyRegistration(string name, UiActor actor)
+        internal FluentPropertyRegistration(string name, IUiActor actor)
         {
             Property = new UIProperty<TData>(name);
             actor.RegisterProperty(Property);
@@ -16,19 +18,21 @@ namespace Tauron.Application.Wpf.Model
 
         public FluentPropertyRegistration<TData> WithValidator(Func<TData, string?> validator)
         {
-            Property.Validator = o =>
-                                 {
-                                     if (o is TData value)
-                                         return validator(value);
-                                     return null;
-                                 };
+            Maybe<string> Executor(Maybe<object> mayData)
+            {
+                return from data in mayData
+                    where data is TData
+                    select MayNotEmpty(validator((TData)data));
+            }
+
+            Property.Validator = new Func<Maybe<object>, Maybe<string>>(Executor).ToMaybe();
 
             return this;
         }
 
         public FluentPropertyRegistration<TData> WithDefaultValue(TData data)
         {
-            Property.InternalValue = data;
+            Property.InternalValue = MayNotNull(data as object)!;
             return this;
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Akka;
 
@@ -8,13 +9,13 @@ namespace Tauron.Application.Wpf.Model
     [PublicAPI]
     public sealed class CommandRegistrationBuilder
     {
-        private readonly Action<string, Action<object?>, CommandQuery?> _register;
+        private readonly Action<string, Action<Maybe<object>>, CommandQuery> _register;
 
         private List<CommandQuery> _canExecute = new();
 
         private Delegate? _command;
 
-        internal CommandRegistrationBuilder(Action<string, Action<object?>, CommandQuery?> register, IExposedReceiveActor target)
+        internal CommandRegistrationBuilder(Action<string, Action<Maybe<object>>, CommandQuery> register, IExposedReceiveActor target)
         {
             Target    = target;
             _register = register;
@@ -22,44 +23,44 @@ namespace Tauron.Application.Wpf.Model
 
         public IExposedReceiveActor Target { get; }
 
-        public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>> canExecute)
+        public CommandRegistrationBuilder WithExecute(Action<Maybe<object>> execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>> canExecute)
         {
-            _command = Delegate.Combine(_command, execute);
+            _command = _command.Combine(execute);
 
             return WithCanExecute(canExecute);
         }
 
         public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>> canExecute)
         {
-            _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
+            _command = _command.Combine(new ActionMapper(execute).Action);
 
             return WithCanExecute(canExecute);
         }
 
-        public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, CommandQuery> canExecute)
+        public CommandRegistrationBuilder WithExecute(Action<Maybe<object>> execute, Func<CommandQueryBuilder, CommandQuery> canExecute)
         {
-            _command = Delegate.Combine(_command, execute);
+            _command = _command.Combine(execute);
 
             return WithCanExecute(canExecute);
         }
 
-        public CommandRegistrationBuilder WithExecute(Action<object?> execute)
+        public CommandRegistrationBuilder WithExecute(Action<Maybe<object>> execute)
         {
-            _command = Delegate.Combine(_command, execute);
+            _command = _command.Combine(execute);
 
             return this;
         }
 
         public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, CommandQuery> canExecute)
         {
-            _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
+            _command = _command.Combine(new ActionMapper(execute).Action);
 
             return WithCanExecute(canExecute);
         }
 
         public CommandRegistrationBuilder WithExecute(Action execute)
         {
-            _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
+            _command = _command.Combine(new ActionMapper(execute).Action);
             return this;
         }
 
@@ -81,7 +82,7 @@ namespace Tauron.Application.Wpf.Model
         {
             if (_command == null) return;
 
-            _register(name, (Action<object?>) _command, CommandQueryBuilder.Instance.Combine(_canExecute.ToArray()));
+            _register(name, (Action<Maybe<object>>) _command, CommandQueryBuilder.Instance.Combine(_canExecute.ToArray()));
         }
 
         private sealed class ActionMapper
@@ -90,12 +91,9 @@ namespace Tauron.Application.Wpf.Model
 
             public ActionMapper(Action action) => _action = action;
 
-            public Action<object?> Action => ActionImpl;
+            public Action<Maybe<object>> Action => ActionImpl;
 
-            private void ActionImpl(object? o)
-            {
-                _action();
-            }
+            private void ActionImpl(Maybe<object> o) => _action();
         }
 
         //private sealed class FuncMapper

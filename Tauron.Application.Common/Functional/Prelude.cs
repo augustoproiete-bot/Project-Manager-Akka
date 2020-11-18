@@ -125,6 +125,35 @@ namespace Tauron
             return Unit.Instance;
         }
 
+        public static Unit Tell(IActorRef actor, object msg, IActorRef sender)
+        {
+            if (!actor.IsNobody())
+                actor.Tell(msg, sender);
+            return Unit.Instance;
+        }
+
+        public static Unit Tell(Maybe<IActorRef> actor, object msg, IActorRef sender)
+            => Tell(actor.OrElse(ActorRefs.Nobody), msg, sender);
+
+        public static Unit Tell<TMsg>(IActorRef actor, Maybe<TMsg> msg)
+        {
+            if (!actor.IsNobody())
+                actor.Tell(msg);
+            return Unit.Instance;
+        }
+
+        public static Unit Tell(Maybe<IActorRef> actor, object msg) => Tell(actor.OrElse(ActorRefs.Nobody), msg);
+
+        public static Unit Tell<TMsg>(Maybe<IActorRef> actor, Maybe<TMsg> msg) => Tell(actor.OrElse(ActorRefs.Nobody), msg);
+
+        public static Task<TResult> Ask<TResult>(IActorRef actor, object msg, TimeSpan? timeout = null) 
+            => actor.Ask<TResult>(msg, timeout);
+
+        public static Task<TResult> Ask<TResult>(Maybe<IActorRef> actor, object msg, TimeSpan? timeout = null) 
+            => actor.IsNothing() 
+                ? Task.FromException<TResult>(new InvalidOperationException("Try to Ask an Empty Maybe Actor")) 
+                : Ask<TResult>(actor.Value, msg, timeout);
+
         public static Unit Forward(IActorRef actor, object msg)
         {
             if (!actor.IsNobody())
@@ -132,13 +161,13 @@ namespace Tauron
             return Unit.Instance;
         }
 
-        public static Unit Use(Action action)
+        public static Unit Action(Action action)
         {
             action();
             return Unit.Instance;
         }
 
-        public static TResult Use<TResult>(Func<TResult> action)
+        public static TResult Func<TResult>(Func<TResult> action)
             => action();
 
         public static Maybe<Unit> MayUse(Action action)
@@ -180,14 +209,12 @@ namespace Tauron
         public static Maybe<TResult> Match<TType, TResult>(Maybe<TType> may, Func<TType, TResult> some, Func<Maybe<TResult>> non)
             => may.Match(some, non);
 
+        public static Maybe<TResult> Match<TType, TResult>(Maybe<TType> may, Func<TType, TResult> some, Func<TResult> non)
+            => may.Match(some, () => non().ToMaybe());
+
         public static Task<TResult> MatchAsync<TType, TResult>(Maybe<TType> may, Func<TType, Task<TResult>> some, Func<Task<TResult>> non)
             => may.MatchAsync(some, non);
 
-        public static void Match<TType>(Maybe<Maybe<TType>> may, Action<TType> some, Action non)
-            => may.Collapse().Match(some, non);
-
-        public static Maybe<TResult> Match<TType, TResult>(Maybe<Maybe<TType>> may, Func<TType, TResult> some, Func<Maybe<TResult>> non)
-            => may.Collapse().Match(some, non);
 
         public static Maybe<TResult> Match<TType, TError, TResult>(Either<TType, TError> may, Func<TType, Maybe<TResult>> some, Func<TError, Maybe<TResult>> non)
             => may.Match(some, non);
@@ -198,28 +225,14 @@ namespace Tauron
         public static TResult OrElse<TResult>(Maybe<TResult> may, TResult result)
             => may.OrElse(result);
 
-        public static TResult OrElse<TResult>(Maybe<Maybe<TResult>> may, TResult result)
-            => may.Collapse().OrElse(result);
 
-        public static Maybe<TResult> Or<TResult>(Maybe<TResult> may, TResult res)
+        public static Maybe<TResult> Either<TResult>(Maybe<TResult> may, TResult res)
             => may.Or(res);
 
-        public static Maybe<TResult> Or<TResult>(Maybe<TResult> may, Maybe<TResult> res)
+        public static Maybe<TResult> Either<TResult>(Maybe<TResult> may, Maybe<TResult> res)
             => may.Or(res);
 
-        public static Maybe<TResult> Or<TResult>(Maybe<Maybe<TResult>> may, TResult res)
-            => may.Collapse().Or(res);
-
-        public static Maybe<TResult> Or<TResult>(Maybe<Maybe<TResult>> may, Maybe<TResult> res)
-            => may.Collapse().Or(res);
-
-        public static Maybe<TResult> Or<TResult>(Maybe<Maybe<TResult>> may, Maybe<Maybe<TResult>> res)
-            => may.Collapse().Or(res.Collapse());
-
-        public static Maybe<TResult> Or<TResult>(Maybe<TResult> may, Maybe<Maybe<TResult>> res)
-            => may.Or(res.Collapse());
-
-        public static Maybe<TResult> Or<TResult>(Func<Maybe<TResult>> may1, Func<Maybe<TResult>> may2)
+        public static Maybe<TResult> Either<TResult>(Func<Maybe<TResult>> may1, Func<Maybe<TResult>> may2)
             => may1().Or(may2);
 
         public static Maybe<TResult> Any<TResult>(IEnumerable<Func<Maybe<TResult>>> maybes)

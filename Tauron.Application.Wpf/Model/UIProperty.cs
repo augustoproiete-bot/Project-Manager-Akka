@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using Functional.Maybe;
 using JetBrains.Annotations;
 
 namespace Tauron.Application.Wpf.Model
@@ -25,17 +26,19 @@ namespace Tauron.Application.Wpf.Model
 
         public event Action<TData>? PropertyValueChangedFunc;
 
-        public void Set([AllowNull] TData data)
+        public void Set(Maybe<TData?> data)
         {
-            SetValue(data);
+            SetValue(data.Cast<TData?, object?>());
         }
 
         [return: MaybeNull]
         public static implicit operator TData(UIProperty<TData> property) => property.Value;
 
-        public static UIProperty<TData> operator +(UIProperty<TData> prop, TData data)
+        public static UIProperty<TData> operator +(UIProperty<TData> prop, TData? data)
         {
-            prop.Set(data);
+#pragma warning disable 8620
+            prop.Set(data == null ? Maybe<TData>.Nothing : data.ToMaybe());
+#pragma warning restore 8620
             return prop;
         }
 
