@@ -11,8 +11,8 @@ namespace Tauron.Host
         public HostBuilderContext(IDictionary<object, object> properties, IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
             HostEnvironment = hostEnvironment;
-            Configuration = configuration;
-            Properties = properties ?? throw new ArgumentNullException(nameof(properties));
+            Configuration   = configuration;
+            Properties      = properties ?? throw new ArgumentNullException(nameof(properties));
         }
 
         public IHostEnvironment HostEnvironment { get; set; }

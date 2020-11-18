@@ -9,11 +9,11 @@ namespace Tauron.Temp
     public sealed class TempStream : Stream
     {
         private readonly TempFile _file;
-        private readonly Stream _wrappedStream;
+        private readonly Stream   _wrappedStream;
 
         public TempStream(TempFile file)
         {
-            _file = file;
+            _file          = file;
             _wrappedStream = file.InternalStrem;
         }
 
@@ -55,17 +55,15 @@ namespace Tauron.Temp
 
         /// <inheritdoc />
         public override Task CopyToAsync(
-          Stream destination,
-          int bufferSize,
-          CancellationToken cancellationToken)
-        {
-            return _wrappedStream.CopyToAsync(destination, bufferSize, cancellationToken);
-        }
+            Stream            destination,
+            int               bufferSize,
+            CancellationToken cancellationToken) =>
+            _wrappedStream.CopyToAsync(destination, bufferSize, cancellationToken);
 
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            if(_file.NoStreamDispose) return;
+            if (_file.NoStreamDispose) return;
             _file.Dispose();
         }
 
@@ -86,13 +84,11 @@ namespace Tauron.Temp
 
         /// <inheritdoc />
         public override Task<int> ReadAsync(
-          byte[] buffer,
-          int offset,
-          int count,
-          CancellationToken cancellationToken)
-        {
-            return _wrappedStream.ReadAsync(buffer, offset, count, cancellationToken);
-        }
+            byte[]            buffer,
+            int               offset,
+            int               count,
+            CancellationToken cancellationToken) =>
+            _wrappedStream.ReadAsync(buffer, offset, count, cancellationToken);
 
         /// <inheritdoc />
         public override int ReadByte() => _wrappedStream.ReadByte();
@@ -111,13 +107,11 @@ namespace Tauron.Temp
 
         /// <inheritdoc />
         public override Task WriteAsync(
-          byte[] buffer,
-          int offset,
-          int count,
-          CancellationToken cancellationToken)
-        {
-            return _wrappedStream.WriteAsync(buffer, offset, count, cancellationToken);
-        }
+            byte[]            buffer,
+            int               offset,
+            int               count,
+            CancellationToken cancellationToken) =>
+            _wrappedStream.WriteAsync(buffer, offset, count, cancellationToken);
 
         /// <inheritdoc />
         public override void WriteByte(byte value) => _wrappedStream.WriteByte(value);

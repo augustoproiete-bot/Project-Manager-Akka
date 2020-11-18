@@ -4,9 +4,7 @@ using System.Windows.Input;
 using Akka.Actor;
 using JetBrains.Annotations;
 using Serilog;
-using Tauron.Akka;
 using Tauron.Application.Wpf.Helper;
-using Tauron.Application.Wpf.Model;
 using Tauron.Application.Wpf.ModelMessages;
 using Tauron.Host;
 
@@ -18,18 +16,18 @@ namespace Tauron.Application.Wpf.UI
     {
         protected readonly ControlBindLogic BindLogic;
 
-        protected readonly ILogger Logger;
+        protected readonly ILogger    Logger;
         protected readonly IViewModel Model;
-        protected readonly TControl UserControl;
+        protected readonly TControl   UserControl;
 
         protected ControlLogicBase(TControl userControl, IViewModel model)
         {
             Logger = Log.ForContext(GetType());
 
-            UserControl = userControl;
+            UserControl             = userControl;
             UserControl.DataContext = model;
-            Model = model;
-            BindLogic = new ControlBindLogic(userControl, model, Logger);
+            Model                   = model;
+            BindLogic               = new ControlBindLogic(userControl, model, Logger);
 
             // ReSharper disable once VirtualMemberCallInConstructor
             WireUpLoaded();
@@ -37,11 +35,11 @@ namespace Tauron.Application.Wpf.UI
             WireUpUnloaded();
 
             userControl.DataContextChanged += (sender, args) =>
-            {
-                Logger.Debug("DataContext Changed Revert");
-                if (args.NewValue != model)
-                    ((FrameworkElement) sender).DataContext = model;
-            };
+                                              {
+                                                  Logger.Debug("DataContext Changed Revert");
+                                                  if (args.NewValue != model)
+                                                      ((FrameworkElement) sender).DataContext = model;
+                                              };
         }
 
         public void Register(string key, IControlBindable bindable, DependencyObject affectedPart)
@@ -55,7 +53,7 @@ namespace Tauron.Application.Wpf.UI
             BindLogic.CleanUp(key);
         }
 
-        public string Key { get; } = Guid.NewGuid().ToString();
+        public string      Key         { get; } = Guid.NewGuid().ToString();
         public ViewManager ViewManager => ViewManager.Manager;
 
         public event Action? ControlUnload;
@@ -97,15 +95,15 @@ namespace Tauron.Application.Wpf.UI
                 else
                 {
                     ViewModelSuperviser.Get(ActorApplication.Application.ActorSystem)
-                       .Create(Model);
+                                       .Create(Model);
                 }
             }
 
             Model.AwaitInit(() =>
-            {
-                Model.Actor.Tell(new InitEvent(UserControl.Key));
-                CommandManager.InvalidateRequerySuggested();
-            });
+                            {
+                                Model.Actor.Tell(new InitEvent(UserControl.Key));
+                                CommandManager.InvalidateRequerySuggested();
+                            });
         }
     }
 }

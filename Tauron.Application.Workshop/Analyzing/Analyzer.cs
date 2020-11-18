@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Functional.Maybe;
@@ -13,25 +13,34 @@ using Tauron.Application.Workshop.Mutation;
 namespace Tauron.Application.Workshop.Analyzing
 {
     [PublicAPI]
-    public sealed class Analyzer<TWorkspace, TData> : DeferredActor, IAnalyzer<TWorkspace, TData> 
+    public sealed class Analyzer<TWorkspace, TData> : DeferredActor<Analyzer<TWorkspace, TData>.AnalyserState>, IAnalyzer<TWorkspace, TData> 
         where TWorkspace : WorkspaceBase<TData> where TData : class
     {
-        private readonly HashSet<string> _rules = new();
-
+        public sealed record AnalyserState(ImmutableHashSet<string> Rules, ImmutableList<object>? Stash, IActorRef Actor) : DeferredActorState(Stash, Actor)
+        {
+            public AnalyserState()
+                : this(ImmutableHashSet<string>.Empty, ImmutableList<object>.Empty, ActorRefs.Nobody)
+            {
+                
+            }
+        }
+        
         internal Analyzer(Task<IActorRef> actor, IEventSource<IssuesEvent> source)
-            : base(actor) => Issues = source;
+            : base(actor, new AnalyserState()) => Issues = source;
 
         internal Analyzer()
-            : base(Task.FromResult<IActorRef>(ActorRefs.Nobody)) 
+            : base(Task.FromResult<IActorRef>(ActorRefs.Nobody), new AnalyserState()) 
             => Issues = new AnalyzerEventSource<TWorkspace, TData>(Task.FromResult<IActorRef>(ActorRefs.Nobody), new WorkspaceSuperviser());
 
         public void RegisterRule(IRule<TWorkspace, TData> rule)
         {
-            lock (_rules)
-            {
-                if (!_rules.Add(rule.Name))
-                    return;
-            }
+            if(ObjectState.Rules.Contains(rule.Name))
+                return;
+            
+            Run(s =>
+                    from state in s
+                    let data = state.Rules.Add(rule.Name)
+                    select state with{Rules = data});
 
             TellToActor(new RegisterRule<TWorkspace, TData>(rule));
         }

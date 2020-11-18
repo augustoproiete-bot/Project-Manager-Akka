@@ -11,14 +11,14 @@ namespace Tauron.Host
         public static IApplicationBuilder UseContentRoot(this IApplicationBuilder hostBuilder, string contentRoot)
         {
             return hostBuilder.Configuration(configBuilder =>
-            {
-                configBuilder
-                    .AddInMemoryCollection(new[]
-                    {
-                        new KeyValuePair<string, string>(HostDefaults.ContentRootKey, contentRoot
-                                                                                      ?? throw new ArgumentNullException(nameof(contentRoot)))
-                    });
-            });
+                                             {
+                                                 configBuilder
+                                                    .AddInMemoryCollection(new[]
+                                                                           {
+                                                                               new KeyValuePair<string, string>(HostDefaults.ContentRootKey, contentRoot
+                                                                                                                                          ?? throw new ArgumentNullException(nameof(contentRoot)))
+                                                                           });
+                                             });
         }
     }
 }

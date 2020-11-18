@@ -63,6 +63,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FTest", "FTest", "{1525DDD0
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestApp", "TestApp\TestApp.fsproj", "{0805D2CF-0921-4FAF-902B-CE291A7E6D6C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tauron.Application.Wpf", "Tauron.Application.Wpf\Tauron.Application.Wpf.csproj", "{D3F8F796-F06D-4BF2-8FCC-3660273B4D85}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -145,6 +147,10 @@ Global
 		{0805D2CF-0921-4FAF-902B-CE291A7E6D6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0805D2CF-0921-4FAF-902B-CE291A7E6D6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0805D2CF-0921-4FAF-902B-CE291A7E6D6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3F8F796-F06D-4BF2-8FCC-3660273B4D85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3F8F796-F06D-4BF2-8FCC-3660273B4D85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3F8F796-F06D-4BF2-8FCC-3660273B4D85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3F8F796-F06D-4BF2-8FCC-3660273B4D85}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -176,6 +182,7 @@ Global
 		{4FDBA9D6-4D7A-41AF-8720-6F2F45170B47} = {6188B03B-AA5D-4CFE-B89F-B358A35DC305}
 		{D75AA171-14A5-4FC4-A53D-2BD7E7EA2EB1} = {6188B03B-AA5D-4CFE-B89F-B358A35DC305}
 		{0805D2CF-0921-4FAF-902B-CE291A7E6D6C} = {1525DDD0-1A36-4541-8FC4-19E5084DAE4F}
+		{D3F8F796-F06D-4BF2-8FCC-3660273B4D85} = {6188B03B-AA5D-4CFE-B89F-B358A35DC305}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F63AD2ED-4320-43AB-8761-A3FEBC507539}

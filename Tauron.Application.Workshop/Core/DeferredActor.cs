@@ -5,15 +5,15 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Functional.Maybe;
 using Serilog;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Workshop.Core
 {
+    public record DeferredActorState(ImmutableList<object>? Stash, IActorRef Actor);
+    
     public abstract class DeferredActor<TState> : StatefulObject<TState>
-        where TState : DeferredActor<TState>.DeferredActorState
+        where TState : DeferredActorState
     {
-        public record DeferredActorState(ImmutableList<object>? Stash, IActorRef Actor);
-
         protected IActorRef Actor => ObjectState.Actor;
 
         protected DeferredActor(Task<IActorRef> actor, TState initialState) 

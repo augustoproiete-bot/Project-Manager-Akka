@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 using Akka.Actor;
 using Functional.Maybe;
 using JetBrains.Annotations;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Settings
 {

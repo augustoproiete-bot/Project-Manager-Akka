@@ -13,14 +13,13 @@ namespace Tauron.Akka
     public sealed class EmptyActor<TActor> : IDefaultActorRef<TActor>
     {
         public Maybe<IActorRef> Actor { get; } = Maybe<IActorRef>.Nothing;
+
         public void Init(string? name = null)
         {
-            
         }
 
         public void Init(IActorRefFactory factory, string? name = null)
         {
-
         }
     }
 }

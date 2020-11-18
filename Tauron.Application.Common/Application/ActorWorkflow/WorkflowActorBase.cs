@@ -6,7 +6,7 @@ using Akka.Event;
 using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workflow;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.ActorWorkflow
 {

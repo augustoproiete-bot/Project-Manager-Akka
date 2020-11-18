@@ -35,10 +35,7 @@ namespace Tauron.Application.Wpf.UI
         ///     Object that can provide services for the markup
         ///     extension.
         /// </param>
-        public override object? ProvideValue(IServiceProvider provider)
-        {
-            return Binding.ProvideValue(provider);
-        }
+        public override object? ProvideValue(IServiceProvider provider) => Binding.ProvideValue(provider);
 
 
         /// <summary>
@@ -57,14 +54,14 @@ namespace Tauron.Application.Wpf.UI
         protected virtual bool TryGetTargetItems(IServiceProvider? provider, out DependencyObject? target, out DependencyProperty? dp)
         {
             target = null;
-            dp = null;
+            dp     = null;
 
             //create a binding and assign it to the target
             if (!(provider?.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service)) return false;
 
             //we need dependency objects / properties
             target = service.TargetObject as DependencyObject;
-            dp = service.TargetProperty as DependencyProperty;
+            dp     = service.TargetProperty as DependencyProperty;
             return target != null && dp != null;
         }
 
@@ -77,7 +74,7 @@ namespace Tauron.Application.Wpf.UI
         ///     The decorated binding class.
         /// </summary>
         [Browsable(false)]
-        public Binding Binding { get; set; } = new Binding();
+        public Binding Binding { get; set; } = new();
 
         [DefaultValue(null)]
         public object? AsyncState
@@ -227,7 +224,8 @@ namespace Tauron.Application.Wpf.UI
             set => Binding.XPath = value;
         }
 
-        [DefaultValue(null)] public Collection<ValidationRule>? ValidationRules => Binding.ValidationRules;
+        [DefaultValue(null)]
+        public Collection<ValidationRule>? ValidationRules => Binding.ValidationRules;
 
         [DefaultValue(null)]
         public string? StringFormat

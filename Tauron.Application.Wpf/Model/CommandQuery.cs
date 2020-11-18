@@ -26,7 +26,13 @@ namespace Tauron.Application.Wpf.Model
     [PublicAPI]
     public sealed class CommandQueryBuilder
     {
-        public static readonly CommandQueryBuilder Instance = new CommandQueryBuilder();
+        public enum QueryCompareType
+        {
+            And,
+            Or
+        }
+
+        public static readonly CommandQueryBuilder Instance = new();
 
         public CommandQuery Combine(params CommandQuery[] queries)
             => new CombineCommandQuery(queries);
@@ -70,22 +76,16 @@ namespace Tauron.Application.Wpf.Model
             return trig;
         }
 
-        public enum QueryCompareType
-        {
-            And,
-            Or
-        }
-
         public sealed class CompareQuery : CommandQuery
         {
+            private readonly CommandQuery[]   _queries;
+            private readonly bool[]           _state;
             private readonly QueryCompareType _type;
-            private readonly CommandQuery[] _queries;
-            private readonly bool[] _state;
 
             public CompareQuery(CommandQuery[] queries, QueryCompareType type)
             {
                 _queries = queries;
-                _type = type;
+                _type    = type;
 
                 _state = new bool[queries.Length];
 
@@ -95,10 +95,10 @@ namespace Tauron.Application.Wpf.Model
                     var stateIndex = i;
 
                     queries[i].Monitor(b =>
-                    {
-                        _state[stateIndex] = b;
-                        Update();
-                    });
+                                       {
+                                           _state[stateIndex] = b;
+                                           Update();
+                                       });
                 }
             }
 
@@ -133,8 +133,8 @@ namespace Tauron.Application.Wpf.Model
 
         public sealed class CombineCommandQuery : CommandQuery
         {
-            private readonly CommandQuery[] _queries;
-            private readonly ConcurrentDictionary<CommandQuery, bool> _states = new ConcurrentDictionary<CommandQuery, bool>();
+            private readonly CommandQuery[]                           _queries;
+            private readonly ConcurrentDictionary<CommandQuery, bool> _states = new();
 
             public CombineCommandQuery(CommandQuery[] queries)
             {
@@ -149,19 +149,19 @@ namespace Tauron.Application.Wpf.Model
 
             private void QueryChanged(CommandQuery query, bool state)
             {
-                _states.AddOrUpdate(query, state, (c, b) => state);
+                _states.AddOrUpdate(query, state, (_, _) => state);
                 Monitors?.Invoke(_states.Values.All(p => p));
             }
 
 
-            public override bool Run() 
+            public override bool Run()
                 => _queries.All(c => c.Run());
         }
 
         public sealed class QueryPropertyCommandQuery<TData> : CommandQuery
         {
+            private readonly Func<TData, bool>     _check;
             private readonly IQueryProperty<TData> _property;
-            private readonly Func<TData, bool> _check;
 
             public QueryPropertyCommandQuery(IQueryProperty<TData> property, Func<TData, bool> check)
             {
@@ -175,14 +175,14 @@ namespace Tauron.Application.Wpf.Model
 
         public sealed class UIPropertyCommandQuery<TData> : CommandQuery
         {
-            private readonly UIProperty<TData> _property;
             private readonly Func<TData, bool> _check;
+            private readonly UIProperty<TData> _property;
 
             public UIPropertyCommandQuery(UIProperty<TData> property, Func<TData, bool> check)
             {
-                _property = property;
+                _property                      =  property;
                 _property.PropertyValueChanged += () => Monitors?.Invoke(check(_property.Value));
-                _check = check;
+                _check                         =  check;
             }
 
             public override bool Run() => _check(_property.Value);
@@ -190,34 +190,31 @@ namespace Tauron.Application.Wpf.Model
 
         public sealed class ExternalCommandQuery<TData> : CommandQuery
         {
-            private TData _currentValue;
             private readonly Func<TData, bool> _check;
+            private          TData             _currentValue;
 
             public ExternalCommandQuery(TData currentValue, Action<Action<TData>> registrar, Func<TData, bool> check)
             {
                 _currentValue = currentValue;
-                _check = check;
+                _check        = check;
 
                 registrar(data =>
-                {
-                    _currentValue = data;
-                    Monitors?.Invoke(_check(_currentValue));
-                });
+                          {
+                              _currentValue = data;
+                              Monitors?.Invoke(_check(_currentValue));
+                          });
             }
 
             public override bool Run() => _check(_currentValue);
         }
 
         public sealed class TriggerCommandQuery : CommandQuery
-        { 
+        {
             private readonly Func<bool> _check;
 
-            public TriggerCommandQuery(Func<bool> check)
-            {
-                _check = check;
-            }
+            public TriggerCommandQuery(Func<bool> check) => _check = check;
 
-            public void Trigger() 
+            public void Trigger()
                 => Monitors?.Invoke(_check());
 
             public override bool Run() => _check();

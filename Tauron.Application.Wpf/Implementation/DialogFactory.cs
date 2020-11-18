@@ -21,10 +21,8 @@ namespace Tauron.Application.Wpf.Implementation
 
         private Dispatcher CurrentDispatcher { get; }
 
-        public void FormatException(System.Windows.Window? owner, Exception exception)
-        {
-            ShowMessageBox(owner, $"Type: {exception.GetType().Name} \n {exception.Message}", "Error", MsgBoxButton.Ok, MsgBoxImage.Error);
-        }
+        public void FormatException(System.Windows.Window? owner, Exception exception) 
+            => ShowMessageBox(owner, $"Type: {exception.GetType().Name} \n {exception.Message}", "Error", MsgBoxButton.Ok, MsgBoxImage.Error);
 
         public MsgBoxResult ShowMessageBox(System.Windows.Window? owner, string text, string caption, MsgBoxButton button, MsgBoxImage icon)
         {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Functional.Maybe;
@@ -167,14 +168,14 @@ namespace Tauron.Application.Workshop.Mutation
     }
 
     [PublicAPI]
-    public class MutatingEngine : DeferredActor
+    public class MutatingEngine : DeferredActor<DeferredActorState>
     {
         public static MutatingEngine Create(WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null)
         {
             var mutatorProps = Props.Create<MutationActor>();
             mutatorProps = configurate?.Invoke(mutatorProps) ?? mutatorProps;
 
-            var mutator = superviser.Create(mutatorProps, "Mutator");
+            var mutator = superviser.Create(mutatorProps.ToMaybe(), "Mutator");
             return new MutatingEngine(mutator, superviser);
         }
 
@@ -184,12 +185,12 @@ namespace Tauron.Application.Workshop.Mutation
             var mutatorProps = Props.Create<MutationActor>();
             mutatorProps = configurate?.Invoke(mutatorProps) ?? mutatorProps;
 
-            var mutator = superviser.Create(mutatorProps, "Mutator");
+            var mutator = superviser.Create(mutatorProps.ToMaybe(), "Mutator");
             return new ExtendedMutatingEngine<TData>(mutator, source, superviser);
         }
 
         public static ExtendedMutatingEngine<TData> From<TData>(IExtendedDataSource<TData> source, MutatingEngine parent)
-            where TData : class => new ExtendedMutatingEngine<TData>(parent._mutator, source, parent._superviser);
+            where TData : class => new(parent._mutator, source, parent._superviser);
 
         public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, WorkspaceSuperviser superviser, Func<Props, Props>? configurate = null) 
             where TData : class
@@ -197,24 +198,21 @@ namespace Tauron.Application.Workshop.Mutation
             var mutatorProps = Props.Create<MutationActor>();
             mutatorProps = configurate?.Invoke(mutatorProps) ?? mutatorProps;
 
-            var mutator = superviser.Create(mutatorProps, "Mutator");
+            var mutator = superviser.Create(mutatorProps.ToMaybe(), "Mutator");
             return new MutatingEngine<TData>(mutator, source, superviser);
         }
 
         public static MutatingEngine<TData> From<TData>(IDataSource<TData> source, MutatingEngine parent) 
-            where TData : class => new MutatingEngine<TData>(parent._mutator, source, parent._superviser);
+            where TData : class => new(parent._mutator, source, parent._superviser);
 
         public static MutatingEngine<TData> Dummy<TData>(IDataSource<TData> source) 
-            where TData : class
-        {
-            return new MutatingEngine<TData>(source);
-        }
+            where TData : class => new(source);
 
         private readonly Task<IActorRef> _mutator;
         private readonly WorkspaceSuperviser _superviser;
 
         protected MutatingEngine(Task<IActorRef> mutator, WorkspaceSuperviser superviser)
-            : base(mutator)
+            : base(mutator, new DeferredActorState(ImmutableList<object>.Empty, ActorRefs.Nobody))
         {
             _mutator = mutator;
             _superviser = superviser;
@@ -236,7 +234,8 @@ namespace Tauron.Application.Workshop.Mutation
                 c =>
                 (
                     from con in c
-                    select con.Change is TEvent
+                    from change in con.Change
+                    select change is TEvent
                 ).OrElse(false)
             );
     }

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Functional.Maybe;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Workshop.StateManagement.DataFactorys
 {
@@ -25,5 +25,8 @@ namespace Tauron.Application.Workshop.StateManagement.DataFactorys
 
             return target;
         }
+        
+        public static AdvancedDataSourceFactory Merge(IEnumerable<AdvancedDataSourceFactory> factorys) 
+            => Merge(factorys.Select(f => f.ToMaybe()));
     }
 }

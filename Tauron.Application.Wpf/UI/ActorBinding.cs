@@ -12,10 +12,7 @@ namespace Tauron.Application.Wpf.UI
     {
         private readonly string _name;
 
-        public ActorBinding(string name)
-        {
-            _name = name;
-        }
+        public ActorBinding(string name) => _name = name;
 
         public override object? ProvideValue(IServiceProvider provider)
         {
@@ -29,10 +26,10 @@ namespace Tauron.Application.Wpf.UI
 
                 if (!ControlBindLogic.FindDataContext(dependencyObject, out var model)) return null;
 
-                Path = Path != null ? new PropertyPath("Value." + Path.Path, Path.PathParameters) : new PropertyPath("Value");
-                Source = new DeferredSource(_name, model);
-                Binding.Delay = 500;
-                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+                Path                                = Path != null ? new PropertyPath("Value." + Path.Path, Path.PathParameters) : new PropertyPath("Value");
+                Source                              = new DeferredSource(_name, model);
+                Binding.Delay                       = 500;
+                UpdateSourceTrigger                 = UpdateSourceTrigger.PropertyChanged;
                 Binding.ValidatesOnNotifyDataErrors = true;
 
                 return base.ProvideValue(provider);

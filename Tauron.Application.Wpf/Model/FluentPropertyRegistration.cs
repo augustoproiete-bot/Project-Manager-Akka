@@ -17,11 +17,11 @@ namespace Tauron.Application.Wpf.Model
         public FluentPropertyRegistration<TData> WithValidator(Func<TData, string?> validator)
         {
             Property.Validator = o =>
-            {
-                if (o is TData value)
-                    return validator(value);
-                return null;
-            };
+                                 {
+                                     if (o is TData value)
+                                         return validator(value);
+                                     return null;
+                                 };
 
             return this;
         }
@@ -45,9 +45,6 @@ namespace Tauron.Application.Wpf.Model
         }
 
 
-        public static implicit operator UIProperty<TData>(FluentPropertyRegistration<TData> config)
-        {
-            return config.Property;
-        }
+        public static implicit operator UIProperty<TData>(FluentPropertyRegistration<TData> config) => config.Property;
     }
 }

@@ -1,11 +1,12 @@
 ﻿using System;
 using Akka.Actor;
+using Functional.Maybe;
 
 namespace Tauron.Application.Wpf
 {
     public interface IViewModel
     {
-        IActorRef Actor { get; }
+        Maybe<IActorRef> Actor { get; }
 
         Type ModelType { get; }
 

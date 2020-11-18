@@ -103,7 +103,7 @@ namespace Tauron.Application.Workshop.StateManagement
             => AddFromAssembly(builder, typeof(TType).Assembly, context);
 
         public static ManagerBuilder AddFromAssembly(this ManagerBuilder builder, Assembly assembly, IComponentContext context) 
-            => AddFromAssembly(builder, assembly, MergeFactory.Merge(context.Resolve<IEnumerable<IDataSourceFactory>>().Cast<AdvancedDataSourceFactory>().ToArray()), context.ToMaybe());
+            => AddFromAssembly(builder, assembly, MergeFactory.Merge(context.Resolve<IEnumerable<IDataSourceFactory>>().Cast<AdvancedDataSourceFactory>()), context.ToMaybe());
 
         public static IConcurrentDispatcherConfugiration WithConcurentDispatcher(this ManagerBuilder builder)
         {

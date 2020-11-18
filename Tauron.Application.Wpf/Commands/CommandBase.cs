@@ -9,11 +9,11 @@ namespace Tauron.Application.Wpf.Commands
     {
         public virtual event EventHandler? CanExecuteChanged;
 
-        protected CommandBase() => CommandManager.RequerySuggested += (sender, args) => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        protected CommandBase() => CommandManager.RequerySuggested += (_, _) => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 
-        public virtual bool CanExecute([CanBeNull] object parameter) => true;
+        public virtual bool CanExecute([CanBeNull] object? parameter) => true;
 
-        public abstract void Execute([CanBeNull] object parameter);
+        public abstract void Execute([CanBeNull] object? parameter);
 
         public virtual void RaiseCanExecuteChanged() 
             => CanExecuteChanged?.Invoke(this, EventArgs.Empty);

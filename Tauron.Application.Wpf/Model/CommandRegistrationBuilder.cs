@@ -10,13 +10,13 @@ namespace Tauron.Application.Wpf.Model
     {
         private readonly Action<string, Action<object?>, CommandQuery?> _register;
 
-        private List<CommandQuery> _canExecute = new List<CommandQuery>();
+        private List<CommandQuery> _canExecute = new();
 
         private Delegate? _command;
 
         internal CommandRegistrationBuilder(Action<string, Action<object?>, CommandQuery?> register, IExposedReceiveActor target)
         {
-            Target = target;
+            Target    = target;
             _register = register;
         }
 
@@ -26,21 +26,21 @@ namespace Tauron.Application.Wpf.Model
         {
             _command = Delegate.Combine(_command, execute);
 
-            return canExecute != null ? WithCanExecute(canExecute) : this;
+            return WithCanExecute(canExecute);
         }
-        
+
         public CommandRegistrationBuilder WithExecute(Action execute, Func<CommandQueryBuilder, IEnumerable<CommandQuery>> canExecute)
         {
             _command = Delegate.Combine(_command, new ActionMapper(execute).Action);
 
             return WithCanExecute(canExecute);
         }
-        
+
         public CommandRegistrationBuilder WithExecute(Action<object?> execute, Func<CommandQueryBuilder, CommandQuery> canExecute)
         {
             _command = Delegate.Combine(_command, execute);
 
-            return canExecute != null ? WithCanExecute(canExecute) : this;
+            return WithCanExecute(canExecute);
         }
 
         public CommandRegistrationBuilder WithExecute(Action<object?> execute)
@@ -88,10 +88,7 @@ namespace Tauron.Application.Wpf.Model
         {
             private readonly Action _action;
 
-            public ActionMapper(Action action)
-            {
-                _action = action;
-            }
+            public ActionMapper(Action action) => _action = action;
 
             public Action<object?> Action => ActionImpl;
 

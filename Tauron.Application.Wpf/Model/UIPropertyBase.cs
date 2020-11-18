@@ -5,10 +5,10 @@ namespace Tauron.Application.Wpf.Model
     public abstract class UIPropertyBase
     {
         private bool _isSetLocked;
-        
+
         protected UIPropertyBase(string name)
         {
-            Name = name;
+            Name    = name;
             IsValid = QueryProperty.Create<bool>(a => IsValidSetter = a);
         }
 
@@ -18,8 +18,8 @@ namespace Tauron.Application.Wpf.Model
 
         public IQueryProperty<bool> IsValid { get; }
 
-        protected internal object? InternalValue { get; internal set; }
-        internal Func<object?, string?>? Validator { get; set; }
+        protected internal object?                 InternalValue { get; internal set; }
+        internal           Func<object?, string?>? Validator     { get; set; }
 
         public event Action? PropertyValueChanged;
 

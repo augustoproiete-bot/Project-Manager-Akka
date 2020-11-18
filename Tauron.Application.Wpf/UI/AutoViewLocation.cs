@@ -9,14 +9,11 @@ namespace Tauron.Application.Wpf.UI
     [PublicAPI]
     public sealed class AutoViewLocation
     {
-        private static readonly Dictionary<Type, Type> Views = new Dictionary<Type, Type>();
+        private static readonly Dictionary<Type, Type> Views = new();
 
         private readonly ILifetimeScope _provider;
 
-        public AutoViewLocation(ILifetimeScope provider)
-        {
-            _provider = provider;
-        }
+        public AutoViewLocation(ILifetimeScope provider) => _provider = provider;
 
         public static AutoViewLocation Manager => ActorApplication.Application.Continer.Resolve<AutoViewLocation>();
 

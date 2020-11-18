@@ -24,7 +24,7 @@ namespace Tauron.Application.Wpf.Helper
 
         public WeakDelegate([NotNull] MethodInfo methodInfo, [NotNull] object target)
         {
-            _method = Argument.NotNull(methodInfo, nameof(methodInfo));
+            _method    = Argument.NotNull(methodInfo, nameof(methodInfo));
             _reference = new WeakReference(Argument.NotNull(target, nameof(target)));
         }
 
@@ -40,7 +40,7 @@ namespace Tauron.Application.Wpf.Helper
 
         public static bool operator ==(WeakDelegate? left, WeakDelegate? right)
         {
-            var leftnull = ReferenceEquals(left, null);
+            var leftnull  = ReferenceEquals(left, null);
             var rightNull = ReferenceEquals(right, null);
 
             return !leftnull ? left!.Equals(right!) : rightNull;
@@ -48,7 +48,7 @@ namespace Tauron.Application.Wpf.Helper
 
         public static bool operator !=(WeakDelegate left, WeakDelegate right)
         {
-            var leftnull = ReferenceEquals(left, null);
+            var leftnull  = ReferenceEquals(left, null);
             var rightNull = ReferenceEquals(right, null);
 
             if (!leftnull) return !left!.Equals(right!);
@@ -69,7 +69,7 @@ namespace Tauron.Application.Wpf.Helper
             {
                 var target = _reference?.Target;
                 return ((target != null ? target.GetHashCode() : 0) * 397)
-                       ^ _method.GetHashCode();
+                     ^ _method.GetHashCode();
             }
         }
 
@@ -93,10 +93,7 @@ namespace Tauron.Application.Wpf.Helper
 
         public static void RegisterAction(Action action)
         {
-            lock (Actions)
-            {
-                Actions.Add(new WeakDelegate(Argument.NotNull(action, nameof(action))));
-            }
+            lock (Actions) Actions.Add(new WeakDelegate(Argument.NotNull(action, nameof(action))));
         }
 
         private static List<WeakDelegate> Initialize()
@@ -111,7 +108,9 @@ namespace Tauron.Application.Wpf.Helper
             {
                 var dead = new List<WeakDelegate>();
                 foreach (var weakDelegate in Actions.ToArray())
+                {
                     if (weakDelegate.IsAlive)
+                    {
                         try
                         {
                             weakDelegate.Invoke();
@@ -120,8 +119,10 @@ namespace Tauron.Application.Wpf.Helper
                         {
                             // ignored
                         }
+                    }
                     else
                         dead.Add(weakDelegate);
+                }
 
                 dead.ForEach(del => Actions.Remove(del));
             }

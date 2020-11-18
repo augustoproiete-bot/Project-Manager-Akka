@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Functional.Maybe;
 using JetBrains.Annotations;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Akka
 {
@@ -13,8 +13,8 @@ namespace Tauron.Akka
         public static async Task<TResult> Ask<TResult>(this IInitableActorRef model, object message, TimeSpan? timeout = null)
         {
             return await MatchAsync(model.Actor,
-                r => r.Ask<TResult>(message, timeout),
-                () => Task.FromException<TResult>(new InvalidOperationException("Actor not Initialized")));
+                                    r => r.Ask<TResult>(message, timeout),
+                                    () => Task.FromException<TResult>(new InvalidOperationException("Actor not Initialized")));
         }
 
         public static Maybe<Unit> Tell(this IInitableActorRef model, object msg)

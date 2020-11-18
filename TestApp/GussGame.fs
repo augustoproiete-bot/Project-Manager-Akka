@@ -2,7 +2,6 @@
 
 open System
 
-
 let Rnd = Random()
 
 let RndNumber min = 

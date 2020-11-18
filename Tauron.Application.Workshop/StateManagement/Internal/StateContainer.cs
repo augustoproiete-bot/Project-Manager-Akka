@@ -4,7 +4,7 @@ using System.Linq;
 using Functional.Maybe;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutation;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Workshop.StateManagement.Internal
 {

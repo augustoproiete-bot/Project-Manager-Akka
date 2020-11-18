@@ -5,7 +5,7 @@ using Akka.DI.Core;
 using Akka.Util.Internal;
 using Functional.Maybe;
 using Tauron.Application.Workshop.Mutation;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Workshop.Core
 {

@@ -11,7 +11,7 @@ namespace Tauron.Application.Wpf.Helper
 
         public IDisposable Bind(DependencyObject root, DependencyObject affectedObject, object dataContext)
         {
-            Root = root;
+            Root           = root;
             AffectedObject = affectedObject;
             Bind(dataContext);
 
@@ -31,12 +31,9 @@ namespace Tauron.Application.Wpf.Helper
         private class CleanUpHelper : IDisposable
         {
             private readonly ControlBindableBase _control;
-            private bool _isDisposed;
+            private          bool                _isDisposed;
 
-            public CleanUpHelper(ControlBindableBase control)
-            {
-                _control = control;
-            }
+            public CleanUpHelper(ControlBindableBase control) => _control = control;
 
             public void Dispose()
             {

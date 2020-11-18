@@ -23,7 +23,7 @@ namespace Tauron.Application.Wpf.UI
                 if (service.TargetObject.GetType().FullName == "System.Windows.SharedDp")
                     return this;
 
-                TargetObject = service.TargetObject;
+                TargetObject   = service.TargetObject;
                 TargetProperty = service.TargetProperty;
             }
 
@@ -64,14 +64,14 @@ namespace Tauron.Application.Wpf.UI
         protected virtual bool TryGetTargetItems(IServiceProvider? provider, [NotNullWhen(true)] out DependencyObject? target, [NotNullWhen(true)] out DependencyProperty? dp)
         {
             target = null;
-            dp = null;
+            dp     = null;
 
             //create a binding and assign it to the target
             if (!(provider?.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget service)) return false;
 
             //we need dependency objects / properties
             target = service.TargetObject as DependencyObject;
-            dp = service.TargetProperty as DependencyProperty;
+            dp     = service.TargetProperty as DependencyProperty;
             return target != null && dp != null;
         }
 

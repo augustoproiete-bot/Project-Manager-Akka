@@ -13,8 +13,8 @@ namespace Tauron.Application.Wpf.Model
 
         public UICollectionProperty(UIProperty<ObservableCollection<TData>> property)
         {
-            Property = property;
-            _collection = property.Value;
+            Property                      =  property;
+            _collection                   =  property.Value;
             property.PropertyValueChanged += () => _collection = property.Value;
         }
 
@@ -24,31 +24,11 @@ namespace Tauron.Application.Wpf.Model
 
         public int Count => _collection?.Count ?? -1;
 
-        public IEnumerator<TData> GetEnumerator()
-        {
-            return _collection?.GetEnumerator() ?? (IEnumerator<TData>) Array.Empty<TData>().GetEnumerator();
-        }
+        public IEnumerator<TData> GetEnumerator() => _collection?.GetEnumerator() ?? (IEnumerator<TData>) Array.Empty<TData>().GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public void Add(TData item) => _collection?.Add(item);
-
-        public void Add(TData item, Action<int> then)
-        {
-            if (_collection == null) return;
-            _collection?.Add(item);
-            then(Count);
-        }
-
-        public void Add(TData item, Action<TData> then)
-        {
-            if(_collection == null) return;
-            _collection.Add(item);
-            then(item);
-        }
 
         public void Clear() => _collection?.Clear();
 
@@ -79,6 +59,20 @@ namespace Tauron.Application.Wpf.Model
         }
 
         int IReadOnlyCollection<TData>.Count => _collection?.Count ?? -1;
+
+        public void Add(TData item, Action<int> then)
+        {
+            if (_collection == null) return;
+            _collection?.Add(item);
+            then(Count);
+        }
+
+        public void Add(TData item, Action<TData> then)
+        {
+            if (_collection == null) return;
+            _collection.Add(item);
+            then(item);
+        }
 
         public void AddRange(IEnumerable<TData> datas)
         {

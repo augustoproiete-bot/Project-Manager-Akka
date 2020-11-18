@@ -7,9 +7,9 @@ namespace Tauron.Application.Wpf.UI
     {
         public WindowControlLogic([NotNull] Window userControl, [NotNull] IViewModel model) : base(userControl, model)
         {
-            userControl.SizeToContent = SizeToContent.Manual;
-            userControl.ShowInTaskbar = true;
-            userControl.ResizeMode = ResizeMode.CanResize;
+            userControl.SizeToContent         = SizeToContent.Manual;
+            userControl.ShowInTaskbar         = true;
+            userControl.ResizeMode            = ResizeMode.CanResize;
             userControl.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 

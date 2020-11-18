@@ -3,7 +3,7 @@ using Functional.Maybe;
 
 namespace Tauron.Application.Workshop.Mutation
 {
-    public interface IRespondHandler<out TData>
+    public interface IRespondHandler<TData>
     {
         void Register(Action<Maybe<TData>> responder);
     }

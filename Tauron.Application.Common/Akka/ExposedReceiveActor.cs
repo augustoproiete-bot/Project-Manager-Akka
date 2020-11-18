@@ -16,29 +16,14 @@ namespace Tauron.Akka
     [PublicAPI]
     public class ExposedReceiveActor : ReceiveActor, IActorDsl, IExposedReceiveActor
     {
-        private readonly List<IDisposable> _resources = new();
-        private Action<Exception, IActorContext>? _onPostRestart;
-        private Action<IActorContext>? _onPostStop;
-        private Action<Exception, object, IActorContext>? _onPreRestart;
-        private Action<IActorContext>? _onPreStart;
-        private SupervisorStrategy? _strategy;
-
-        public IActorDsl Exposed => this;
+        private readonly List<IDisposable>                         _resources = new();
+        private          Action<Exception, IActorContext>?         _onPostRestart;
+        private          Action<IActorContext>?                    _onPostStop;
+        private          Action<Exception, object, IActorContext>? _onPreRestart;
+        private          Action<IActorContext>?                    _onPreStart;
+        private          SupervisorStrategy?                       _strategy;
 
         public static IUntypedActorContext ExposedContext => Context;
-
-        public void Flow<TStart>(Action<ActorFlowBuilder<TStart>> builder)
-            => builder(new ActorFlowBuilder<TStart>(this));
-
-        public EnterFlow<TStart> EnterFlow<TStart>(Action<ActorFlowBuilder<TStart>> builder)
-        {
-            var flowBuilder = new ActorFlowBuilder<TStart>(this);
-            builder(flowBuilder);
-            return flowBuilder.Build();
-        }
-
-        public void AddResource(IDisposable res)
-            => _resources.Add(res);
 
         protected internal ILoggingAdapter Log { get; } = Context.GetLogger();
 
@@ -72,14 +57,6 @@ namespace Tauron.Akka
 
         IActorRef IActorDsl.ActorOf(Action<IActorDsl> config, string name) => Context.ActorOf(config, name);
 
-        protected event Action<Exception>? OnPostRestart;
-
-        protected event Action<Exception, object>? OnPreRestart;
-
-        protected event Action? OnPostStop;
-
-        protected event Action? OnPreStart;
-
         Action<Exception, IActorContext>? IActorDsl.OnPostRestart
         {
             get => _onPostRestart;
@@ -110,6 +87,29 @@ namespace Tauron.Akka
             set => _strategy = value;
         }
 
+        public IActorDsl Exposed => this;
+
+        public void Flow<TStart>(Action<ActorFlowBuilder<TStart>> builder)
+            => builder(new ActorFlowBuilder<TStart>(this));
+
+        public EnterFlow<TStart> EnterFlow<TStart>(Action<ActorFlowBuilder<TStart>> builder)
+        {
+            var flowBuilder = new ActorFlowBuilder<TStart>(this);
+            builder(flowBuilder);
+            return flowBuilder.Build();
+        }
+
+        public void AddResource(IDisposable res)
+            => _resources.Add(res);
+
+        protected event Action<Exception>? OnPostRestart;
+
+        protected event Action<Exception, object>? OnPreRestart;
+
+        protected event Action? OnPostStop;
+
+        protected event Action? OnPreStart;
+
         protected override void PostRestart(Exception reason)
         {
             _onPostRestart?.Invoke(reason, Context);
@@ -129,7 +129,7 @@ namespace Tauron.Akka
             _onPostStop?.Invoke(Context);
             OnPostStop?.Invoke();
 
-            foreach (var disposable in _resources) 
+            foreach (var disposable in _resources)
                 disposable.Dispose();
 
             base.PostStop();

@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 using Functional.Maybe;
 using JetBrains.Annotations;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application
 {

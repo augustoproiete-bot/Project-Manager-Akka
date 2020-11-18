@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AkkaTest
 {
@@ -12,10 +12,8 @@ namespace AkkaTest
 
             foreach (var te in from ele in test
                                where ele is string
-                               select (string)ele)
-            {
+                               select (string) ele)
                 Console.WriteLine(te);
-            }
         }
     }
 }

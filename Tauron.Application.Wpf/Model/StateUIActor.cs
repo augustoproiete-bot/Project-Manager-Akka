@@ -13,15 +13,15 @@ namespace Tauron.Application.Wpf.Model
     [MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
     public abstract class StateUIActor : UiActor
     {
-        private readonly Dictionary<Type, Action<IOperationResult>> _compledActions = new Dictionary<Type, Action<IOperationResult>>();
-
-        public IActionInvoker ActionInvoker { get; }
+        private readonly Dictionary<Type, Action<IOperationResult>> _compledActions = new();
 
         protected StateUIActor(ILifetimeScope lifetimeScope, Dispatcher dispatcher, IActionInvoker actionInvoker) : base(lifetimeScope, dispatcher)
         {
             ActionInvoker = actionInvoker;
             Receive<IOperationResult>(OnOperationCompled);
         }
+
+        public IActionInvoker ActionInvoker { get; }
 
         protected virtual void OnOperationCompled(IOperationResult result)
         {
@@ -34,7 +34,7 @@ namespace Tauron.Application.Wpf.Model
             }
         }
 
-        public TState GetState<TState>(string key = "") where TState : class 
+        public TState GetState<TState>(string key = "") where TState : class
             => ActionInvoker.GetState<TState>(key) ?? throw new InvalidOperationException("No such State Found");
 
         public void WhenActionComnpled<TAction>(Action<IOperationResult> opsAction)
@@ -44,8 +44,8 @@ namespace Tauron.Application.Wpf.Model
             _compledActions[key] = opsAction.Combine(_compledActions.GetValueOrDefault(key))!;
         }
 
-        public UIStateConfiguration<TState> WhenStateChanges<TState>(string? name = null) 
-            where TState : class => new UIStateConfiguration<TState>(ActionInvoker.GetState<TState>(name ?? string.Empty) ?? throw new ArgumentException("No such State Found"), this);
+        public UIStateConfiguration<TState> WhenStateChanges<TState>(string? name = null)
+            where TState : class => new(ActionInvoker.GetState<TState>(name ?? string.Empty) ?? throw new ArgumentException("No such State Found"), this);
 
         public void DispatchAction(IStateAction action, bool? sendBack = true)
             => ActionInvoker.Run(action, sendBack);
@@ -53,8 +53,8 @@ namespace Tauron.Application.Wpf.Model
         [PublicAPI]
         public sealed class UIStateConfiguration<TState>
         {
-            private readonly TState _state;
             private readonly StateUIActor _actor;
+            private readonly TState       _state;
 
             public UIStateConfiguration(TState state, StateUIActor actor)
             {
@@ -73,27 +73,27 @@ namespace Tauron.Application.Wpf.Model
         [PublicAPI]
         public sealed class UIStateEventConfiguration<TEvent>
         {
+            private readonly StateUIActor         _actor;
             private readonly IEventSource<TEvent> _eventSource;
-            private readonly StateUIActor _actor;
 
             public UIStateEventConfiguration(IEventSource<TEvent> eventSource, StateUIActor actor)
             {
                 _eventSource = eventSource;
-                _actor = actor;
+                _actor       = actor;
             }
 
             public FluentPropertyRegistration<TData> ToProperty<TData>(string name, Func<TEvent, TData> transform, Func<TEvent, bool>? condition = null)
             {
                 var propertyConfig = _actor.RegisterProperty<TData>(name);
-                var property = propertyConfig.Property;
+                var property       = propertyConfig.Property;
 
                 _eventSource.RespondOn(_actor.Self, evt =>
-                {
-                    if (condition != null && !condition(evt))
-                        return;
+                                                    {
+                                                        if (condition != null && !condition(evt))
+                                                            return;
 
-                    property.Set(transform(evt));
-                });
+                                                        property.Set(transform(evt));
+                                                    });
 
                 return propertyConfig;
             }
@@ -110,21 +110,21 @@ namespace Tauron.Application.Wpf.Model
     public static class StateUIActorExtenstions
     {
         public static CommandRegistrationBuilder ToStateAction<TStateAction>(this CommandRegistrationBuilder builder)
-            where TStateAction : IStateAction, new() 
+            where TStateAction : IStateAction, new()
             => ToStateAction(builder, _ => new TStateAction());
 
-        public static CommandRegistrationBuilder ToStateAction(this CommandRegistrationBuilder builder, Func<IStateAction?> action) 
+        public static CommandRegistrationBuilder ToStateAction(this CommandRegistrationBuilder builder, Func<IStateAction?> action)
             => ToStateAction(builder, _ => action());
 
         public static CommandRegistrationBuilder ToStateAction<TParameter>(this CommandRegistrationBuilder builder, Func<TParameter, IStateAction?> action)
         {
             return ToStateAction(builder, o =>
-            {
-                if (o is TParameter parameter)
-                    return action(parameter);
+                                          {
+                                              if (o is TParameter parameter)
+                                                  return action(parameter);
 
-                return action(default!);
-            });
+                                              return action(default!);
+                                          });
         }
 
         public static CommandRegistrationBuilder ToStateAction(this CommandRegistrationBuilder builder, Func<object?, IStateAction?> action)
@@ -132,12 +132,12 @@ namespace Tauron.Application.Wpf.Model
             var invoker = TryCast(builder);
 
             return builder.WithExecute(o =>
-            {
-                var stateAction = action(o);
-                if(stateAction == null) return;
+                                       {
+                                           var stateAction = action(o);
+                                           if (stateAction == null) return;
 
-                invoker.DispatchAction(stateAction);
-            });
+                                           invoker.DispatchAction(stateAction);
+                                       });
         }
 
         private static StateUIActor TryCast(CommandRegistrationBuilder builder)

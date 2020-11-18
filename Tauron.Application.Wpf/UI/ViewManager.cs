@@ -12,7 +12,7 @@ namespace Tauron.Application.Wpf.UI
         {
         }
 
-        public static ViewManager Manager { get; } = new ViewManager();
+        public static ViewManager Manager { get; } = new();
 
         public void RegisterConnector(string key, ViewConnector connector)
         {

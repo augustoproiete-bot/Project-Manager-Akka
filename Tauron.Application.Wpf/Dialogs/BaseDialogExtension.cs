@@ -13,16 +13,12 @@ namespace Tauron.Application.Wpf.Dialogs
         private static IDialogCoordinator? _dialogCoordinator;
 
         public static Func<TData> ShowDialog<TDialog, TData>(this UiActor actor, params Parameter[] parameters)
-            where TDialog : IBaseDialog<TData, TData>
-        {
-            return ShowDialog<TDialog, TData, TData>(actor, () => default!, parameters);
-        }
+            where TDialog : IBaseDialog<TData, TData> =>
+            ShowDialog<TDialog, TData, TData>(actor, () => default!, parameters);
 
         public static Func<TData> ShowDialog<TDialog, TData>(this UiActor actor, Func<TData> initalData, params Parameter[] parameters)
-            where TDialog : IBaseDialog<TData, TData>
-        {
-            return ShowDialog<TDialog, TData, TData>(actor, initalData, parameters);
-        }
+            where TDialog : IBaseDialog<TData, TData> =>
+            ShowDialog<TDialog, TData, TData>(actor, initalData, parameters);
 
         public static Func<TData> ShowDialog<TDialog, TData, TViewData>(this UiActor actor, Func<TViewData> initalData, params Parameter[] parameters)
             where TDialog : IBaseDialog<TData, TViewData>

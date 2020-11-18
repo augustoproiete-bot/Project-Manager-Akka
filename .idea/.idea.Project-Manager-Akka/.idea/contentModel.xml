@@ -45,6 +45,7 @@
       <e p="ExpressionEvaluatorTestService.Api" t="IncludeRecursive">
         <e p="ExpressionEvaluatorTestService.Api.csproj" t="IncludeRecursive" />
       </e>
+      <e p="FTest" t="Include" />
       <e p="packages" t="ExcludeRecursive" />
       <e p="Project-Manager-Akka.sln" t="IncludeFlat" />
       <e p="RepositoryServer" t="IncludeRecursive">
@@ -133,10 +134,9 @@
           <e p="F.cs" t="Include" />
           <e p="FuncLog.cs" t="Include" />
           <e p="Maybe.cs" t="Include" />
-          <e p="Preload.cs" t="Include" />
+          <e p="Prelude.cs" t="Include" />
           <e p="Result.cs" t="Include" />
           <e p="State" t="Include">
-            <e p="ObjectState.cs" t="Include" />
             <e p="StatefulObject.cs" t="Include" />
           </e>
           <e p="Unit.cs" t="Include" />
@@ -372,6 +372,147 @@
         <e p="Tauron.Application.Workshop.csproj" t="IncludeRecursive" />
         <e p="Workspace.cs" t="Include" />
         <e p="WorkspaceSuperviser.cs" t="Include" />
+      </e>
+      <e p="Tauron.Application.Wpf" t="IncludeRecursive">
+        <e p="ActorFlowWpfExetension.cs" t="Include" />
+        <e p="AppCore" t="Include">
+          <e p="AppLifetime.cs" t="Include" />
+          <e p="DelegateAppFactory.cs" t="Include" />
+          <e p="IAppFactory.cs" t="Include" />
+          <e p="IMainWindow.cs" t="Include" />
+          <e p="ISplashScreen.cs" t="Include" />
+          <e p="IWindowProvider.cs" t="Include" />
+          <e p="SimpleSplashScreen.cs" t="Include" />
+          <e p="WpfConfiguration.cs" t="Include" />
+        </e>
+        <e p="AssemblyInfo.cs" t="Include" />
+        <e p="AutofacExtensions.cs" t="Include" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="CommandBinder.cs" t="Include" />
+        <e p="Commands" t="Include">
+          <e p="CommandBase.cs" t="Include" />
+          <e p="EventCommand.cs" t="Include" />
+          <e p="MethodCommand.cs" t="Include" />
+          <e p="SimpleCommand.cs" t="Include" />
+        </e>
+        <e p="ControlHelper.cs" t="Include" />
+        <e p="Converter" t="Include">
+          <e p="BoolToVisibilityConverter.cs" t="Include" />
+          <e p="BrushValueConverter.cs" t="Include" />
+          <e p="NullableLongToIntConverter.cs" t="Include" />
+          <e p="NullableToBoolConverter.cs" t="Include" />
+          <e p="TextInputToVisibilityConverter.cs" t="Include" />
+          <e p="ValueConverterFactoryBase.cs" t="Include" />
+        </e>
+        <e p="Dialogs" t="Include">
+          <e p="BaseDialogExtension.cs" t="Include" />
+          <e p="DialogBase.cs" t="Include" />
+          <e p="DialogCoordinator.cs" t="Include" />
+          <e p="DialogHost.cs" t="Include" />
+          <e p="IBaseDialog.cs" t="Include" />
+          <e p="IDialogCoordinator.cs" t="Include" />
+          <e p="MessageDialog.xaml" t="Include" />
+          <e p="MessageDialog.xaml.cs" t="Include" />
+        </e>
+        <e p="EventBinder.cs" t="Include" />
+        <e p="FrameworkObject.cs" t="Include" />
+        <e p="Helper" t="Include">
+          <e p="ControlBindableBase.cs" t="Include" />
+          <e p="ControlBindLogic.cs" t="Include" />
+          <e p="IBinderControlable.cs" t="Include" />
+          <e p="IControlBindable.cs" t="Include" />
+          <e p="IWeakReference.cs" t="Include" />
+          <e p="ViewModelSuperviser.cs" t="Include" />
+          <e p="WeakCleanUp.cs" t="Include" />
+          <e p="WeakCollection.cs" t="Include" />
+        </e>
+        <e p="IDialogFactory.cs" t="Include" />
+        <e p="IImageHelper.cs" t="Include" />
+        <e p="Implementation" t="Include">
+          <e p="DialogFactory.cs" t="Include" />
+          <e p="ImageHelper.cs" t="Include" />
+          <e p="PackUriHelper.cs" t="Include" />
+        </e>
+        <e p="IPackUriHelper.cs" t="Include" />
+        <e p="IView.cs" t="Include" />
+        <e p="IViewModel.cs" t="Include" />
+        <e p="Model" t="Include">
+          <e p="ActorModel.cs" t="Include" />
+          <e p="CommandQuery.cs" t="Include" />
+          <e p="CommandRegistrationBuilder.cs" t="Include" />
+          <e p="EventRegistrationBuilder.cs" t="Include" />
+          <e p="FluentCollectionPropertyRegistration.cs" t="Include" />
+          <e p="FluentPropertyRegistration.cs" t="Include" />
+          <e p="QueryProperty.cs" t="Include" />
+          <e p="StateUIActor.cs" t="Include" />
+          <e p="UiActor.cs" t="Include" />
+          <e p="UIActorExtensions.cs" t="Include" />
+          <e p="UICollectionProperty.cs" t="Include" />
+          <e p="UIModel.cs" t="Include" />
+          <e p="UIProperty.cs" t="Include" />
+          <e p="UIPropertyBase.cs" t="Include" />
+          <e p="ViewModelActorRef.cs" t="Include" />
+        </e>
+        <e p="ModelMessages" t="Include">
+          <e p="CanCommandExecuteRequest.cs" t="Include" />
+          <e p="CanCommandExecuteRespond.cs" t="Include" />
+          <e p="CommandExecuteEvent.cs" t="Include" />
+          <e p="ControlSetEvent.cs" t="Include" />
+          <e p="EventHook.cs" t="Include" />
+          <e p="ExecuteEventExent.cs" t="Include" />
+          <e p="GetValue.cs" t="Include" />
+          <e p="InitEvent.cs" t="Include" />
+          <e p="InitParentViewModel.cs" t="Include" />
+          <e p="PropertyChangedEvent.cs" t="Include" />
+          <e p="SetValue.cs" t="Include" />
+          <e p="TrackPropertyEvent.cs" t="Include" />
+          <e p="UnloadEvent.cs" t="Include" />
+          <e p="ValidatingEvent.cs" t="Include" />
+        </e>
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net5.0-windows" t="Include">
+              <e p="Dialogs" t="Include">
+                <e p="MessageDialog.g.cs" t="Include" />
+              </e>
+              <e p="GeneratedInternalTypeHelper.g.cs" t="Include" />
+              <e p="Tauron.Application.Wpf.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Tauron.Application.Wpf.csproj" t="IncludeRecursive" />
+        <e p="TauronWpfModule.cs" t="Include" />
+        <e p="Themes" t="Include">
+          <e p="Generic.xaml" t="Include" />
+        </e>
+        <e p="UI" t="Include">
+          <e p="ActorBinding.cs" t="Include" />
+          <e p="AutoViewLocation.cs" t="Include" />
+          <e p="BindingDecoratorBase.Latest.cs" t="Include" />
+          <e p="ControlLogicBase.cs" t="Include" />
+          <e p="DeferredSource.cs" t="Include" />
+          <e p="Loc.cs" t="Include" />
+          <e p="ModelConnectorBase.cs" t="Include" />
+          <e p="UpdatableMarkupExtension.cs" t="Include" />
+          <e p="UserControlLogic.cs" t="Include" />
+          <e p="ViewConnector.cs" t="Include" />
+          <e p="ViewManager.cs" t="Include" />
+          <e p="ViewModelBinding.cs" t="Include" />
+          <e p="ViewModelConverter.cs" t="Include" />
+          <e p="WindowControlLogic.cs" t="Include" />
+        </e>
+        <e p="UIActorExtensions.cs" t="Include" />
+        <e p="UIObservableCollection.cs" t="Include" />
+        <e p="UserControl.cs" t="Include" />
+        <e p="Window.cs" t="Include" />
+        <e p="WpfHostExtensions.cs" t="Include" />
+      </e>
+      <e p="TestApp" t="IncludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="GussGame.fs" t="Include" />
+        <e p="obj" t="ExcludeRecursive" />
+        <e p="Program.fs" t="Include" />
+        <e p="TestApp.fsproj" t="IncludeRecursive" />
       </e>
     </e>
   </component>

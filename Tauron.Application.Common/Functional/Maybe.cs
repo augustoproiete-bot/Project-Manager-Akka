@@ -27,9 +27,9 @@ namespace Tauron
     {
         public static Maybe<TOut> Match<TIn, TOut>(this Maybe<TIn> mayInput, Func<TIn, TOut> mach, Func<Maybe<TOut>> onElse)
             => mayInput.IsNothing()
-                ? onElse()
-                : from input in mayInput
-                  select mach(input);
+                   ? onElse()
+                   : from input in mayInput
+                     select mach(input);
 
         public static void MayTell<TMsg>(this IActorRef actor, Maybe<TMsg> mayData)
             => mayData.Do(m => actor.Tell(m));

@@ -1,57 +1,63 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading;
 using Akka.Actor;
-using Akka.Util;
+using Functional.Maybe;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Wpf.Model
 {
-    public abstract class ViewModelActorRef : IViewModel
+    public abstract class ViewModelActorRef : StatefulObject<ViewModelActorRef.ViewModelActorRefState>, IViewModel
     {
-        public abstract IActorRef Actor { get; }
-        public abstract Type ModelType { get; }
-        public abstract bool IsInitialized { get; }
-        public abstract void AwaitInit(Action waiter);
-        internal abstract void Init(IActorRef actor);
+        public sealed record ViewModelActorRefState(Maybe<IActorRef> Actor, bool IsInitialized, ImmutableList<Action>? Waiter);
+
+        protected ViewModelActorRef()
+            : base(new ViewModelActorRefState(Maybe<IActorRef>.Nothing, false, ImmutableList<Action>.Empty), true)
+        { }
+
+        public abstract   Maybe<IActorRef> Actor         { get; }
+        public abstract   Type      ModelType     { get; }
+        public abstract   bool      IsInitialized { get; }
+        public abstract   void      AwaitInit(Action waiter);
+        internal abstract Maybe<Unit>   Init(IActorRef   actor);
     }
 
-    public sealed class ViewModelActorRef<TModel> : ViewModelActorRef,  IViewModel<TModel>
+    public sealed class ViewModelActorRef<TModel> : ViewModelActorRef, IViewModel<TModel>
         where TModel : UiActor
     {
-        private bool _isInitialized;
-
-        private List<Action>? _waiter = new List<Action>();
-        private  IActorRef _actor = ActorRefs.Nobody;
-
-        public override IActorRef Actor => _actor;
+       public override Maybe<IActorRef> Actor => ObjectState.Actor;
 
         public override Type ModelType => typeof(TModel);
 
-        public override bool IsInitialized => _isInitialized;
+        public override bool IsInitialized => ObjectState.IsInitialized;
 
         public override void AwaitInit(Action waiter)
         {
-            lock (this)
-            {
-                if (IsInitialized)
-                    waiter();
-                else
-                    _waiter!.Add(waiter);
-            }
+            Run(s =>
+                {
+                    var initialized =
+                        from state in s
+                        where state.IsInitialized
+                        select Unit.Instance;
+
+                    return Match(initialized,
+                                 u =>
+                                     from state in s
+                                     from _ in MayUse(waiter)
+                                     select state,
+                                 () => May(from state in s
+                                           where state.Waiter != null
+                                           select state with{Waiter = state.Waiter.Add(waiter)}));
+                });
         }
 
-        internal override void Init(IActorRef actor)
+        internal override Maybe<Unit> Init(IActorRef actor)
         {
-            Interlocked.Exchange(ref _actor, actor);
-
-            lock (this)
-            {
-                _isInitialized = true;
-                foreach (var action in _waiter!) 
-                    action();
-
-                _waiter = null;
-            }
+            return Run(s =>
+                           from state in s
+                           from _ in MayUse(() => state?.Waiter.ForEach(a => a()))
+                           select state with{Waiter = null, IsInitialized = true})
+               .AsMayUnit();
         }
     }
 }

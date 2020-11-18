@@ -8,22 +8,22 @@ namespace Tauron.Application.Wpf.UI
 {
     public sealed class ViewConnector : ModelConnectorBase<ViewConnector>
     {
-        private readonly Dispatcher _dispatcher;
+        private readonly Dispatcher     _dispatcher;
         private readonly Action<object> _updater;
-        private readonly string _viewModelKey = Guid.NewGuid().ToString();
+        private readonly string         _viewModelKey = Guid.NewGuid().ToString();
 
         private ViewManager _manager = ViewManager.Manager;
 
         public ViewConnector(string name, DataContextPromise promise, Action<object> updater, Dispatcher dispatcher)
             : base(name, promise)
         {
-            _updater = updater;
+            _updater    = updater;
             _dispatcher = dispatcher;
         }
 
         protected override void OnLoad()
         {
-            if(View == null) return;
+            if (View == null) return;
             _manager = View.ViewManager;
             _manager.RegisterConnector(_viewModelKey, this);
 
@@ -32,7 +32,7 @@ namespace Tauron.Application.Wpf.UI
 
         protected override void OnUnload()
         {
-            if(View == null) return;
+            if (View == null) return;
             _manager.UnregisterConnector(_viewModelKey);
 
             base.OnUnload();
@@ -46,7 +46,7 @@ namespace Tauron.Application.Wpf.UI
 
         protected override void PropertyChangedHandler(PropertyChangedEvent obj)
         {
-            if(View == null) return;
+            if (View == null) return;
 
             var converter = new ViewModelConverter();
             if (!(obj.Value is IViewModel viewModel)) return;

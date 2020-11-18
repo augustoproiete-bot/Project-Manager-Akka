@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 using Functional.Maybe;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Settings
 {

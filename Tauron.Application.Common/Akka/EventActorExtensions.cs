@@ -21,7 +21,7 @@ namespace Tauron.Akka
             => from realName in name
                from child in system.TryGetChild(name)
                select child.IsNobody()
-                   ? EventActor.Create(system, name, killOnFirstResponse)
-                   : EventActor.From(child);
+                          ? EventActor.Create(system, name, killOnFirstResponse)
+                          : EventActor.From(child);
     }
 }

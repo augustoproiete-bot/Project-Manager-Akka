@@ -9,7 +9,7 @@ namespace Tauron.Application.Wpf.Dialogs
     {
         internal static readonly DialogCoordinator InternalInstance = new DialogCoordinator();
 
-        private static readonly ILogger _log = Log.ForContext<DialogCoordinator>();
+        private static readonly ILogger Log = Serilog.Log.ForContext<DialogCoordinator>();
 
         public static IDialogCoordinator Instance => InternalInstance;
 
@@ -33,7 +33,7 @@ namespace Tauron.Application.Wpf.Dialogs
 
         public void ShowDialog(object dialog)
         {
-            _log.Information("Show Dialog {Type}", dialog.GetType());
+            Log.Information("Show Dialog {Type}", dialog.GetType());
             ShowDialogEvent?.Invoke(dialog);
         }
 

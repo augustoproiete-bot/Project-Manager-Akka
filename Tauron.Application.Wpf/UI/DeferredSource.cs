@@ -12,7 +12,7 @@ namespace Tauron.Application.Wpf.UI
     public sealed class DeferredSource : ModelConnectorBase<DeferredSource>, INotifyPropertyChanged, INotifyDataErrorInfo
     {
         private string? _error;
-        private bool _hasErrors;
+        private bool    _hasErrors;
         private object? _value;
 
         public DeferredSource(string name, DataContextPromise promise)
@@ -65,7 +65,7 @@ namespace Tauron.Application.Wpf.UI
 
         protected override void ValidateCompled(ValidatingEvent msg)
         {
-            _error = msg.Reason;
+            _error    = msg.Reason;
             HasErrors = msg.Error;
         }
 

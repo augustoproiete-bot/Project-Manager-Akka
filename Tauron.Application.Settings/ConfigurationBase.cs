@@ -6,7 +6,7 @@ using Functional.Maybe;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Akka;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Settings
 {

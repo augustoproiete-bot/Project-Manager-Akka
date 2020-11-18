@@ -11,6 +11,14 @@ namespace Tauron
         private readonly ILoggingAdapter _loggingAdapter;
 
         public FuncLog(ILoggingAdapter loggingAdapter) => _loggingAdapter = loggingAdapter;
+
+        public bool IsDebugEnabled => _loggingAdapter.IsDebugEnabled;
+
+        public bool IsInfoEnabled => _loggingAdapter.IsInfoEnabled;
+
+        public bool IsWarningEnabled => _loggingAdapter.IsWarningEnabled;
+
+        public bool IsErrorEnabled               => _loggingAdapter.IsErrorEnabled;
         public bool IsEnabled(LogLevel logLevel) => _loggingAdapter.IsEnabled(logLevel);
 
         public Maybe<Unit> Debug(string format, params object[] args)
@@ -72,13 +80,5 @@ namespace Tauron
             _loggingAdapter.Log(logLevel, cause, format, args);
             return Unit.MayInstance;
         }
-
-        public bool IsDebugEnabled => _loggingAdapter.IsDebugEnabled;
-
-        public bool IsInfoEnabled => _loggingAdapter.IsInfoEnabled;
-
-        public bool IsWarningEnabled => _loggingAdapter.IsWarningEnabled;
-
-        public bool IsErrorEnabled => _loggingAdapter.IsErrorEnabled;
     }
 }

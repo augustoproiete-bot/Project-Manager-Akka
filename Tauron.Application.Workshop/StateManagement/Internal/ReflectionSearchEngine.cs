@@ -11,7 +11,7 @@ using JetBrains.Annotations;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.StateManagement.Attributes;
 using Tauron.Application.Workshop.StateManagement.DataFactorys;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 using TypeLst = System.Collections.Immutable.ImmutableList<System.Type>;
 using TypeGroupDic = System.Collections.Immutable.ImmutableDictionary<System.Type, System.Collections.Immutable.ImmutableList<System.Type>>;
@@ -36,7 +36,7 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
 
         public void Add(ManagerBuilder builder, IDataSourceFactory factory)
         {
-            var data = new ReflectionData(TypeLst.Empty, TypeGroupDic.Empty, ImmutableList<Func<Maybe<AdvancedDataSourceFactory>>>.Empty, TypeLst.Empty);
+            var data = new ReflectionData(ImmutableList<(Type State, Maybe<string> Key)>.Empty, TypeGroupDic.Empty, ImmutableList<Func<Maybe<AdvancedDataSourceFactory>>>.Empty, TypeLst.Empty);
 
             Func<Maybe<TType>> CreateFactory<TType>(Type target)
             {
@@ -70,23 +70,22 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
                         case EffectAttribute:
                             builder.WithEffect(CreateFactory<IEffect>(targetType));
                             return data;
-                        case MiddlewareAttribute _:
+                        case MiddlewareAttribute:
                             builder.WithMiddleware(CreateFactory<IMiddleware>(targetType));
                             return data;
                         case BelogsToStateAttribute belogsTo:
-                            return data with{Reducers = data}
-                                reducers.Add(belogsTo.StateType, type);
-                            break;
-                        case DataSourceAttribute _:
-                            factorys.Add(CreateFactory<AdvancedDataSourceFactory>(type));
-                            break;
-                        case ProcessorAttribute _:
-                            processors.Add(type);
-                            break;
+                            return data with{Reducers = AddToDic(data.Reducers, belogsTo.StateType)};
+                        case DataSourceAttribute:
+                            return data with{Factorys = data.Factorys.Add(CreateFactory<AdvancedDataSourceFactory>(targetType))};
+                        case ProcessorAttribute:
+                            return data with{Processors = data.Processors.Add(targetType)};
                         default:
                             return data;
                     }
                 }
+
+                data = DoModify(data, d => from data in d
+                                           select Switch(data));
             }
 
             var types = _assembly.GetTypes();
@@ -94,33 +93,32 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
             foreach (var type in types)
             {
                 foreach (var customAttribute in type.GetCustomAttributes(false))
-                {
-                    ApplyAttribute(customAttribute);
-                }
+                    ApplyAttribute(type, customAttribute);
             }
 
-            //if (factorys.Count != 0)
-            //{
-            //    var factory1 = factory;
-            //    factorys.Add(() => factory1.MaybeCast<IDataSourceFactory, AdvancedDataSourceFactory>());
-            //    factory = MergeFactory.Merge(factorys.Select(f => f()));
-            //}
+            if (data.Factorys.Count != 0)
+            {
+                var factory1 = factory;
+                
+                data    = data with{Factorys = data.Factorys.Add(() => factory1.MaybeCast<IDataSourceFactory, AdvancedDataSourceFactory>())};
+                factory = MergeFactory.Merge(data.Factorys.Select(f => f()));
+            }
 
-            //foreach (var (type, key) in states)
-            //{
-            //    if(type == null || type.BaseType?.IsGenericType != true || type.BaseType?.GetGenericTypeDefinition() != typeof(StateBase<>)) 
-            //        continue;
+            foreach (var (type, key) in data.States)
+            {
+                if(type == null || type.BaseType?.IsGenericType != true || type.BaseType?.GetGenericTypeDefinition() != typeof(StateBase<>)) 
+                    continue;
 
-            //    var dataType = type.BaseType.GetGenericArguments()[0];
-            //    var actualMethod = ConfigurateStateMethod.MakeGenericMethod(dataType);
-            //    actualMethod.Invoke(this, new object?[] {type, builder, factory, reducers, key});
-            //}
+                var dataType = type.BaseType.GetGenericArguments()[0];
+                var actualMethod = ConfigurateStateMethod.MakeGenericMethod(dataType);
+                actualMethod.Invoke(this, new object?[] {type, builder, factory, data.Reducers, key});
+            }
 
             //foreach (var processor in processors) 
             //    builder.Superviser.CreateAnonym(processor, $"Processor--{processor.Name}");
         }
 
-        private void ConfigurateState<TData>(Type target, ManagerBuilder builder, IDataSourceFactory factory, GroupDictionary<Type, Type> reducerMap, string? key)
+        private void ConfigurateState<TData>(Type target, ManagerBuilder builder, IDataSourceFactory factory, TypeGroupDic reducerMap, string? key)
             where TData : class
         {
             var config = builder.WithDataSource(factory.Create<TData>());
@@ -216,37 +214,37 @@ namespace Tauron.Application.Workshop.StateManagement.Internal
         {
             private readonly Func<Maybe<MutatingContext<TData>>, TAction, Task<Maybe<ReducerResult<TData>>>> _action;
 
-            public DelegateReducer(Func<MutatingContext<TData>, TAction, ReducerResult<TData>> action, IValidator<TAction>? validation)
+            public DelegateReducer(Func<Maybe<MutatingContext<TData>>, TAction, Maybe<ReducerResult<TData>>> action, IValidator<TAction>? validation)
             {
                 _action = (a, c) => Task.FromResult(action(a, c));
                 Validator = validation;
             }
 
-            public DelegateReducer(Func<MutatingContext<TData>, TAction, MutatingContext<TData>> action, IValidator<TAction>? validation)
+            public DelegateReducer(Func<Maybe<MutatingContext<TData>>, TAction, Maybe<MutatingContext<TData>>> action, IValidator<TAction>? validation)
             {
                 _action = (context, stateAction) => SucessAsync(action(context, stateAction));
                 Validator = validation;
             }
 
-            public DelegateReducer(Func<MutatingContext<TData>, TAction, TData> action, IValidator<TAction>? validation)
+            public DelegateReducer(Func<Maybe<MutatingContext<TData>>, TAction, Maybe<TData>> action, IValidator<TAction>? validation)
             {
                 _action = (context, stateAction) => SucessAsync(MutatingContext<TData>.New(action(context, stateAction)));
                 Validator = validation;
             }
 
-            public DelegateReducer(Func<MutatingContext<TData>, TAction, Task<ReducerResult<TData>>> action, IValidator<TAction>? validation)
+            public DelegateReducer(Func<Maybe<MutatingContext<TData>>, TAction, Task<Maybe<ReducerResult<TData>>>> action, IValidator<TAction>? validation)
             {
                 _action = action;
                 Validator = validation;
             }
 
-            public DelegateReducer(Func<MutatingContext<TData>, TAction, Task<MutatingContext<TData>>> action, IValidator<TAction>? validation)
+            public DelegateReducer(Func<Maybe<MutatingContext<TData>>, TAction, Task<Maybe<MutatingContext<TData>>>> action, IValidator<TAction>? validation)
             {
                 _action = async (context, stateAction) => Sucess(await action(context, stateAction));
                 Validator = validation;
             }
 
-            public DelegateReducer(Func<MutatingContext<TData>, TAction, Task<TData>> action, IValidator<TAction>? validation)
+            public DelegateReducer(Func<Maybe<MutatingContext<TData>>, TAction, Task<Maybe<TData>>> action, IValidator<TAction>? validation)
             {
                 _action = async (context, stateAction) => Sucess(MutatingContext<TData>.New(await action(context, stateAction)));
                 Validator = validation;

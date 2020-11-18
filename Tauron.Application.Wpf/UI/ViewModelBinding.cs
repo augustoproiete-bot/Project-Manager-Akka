@@ -11,10 +11,7 @@ namespace Tauron.Application.Wpf.UI
     {
         private readonly string _name;
 
-        public ViewModelBinding(string name)
-        {
-            _name = name;
-        }
+        public ViewModelBinding(string name) => _name = name;
 
         //public override object? ProvideValue(IServiceProvider provider)
         //{
@@ -29,10 +26,7 @@ namespace Tauron.Application.Wpf.UI
         //    return base.ProvideValue(provider);
         //}
 
-        protected override object DesignTime()
-        {
-            return "Design Time: No View";
-        }
+        protected override object DesignTime() => "Design Time: No View";
 
         protected override object ProvideValueInternal(IServiceProvider serviceProvider)
         {

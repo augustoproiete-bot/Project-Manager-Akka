@@ -91,9 +91,10 @@
             <Setter.Value>
                 <ControlTemplate>
                     <Grid>
-                        <ContentControl x:Name="DialogContent" IsEnabled="True" Visibility="Collapsed" VerticalAlignment="Center"
+                        <ContentControl x:Name="DialogContent" IsEnabled="True" Visibility="Collapsed"
+                                        VerticalAlignment="Center"
                                         HorizontalAlignment="Center" MinWidth="600" />
-                        <ContentControl x:Name="MainContent" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                        <ContentControl x:Name="MainContent" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

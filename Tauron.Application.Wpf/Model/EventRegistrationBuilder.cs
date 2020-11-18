@@ -7,12 +7,12 @@ namespace Tauron.Application.Wpf.Model
     [PublicAPI]
     public sealed class EventRegistrationBuilder
     {
-        private readonly string _name;
+        private readonly string                   _name;
         private readonly Action<string, Delegate> _register;
 
         internal EventRegistrationBuilder(string name, Action<string, Delegate> register)
         {
-            _name = name;
+            _name     = name;
             _register = register;
         }
 

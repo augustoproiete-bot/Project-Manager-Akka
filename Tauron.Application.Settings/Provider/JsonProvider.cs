@@ -3,7 +3,7 @@ using System.IO;
 using Functional.Maybe;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Settings.Provider
 {

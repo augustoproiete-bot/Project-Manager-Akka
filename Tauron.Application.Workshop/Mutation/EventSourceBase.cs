@@ -6,7 +6,7 @@ using Akka.Util.Internal;
 using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Workshop.Core;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Workshop.Mutation
 {
@@ -49,15 +49,15 @@ namespace Tauron.Application.Workshop.Mutation
 
         public void RespondOn(IActorRef? source, Action<Maybe<TRespond>> action)
         {
-            WatchIntrest CreateIntrest()
+            WatchIntrest CreateIntrest(IActorRef actor)
             {
-                return new(source,
+                return new(actor,
                            () => Run(s =>
                                          from state in s
-                                         select state with{SourceActions = state.SourceActions.Remove(source)}));
+                                         select state with{SourceActions = state.SourceActions.Remove(actor)}));
             }
             
-            if (source.IsNobody())
+            if (source == null || source.IsNobody())
             {
                 Run(s =>
                         from state in s 
@@ -67,7 +67,7 @@ namespace Tauron.Application.Workshop.Mutation
             {
                 Run(s =>
                         from state in s
-                        from _ in MayUse(() => _superviser.WatchIntrest(CreateIntrest()))
+                        from _ in MayUse(() => _superviser.WatchIntrest(CreateIntrest(source)))
                         let list = state.SourceActions
                         select state with{ SourceActions = list.ContainsKey(source)
                                                                ? list.SetItem(source, list[source].Combine(action))

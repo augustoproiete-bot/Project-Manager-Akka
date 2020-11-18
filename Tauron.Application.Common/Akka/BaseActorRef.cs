@@ -2,7 +2,7 @@
 using Akka.Actor;
 using Functional.Maybe;
 using JetBrains.Annotations;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Akka
 {
@@ -12,7 +12,7 @@ namespace Tauron.Akka
     {
         private readonly ActorRefFactory<TActor> _builder;
 
-        protected BaseActorRef(ActorRefFactory<TActor> actorBuilder) 
+        protected BaseActorRef(ActorRefFactory<TActor> actorBuilder)
             => _builder = actorBuilder;
 
         public Maybe<bool> IsInitialized { get; private set; } = May(false);
@@ -26,7 +26,7 @@ namespace Tauron.Akka
 
         public event Action? Initialized;
 
-        public void Tell(object message, IActorRef sender) 
+        public void Tell(object message, IActorRef sender)
             => Do(Actor, a => a.Tell(message, sender));
 
         public bool Equals(IActorRef? other)
@@ -35,7 +35,7 @@ namespace Tauron.Akka
                       where act.Equals(otherAct)
                       select true, false);
 
-        public int CompareTo(IActorRef? other) 
+        public int CompareTo(IActorRef? other)
             => CompareTo(other as object);
 
         public int CompareTo(object? obj)
@@ -43,7 +43,7 @@ namespace Tauron.Akka
                       from other in May(obj)
                       select act.CompareTo(other), 0);
 
-        public virtual void Init(string? name = null) 
+        public virtual void Init(string? name = null)
             => IniCore((b, s) => _builder.Create(b, s), name);
 
         public virtual void Init(IActorRefFactory factory, string? name = null)
@@ -72,7 +72,7 @@ namespace Tauron.Akka
         {
             IsInitialized = May(false);
 
-            Do(from act in Actor 
+            Do(from act in Actor
                select Use(() => act.Tell(PoisonPill.Instance)));
 
             Actor = Maybe<IActorRef>.Nothing;

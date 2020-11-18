@@ -6,6 +6,7 @@ using Akka.Actor.Internal;
 using Akka.DI.Core;
 using Akka.Event;
 using Akka.Util;
+using Functional.Maybe;
 using Tauron.Akka;
 using Tauron.Application.Wpf.Model;
 
@@ -13,7 +14,7 @@ namespace Tauron.Application.Wpf.Helper
 {
     public static class ViewModelSuperviserExtensions
     {
-        public static void InitModel(this IViewModel model, IUntypedActorContext context, string? name = null)
+        public static void InitModel(this IViewModel model, IUntypedActorContext context, Maybe<string> name = default)
             => ViewModelSuperviser.Get(context.System).Create(model, name);
     }
 
@@ -22,15 +23,15 @@ namespace Tauron.Application.Wpf.Helper
         private static ViewModelSuperviser? _superviser;
 
 
-        public static ViewModelSuperviser Get(ActorSystem system)
-            => _superviser ??= new ViewModelSuperviser(system.ActorOf(system.DI().Props<ViewModelSuperviserActor>(), nameof(ViewModelSuperviser)));
-
-
         private readonly IActorRef _coordinator;
 
         private ViewModelSuperviser(IActorRef coordinator) => _coordinator = coordinator;
 
-        public void Create(IViewModel model, string? name = null)
+
+        public static ViewModelSuperviser Get(ActorSystem system)
+            => _superviser ??= new ViewModelSuperviser(system.ActorOf(system.DI().Props<ViewModelSuperviserActor>(), nameof(ViewModelSuperviser)));
+
+        public void Create(IViewModel model, Maybe<string> name = default)
         {
             if (model is ViewModelActorRef actualModel)
                 _coordinator.Tell(new CreateModel(actualModel, name));
@@ -38,58 +39,53 @@ namespace Tauron.Application.Wpf.Helper
                 throw new InvalidOperationException($"Model mot Compatible with {nameof(ViewModelActorRef)}");
         }
 
-        internal sealed class CreateModel
-        {
-            public ViewModelActorRef Model { get; }
-
-            public string? Name { get; }
-
-            public CreateModel(ViewModelActorRef model, string? name)
-            {
-                Model = model;
-                Name = name;
-            }
-        }
+        internal sealed record CreateModel(ViewModelActorRef Model, Maybe<string> Name);
     }
 
-    public sealed class ViewModelSuperviserActor : ExposedReceiveActor
+    public sealed class ViewModelSuperviserActor : StatefulReceiveActor<ViewModelSuperviserActor.ViewModelSuperviserState>
     {
+        public sealed record ViewModelSuperviserState(int Count);
+        
         private int _count;
 
         public ViewModelSuperviserActor()
+            : base(new ViewModelSuperviserState(0))
         {
             Receive<ViewModelSuperviser.CreateModel>(NewModel);
         }
 
-        private void NewModel(ViewModelSuperviser.CreateModel obj)
+        private Maybe<ViewModelSuperviserState> NewModel(ViewModelSuperviser.CreateModel obj, Maybe<ViewModelSuperviserState> mayState)
         {
-            if (obj.Model.IsInitialized) return;
+            var(model, name) = obj;
+            
+            if (model.IsInitialized) return mayState;
 
-            _count++;
-
-            var props = Context.System.DI().Props(obj.Model.ModelType);
-            var actor = Context.ActorOf(props, obj.Name ?? $"{obj.Model.ModelType.Name}--{_count}");
-
-            obj.Model.Init(actor);
+            return from state in mayState
+                   let props = Context.System.DI().Props(model.ModelType)
+                   let actorName = name.OrElse($"{model.ModelType.Name}--{_count}")
+                   let actor = Context.ActorOf(props, actorName)
+                   from _ in model.Init(actor)
+                   select state with{Count = state.Count + 1};
         }
 
-        protected override SupervisorStrategy SupervisorStrategy() 
+        protected override SupervisorStrategy SupervisorStrategy()
             => new CircuitBreakerStrategy(Log);
 
         private sealed class CircuitBreakerStrategy : SupervisorStrategy
         {
             private readonly Func<IDecider> _decider;
 
-            private readonly ConcurrentDictionary<IActorRef, IDecider> _deciders = new ConcurrentDictionary<IActorRef, IDecider>();
+            private readonly ConcurrentDictionary<IActorRef, IDecider> _deciders = new();
 
-            private CircuitBreakerStrategy(Func<IDecider> decider) 
+            private CircuitBreakerStrategy(Func<IDecider> decider)
                 => _decider = decider;
 
             public CircuitBreakerStrategy(ILoggingAdapter log)
                 : this(() => new CircuitBreakerDecider(log))
             {
-                
             }
+
+            public override IDecider Decider => throw new NotSupportedException("Single Decider not Supportet");
 
             protected override Directive Handle(IActorRef child, Exception exception)
             {
@@ -105,13 +101,11 @@ namespace Tauron.Application.Wpf.Helper
                     context.Stop(child);
             }
 
-            public override void HandleChildTerminated(IActorContext actorContext, IActorRef child, IEnumerable<IInternalActorRef> children) 
+            public override void HandleChildTerminated(IActorContext actorContext, IActorRef child, IEnumerable<IInternalActorRef> children)
                 => _deciders.TryRemove(child, out _);
 
-            public override ISurrogate ToSurrogate(ActorSystem system) 
+            public override ISurrogate ToSurrogate(ActorSystem system)
                 => throw new NotSupportedException("Can not serialize CircuitBreakerStrategy");
-
-            public override IDecider Decider => throw new NotSupportedException("Single Decider not Supportet");
         }
 
         private sealed class CircuitBreakerDecider : IDecider
@@ -119,9 +113,9 @@ namespace Tauron.Application.Wpf.Helper
             private readonly ILoggingAdapter _log;
 
             private InternalState _currentState = InternalState.Closed;
+            private int           _restartAtempt;
 
             private int _stateAtempt;
-            private int _restartAtempt;
 
             public CircuitBreakerDecider(ILoggingAdapter log) => _log = log;
 
@@ -144,7 +138,7 @@ namespace Tauron.Application.Wpf.Helper
                 switch (_currentState)
                 {
                     case InternalState.Closed:
-                        _stateAtempt = 1;
+                        _stateAtempt  = 1;
                         _currentState = InternalState.HalfOpen;
                         return Directive.Resume;
                     case InternalState.HalfOpen when _stateAtempt > 5:
@@ -169,7 +163,7 @@ namespace Tauron.Application.Wpf.Helper
             private enum InternalState
             {
                 Closed,
-                HalfOpen,
+                HalfOpen
             }
         }
     }

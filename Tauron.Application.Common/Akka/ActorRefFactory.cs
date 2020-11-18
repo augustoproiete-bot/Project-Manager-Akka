@@ -2,7 +2,7 @@
 using Akka.DI.Core;
 using Functional.Maybe;
 using JetBrains.Annotations;
-using static Tauron.Preload;
+using static Tauron.Prelude;
 
 namespace Tauron.Akka
 {

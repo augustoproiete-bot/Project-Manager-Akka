@@ -30,16 +30,14 @@ namespace Tauron.Application.Wpf.UI
             promise
                .OnContext((model, view) =>
                           {
-                              View = view;
+                              View  = view;
                               Model = model;
 
                               if (model.IsInitialized)
-                              {
                                   Task.Run(async () => await InitAsync());
-                              }
                               else
                               {
-                                  void OnModelOnInitialized() 
+                                  void OnModelOnInitialized()
                                       => Task.Run(async () => await InitAsync());
 
                                   model.AwaitInit(OnModelOnInitialized);
@@ -47,7 +45,7 @@ namespace Tauron.Application.Wpf.UI
                           });
         }
 
-        protected string Name { get; }
+        protected string      Name  { get; }
         protected IViewModel? Model { get; private set; }
 
         protected IView? View { get; private set; }
