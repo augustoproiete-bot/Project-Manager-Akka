@@ -4,12 +4,13 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
-using Akka.Actor;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Application.Wpf.Commands;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Wpf
 {
@@ -36,25 +37,25 @@ namespace Tauron.Application.Wpf
         {
             if (DesignerProperties.GetIsInDesignMode(d)) return;
 
-            var root = ControlBindLogic.FindRoot(d);
-            if (root == null)
+            var root = ControlBindLogic.FindRoot(May(d));
+            if (root.IsNothing())
             {
                 if (d is FrameworkElement element)
-                    ControlBindLogic.MakeLazy(element, e.NewValue as string, e.OldValue as string, BindInternal);
+                    ControlBindLogic.MakeLazy(element, MayNotEmpty(e.NewValue as string), MayNotEmpty(e.OldValue as string), BindInternal);
                 return;
             }
 
-            BindInternal(e.OldValue as string, e.NewValue as string, root, d);
+            BindInternal(MayNotEmpty(e.OldValue as string), MayNotEmpty(e.NewValue as string), root, d);
         }
 
-        private static void BindInternal(string? oldValue, string? newValue, IBinderControllable binder, DependencyObject affectedPart)
+        private static void BindInternal(Maybe<string> oldValue, Maybe<string> newValue, Maybe<IBinderControllable> binder, DependencyObject affectedPart)
         {
-            if (oldValue != null)
-                binder.CleanUp(EventBinderPrefix + oldValue);
+            if (oldValue.IsSomething())
+                binder.Value.CleanUp(EventBinderPrefix + oldValue.Value);
 
-            if (newValue == null) return;
+            if (newValue.IsNothing()) return;
 
-            binder.Register(EventBinderPrefix + newValue, new EventLinker {Commands = newValue}, affectedPart);
+            binder.Value.Register(EventBinderPrefix + newValue, new EventLinker {Commands = newValue.Value}, affectedPart);
         }
 
         private sealed class EventLinker : ControlBindableBase
@@ -160,7 +161,7 @@ namespace Tauron.Application.Wpf
 
                     if (_dataContext == null) return false;
 
-                    _command = d => _dataContext.Actor.Tell(new ExecuteEventExent(d, _targetName));
+                    _command = d => Tell(_dataContext.Actor, new ExecuteEventExent(d, _targetName));
 
 
                     return _command != null && !_isDirty;

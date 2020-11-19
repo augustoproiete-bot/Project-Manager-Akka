@@ -216,7 +216,90 @@
         <e p="Tauron.Application.Localizer.csproj" t="IncludeRecursive" />
       </e>
       <e p="Tauron.Application.Localizer.DataModel" t="IncludeRecursive">
+        <e p="ActiveLanguage.cs" t="Include" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="BuildInfo.cs" t="Include" />
+        <e p="LocEntry.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net5.0" t="Include">
+              <e p="Tauron.Application.Localizer.DataModel.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Processing" t="Include">
+          <e p="Actors" t="Include">
+            <e p="BuildActorCoordinator.cs" t="Include" />
+            <e p="BuildAgent.cs" t="Include" />
+            <e p="InternalLoadProject.cs" t="Include" />
+            <e p="ProjectLoader.cs" t="Include" />
+            <e p="ProjectSaver.cs" t="Include" />
+          </e>
+          <e p="Messages" t="Include">
+            <e p="AgentCompled.cs" t="Include" />
+            <e p="BuildCompled.cs" t="Include" />
+            <e p="BuildMessage.cs" t="Include" />
+            <e p="BuildRequest.cs" t="Include" />
+            <e p="ForceSave.cs" t="Include" />
+            <e p="LoadedProjectFile.cs" t="Include" />
+            <e p="LoadProjectFile.cs" t="Include" />
+            <e p="Operation.cs" t="Include" />
+            <e p="PreparedBuild.cs" t="Include" />
+            <e p="SavedProject.cs" t="Include" />
+            <e p="SaveProject.cs" t="Include" />
+          </e>
+          <e p="ProjectFileOperator.cs" t="Include" />
+        </e>
+        <e p="Project.cs" t="Include" />
+        <e p="ProjectFile.cs" t="Include" />
+        <e p="ProjectFile.Operations.cs" t="Include" />
+        <e p="Serialization" t="Include">
+          <e p="BinaryHelper.cs" t="Include" />
+          <e p="IWriteable.cs" t="Include" />
+        </e>
         <e p="Tauron.Application.Localizer.DataModel.csproj" t="IncludeRecursive" />
+        <e p="Tauron.Application.Localizer.DataModel.csproj.DotSettings" t="Include" />
+        <e p="Workspace" t="Include">
+          <e p="AddActiveLanguage.cs" t="Include" />
+          <e p="AddImport.cs" t="Include" />
+          <e p="AddProject.cs" t="Include" />
+          <e p="Analyzing" t="Include">
+            <e p="Issues.cs" t="Include" />
+            <e p="LocalizerRule.cs" t="Include" />
+            <e p="SourceRule.cs" t="Include" />
+          </e>
+          <e p="EntryRemove.cs" t="Include" />
+          <e p="EntryUpdate.cs" t="Include" />
+          <e p="Mutating" t="Include">
+            <e p="BuildMutator.cs" t="Include" />
+            <e p="Changes" t="Include">
+              <e p="AddImportChange.cs" t="Include" />
+              <e p="EntryChange.cs" t="Include" />
+              <e p="GlobalLanguageChange.cs" t="Include" />
+              <e p="IntigrateImportChange.cs" t="Include" />
+              <e p="LanguageChange.cs" t="Include" />
+              <e p="NewEntryChange.cs" t="Include" />
+              <e p="NewProjectChange.cs" t="Include" />
+              <e p="ProjectPathChange.cs" t="Include" />
+              <e p="RemoveEntryChange.cs" t="Include" />
+              <e p="RemoveImportChange.cs" t="Include" />
+              <e p="RemoveProjectChange.cs" t="Include" />
+              <e p="SourceChange.cs" t="Include" />
+            </e>
+            <e p="EntryAdd.cs" t="Include" />
+            <e p="EntryMutator.cs" t="Include" />
+            <e p="IntigrateImport.cs" t="Include" />
+            <e p="ProjectMutator.cs" t="Include" />
+            <e p="SourceMutator.cs" t="Include" />
+          </e>
+          <e p="ProjectFileWorkspace.cs" t="Include" />
+          <e p="ProjectPathChanged.cs" t="Include" />
+          <e p="ProjectRest.cs" t="Include" />
+          <e p="RemoveImport.cs" t="Include" />
+          <e p="RemoveProject.cs" t="Include" />
+          <e p="SaveRequest.cs" t="Include" />
+          <e p="SourceUpdated.cs" t="Include" />
+        </e>
       </e>
       <e p="Tauron.Application.Localizer.UIModels" t="IncludeRecursive">
         <e p="Tauron.Application.Localizer.UIModels.csproj" t="IncludeRecursive" />

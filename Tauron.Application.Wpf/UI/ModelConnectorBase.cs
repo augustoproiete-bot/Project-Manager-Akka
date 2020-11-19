@@ -21,10 +21,11 @@ namespace Tauron.Application.Wpf.UI
 
         private int _isInitializing = 1;
 
-        protected ModelConnectorBase(string name, DataContextPromise promise)
+        protected ModelConnectorBase(string name, Maybe<DataContextPromise> mayPromise)
         {
             Name = name;
 
+            var promise = mayPromise.Value;
             promise.OnUnload(OnUnload);
 
             promise.OnNoContext(NoDataContextFound);

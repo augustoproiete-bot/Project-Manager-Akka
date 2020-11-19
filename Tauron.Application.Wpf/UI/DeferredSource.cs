@@ -16,7 +16,7 @@ namespace Tauron.Application.Wpf.UI
         private Maybe<bool>    _hasErrors;
         private Maybe<object?> _value;
 
-        public DeferredSource(string name, DataContextPromise promise)
+        public DeferredSource(string name, Maybe<DataContextPromise> promise)
             : base(name, promise)
         {
         }

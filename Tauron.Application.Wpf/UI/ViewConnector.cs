@@ -18,7 +18,7 @@ namespace Tauron.Application.Wpf.UI
 
         private Maybe<ViewManager> _manager = May(ViewManager.Manager);
 
-        public ViewConnector(string name, DataContextPromise promise, Action<object> updater, Dispatcher dispatcher)
+        public ViewConnector(string name, Maybe<DataContextPromise> promise, Action<object> updater, Dispatcher dispatcher)
             : base(name, promise)
         {
             _updater    = updater;

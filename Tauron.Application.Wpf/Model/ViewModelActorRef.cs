@@ -6,6 +6,8 @@ using static Tauron.Prelude;
 
 namespace Tauron.Application.Wpf.Model
 {
+    
+    #pragma warning disable 8602
     public abstract class ViewModelActorRef : StatefulObject<ViewModelActorRef.ViewModelActorRefState>, IViewModel
     {
         public sealed record ViewModelActorRefState(Maybe<IActorRef> Actor, bool IsInitialized, ImmutableList<Action>? Waiter);
@@ -46,7 +48,7 @@ namespace Tauron.Application.Wpf.Model
                                      select state,
                                  () => May(from state in s
                                            where state.Waiter != null
-                                           select state with{Waiter = state.Waiter.Add(waiter)}));
+                                           select state with{Waiter = state?.Waiter.Add(waiter)}));
                 });
         }
 

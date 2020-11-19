@@ -1,71 +1,32 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
-using Amadevus.RecordGenerator;
+using Functional.Maybe;
 using Tauron.Application.Localizer.DataModel.Serialization;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Localizer.DataModel
 {
-    [Record]
-    public sealed partial class ActiveLanguage : IEquatable<ActiveLanguage>, IWriteable
+    public sealed record ActiveLanguage(string Shortcut, string Name) : IWriteable
     {
-        public static readonly ActiveLanguage Invariant = FromCulture(CultureInfo.InvariantCulture);
+        public static readonly Maybe<ActiveLanguage> Invariant = FromCulture(May(CultureInfo.InvariantCulture));
 
-        public string Shortcut { get; }
+        public static Maybe<ActiveLanguage> FromCulture(Maybe<CultureInfo> mayInfo)
+            => from info in mayInfo
+               select new ActiveLanguage(info.Name, info.EnglishName);
 
-        public string Name { get; }
+        public Maybe<CultureInfo> ToCulture() 
+            => May(CultureInfo.GetCultureInfo(Shortcut));
 
-        public bool Equals(ActiveLanguage? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Shortcut == other.Shortcut;
-        }
+        public static Maybe<ActiveLanguage> ReadFrom(Maybe<BinaryReader> mayReader)
+            => from reader in mayReader
+               select new ActiveLanguage(reader.ReadString(), reader.ReadString());
 
-        public void Write(BinaryWriter writer)
-        {
-            writer.Write(Shortcut);
-            writer.Write(Name);
-        }
-
-        public static ActiveLanguage FromCulture(CultureInfo info)
-        {
-            return new ActiveLanguage(info.Name, info.EnglishName);
-        }
-
-        public CultureInfo ToCulture()
-        {
-            return CultureInfo.GetCultureInfo(Shortcut);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            return ReferenceEquals(this, obj) || obj is ActiveLanguage other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            return Shortcut.GetHashCode();
-        }
-
-        public static bool operator ==(ActiveLanguage? left, ActiveLanguage? right)
-        {
-            return Equals(left, right);
-        }
-
-        public static bool operator !=(ActiveLanguage? left, ActiveLanguage? right)
-        {
-            return !Equals(left, right);
-        }
-
-        public static ActiveLanguage ReadFrom(BinaryReader reader)
-        {
-            var lang = new Builder
-            {
-                Shortcut = reader.ReadString(),
-                Name = reader.ReadString()
-            };
-            return lang.ToImmutable();
-        }
+        public Maybe<Unit> Write(Maybe<BinaryWriter> mayWriter)
+            => from writer in mayWriter
+               select Action(() =>
+                             {
+                                 writer.Write(Shortcut);
+                                 writer.Write(Name);
+                             });
     }
 }

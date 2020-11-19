@@ -1,9 +1,10 @@
 ﻿using System.IO;
+using Functional.Maybe;
 
 namespace Tauron.Application.Localizer.DataModel.Serialization
 {
     public interface IWriteable
     {
-        void Write(BinaryWriter writer);
+        Maybe<Unit> Write(Maybe<BinaryWriter> mayWriter);
     }
 }

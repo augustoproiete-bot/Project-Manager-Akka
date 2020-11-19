@@ -46,8 +46,6 @@ namespace Tauron.Application.Wpf.Helper
     {
         public sealed record ViewModelSuperviserState(int Count);
         
-        private int _count;
-
         public ViewModelSuperviserActor()
             : base(new ViewModelSuperviserState(0))
         {
@@ -62,7 +60,7 @@ namespace Tauron.Application.Wpf.Helper
 
             return from state in mayState
                    let props = Context.System.DI().Props(model.ModelType)
-                   let actorName = name.OrElse($"{model.ModelType.Name}--{_count}")
+                   let actorName = name.OrElse($"{model.ModelType.Name}--{ObjectState.Count}")
                    let actor = Context.ActorOf(props, actorName)
                    from _ in model.Init(actor)
                    select state with{Count = state.Count + 1};

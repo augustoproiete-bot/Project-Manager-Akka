@@ -41,7 +41,7 @@ namespace Tauron.Application.Wpf.UI
             //if (!(ControlBindLogic.FindRoot(target) is IView view))
             //    return "No View as Root: " + _name;
 
-            var connector = new ViewConnector(_name, promise.Value, UpdateValue, target.Dispatcher);
+            var connector = new ViewConnector(_name, promise, UpdateValue, target.Dispatcher);
 
             return connector;
         }

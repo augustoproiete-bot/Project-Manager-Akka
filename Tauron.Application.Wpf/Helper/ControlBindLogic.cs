@@ -228,7 +228,7 @@ namespace Tauron.Application.Wpf.Helper
             target.Loaded += temp.ElementOnLoaded;
         }
 
-        public delegate void LazyRunner(Maybe<string> oldValue, Maybe<string> newValue, IBinderControllable target, DependencyObject dependencyObject);
+        public delegate void LazyRunner(Maybe<string> oldValue, Maybe<string> newValue, Maybe<IBinderControllable> target, DependencyObject dependencyObject);
 
         private class LazyHelper
         {
@@ -249,7 +249,7 @@ namespace Tauron.Application.Wpf.Helper
             {
                 Finally(() =>
                     from root in FindRoot(May<DependencyObject>(_target)) 
-                    select Action(() => _runner(_oldValue, _newValue, root, _target)),
+                    select Action(() => _runner(_oldValue, _newValue, May(root), _target)),
                     () => _target.Loaded -= ElementOnLoaded);
             }
         }

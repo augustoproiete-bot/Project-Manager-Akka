@@ -174,7 +174,7 @@ namespace Tauron.Application.Wpf
                 else _reference = reference;
             }
 
-            public TReference? Target => _weakRef != null ? _weakRef.TypedTarget() : _reference;
+            public TReference? Target => _weakRef != null ? _weakRef.TypedTarget().Value : _reference;
 
             public bool IsAlive => _weakRef == null || _weakRef.IsAlive();
         }
