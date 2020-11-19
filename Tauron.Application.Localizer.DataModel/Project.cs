@@ -1,63 +1,50 @@
 ﻿using System.Collections.Immutable;
 using System.IO;
-using Amadevus.RecordGenerator;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel.Serialization;
+using static Tauron.Prelude;
+using static Tauron.Application.Localizer.DataModel.Serialization.BinaryHelper;
 
 namespace Tauron.Application.Localizer.DataModel
 {
-    [Record]
     [PublicAPI]
-    public sealed partial class Project : IWriteable
+    public sealed record Project(ImmutableList<LocEntry> Entries, string ProjectName, ImmutableList<ActiveLanguage> ActiveLanguages, ImmutableList<string> Imports) : IWriteable
     {
         public Project()
-        {
-            ProjectName = string.Empty;
-            Entries = ImmutableList<LocEntry>.Empty;
-            ActiveLanguages = ImmutableList<ActiveLanguage>.Empty;
-            Imports = ImmutableList<string>.Empty;
-        }
+            : this(ImmutableList<LocEntry>.Empty, string.Empty, ImmutableList<ActiveLanguage>.Empty, ImmutableList<string>.Empty)
+        { }
 
         public Project(string name)
-            : this()
+            : this() => ProjectName = name;
+
+        public Maybe<Unit> WriteData(Maybe<BinaryWriter> mayWriter)
         {
-            ProjectName = name;
+            return
+                from p in Write(mayWriter, ProjectName)
+                from l in WriteList(mayWriter, ActiveLanguages)
+                from e in WriteList(mayWriter, Entries)
+                from i in WriteList(mayWriter, Imports) 
+                select i;
         }
 
-        public ImmutableList<LocEntry> Entries { get; }
 
-        public string ProjectName { get; }
-
-        public ImmutableList<ActiveLanguage> ActiveLanguages { get; }
-
-        public ImmutableList<string> Imports { get; }
-
-        public void Write(BinaryWriter writer)
+        public Maybe<ActiveLanguage> GetActiveLanguage(Maybe<string> mayShortcut)
         {
-            writer.Write(ProjectName);
-
-            BinaryHelper.WriteList(ActiveLanguages, writer);
-            BinaryHelper.WriteList(Entries, writer);
-            BinaryHelper.WriteList(Imports, writer);
+            return Either(
+                from shortcut in mayShortcut
+                select MayNotNull(ActiveLanguages.Find(al => al.Shortcut == shortcut)),
+                ActiveLanguage.Invariant);
         }
 
-        public ActiveLanguage GetActiveLanguage(string shortcut)
+        public static Maybe<Project> ReadFrom(Maybe<BinaryReader> reader)
         {
-            return ActiveLanguages.Find(al => al.Shortcut == shortcut) ?? ActiveLanguage.Invariant;
-        }
-
-        public static Project ReadFrom(BinaryReader reader)
-        {
-            var project = new Builder
-            {
-                ProjectName = reader.ReadString(),
-                ActiveLanguages = BinaryHelper.Read(reader, ActiveLanguage.ReadFrom),
-                Entries = BinaryHelper.Read(reader, LocEntry.ReadFrom),
-                Imports = BinaryHelper.ReadString(reader)
-            };
-
-
-            return project.ToImmutable();
+            return
+                from name in ReadString(reader)
+                from languages in ReadList(reader, ActiveLanguage.ReadFrom)
+                from entries in ReadList(reader, LocEntry.ReadFrom)
+                from imports in ReadList(reader)
+                select new Project(entries, name, languages, imports);
         }
     }
 }

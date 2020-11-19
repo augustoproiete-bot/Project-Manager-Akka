@@ -3,6 +3,7 @@ using System.IO;
 using Functional.Maybe;
 using Tauron.Application.Localizer.DataModel.Serialization;
 using static Tauron.Prelude;
+using static Tauron.Application.Localizer.DataModel.Serialization.BinaryHelper;
 
 namespace Tauron.Application.Localizer.DataModel
 {
@@ -12,21 +13,19 @@ namespace Tauron.Application.Localizer.DataModel
 
         public static Maybe<ActiveLanguage> FromCulture(Maybe<CultureInfo> mayInfo)
             => from info in mayInfo
-               select new ActiveLanguage(info.Name, info.EnglishName);
+                select new ActiveLanguage(info.Name, info.EnglishName);
 
-        public Maybe<CultureInfo> ToCulture() 
+        public Maybe<CultureInfo> ToCulture()
             => May(CultureInfo.GetCultureInfo(Shortcut));
 
         public static Maybe<ActiveLanguage> ReadFrom(Maybe<BinaryReader> mayReader)
-            => from reader in mayReader
-               select new ActiveLanguage(reader.ReadString(), reader.ReadString());
+            => from shortcut in ReadString(mayReader)
+                from name in ReadString(mayReader)
+                select new ActiveLanguage(shortcut, name);
 
-        public Maybe<Unit> Write(Maybe<BinaryWriter> mayWriter)
-            => from writer in mayWriter
-               select Action(() =>
-                             {
-                                 writer.Write(Shortcut);
-                                 writer.Write(Name);
-                             });
+        public Maybe<Unit> WriteData(Maybe<BinaryWriter> mayWriter)
+            => from _ in Write(mayWriter, Shortcut)
+                from u in Write(mayWriter, Name)
+                select u;
     }
 }

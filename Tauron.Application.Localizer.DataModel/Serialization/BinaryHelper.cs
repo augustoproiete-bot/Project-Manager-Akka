@@ -1,71 +1,166 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.IO;
+using Functional.Maybe;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Localizer.DataModel.Serialization
 {
     public static class BinaryHelper
     {
-        public static ImmutableDictionary<TKey, TValue> Read<TKey, TValue>(BinaryReader reader, Func<BinaryReader, TKey> keyConversion, Func<BinaryReader, TValue> valueConversion)
+        public static Maybe<Unit> Write(Maybe<BinaryWriter> mayWriter, string str)
         {
-            var count = reader.ReadInt32();
-            var builder = ImmutableDictionary.CreateBuilder<TKey, TValue>();
-
-            for (var i = 0; i < count; i++)
-                builder.Add(keyConversion(reader), valueConversion(reader));
-
-            return builder.ToImmutable();
+            return
+                from writer in mayWriter
+                select Action(() => writer.Write(str));
         }
 
-        public static void WriteDic(ImmutableDictionary<string, string> dic, BinaryWriter writer)
+        public static Maybe<string> ReadString(Maybe<BinaryReader> mayReader)
         {
-            writer.Write(dic.Count);
-            foreach (var (key, value) in dic)
-            {
-                writer.Write(key);
-                writer.Write(value);
-            }
+            return
+                from reader in mayReader
+                select reader.ReadString();
         }
 
-        public static void WriteDic<TKey>(ImmutableDictionary<TKey, string> dic, BinaryWriter writer)
+        public static Maybe<Unit> Write(Maybe<BinaryWriter> mayWriter, bool value)
+        {
+            return
+                from writer in mayWriter
+                select Action(() => writer.Write(value));
+        }
+
+        public static Maybe<bool> ReadBoolean(Maybe<BinaryReader> mayReader)
+        {
+            return
+                from reader in mayReader
+                select reader.ReadBoolean();
+        }
+
+        public static Maybe<Unit> Write(Maybe<BinaryWriter> mayWriter, int value)
+        {
+            return
+                from writer in mayWriter
+                select Action(() => writer.Write(value));
+        }
+
+        public static Maybe<int> ReadInt32(Maybe<BinaryReader> mayReader)
+        {
+            return
+                from reader in mayReader
+                select reader.ReadInt32();
+        }
+
+        public static Maybe<ImmutableDictionary<TKey, TValue>> ReadDic<TKey, TValue>(Maybe<BinaryReader> mayReader, Func<Maybe<BinaryReader>, Maybe<TKey>> keyConversion, Func<Maybe<BinaryReader>, Maybe<TValue>> valueConversion)
+            where TKey : notnull
+        {
+            return
+                from reader in mayReader
+                let count = reader.ReadInt32()
+                let builder = ImmutableDictionary.CreateBuilder<TKey, TValue>()
+                from _ in Func(() =>
+                {
+                    for (var i = 0; i < count; i++)
+                    {
+                        var pair =
+                            from key in keyConversion(mayReader)
+                            from value in valueConversion(mayReader)
+                            select (key, value);
+
+                        if (pair.IsNothing())
+                            return Maybe<Unit>.Nothing;
+
+                        pair.Do(p => builder.Add(p.key, p.value));
+                    }
+
+                    return Unit.MayInstance;
+                })
+                select builder.ToImmutable();
+        }
+        
+        public static Maybe<Unit> WriteDic(Maybe<BinaryWriter> mayWriter, ImmutableDictionary<string, string> dic)
+        {
+            return
+                from writer in mayWriter
+                select Action(() =>
+                {
+
+                    writer.Write(dic.Count);
+                    foreach (var (key, value) in dic)
+                    {
+                        writer.Write(key);
+                        writer.Write(value);
+                    }
+                });
+        }
+
+        public static Maybe<Unit> WriteDic<TKey>(Maybe<BinaryWriter> mayWriter, ImmutableDictionary<TKey, string> dic)
             where TKey : IWriteable
         {
-            writer.Write(dic.Count);
-            foreach (var (key, value) in dic)
-            {
-                key.Write(writer);
-                writer.Write(value);
-            }
+            return
+                from writer in mayWriter
+                select Action(() =>
+                {
+                    writer.Write(dic.Count);
+                    foreach (var (key, value) in dic)
+                    {
+                        key.WriteData(mayWriter);
+                        writer.Write(value);
+                    }
+                });
         }
 
-        public static ImmutableList<TType> Read<TType>(BinaryReader reader, Func<BinaryReader, TType> converter)
+        public static Maybe<ImmutableList<TType>> ReadList<TType>(Maybe<BinaryReader> mayReader, Func<Maybe<BinaryReader>, Maybe<TType>> converter)
         {
-            var builder = ImmutableList.CreateBuilder<TType>();
-            var count = reader.ReadInt32();
+            return
+                from reader in mayReader
+                let builder = ImmutableList.CreateBuilder<TType>()
+                let count = reader.ReadInt32()
+                from _ in Func(() =>
+                {
+                    for (var i = 0; i < count; i++)
+                    {
+                        var data =
+                            from value in converter(mayReader)
+                            select value;
 
-            for (var i = 0; i < count; i++) builder.Add(converter(reader));
+                        if (data.IsNothing())
+                            return Maybe<Unit>.Nothing;
 
-            return builder.ToImmutable();
+                        Do(data, builder.Add);
+                    }
+
+                    return Unit.MayInstance;
+                })
+                select builder.ToImmutable();
         }
 
-        public static ImmutableList<string> ReadString(BinaryReader reader)
-        {
-            return Read(reader, binaryReader => binaryReader.ReadString());
-        }
+        public static Maybe<ImmutableList<string>> ReadList(Maybe<BinaryReader> reader) 
+            => ReadList(reader, binaryReader => from stringReader in binaryReader
+                                            select stringReader.ReadString());
 
-        public static void WriteList<TType>(ImmutableList<TType> list, BinaryWriter writer)
+        public static Maybe<Unit> WriteList<TType>(Maybe<BinaryWriter> mayWriter, ImmutableList<TType> list)
             where TType : IWriteable
         {
-            writer.Write(list.Count);
-            foreach (var writeable in list)
-                writeable.Write(writer);
+            return
+                from writer in mayWriter
+                select Action(() =>
+                {
+                    writer.Write(list.Count);
+                    foreach (var writeable in list)
+                        writeable.WriteData(mayWriter);
+                });
         }
 
-        public static void WriteList(ImmutableList<string> list, BinaryWriter writer)
+        public static Maybe<Unit> WriteList(Maybe<BinaryWriter> mayWriter, ImmutableList<string> list)
         {
-            writer.Write(list.Count);
-            foreach (var writeable in list)
-                writer.Write(writeable);
+            return
+                from writer in mayWriter
+                select Action(() =>
+                {
+                    writer.Write(list.Count);
+                    foreach (var writeable in list)
+                        writer.Write(writeable);
+                });
         }
     }
 }

@@ -5,6 +5,6 @@ namespace Tauron.Application.Localizer.DataModel.Serialization
 {
     public interface IWriteable
     {
-        Maybe<Unit> Write(Maybe<BinaryWriter> mayWriter);
+        Maybe<Unit> WriteData(Maybe<BinaryWriter> mayWriter);
     }
 }

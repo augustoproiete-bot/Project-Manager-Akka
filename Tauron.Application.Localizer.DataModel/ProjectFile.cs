@@ -3,67 +3,54 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Threading;
 using Akka.Actor;
-using Amadevus.RecordGenerator;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Akka;
 using Tauron.Application.Localizer.DataModel.Processing;
 using Tauron.Application.Localizer.DataModel.Serialization;
+using static Tauron.Prelude;
+using static Tauron.Application.Localizer.DataModel.Serialization.BinaryHelper;
 
 namespace Tauron.Application.Localizer.DataModel
 {
-    [Record]
     [PublicAPI]
-    public sealed partial class ProjectFile : IWriteable
+    public sealed partial record ProjectFile(ImmutableList<Project> Projects, ImmutableList<ActiveLanguage> GlobalLanguages, string Source, Maybe<IActorRef> Operator, BuildInfo BuildInfo) : IWriteable
     {
         public const int Version = 2;
 
         public ProjectFile()
-        {
-            Projects = ImmutableList<Project>.Empty;
-            Source = string.Empty;
-            Operator = ActorRefs.Nobody;
-            GlobalLanguages = ImmutableList<ActiveLanguage>.Empty;
-            BuildInfo = new BuildInfo();
-        }
+            : this(ImmutableList<Project>.Empty, ImmutableList<ActiveLanguage>.Empty, string.Empty, Maybe<IActorRef>.Nothing, new BuildInfo())
+        { }
 
         private ProjectFile(string source, IActorRef op)
             : this()
         {
             Source = source;
-            Operator = op;
+            Operator = MayActor(op);
         }
 
-        public ImmutableList<Project> Projects { get; }
+        public bool IsEmpty => Operator.IsNothing();
 
-        public ImmutableList<ActiveLanguage> GlobalLanguages { get; }
+        public Maybe<Unit> WriteData(Maybe<BinaryWriter> writer) 
+            => from v in Write(writer, Version) 
+                from p in WriteList(writer, Projects) 
+                from l in WriteList(writer, GlobalLanguages) 
+                from i in BuildInfo.WriteData(writer) 
+                select i;
 
-        public string Source { get; }
+        public static Maybe<ProjectFile> FromSource(Maybe<string> maySource, Maybe<IActorRef> mayOp)
+            => from source in maySource
+                from op in mayOp
+                select new ProjectFile(source, op);
 
-        public IActorRef Operator { get; }
-
-        public bool IsEmpty => Operator.Equals(ActorRefs.Nobody);
-
-        public BuildInfo BuildInfo { get; }
-
-        public void Write(BinaryWriter writer)
-        {
-            writer.Write(Version);
-            BinaryHelper.WriteList(Projects, writer);
-            BinaryHelper.WriteList(GlobalLanguages, writer);
-            BuildInfo.Write(writer);
-        }
-
-        public static ProjectFile FromSource(string source, IActorRef op) 
-            => new ProjectFile(source, op);
-
-        public static ProjectFile ReadFile(BinaryReader reader, string source, IActorRef op)
+        public static Maybe<ProjectFile> ReadFile(Maybe<BinaryReader> reader, Maybe<string> source, Maybe<IActorRef> op)
         {
             var file = new ProjectFile(source, op);
             var builder = file.ToBuilder();
 
             var vers = reader.ReadInt32();
-            builder.Projects = BinaryHelper.Read(reader, Project.ReadFrom);
-            builder.GlobalLanguages = BinaryHelper.Read(reader, ActiveLanguage.ReadFrom);
+            builder.Projects = BinaryHelper.ReadList(reader, Project.ReadFrom);
+            builder.GlobalLanguages = BinaryHelper.ReadList(reader, ActiveLanguage.ReadFrom);
             builder.BuildInfo = vers == 1 ? new BuildInfo() : BuildInfo.ReadFrom(reader);
 
             return builder.ToImmutable();

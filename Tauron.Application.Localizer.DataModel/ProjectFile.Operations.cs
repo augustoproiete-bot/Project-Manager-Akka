@@ -6,7 +6,7 @@ using Tauron.Application.Localizer.DataModel.Processing;
 
 namespace Tauron.Application.Localizer.DataModel
 {
-    public sealed partial class ProjectFile
+    public sealed partial record ProjectFile
     {
         public static ProjectFile NewProjectFile(IActorContext factory, string source, string actorName)
         {

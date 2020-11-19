@@ -1,36 +1,30 @@
 ﻿using System.Collections.Immutable;
 using System.IO;
-using Amadevus.RecordGenerator;
+using Functional.Maybe;
 using Tauron.Application.Localizer.DataModel.Serialization;
+using static Tauron.Application.Localizer.DataModel.Serialization.BinaryHelper;
 
 namespace Tauron.Application.Localizer.DataModel
 {
-    [Record]
-    public sealed partial class BuildInfo : IWriteable
+    public sealed record BuildInfo(bool IntigrateProjects, ImmutableDictionary<string, string> ProjectPaths) : IWriteable
     {
-        public bool IntigrateProjects { get; }
-
-        public ImmutableDictionary<string, string> ProjectPaths { get; }
-
         public BuildInfo()
+            : this(true, ImmutableDictionary<string, string>.Empty){ }
+
+        public Maybe<Unit> WriteData(Maybe<BinaryWriter> mayWriter)
         {
-            IntigrateProjects = true;
-            ProjectPaths = ImmutableDictionary<string, string>.Empty;
+            return
+                from a in Write(mayWriter, IntigrateProjects)
+                from b in WriteDic(mayWriter, ProjectPaths)
+                select b;
         }
 
-        public void Write(BinaryWriter writer)
+        public static Maybe<BuildInfo> ReadFrom(Maybe<BinaryReader> mayReader)
         {
-            writer.Write(IntigrateProjects);
-            BinaryHelper.WriteDic(ProjectPaths, writer);
-        }
-
-        public static BuildInfo ReadFrom(BinaryReader reader)
-        {
-            return new Builder
-            {
-                IntigrateProjects = reader.ReadBoolean(), 
-                ProjectPaths = BinaryHelper.Read(reader, r => r.ReadString(), r => r.ReadString())
-            }.ToImmutable();
+            return
+                from intigrate in ReadBoolean(mayReader)
+                from paths in ReadDic(mayReader, ReadString, ReadString)
+                select new BuildInfo(intigrate, paths);
         }
     }
 }

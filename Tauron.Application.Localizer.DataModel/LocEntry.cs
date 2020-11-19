@@ -1,47 +1,36 @@
 ﻿using System.Collections.Immutable;
 using System.IO;
-using Amadevus.RecordGenerator;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel.Serialization;
+using static Tauron.Application.Localizer.DataModel.Serialization.BinaryHelper;
 
 namespace Tauron.Application.Localizer.DataModel
 {
-    [Record]
     [PublicAPI]
-    public sealed partial class LocEntry : IWriteable
+    public sealed record LocEntry(string Project, string Key, ImmutableDictionary<ActiveLanguage, string> Values) : IWriteable
     {
         public LocEntry(string project, string name)
+            : this(project, name, ImmutableDictionary<ActiveLanguage, string>.Empty)
         {
-            Project = project;
-            Key = name;
-            Values = ImmutableDictionary<ActiveLanguage, string>.Empty;
         }
 
-        public string Project { get; }
-
-        public string Key { get; }
-
-        public ImmutableDictionary<ActiveLanguage, string> Values { get; }
-
-        public void Write(BinaryWriter writer)
+        public Maybe<Unit> WriteData(Maybe<BinaryWriter> mayWriter)
         {
-            writer.Write(Project);
-            writer.Write(Key);
-
-            BinaryHelper.WriteDic(Values, writer);
+            return
+                from p in Write(mayWriter, Project)
+                from k in Write(mayWriter, Key)
+                from v in WriteDic(mayWriter, Values)
+                select v;
         }
 
-        public static LocEntry ReadFrom(BinaryReader reader)
+        public static Maybe<LocEntry> ReadFrom(Maybe<BinaryReader> mayReader)
         {
-            var builder = new Builder
-            {
-                Project = reader.ReadString(),
-                Key = reader.ReadString(),
-                Values = BinaryHelper.Read(reader, ActiveLanguage.ReadFrom, binaryReader => binaryReader.ReadString())
-            };
-
-
-            return builder.ToImmutable();
+            return
+                from project in ReadString(mayReader)
+                from key in ReadString(mayReader)
+                from values in ReadDic(mayReader, ActiveLanguage.ReadFrom, ReadString)
+                select new LocEntry(project, key, values);
         }
     }
 }

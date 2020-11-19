@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AkkaTest.Test;
+using Superpower;
+using Superpower.Parsers;
+using Superpower.Tokenizers;
 
 namespace AkkaTest
 {
@@ -8,12 +12,6 @@ namespace AkkaTest
     {
         private static void Main()
         {
-            IEnumerable<object> test = new object[] {"Hallo Welt", 10, "Hallo Welt 2"};
-
-            foreach (var te in from ele in test
-                               where ele is string
-                               select (string) ele)
-                Console.WriteLine(te);
         }
     }
 }
