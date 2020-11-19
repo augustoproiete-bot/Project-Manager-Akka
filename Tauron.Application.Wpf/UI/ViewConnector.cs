@@ -1,18 +1,22 @@
 ﻿using System;
 using System.Globalization;
 using System.Windows.Threading;
+using Functional.Maybe;
 using Tauron.Application.Wpf.Helper;
 using Tauron.Application.Wpf.ModelMessages;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Wpf.UI
 {
     public sealed class ViewConnector : ModelConnectorBase<ViewConnector>
     {
+        private static readonly ViewModelConverter Converter = new();
+        
         private readonly Dispatcher     _dispatcher;
         private readonly Action<object> _updater;
         private readonly string         _viewModelKey = Guid.NewGuid().ToString();
 
-        private ViewManager _manager = ViewManager.Manager;
+        private Maybe<ViewManager> _manager = May(ViewManager.Manager);
 
         public ViewConnector(string name, DataContextPromise promise, Action<object> updater, Dispatcher dispatcher)
             : base(name, promise)
@@ -23,17 +27,22 @@ namespace Tauron.Application.Wpf.UI
 
         protected override void OnLoad()
         {
-            if (View == null) return;
-            _manager = View.ViewManager;
-            _manager.RegisterConnector(_viewModelKey, this);
+            _manager = from view in View
+                       select Func(() =>
+                                   {
+                                       var manager = view.ViewManager;
+                                       manager.RegisterConnector(_viewModelKey, this);
+                                       return manager;
+                                   });
 
             base.OnLoad();
         }
 
         protected override void OnUnload()
         {
-            if (View == null) return;
-            _manager.UnregisterConnector(_viewModelKey);
+            Do(from _ in View
+               from manager in _manager 
+               select Action(() => manager.UnregisterConnector(_viewModelKey)));
 
             base.OnUnload();
         }
@@ -46,15 +55,16 @@ namespace Tauron.Application.Wpf.UI
 
         protected override void PropertyChangedHandler(PropertyChangedEvent obj)
         {
-            if (View == null) return;
+            Do(from _ in View
+               from value in obj.Value
+               where value is IViewModel
+               select Action(() =>
+                             {
+                                 var view = _dispatcher.Invoke(() => Converter.Convert((IViewModel) value, GetType(), View, CultureInfo.CurrentUICulture) as IView);
+                                 if (view == null) return;
 
-            var converter = new ViewModelConverter();
-            if (!(obj.Value is IViewModel viewModel)) return;
-
-            var view = _dispatcher.Invoke(() => converter.Convert(viewModel, GetType(), View, CultureInfo.CurrentUICulture) as IView);
-            if (view == null) return;
-
-            _updater(view);
+                                 _updater(view);
+                             }));
         }
 
         public override string ToString() => "View Connector Loading...";

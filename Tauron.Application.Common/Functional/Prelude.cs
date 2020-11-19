@@ -192,6 +192,9 @@ namespace Tauron
         public static void Do<TResult>(Maybe<TResult> may)
         {
         }
+        
+        public static Task DoAsync(Maybe<Task> may) 
+            => may.IsNothing() ? Task.CompletedTask : may.Value;
 
         public static void Do<TResult>(Maybe<TResult> maybe, Action<TResult> doing)
             => maybe.Do(doing);
@@ -224,6 +227,9 @@ namespace Tauron
 
         public static TResult OrElse<TResult>(Maybe<TResult> may, TResult result)
             => may.OrElse(result);
+        
+        public static TResult OrElse<TResult>(Maybe<Maybe<TResult>> may, TResult result)
+            => may.Collapse().OrElse(result);
 
 
         public static Maybe<TResult> Either<TResult>(Maybe<TResult> may, TResult res)

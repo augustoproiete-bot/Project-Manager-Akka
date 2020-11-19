@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using Akka.Actor;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Application.Wpf.Helper;
@@ -52,7 +53,7 @@ namespace Tauron.Application.Wpf
             SetLinker(d, e.OldValue as string, e.NewValue as string, () => new WindowLinker());
         }
 
-        private static void SetLinker(DependencyObject obj, string? oldName, string? newName, Func<LinkerBase> factory)
+        private static void SetLinker(DependencyObject obj, Maybe<string> oldName, Maybe<string> newName, Func<LinkerBase> factory)
         {
             if (string.IsNullOrWhiteSpace(newName))
                 return;

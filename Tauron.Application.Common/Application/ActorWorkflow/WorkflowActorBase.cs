@@ -95,7 +95,7 @@ namespace Tauron.Application.ActorWorkflow
                             return Match(callResult,
                                 id =>
                                 {
-                                    Self.Tell(new ChainCall(id).WithBase(_lastCall), OrElse(_starterSender, ActorRefs.NoSender));
+                                    Self.Tell(new ChainCall(id.Value).WithBase(_lastCall), OrElse(_starterSender, ActorRefs.NoSender));
                                     _lastCall = Maybe<ChainCall>.Nothing;
                                     return true;
                                 },
@@ -121,8 +121,8 @@ namespace Tauron.Application.ActorWorkflow
             };
 
             return Either(defaultCall, from del in _starter.Lookup(msg.GetType())
-                                   select from call in May(del.DynamicInvoke(msg))
-                                          select true);
+                                       from call in May(del.DynamicInvoke(msg))
+                                       select true);
         }
 
         protected void Signal<TMessage>(Func<Maybe<TContext>, TMessage, StepId> signal)
@@ -154,7 +154,7 @@ namespace Tauron.Application.ActorWorkflow
                     case "Waiting":
                         _runState = May(RunState.Waiting);
                         // ReSharper disable once MergeSequentialPatterns
-                        if (stepRev.Step is IHasTimeout timeout && timeout.Timeout != null)
+                        if (stepRev.Step is IHasTimeout timeout && timeout.Timeout.IsSomething())
                             Timers.StartSingleTimer(_timeout, new TimeoutMarker(), timeout.Timeout.Value);
                         _lastCall = May(chain);
                         break;
@@ -354,7 +354,8 @@ namespace Tauron.Application.ActorWorkflow
                     select StepIds[pos],
 
                     from baseCall in BaseCall
-                    select baseCall.Id);
+                    from id in baseCall.Id
+                    select id);
 
             public Maybe<ChainCall> Next()
             {

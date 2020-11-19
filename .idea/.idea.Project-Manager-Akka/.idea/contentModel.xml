@@ -444,7 +444,7 @@
           <e p="FluentCollectionPropertyRegistration.cs" t="Include" />
           <e p="FluentPropertyRegistration.cs" t="Include" />
           <e p="QueryProperty.cs" t="Include" />
-          <e p="StateUIActor.cs" t="Include" />
+          <e p="StatefulActionUIActor.cs" t="Include" />
           <e p="UiActor.cs" t="Include" />
           <e p="UIActorExtensions.cs" t="Include" />
           <e p="UICollectionProperty.cs" t="Include" />

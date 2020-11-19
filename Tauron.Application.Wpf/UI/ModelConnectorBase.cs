@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Serilog;
 using Tauron.Akka;
@@ -31,8 +32,8 @@ namespace Tauron.Application.Wpf.UI
             promise
                .OnContext((model, view) =>
                           {
-                              View  = view;
-                              Model = model;
+                              View  = May(view);
+                              Model = May(model);
 
                               if (model.IsInitialized)
                                   Task.Run(async () => await InitAsync());
@@ -46,10 +47,10 @@ namespace Tauron.Application.Wpf.UI
                           });
         }
 
-        protected string      Name  { get; }
-        protected IViewModel? Model { get; private set; }
+        protected string            Name  { get; }
+        protected Maybe<IViewModel> Model { get; private set; }
 
-        protected IView? View { get; private set; }
+        protected Maybe<IView> View { get; private set; }
 
         protected int IsInitializing => _isInitializing;
 
@@ -59,19 +60,23 @@ namespace Tauron.Application.Wpf.UI
             {
                 Log.Debug("Init ModelConnector {Type} -- {Name}", typeof(TDrived), Name);
 
-                if (Model == null) return;
+                if (Model.IsNothing()) return;
                 OnLoad();
                 //Log.Information("Ask For {Property}", _name);
-                var eventActor = await Ask<IEventActor>(Model.Actor, new MakeEventHook(Name), TimeSpan.FromSeconds(15));
-                //Log.Information("Ask Compled For {Property}", _name);
+                await DoAsync(from model in Model
+                              select Func(async () =>
+                                          {
+                                              var eventActor = await Ask<IEventActor>(model.Actor, new MakeEventHook(Name), TimeSpan.FromSeconds(15));
+                                              //Log.Information("Ask Compled For {Property}", _name);
 
-                eventActor.Register(HookEvent.Create<PropertyChangedEvent>(PropertyChangedHandler));
-                eventActor.Register(HookEvent.Create<ValidatingEvent>(ValidateCompled));
+                                              eventActor.Register(HookEvent.Create<PropertyChangedEvent>(PropertyChangedHandler));
+                                              eventActor.Register(HookEvent.Create<ValidatingEvent>(ValidateCompled));
 
-                Tell(Model.Actor, new TrackPropertyEvent(Name), eventActor.OriginalRef));
+                                              Tell(model.Actor, new TrackPropertyEvent(Name), eventActor.OriginalRef);
 
-                Interlocked.Exchange(ref _eventActor, eventActor);
-                Interlocked.Exchange(ref _isInitializing, 0);
+                                              Interlocked.Exchange(ref _eventActor, eventActor);
+                                              Interlocked.Exchange(ref _isInitializing, 0);
+                                          }));
             }
             catch (Exception e)
             {
@@ -96,11 +101,11 @@ namespace Tauron.Application.Wpf.UI
 
         public void ForceUnload()
         {
-            if (Model == null)
+            if (Model.IsNothing())
                 return;
 
             OnUnload();
-            Model = null;
+            Model = Maybe<IViewModel>.Nothing;
             _eventActor?.OriginalRef.Tell(PoisonPill.Instance);
         }
 

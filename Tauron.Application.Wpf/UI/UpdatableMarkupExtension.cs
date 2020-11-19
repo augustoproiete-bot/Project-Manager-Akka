@@ -34,30 +34,29 @@ namespace Tauron.Application.Wpf.UI
 
         protected void UpdateValue(object? value)
         {
-            if (TargetObject != null)
+            if (TargetObject == null) return;
+            
+            if (TargetProperty is DependencyProperty dependencyProperty)
             {
-                if (TargetProperty is DependencyProperty dependencyProperty)
+                var obj = TargetObject as DependencyObject;
+
+                void UpdateAction()
                 {
-                    var obj = TargetObject as DependencyObject;
-
-                    void UpdateAction()
-                    {
-                        obj.SetValue(dependencyProperty, value);
-                    }
-
-                    // Check whether the target object can be accessed from the
-                    // current thread, and use Dispatcher.Invoke if it can't
-
-                    if (obj?.CheckAccess() == true)
-                        UpdateAction();
-                    else
-                        obj?.Dispatcher.BeginInvoke(new Action(UpdateAction), DispatcherPriority.Background);
+                    obj.SetValue(dependencyProperty, value);
                 }
-                else // _targetProperty is PropertyInfo
-                {
-                    var prop = TargetProperty as PropertyInfo;
-                    prop?.SetValue(TargetObject, value, null);
-                }
+
+                // Check whether the target object can be accessed from the
+                // current thread, and use Dispatcher.Invoke if it can't
+
+                if (obj?.CheckAccess() == true)
+                    UpdateAction();
+                else
+                    obj?.Dispatcher.BeginInvoke(new Action(UpdateAction), DispatcherPriority.Background);
+            }
+            else // _targetProperty is PropertyInfo
+            {
+                var prop = TargetProperty as PropertyInfo;
+                prop?.SetValue(TargetObject, value, null);
             }
         }
 

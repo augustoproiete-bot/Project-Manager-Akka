@@ -32,13 +32,13 @@ namespace Tauron.Application.Wpf
         }
 
         public static ReceiveBuilder<TRecieve, TNext, TStart> ToModel<TRecieve, TNext, TStart>(this AbastractTargetSelector<ReceiveBuilder<TRecieve, TNext, TStart>, TStart> selector, IViewModel model) 
-            => selector.ToRef(model.Actor);
+            => selector.ToRef(model.Actor.Value);
 
         public static AyncReceiveBuilder<TRecieve, TNext, TStart> ToModel<TRecieve, TNext, TStart>(this AbastractTargetSelector<AyncReceiveBuilder<TRecieve, TNext, TStart>, TStart> selector, IViewModel model) 
-            => selector.ToRef(model.Actor);
+            => selector.ToRef(model.Actor.Value);
 
         public static ActorFlowBuilder<TStart> ToModel<TStart>(this AbastractTargetSelector<ActorFlowBuilder<TStart>, TStart> selector, IViewModel model) 
-            => selector.ToRef(model.Actor);
+            => selector.ToRef(model.Actor.Value);
 
         #endregion
 

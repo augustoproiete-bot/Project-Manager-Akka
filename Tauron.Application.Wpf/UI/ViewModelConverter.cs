@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Windows.Data;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Wpf.Converter;
 
@@ -25,7 +26,7 @@ namespace Tauron.Application.Wpf.UI
 
             var manager = AutoViewLocation.Manager;
             var view    = manager.ResolveView(model);
-            return view ?? value;
+            return view.OrElseDefault() ?? value;
 
             //root.ViewManager.ThenRegister(model, view, root);
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Markup;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Wpf.Helper;
 
@@ -34,12 +35,13 @@ namespace Tauron.Application.Wpf.UI
                 return "Invalid IProvideValueTarget: " + _name;
             if (!(service.TargetObject is DependencyObject target))
                 return "Invalid Target Object: " + _name;
-            if (!ControlBindLogic.FindDataContext(target, out var promise))
+            var promise = ControlBindLogic.FindDataContext(target.ToMaybe());
+            if (promise.IsNothing())
                 return "No Data Context Found: " + _name;
             //if (!(ControlBindLogic.FindRoot(target) is IView view))
             //    return "No View as Root: " + _name;
 
-            var connector = new ViewConnector(_name, promise, UpdateValue, target.Dispatcher);
+            var connector = new ViewConnector(_name, promise.Value, UpdateValue, target.Dispatcher);
 
             return connector;
         }
