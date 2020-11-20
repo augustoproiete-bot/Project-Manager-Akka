@@ -1,25 +1,15 @@
-﻿namespace Tauron.Application.Localizer.DataModel.Processing
+﻿using Functional.Maybe;
+
+namespace Tauron.Application.Localizer.DataModel.Processing
 {
-    public sealed class ForceSave
+    public sealed record ForceSave(bool AndSeal, ProjectFile File)
     {
-        private ForceSave(bool andSeal, ProjectFile file)
-        {
-            AndSeal = andSeal;
-            File = file;
-        }
+        public static Maybe<ForceSave> Force(Maybe<ProjectFile> file)
+            => from f in file
+               select new ForceSave(false, f);
 
-        public bool AndSeal { get; }
-
-        public ProjectFile File { get; }
-
-        public static ForceSave Force(ProjectFile file)
-        {
-            return new ForceSave(false, file);
-        }
-
-        public static ForceSave Seal(ProjectFile file)
-        {
-            return new ForceSave(true, file);
-        }
+        public static Maybe<ForceSave> Seal(Maybe<ProjectFile> file)
+            => from f in file
+               select new ForceSave(true, f);
     }
 }

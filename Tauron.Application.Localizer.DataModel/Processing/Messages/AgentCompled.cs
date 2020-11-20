@@ -1,20 +1,7 @@
 ﻿using System;
+using Functional.Maybe;
 
 namespace Tauron.Application.Localizer.DataModel.Processing
 {
-    public sealed class AgentCompled
-    {
-        public bool Failed { get; }
-
-        public Exception? Cause { get; }
-
-        public string OperationId { get; private set; }
-
-        public AgentCompled(bool failed, Exception? cause, string operationId)
-        {
-            Failed = failed;
-            Cause = cause;
-            OperationId = operationId;
-        }
-    }
+    public sealed record AgentCompled(bool Failed, Maybe<Exception> Cause, string OperationId);
 }

@@ -3,13 +3,5 @@
 namespace Tauron.Application.Localizer.DataModel.Processing
 {
     [PublicAPI]
-    public sealed class LoadProjectFile : Operation
-    {
-        public LoadProjectFile(string operationId, string source) : base(operationId)
-        {
-            Source = source;
-        }
-
-        public string Source { get; }
-    }
+    public sealed record LoadProjectFile(string Source, string OperationId) : Operation(OperationId);
 }

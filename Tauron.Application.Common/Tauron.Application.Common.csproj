@@ -13,7 +13,6 @@
   <ItemGroup>
     <Compile Remove="ActorFlowBuilder - Backup.cs" />
     <Compile Remove="Async.cs" />
-    <Compile Remove="Functional\F.cs" />
     <Compile Remove="SecurityHelper.cs" />
     <Compile Remove="SerializationExtensions.cs" />
   </ItemGroup>
@@ -21,15 +20,14 @@
   <ItemGroup>
     <None Include="ActorFlowBuilder - Backup.cs" />
     <None Include="Async.cs" />
-    <None Include="Functional\F.cs" />
     <None Include="SecurityHelper.cs" />
     <None Include="SerializationExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.4.11" />
+    <PackageReference Include="Akka" Version="1.4.12" />
     <PackageReference Include="Akka.DI.AutoFac" Version="1.4.1" />
-    <PackageReference Include="Akka.DI.Core" Version="1.4.11" />
+    <PackageReference Include="Akka.DI.Core" Version="1.4.12" />
     <PackageReference Include="Akka.Logger.Serilog" Version="1.4.11" />
     <PackageReference Include="Autofac" Version="6.0.0" />
     <PackageReference Include="FastExpressionCompiler" Version="3.0.0-preview-04" />

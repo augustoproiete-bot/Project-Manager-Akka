@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.IO;
 using System.Threading;
 using Akka.Actor;
@@ -43,24 +42,30 @@ namespace Tauron.Application.Localizer.DataModel
                 from op in mayOp
                 select new ProjectFile(source, op);
 
-        public static Maybe<ProjectFile> ReadFile(Maybe<BinaryReader> reader, Maybe<string> source, Maybe<IActorRef> op)
-        {
-            var file = new ProjectFile(source, op);
-            var builder = file.ToBuilder();
+        public static Maybe<ProjectFile> ReadFile(Maybe<BinaryReader> reader, Maybe<string> maySource, Maybe<IActorRef> mayOp) 
+            => from source in maySource
+               from op in mayOp
+               let file = new ProjectFile(source, op)
+               from vers in ReadInt32(reader)
+               from projects in ReadList(reader, Project.ReadFrom)
+               from globalLang in ReadList(reader, ActiveLanguage.ReadFrom)
+               from buildInfo in vers == 2 ? BuildInfo.ReadFrom(reader) : May(new BuildInfo())
+               select file with
+                          {
+                          Projects = projects,
+                          GlobalLanguages = globalLang,
+                          BuildInfo = buildInfo
+                          };
 
-            var vers = reader.ReadInt32();
-            builder.Projects = BinaryHelper.ReadList(reader, Project.ReadFrom);
-            builder.GlobalLanguages = BinaryHelper.ReadList(reader, ActiveLanguage.ReadFrom);
-            builder.BuildInfo = vers == 1 ? new BuildInfo() : BuildInfo.ReadFrom(reader);
-
-            return builder.ToImmutable();
-        }
-
-        public static void BeginLoad(IActorContext factory, string operationId, string source, string actorName)
-        {
-            var actor = factory.GetOrAdd<ProjectFileOperator>(actorName);
-            actor.Tell(new LoadProjectFile(operationId, source));
-            Thread.Sleep(500);
-        }
+        public static Maybe<Unit> BeginLoad(Maybe<IActorContext> mayFactory, Maybe<string> mayOperationId, Maybe<string> maySource, Maybe<string> mayActorName) 
+            => from factory in mayFactory
+               from source in maySource
+               from operationId in mayOperationId
+               from actor in factory.GetOrAdd<ProjectFileOperator>(mayActorName)
+               select Action(() =>
+                             {
+                                 Tell(actor, new LoadProjectFile(operationId, source));
+                                 Thread.Sleep(500);
+                             });
     }
 }

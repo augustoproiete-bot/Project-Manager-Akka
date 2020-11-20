@@ -1,20 +1,7 @@
 ﻿using System;
+using Functional.Maybe;
 
 namespace Tauron.Application.Localizer.DataModel.Processing
 {
-    public sealed class LoadedProjectFile : Operation
-    {
-        public LoadedProjectFile(string operationId, ProjectFile projectFile, Exception? errorReason, bool ok) : base(operationId)
-        {
-            ProjectFile = projectFile;
-            ErrorReason = errorReason;
-            Ok = ok;
-        }
-
-        public ProjectFile ProjectFile { get; }
-
-        public Exception? ErrorReason { get; }
-
-        public bool Ok { get; }
-    }
+    public sealed record LoadedProjectFile(ProjectFile ProjectFile, Maybe<Exception> ErrorReason, bool Ok, string OperationId) : Operation(OperationId);
 }

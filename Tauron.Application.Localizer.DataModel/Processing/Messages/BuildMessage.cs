@@ -1,6 +1,6 @@
 ﻿namespace Tauron.Application.Localizer.DataModel.Processing
 {
-    public sealed class BuildMessage
+    public sealed record BuildMessage(string Message, string OperationId, string Agent)
     {
         public static class Ids
         {
@@ -17,32 +17,19 @@
             // ReSharper restore MemberHidesStaticFromOuterClass
         }
 
-        public string Message { get; }
-
-        public string OperationId { get; }
-
-        public string Agent { get; }
-
-        private BuildMessage(string message, string operationId, string agent)
-        {
-            Message = message;
-            OperationId = operationId;
-            Agent = agent;
-        }
-
         public static BuildMessage GatherData(string id, string agnet = "")
-            => new BuildMessage(Ids.GatherData, id, agnet);
+            => new(Ids.GatherData, id, agnet);
 
         public static BuildMessage NoData(string id)
-            => new BuildMessage(Ids.NoData, id, string.Empty);
+            => new(Ids.NoData, id, string.Empty);
 
         public static BuildMessage GenerateLangFiles(string id, string agent)
-            => new BuildMessage(Ids.GenerateLangFiles, id, agent);
+            => new(Ids.GenerateLangFiles, id, agent);
 
         public static BuildMessage GenerateCsFiles(string id, string agent)
-            => new BuildMessage(Ids.GenerateCsFiles, id, agent);
+            => new(Ids.GenerateCsFiles, id, agent);
 
         public static BuildMessage AgentCompled(string id, string agent)
-            => new BuildMessage(Ids.AgentCompled, id, agent);
+            => new(Ids.AgentCompled, id, agent);
     }
 }

@@ -1,17 +1,7 @@
 ﻿using System;
+using Functional.Maybe;
 
 namespace Tauron.Application.Localizer.DataModel.Processing
 {
-    public sealed class SavedProject : Operation
-    {
-        public SavedProject(string operationId, bool ok, Exception? exception) : base(operationId)
-        {
-            Ok = ok;
-            Exception = exception;
-        }
-
-        public bool Ok { get; }
-
-        public Exception? Exception { get; }
-    }
+    public sealed record SavedProject(bool Ok, Maybe<Exception> Exception, string OperationId) : Operation(OperationId);
 }

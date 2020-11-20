@@ -1,61 +1,75 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Akka.Actor;
+using Functional.Maybe;
 using Tauron.Akka;
 using Tauron.Application.Localizer.DataModel.Processing;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Localizer.DataModel
 {
     public sealed partial record ProjectFile
     {
-        public static ProjectFile NewProjectFile(IActorContext factory, string source, string actorName)
+        public static Maybe<ProjectFile> NewProjectFile(Maybe<IActorContext> factory, Maybe<string> source, Maybe<string> actorName) 
+            => from fac in factory
+               select FromSource(source, fac.GetOrAdd<ProjectFileOperator>(actorName));
+
+        public Maybe<ProjectFile> AddLanguage(Maybe<Project> mayProject, Maybe<ActiveLanguage> mayLanguage)
+            => from project in mayProject
+               from lang in mayLanguage
+               let newProj = project with{ ActiveLanguages = project.ActiveLanguages.Add(lang) }
+               select this with{ Projects = Projects.Replace(project, newProj)};
+
+        public Maybe<ProjectFile> AddProject(Maybe<Project> project)
+            => from proj in project
+               select this with {Projects = Projects.Add(proj)};
+
+        public Maybe<ProjectFile> RemoveProject(Maybe<Project> project)
+            => from proj in project
+               select this with{Projects = Projects.Remove(proj)};
+
+        public Maybe<ProjectFile> AddImport(Maybe<Project> project, Maybe<string> toAdd)
+            => from proj in project
+               from import in toAdd
+               let newProj = proj with{Imports = proj.Imports.Add(import)}
+               select this with{Projects = Projects.Replace(proj, newProj)};
+
+        public Maybe<ProjectFile> ReplaceEntry(Maybe<LocEntry> mayOldEntry, Maybe<LocEntry> mayNewEntry)
         {
-            var actor = factory.GetOrAdd<ProjectFileOperator>(actorName);
-            return FromSource(source, actor);
+            var validate = mayOldEntry.Or(mayNewEntry);
+
+            var projectName = validate.OrElseDefault()?.Project;
+            if (string.IsNullOrWhiteSpace(projectName)) return May(this);
+            if (string.IsNullOrWhiteSpace(validate.OrElseDefault()?.Key)) return May(this);
+
+            var mayOld = MayNotNull(Projects.Find(p => p.ProjectName == projectName));
+
+            var modify = Maybe<ProjectFile>.Nothing;
+
+            if (mayOldEntry.IsNothing() && mayNewEntry.IsSomething())
+            {
+                modify = from old in mayOld
+                         from newEntry in mayNewEntry
+                         select this with{Projects = Projects.Replace(old, old with{Entries = old.Entries.Add(newEntry)})};
+            }
+            else if (mayOldEntry.IsSomething() && mayNewEntry.IsNothing())
+            {
+                modify = from old in mayOld
+                         from entry in mayOldEntry
+                         select this with{Projects = Projects.Replace(old, old with{Entries = old.Entries.Remove(entry)})};
+            }
+            else if (mayOldEntry.IsSomething() && mayNewEntry.IsSomething())
+            {
+                modify = from old in mayOld
+                         from oldEntry in mayOldEntry
+                         from newEntry in mayNewEntry
+                         select this with{Projects = Projects.Replace(old, old with{Entries = old.Entries.Replace(oldEntry, newEntry)})};
+            }
+
+            return Either(modify, May(this));
         }
-
-        public ProjectFile AddLanguage(Project project, ActiveLanguage language)
-        {
-            var temp = project.WithActiveLanguages(project.ActiveLanguages.Add(language));
-            return WithProjects(Projects.Replace(project, temp));
-        }
-
-        public ProjectFile AddProject(Project project)
-        {
-            return WithProjects(Projects.Add(project));
-        }
-
-        public ProjectFile RemoveProject(Project project)
-        {
-            return WithProjects(Projects.Remove(project));
-        }
-
-        public ProjectFile AddImport(Project project, string toAdd)
-        {
-            return WithProjects(Projects.Replace(project, project.WithImports(project.Imports.Add(toAdd))));
-        }
-
-        public ProjectFile ReplaceEntry(LocEntry? oldEntry, LocEntry? newEntry)
-        {
-            var projectName = oldEntry?.Project ?? newEntry?.Project;
-            if (string.IsNullOrWhiteSpace(projectName)) return this;
-
-            var entryName = oldEntry?.Key ?? newEntry?.Key;
-            if (string.IsNullOrWhiteSpace(entryName)) return this;
-
-            var old = Projects.Find(p => p.ProjectName == projectName);
-
-            if (oldEntry == null && newEntry != null)
-                return WithProjects(Projects.Replace(old, old.WithEntries(old.Entries.Add(newEntry))));
-            if (oldEntry != null && newEntry == null)
-                return WithProjects(Projects.Replace(old, old.WithEntries(old.Entries.Remove(oldEntry))));
-            if (oldEntry != null && newEntry != null)
-                return WithProjects(Projects.Replace(old, old.WithEntries(old.Entries.Replace(oldEntry, newEntry))));
-
-            return this;
-        }
-
-        public string? FindProjectPath(Project project)
-            => BuildInfo.ProjectPaths.FirstOrDefault(p => p.Key == project.ProjectName).Value;
+        
+        public Maybe<string> FindProjectPath(Maybe<Project> project)
+            => from proj in project
+               select MayNotEmpty(BuildInfo.ProjectPaths.FirstOrDefault(p => p.Key == proj.ProjectName).Value);
     }
 }
