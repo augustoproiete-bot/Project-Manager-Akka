@@ -3,55 +3,53 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Functional.Maybe;
 using Tauron.Akka;
 using Tauron.Localization;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Localizer.DataModel.Processing.Actors
 {
     public sealed class BuildAgent : ExposedReceiveActor
     {
-        public BuildAgent()
+        public BuildAgent() 
+            => Flow<PreparedBuild>(b => b.Func(OnBuild).Forward.ToParent());
+
+        private Maybe<AgentCompled> OnBuild(Maybe<PreparedBuild> mayBuild)
         {
-            Flow<PreparedBuild>(b => b.Func(OnBuild).Forward.ToParent());
+            var agentName = Context.Self.Path.Name + ": ";
+
+            return MatchMay(
+                from build in mayBuild
+                select Try(() =>
+                    from step1 in MayTell(Context.Sender, BuildMessage.GatherData(build.Operation, agentName))
+                    from data in GetData(build)
+                    
+                    from step2 in MayTell(Context.Sender, BuildMessage.GenerateLangFiles(build.Operation, agentName))
+                    from a in GenerateJson(data, build.TargetPath)
+
+                    from step3 in MayTell(Context.Sender, BuildMessage.GenerateCsFiles(build.Operation, agentName))
+                    from b in GenerateCode(data, build.TargetPath)
+
+                    from final in MayTell(Context.Sender, BuildMessage.AgentCompled(build.Operation, agentName)) 
+                    select new AgentCompled(false, Maybe<Exception>.Nothing, build.Operation)),
+                e => May(new AgentCompled(true, May(e), mayBuild.Value.Operation)));
         }
 
-        private AgentCompled OnBuild(PreparedBuild build)
-        {
-            try
-            {
-                var agentName = Context.Self.Path.Name + ": ";
-
-                Context.Sender.Tell(BuildMessage.GatherData(build.Operation, agentName));
-                var data = GetData(build);
-                
-                Context.Sender.Tell(BuildMessage.GenerateLangFiles(build.Operation, agentName));
-                GenerateJson(data, build.TargetPath);
-
-                Context.Sender.Tell(BuildMessage.GenerateCsFiles(build.Operation, agentName));
-                GenerateCode(data, build.TargetPath);
-
-                Context.Sender.Tell(BuildMessage.AgentCompled(build.Operation, agentName));
-
-                return new AgentCompled(false, null, build.Operation);
-            }
-            catch (Exception e)
-            {
-                return new AgentCompled(true, e, build.Operation);
-            }
-        }
-
-        private static Dictionary<string, GroupDictionary<string, (string Id, string Content)>> GetData(PreparedBuild build)
+        private static Maybe<Dictionary<string, GroupDictionary<string, (string Id, string Content)>>> GetData(PreparedBuild build)
         {
             var files = new Dictionary<string, GroupDictionary<string, (string Id, string Content)>>();
 
+            var (buildInfo, targetProject, projectFile, _, _) = build;
+
             var imports = new List<(string FileName, Project Project)>
                           {
-                              (string.Empty, build.TargetProject)
+                              (string.Empty, targetProject)
                           };
-            imports.AddRange(build.TargetProject.Imports
-               .Select(pn => build.ProjectFile.Projects.Find(p => p.ProjectName == pn))
+            imports.AddRange(targetProject.Imports
+               .Select(pn => projectFile.Projects.Find(p => p.ProjectName == pn))
                .Where(p => p != null)
-               .Select(p => build.BuildInfo.IntigrateProjects ? (string.Empty, p) : (p.ProjectName, p)));
+               .Select(p => buildInfo.IntigrateProjects ? (string.Empty, p) : (p.ProjectName, p))!);
 
             foreach (var (fileName, project) in imports)
             {
@@ -68,10 +66,10 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
                 }
             }
 
-            return files;
+            return May(files);
         }
 
-        private static void GenerateJson(Dictionary<string, GroupDictionary<string, (string Id, string Content)>> data, string targetPath)
+        private static Maybe<Unit> GenerateJson(Dictionary<string, GroupDictionary<string, (string Id, string Content)>> data, string targetPath)
         {
             if (!Directory.Exists(targetPath))
                 Directory.CreateDirectory(targetPath);
@@ -95,9 +93,11 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
                     writer.Flush();
                 }
             }
+
+            return Unit.MayInstance;
         }
 
-        private static void GenerateCode(Dictionary<string, GroupDictionary<string, (string Id, string Content)>> data, string targetPath)
+        private static Maybe<Unit> GenerateCode(Dictionary<string, GroupDictionary<string, (string Id, string Content)>> data, string targetPath)
         {
             var ids = new HashSet<string>(data
                .SelectMany(e => e.Value)
@@ -163,6 +163,8 @@ namespace Tauron.Application.Localizer.DataModel.Processing.Actors
             file.WriteLine("}");
 
             file.Flush();
+
+            return Unit.MayInstance;
         }
 
         private static void WriteClassData(StreamWriter writer, string className, ICollection<(string FieldName, string Original)> entryValue, int tabs, 

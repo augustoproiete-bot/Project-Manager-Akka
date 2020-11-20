@@ -1,65 +1,76 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Tauron.Akka;
 using Akka.Actor;
 using Akka.Event;
+using Akka.Routing;
+using Functional.Maybe;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Localizer.DataModel.Processing.Actors
 {
-    public sealed class BuildActorCoordinator : ExposedReceiveActor
+    public sealed class BuildActorCoordinator : StatefulReceiveActor<BuildActorCoordinator.CoordinatorState>
     {
-        private readonly ILoggingAdapter _log = Context.GetLogger();
-
-        private int _remaining;
-        private bool _fail;
+        public record CoordinatorState(int Remaining, bool Fail, IActorRef Agents);
 
         public BuildActorCoordinator()
+            : base(new CoordinatorState(0, false, CreateAgentPool()))
         {
             Flow<BuildRequest>(b => b.Action(ProcessRequest));
             Flow<AgentCompled>(b => b.Func(SingleBuildCompled).ToSender());
         }
 
-        private BuildCompled? SingleBuildCompled(AgentCompled arg)
-        {
-            _remaining--;
-            if (arg.Failed)
-            {
-                _fail = true;
-                _log.Warning(arg.Cause, "Error in Build Agent");
-            }
+        private static IActorRef CreateAgentPool()
+            => Context.ActorOf(Props.Create<BuildAgent>().WithRouter(new SmallestMailboxPool(Environment.ProcessorCount * 2)), "Agents");
 
-            return _remaining == 0 ? new BuildCompled(arg.OperationId, _fail) : null;
+        private Maybe<BuildCompled> SingleBuildCompled(Maybe<AgentCompled> arg)
+        {
+            return
+                from _ in MayRun(s =>
+                    from state in s
+                    select state with{Remaining = state.Remaining - 1})
+
+                from agent in arg
+                from state in MayRun(s =>
+                    from state in s
+                    where agent.Failed
+                    from error in agent.Cause
+                    from _ in To(Log).Warning(error, "Error in Build Agent")
+                    select state with{Fail = true})
+
+                where state.Remaining == 0
+                select new BuildCompled(agent.OperationId, state.Fail);
         }
 
-        private void ProcessRequest(BuildRequest obj)
-        {
-            Context.Sender.Tell(BuildMessage.GatherData(obj.OperationId));
+        private Maybe<Unit> ProcessRequest(Maybe<BuildRequest> obj)
+            =>
+                from request in obj
+                from m1 in MayTell(Context.Sender, BuildMessage.GatherData(request.OperationId))
+                from reset in MayRun(s =>
+                    from state in s
+                    select state with{Remaining = 0, Fail = false})
 
-            _remaining = 0;
-            _fail = false;
+                let data = request.ProjectFile
+                let toBuild = ImmutableList<PreparedBuild>.Empty.AddRange(
+                    from project in data.Projects
+                    let path = data.FindProjectPath(May(project))
+                    where !string.IsNullOrWhiteSpace(path.OrElseDefault())
+                    select new PreparedBuild(data.BuildInfo, project, data, request.OperationId, path.Value))
 
-            var data = obj.ProjectFile;
-            var toBuild = new List<PreparedBuild>(data.Projects.Count);
-            
-            toBuild.AddRange(
-                from project in data.Projects 
-                let path = data.FindProjectPath(project) 
-                where !string.IsNullOrWhiteSpace(path) 
-                select new PreparedBuild(data.BuildInfo, project, data, obj.OperationId, path));
+                from count in
+                    MayTell(
+                        BuildMessage.NoData(request.OperationId),
+                        from actor in MayActor(Context.Sender)
+                        where toBuild.Count == 0
+                        select actor)
 
-            if (toBuild.Count == 0)
-            {
-                Context.Sender.Tell(BuildMessage.NoData(obj.OperationId));
-                return;
-            }
-
-            var agent = 1;
-            foreach (var preparedBuild in toBuild)
-            {
-                _remaining++;
-                Context.GetOrAdd<BuildAgent>("Agent-" + agent).Forward(preparedBuild);
-                agent++;
-            }
-        }
+                where toBuild.Count != 0
+                from agents in MayRun(s =>
+                    from state in s
+                    from start in MayAction(() => toBuild.ForEach(pr => Tell(state.Agents, pr)))
+                    select state with{Remaining = toBuild.Count})
+                select Unit.Instance;
     }
 }

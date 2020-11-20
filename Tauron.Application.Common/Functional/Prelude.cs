@@ -132,19 +132,70 @@ namespace Tauron
             return Unit.Instance;
         }
 
-        public static Unit Tell(Maybe<IActorRef> actor, object msg, IActorRef sender)
-            => Tell(actor.OrElse(ActorRefs.Nobody), msg, sender);
+        public static Unit Tell(Maybe<IActorRef> actor, object msg, IActorRef sender) => actor.IsNothing() ? Unit.Instance : Tell(actor.Value, msg, sender);
 
         public static Unit Tell<TMsg>(IActorRef actor, Maybe<TMsg> msg)
         {
-            if (!actor.IsNobody())
-                actor.Tell(msg);
+            if (!actor.IsNobody() && msg.IsSomething())
+                actor.Tell(msg.Value);
             return Unit.Instance;
         }
 
-        public static Unit Tell(Maybe<IActorRef> actor, object msg) => Tell(actor.OrElse(ActorRefs.Nobody), msg);
+        public static Unit Tell(Maybe<IActorRef> actor, object msg) => actor.IsNothing() ? Unit.Instance : Tell(actor.Value, msg);
 
-        public static Unit Tell<TMsg>(Maybe<IActorRef> actor, Maybe<TMsg> msg) => Tell(actor.OrElse(ActorRefs.Nobody), msg);
+        public static Unit Tell<TMsg>(Maybe<IActorRef> actor, Maybe<TMsg> msg) => actor.IsNothing() ? Unit.Instance : Tell(actor.Value, msg);
+
+        public static Maybe<Unit> MayTell(IActorRef actor, object msg)
+        {
+            Tell(actor, msg);
+            return Unit.MayInstance;
+        }
+
+        public static Maybe<Unit> MayTell(IActorRef actor, object msg, IActorRef sender)
+        {
+            Tell(actor, msg, sender);
+            return Unit.MayInstance;
+        }
+
+        public static Maybe<Unit> MayTell(Maybe<IActorRef> actor, object msg, IActorRef sender)
+        {
+            Tell(actor, msg, sender);
+            return Unit.MayInstance;
+        }
+
+        public static Maybe<Unit> MayTell<TMsg>(IActorRef actor, Maybe<TMsg> msg)
+        {
+            Tell(actor, msg);
+            return Unit.MayInstance;
+        }
+
+        public static Maybe<Unit> MayTell(Maybe<IActorRef> actor, object msg)
+        {
+            Tell(actor, msg);
+            return Unit.MayInstance;
+        }
+
+        public static Maybe<Unit> MayTell<TMsg>(Maybe<IActorRef> actor, Maybe<TMsg> msg)
+        {
+            Tell(actor, msg);
+            return Unit.MayInstance;
+        }
+
+        public static Maybe<Unit> MayTell(object msg, Maybe<IActorRef> actor)
+        {
+            Tell(actor, msg);
+            return Unit.MayInstance;
+        }
+
+        public static Maybe<Unit> MayTell<TMsg>(Maybe<TMsg> msg, Maybe<IActorRef> actor)
+        {
+            Tell(actor, msg);
+            return Unit.MayInstance;
+        }
+
+        public static Unit Tell(object msg, Maybe<IActorRef> actor) => Tell(actor, msg);
+
+        public static Unit Tell<TMsg>(Maybe<TMsg> msg, Maybe<IActorRef> actor) => actor.IsNothing() ? Unit.Instance : Tell(actor.Value, msg);
 
         public static Task<TResult> Ask<TResult>(IActorRef actor, object msg, TimeSpan? timeout = null) 
             => actor.Ask<TResult>(msg, timeout);
@@ -161,14 +212,33 @@ namespace Tauron
             return Unit.Instance;
         }
 
+        public static Maybe<Unit> Forward(Maybe<IActorRef> actor, object msg)
+        {
+            if(actor.IsNothing())
+                return Maybe<Unit>.Nothing;
+
+            Forward(actor.Value, msg);
+
+            return Unit.MayInstance;
+        }
+
         public static Unit Action(Action action)
         {
             action();
             return Unit.Instance;
         }
 
+        public static Maybe<Unit> MayAction(Action action)
+        {
+            action();
+            return Unit.MayInstance;
+        }
+
         public static TResult Func<TResult>(Func<TResult> action)
             => action();
+
+        public static Maybe<TResult> MayFunc<TResult>(Func<TResult> action)
+            => May(action());
 
         public static Maybe<Unit> MayUse(Action action)
         {
@@ -224,6 +294,20 @@ namespace Tauron
 
         public static Maybe<TType> Match<TType, TError>(Either<Maybe<TType>, TError> may, Func<TError, Maybe<TType>> non)
             => may.Match(v => v, non);
+
+        public static Maybe<TType> MatchMay<TType, TError>(Maybe<Either<TType, TError>> may, Func<TError, TType> non)
+        {
+            if(may.IsNothing())
+                return Maybe<TType>.Nothing;
+            return may.Value.Match(May, error =>  May(non(error)));
+        }
+
+        public static Maybe<TType> MatchMay<TType, TError>(Maybe<Either<Maybe<TType>, TError>> may, Func<TError, TType> non)
+        {
+            if (may.IsNothing())
+                return Maybe<TType>.Nothing;
+            return may.Value.Match(r => r, error => May(non(error)));
+        }
 
         public static TResult OrElse<TResult>(Maybe<TResult> may, TResult result)
             => may.OrElse(result);

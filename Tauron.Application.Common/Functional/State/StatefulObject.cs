@@ -68,6 +68,8 @@ namespace Tauron
         protected TState Run(Func<Maybe<TState>, Maybe<TState>> operation) 
             => _stateLogic.Run(operation);
 
+        protected Maybe<TState> MayRun(Func<Maybe<TState>, Maybe<TState>> operation)
+            => May(_stateLogic.Run(operation));
 
         protected void Receive<T>(Func<T, Maybe<TState>, Maybe<TState>> handler, Predicate<T>? shouldHandle = null)
         {
