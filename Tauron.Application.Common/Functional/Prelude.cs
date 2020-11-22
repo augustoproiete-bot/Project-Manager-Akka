@@ -294,6 +294,12 @@ namespace Tauron
 
         public static Maybe<TType> Match<TType, TError>(Either<Maybe<TType>, TError> may, Func<TError, Maybe<TType>> non)
             => may.Match(v => v, non);
+        
+        public static Maybe<TType> Match<TType, TError>(Either<TType, TError> may, Func<TError, TType> non)
+            => May(may.Match(v => v, non));
+        
+        public static Maybe<TType> Match<TType, TError>(Either<Maybe<TType>, TError> may, Func<TError, TType> non)
+            => may.Match(v => v, e => May(non(e)));
 
         public static Maybe<TType> MatchMay<TType, TError>(Maybe<Either<TType, TError>> may, Func<TError, TType> non)
         {
@@ -403,6 +409,14 @@ namespace Tauron
                 {
                     IOFile.WriteAllText(fileName, content);
                     return Unit.Instance;
+                }
+
+                public static Maybe<TResult> Open<TResult>(Maybe<string> path, FileMode mode, Func<Maybe<FileStream>, Maybe<TResult>> process)
+                {
+                    if(path.IsNothing())
+                        return Maybe<TResult>.Nothing;
+                    using var stream = IOFile.Open(path.Value, mode);
+                    return process(May(stream));
                 }
             }
         }

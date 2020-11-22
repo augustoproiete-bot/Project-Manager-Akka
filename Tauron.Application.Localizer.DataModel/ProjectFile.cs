@@ -42,6 +42,9 @@ namespace Tauron.Application.Localizer.DataModel
                 from op in mayOp
                 select new ProjectFile(source, op);
 
+        public static ProjectFile FromSource(string maySource, IActorRef mayOp)
+            => FromSource(May(maySource), May(mayOp)).Value;
+
         public static Maybe<ProjectFile> ReadFile(Maybe<BinaryReader> reader, Maybe<string> maySource, Maybe<IActorRef> mayOp) 
             => from source in maySource
                from op in mayOp
