@@ -20,6 +20,9 @@ namespace Tauron
         public static FuncLog To(ILoggingAdapter adapter)
             => new(adapter);
 
+        public static FuncTimerSheduler To(ITimerScheduler scheduler)
+            => new(scheduler);
+        
         public static TResult Throw<TResult>(Maybe<TResult> may, Func<Exception> error)
             => may.OrElse(error);
 
@@ -291,6 +294,9 @@ namespace Tauron
 
         public static Maybe<TResult> Match<TType, TError, TResult>(Either<TType, TError> may, Func<TType, Maybe<TResult>> some, Func<TError, Maybe<TResult>> non)
             => may.Match(some, non);
+        
+        public static TResult Match<TType, TError, TResult>(Either<TType, TError> may, Func<TType, TResult> some, Func<TError, TResult> non)
+            => may.Match(some, non);
 
         public static Maybe<TType> Match<TType, TError>(Either<Maybe<TType>, TError> may, Func<TError, Maybe<TType>> non)
             => may.Match(v => v, non);
@@ -418,6 +424,12 @@ namespace Tauron
                     using var stream = IOFile.Open(path.Value, mode);
                     return process(May(stream));
                 }
+
+                public static Maybe<Unit> Copy(Maybe<string> maySource, Maybe<string> mayDestination, bool @override = false)
+                    =>
+                        from source in maySource
+                        from destination in mayDestination
+                        select Action(() => IOFile.Copy(source, destination, @override));
             }
         }
     }

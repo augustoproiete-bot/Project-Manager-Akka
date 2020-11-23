@@ -1,4 +1,5 @@
-﻿using Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes;
+﻿using Functional.Maybe;
+using Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutation;
 
@@ -11,8 +12,20 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
         public BuildMutator(MutatingEngine<MutatingContext<ProjectFile>> engine)
         {
             _engine = engine;
-            Intigrate = engine.EventSource(mc => mc.GetChange<IntigrateImportChange>().ToEvent(), mc => mc.Change is IntigrateImportChange);
-            ProjectPath = engine.EventSource(mc => mc.GetChange<ProjectPathChange>().ToEventData(), context => context.Change is ProjectPathChange);
+
+            Intigrate = engine.EventSource(
+                                           mc => from context in mc
+                                                 select context.GetChange<IntigrateImportChange>().ToEvent(),
+                                           mc => from context in mc
+                                                 from change in context.Change
+                                                 select change is IntigrateImportChange);
+
+            ProjectPath = engine.EventSource(
+                                             mc => from context in mc
+                                                   select context.GetChange<ProjectPathChange>().ToEventData(),
+                                             mc => from context in mc
+                                                   from change in context.Change
+                                                   select change is ProjectPathChange);
         }
 
         public IEventSource<IntigrateImport> Intigrate { get; }

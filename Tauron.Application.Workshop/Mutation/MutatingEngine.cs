@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 using Tauron.Application.Workshop.Core;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutating.Changes;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Workshop.Mutation
 {
@@ -53,12 +54,10 @@ namespace Tauron.Application.Workshop.Mutation
             return new AsyncDataMutation(Runner, name, hash);
         }
 
-        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Maybe<Func<Maybe<TData>, bool>> where) 
-            => new EventSource<TRespond, TData>(_superviser, _mutator, transformer, where, _responder);
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Func<Maybe<TData>, Maybe<bool>>? where) 
+            => new EventSource<TRespond,TData>(_superviser, _mutator, transformer, MayNotNull(where), _responder);
 
-        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Func<Maybe<TData>, bool> where) => EventSource(transformer, where.ToMaybe());
-
-        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer) => EventSource(transformer, Maybe<Func<Maybe<TData>, bool>>.Nothing);
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer) => EventSource(transformer, null);
 
         private sealed class ResponderList : IRespondHandler<TData>
         {
@@ -120,12 +119,11 @@ namespace Tauron.Application.Workshop.Mutation
             return new AsyncDataMutation(Runner, name, query.ToHash().Cast<string, object>());
         }
 
-        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Maybe<Func<Maybe<TData>, bool>> where)
-            => new EventSource<TRespond, TData>(_superviser, _mutator, transformer, where, _responder);
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Func<Maybe<TData>, Maybe<bool>>? where) 
+            => new EventSource<TRespond,TData>(_superviser, _mutator, transformer, MayNotNull(where), _responder);
 
-        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer, Func<Maybe<TData>, bool> where) => EventSource(transformer, where.ToMaybe());
-
-        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer) => EventSource(transformer, Maybe<Func<Maybe<TData>, bool>>.Nothing);
+        public IEventSource<TRespond> EventSource<TRespond>(Func<Maybe<TData>, Maybe<TRespond>> transformer) 
+            => EventSource(transformer, null);
 
         private sealed class ResponderList : IRespondHandler<TData>
         {
@@ -225,18 +223,17 @@ namespace Tauron.Application.Workshop.Mutation
     [PublicAPI]
     public static class MutatinEngineExtensions
     {
-        public static IEventSource<TEvent> EventSource<TData, TEvent>(this IEventSourceable<MutatingContext<TData>> engine)
+        public static IEventSource<TEvent> EventSource<TData, TEvent>(
+            this IEventSourceable<MutatingContext<TData>> engine)
             where TEvent : MutatingChange
             => engine.EventSource(
-                c =>
-                    from con in c
-                    select con.GetChange<TEvent>(),
-                c =>
-                (
-                    from con in c
-                    from change in con.Change
-                    select change is TEvent
-                ).OrElse(false)
-            );
+                                  c =>
+                                      from con in c
+                                      select con.GetChange<TEvent>(),
+                                  c =>
+                                      from con in c
+                                      from change in con.Change
+                                      select change is TEvent
+                                 );
     }
 }

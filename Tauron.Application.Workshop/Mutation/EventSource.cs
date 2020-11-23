@@ -7,7 +7,7 @@ namespace Tauron.Application.Workshop.Mutation
 {
     public sealed class EventSource<TRespond, TData> : EventSourceBase<TRespond>
     {
-        public EventSource(WorkspaceSuperviser superviser, Task<IActorRef> mutator, Func<Maybe<TData>, Maybe<TRespond>> transform, Maybe<Func<Maybe<TData>, bool>> where, IRespondHandler<TData> handler)
+        public EventSource(WorkspaceSuperviser superviser, Task<IActorRef> mutator, Func<Maybe<TData>, Maybe<TRespond>> transform, Maybe<Func<Maybe<TData>, Maybe<bool>>> where, IRespondHandler<TData> handler)
             : base(mutator, superviser)
         {
             where.Match
@@ -16,7 +16,7 @@ namespace Tauron.Application.Workshop.Mutation
                 {
                     handler.Register(d =>
                     {
-                        if (w(d))
+                        if (w(d).OrElse(false))
                             Send(transform(d));
                     });
                 },
