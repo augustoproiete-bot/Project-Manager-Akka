@@ -2,21 +2,9 @@
 
 namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes
 {
-    public class AddImportChange : MutatingChange
+    public record AddImportChange(string Import, string ProjectName) : MutatingChange
     {
-        public AddImportChange(string import, string projectName)
-        {
-            Import = import;
-            ProjectName = projectName;
-        }
-
-        private string Import { get; }
-
-        private string ProjectName { get; }
-
-        public AddImport ToEventData()
-        {
-            return new AddImport(ProjectName, Import);
-        }
+        public AddImport ToEventData() 
+            => new(ProjectName, Import);
     }
 }

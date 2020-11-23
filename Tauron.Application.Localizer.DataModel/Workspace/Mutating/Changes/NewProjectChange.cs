@@ -2,13 +2,5 @@
 
 namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes
 {
-    public sealed class NewProjectChange : MutatingChange
-    {
-        public NewProjectChange(Project project)
-        {
-            Project = project;
-        }
-
-        public Project Project { get; }
-    }
+    public sealed record NewProjectChange(Project Project) : MutatingChange;
 }

@@ -14,8 +14,8 @@ namespace Tauron.Application.Workshop.Analyzing.Rules
     {
         private sealed class InternalRuleActor : ExposedReceiveActor
         {
-            public InternalRuleActor(Action<IExposedReceiveActor> constructor) 
-                => constructor(this);
+            public InternalRuleActor(Func<Maybe<IExposedReceiveActor>, Maybe<Unit>> constructor) 
+                => constructor(Prelude.May((IExposedReceiveActor)this));
         }
 
         protected Maybe<TWorkspace> Workspace { get; private set; }
@@ -28,7 +28,7 @@ namespace Tauron.Application.Workshop.Analyzing.Rules
             return superviser.ActorOf(() => new InternalRuleActor(ActorConstruct), Name);
         }
 
-        protected abstract void ActorConstruct(IExposedReceiveActor actor);
+        protected abstract Maybe<Unit> ActorConstruct(Maybe<IExposedReceiveActor> mayActor);
 
         //protected abstract void RegisterResponds(TWorkspace workspace, IActorContext context);
 

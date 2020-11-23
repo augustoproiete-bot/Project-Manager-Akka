@@ -2,21 +2,8 @@
 
 namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes
 {
-    public sealed class LanguageChange : MutatingChange
+    public sealed record LanguageChange(ActiveLanguage Language, string Name) : MutatingChange
     {
-        public LanguageChange(ActiveLanguage language, string name)
-        {
-            Language = language;
-            Name = name;
-        }
-
-        private ActiveLanguage Language { get; }
-
-        private string Name { get; }
-
-        public AddActiveLanguage ToEventData()
-        {
-            return new AddActiveLanguage(Language, Name);
-        }
+        public AddActiveLanguage ToEventData() => new(Language, Name);
     }
 }

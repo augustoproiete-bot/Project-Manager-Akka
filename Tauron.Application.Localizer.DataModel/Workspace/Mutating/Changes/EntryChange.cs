@@ -2,13 +2,5 @@
 
 namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes
 {
-    public sealed class EntryChange : MutatingChange
-    {
-        public EntryChange(LocEntry entry)
-        {
-            Entry = entry;
-        }
-
-        public LocEntry Entry { get; }
-    }
+    public sealed record EntryChange(LocEntry Entry) : MutatingChange;
 }

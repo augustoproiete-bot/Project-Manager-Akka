@@ -1,4 +1,5 @@
 ﻿using System;
+using Akka.Actor;
 using Akka.Event;
 using Functional.Maybe;
 using JetBrains.Annotations;
@@ -78,6 +79,47 @@ namespace Tauron
         public Maybe<Unit> Log(LogLevel logLevel, Exception cause, string format, params object[] args)
         {
             _loggingAdapter.Log(logLevel, cause, format, args);
+            return Unit.MayInstance;
+        }
+    }
+    
+    public sealed class FuncTimerSheduler
+    {
+        private readonly ITimerScheduler _timerScheduler;
+
+        public FuncTimerSheduler(ITimerScheduler timerScheduler) 
+            => _timerScheduler = timerScheduler;
+
+        public Maybe<Unit> StartPeriodicTimer(object key, object msg, TimeSpan interval)
+        {
+            _timerScheduler.StartPeriodicTimer(key, msg, interval);
+            return Unit.MayInstance;
+        }
+
+        public Maybe<Unit> StartPeriodicTimer(object key, object msg, TimeSpan initialDelay, TimeSpan interval)
+        {
+            _timerScheduler.StartPeriodicTimer(key, msg, initialDelay, interval);
+            return Unit.MayInstance;
+        }
+
+        public Maybe<Unit> StartSingleTimer(object key, object msg, TimeSpan timeout)
+        {
+            _timerScheduler.StartSingleTimer(key, msg, timeout);
+            return Unit.MayInstance;
+        }
+
+        public Maybe<bool> IsTimerActive(object key) 
+            => _timerScheduler.IsTimerActive(key).ToMaybe();
+
+        public Maybe<Unit> Cancel(object key)
+        {
+            _timerScheduler.Cancel(key);
+            return Unit.MayInstance;
+        }
+
+        public Maybe<Unit> CancelAll()
+        {
+            _timerScheduler.CancelAll();
             return Unit.MayInstance;
         }
     }
