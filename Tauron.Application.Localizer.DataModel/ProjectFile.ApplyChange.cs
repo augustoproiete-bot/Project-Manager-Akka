@@ -1,5 +1,7 @@
-﻿using Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes;
+﻿using Functional.Maybe;
+using Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes;
 using Tauron.Application.Workshop.Mutating.Changes;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Localizer.DataModel
 {
@@ -18,6 +20,11 @@ namespace Tauron.Application.Localizer.DataModel
                                                                                                                          projectPathChange.TargetPath)
                                                                            }
                                                            },
+                RemoveEntryChange removeEntryChange => ReplaceEntry(May(removeEntryChange.Entry), Maybe<LocEntry>.Nothing).OrElse(this),
+                EntryChange entryChange => ReplaceEntry(May(entryChange.OldEntry), May(entryChange.Entry)).OrElse(this),
+                NewEntryChange newEntryChange => ReplaceEntry(Maybe<LocEntry>.Nothing, May(newEntryChange.newEntry)).OrElse(this),
+                GlobalLanguageChange globalLanguageChange => this with{GlobalLanguages = GlobalLanguages.Add(globalLanguageChange.Language)},
+                NewProjectChange newProjectChange => this with{Projects = Projects.Add(newProjectChange.Project)},
                 _ => this
             };
         }

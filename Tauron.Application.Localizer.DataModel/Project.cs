@@ -15,8 +15,12 @@ namespace Tauron.Application.Localizer.DataModel
             : this(ImmutableList<LocEntry>.Empty, string.Empty, ImmutableList<ActiveLanguage>.Empty, ImmutableList<string>.Empty)
         { }
 
-        public Project(string name)
-            : this() => ProjectName = name;
+        public Project(string name, ImmutableList<ActiveLanguage> languages)
+            : this()
+        {
+            ProjectName = name;
+            ActiveLanguages = languages;
+        }
 
         public Maybe<Unit> WriteData(Maybe<BinaryWriter> mayWriter)
         {

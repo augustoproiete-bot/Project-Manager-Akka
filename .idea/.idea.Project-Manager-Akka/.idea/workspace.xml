@@ -13,15 +13,15 @@
     <projectFile>TestApp/TestApp.fsproj</projectFile>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5464392d-2c57-4283-ba79-c6ea097d86d8" name="Default Changelist" comment="commit">
-      <change afterPath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/ProjectFile.ApplyChange.cs" afterDir="false" />
+    <list default="true" id="5464392d-2c57-4283-ba79-c6ea097d86d8" name="Default Changelist" comment="Commit">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Project-Manager-Akka/.idea/contentModel.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Project-Manager-Akka/.idea/contentModel.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Project-Manager-Akka/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Project-Manager-Akka/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/BuildMutator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/BuildMutator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/EntryAdd.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/EntryAdd.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Tauron.Application.Workshop/Core/DeferredActor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Workshop/Core/DeferredActor.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Tauron.Application.Workshop/Mutating/MutatingContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Workshop/Mutating/MutatingContext.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Tauron.Application.Workshop/Mutation/MutatingEngine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Workshop/Mutation/MutatingEngine.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Project.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Project.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/ProjectFile.ApplyChange.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/ProjectFile.ApplyChange.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/Changes/EntryChange.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/Changes/EntryChange.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/EntryMutator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/EntryMutator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/IntigrateImport.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/IntigrateImport.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/ProjectMutator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/ProjectMutator.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,18 +32,10 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/DEEB523B-E3E2-42CE-A806-4C6A9C6EBAE3/3a/cc486ea4/ImmutableList`1.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/4CB41E6F-B10E-4316-88A1-805FC50F608B/ba/0b662edd/MaybeLinq.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/DEEB523B-E3E2-42CE-A806-4C6A9C6EBAE3/25/ImmutableList_1.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/DEEB523B-E3E2-42CE-A806-4C6A9C6EBAE3/7b/c8d976d3/0200004Epdb.il" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/DB86D9FA-385E-42F0-9632-44A2C32F69C1/9e/ea954a53/ITimerScheduler.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Tauron.Application.Common/Functional/F.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/F3DD31A3-D437-4D7D-9525-D887480DAE95/84/da00cb07/ArraySegment`1.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/4CB41E6F-B10E-4316-88A1-805FC50F608B/c6/2802f15f/MaybeConvertions.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/F3DD31A3-D437-4D7D-9525-D887480DAE95/4a/e602ace5/List`1.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/D3BFDB86-DA53-416A-9A76-296E6325A7B3/fe/06d34a32/Enumerable.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/4CB41E6F-B10E-4316-88A1-805FC50F608B/8b/1ed1b2bb/MaybeFunctionalWrappers.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/9D774728-240B-468F-91FA-EDB4630CD7BD/14/ce789f72/ActorRefs.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/F3DD31A3-D437-4D7D-9525-D887480DAE95/80/bc44c89b/KeyValuePair`2.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/F3DD31A3-D437-4D7D-9525-D887480DAE95/1b/de037074/SemaphoreSlim.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/DEEB523B-E3E2-42CE-A806-4C6A9C6EBAE3/ed/400f78cf/ImmutableDictionary`2.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="IdeDocumentHistory">
     <changedPaths>
@@ -54,7 +46,6 @@
       <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Analyzing/LocalizerRule.cs" />
       <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Analyzing/SourceRule.cs" />
       <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/Changes/AddImportChange.cs" />
-      <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/Changes/EntryChange.cs" />
       <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/Changes/GlobalLanguageChange.cs" />
       <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/Changes/IntigrateImportChange.cs" />
       <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/Changes/LanguageChange.cs" />
@@ -70,9 +61,14 @@
       <option value="$PROJECT_DIR$/Tauron.Application.Workshop/Core/DeferredActor.cs" />
       <option value="$PROJECT_DIR$/Tauron.Application.Workshop/Mutation/MutatingEngine.cs" />
       <option value="$PROJECT_DIR$/Tauron.Application.Workshop/Mutating/MutatingContext.cs" />
-      <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/ProjectFile.ApplyChange.cs" />
       <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/EntryAdd.cs" />
       <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/BuildMutator.cs" />
+      <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/Changes/EntryChange.cs" />
+      <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/EntryMutator.cs" />
+      <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/IntigrateImport.cs" />
+      <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Project.cs" />
+      <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/ProjectFile.ApplyChange.cs" />
+      <option value="$PROJECT_DIR$/Tauron.Application.Localizer.DataModel/Workspace/Mutating/ProjectMutator.cs" />
     </changedPaths>
   </component>
   <component name="ProjectId" id="1kgGyOm0kUc97nz880Msbaa5TKf" />
@@ -91,7 +87,7 @@
     <property name="node.js.path.for.package.tslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
-    <property name="settings.editor.selected.configurable" value="preferences.editor" />
+    <property name="settings.editor.selected.configurable" value="CSharpOtherInlayHintsOptions" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RunManager" selected=".NET Project.DeploymentServer">
@@ -278,6 +274,7 @@
       <workItem from="1606115083065" duration="10115000" />
       <workItem from="1606133760887" duration="3937000" />
       <workItem from="1606156837720" duration="3751000" />
+      <workItem from="1606202285926" duration="7257000" />
     </task>
     <servers />
   </component>
@@ -297,6 +294,10 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="Commit" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

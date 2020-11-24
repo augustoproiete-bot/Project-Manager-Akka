@@ -2,10 +2,12 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
+using Functional.Maybe;
 using JetBrains.Annotations;
 using Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutation;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
 {
@@ -20,23 +22,39 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
             _engine = engine;
             _workspace = workspace;
 
-            NewProject = engine.EventSource(mc => new AddProject(mc.GetChange<NewProjectChange>().Project), context => context.Change is NewProjectChange);
-            RemovedProject = engine.EventSource(mc => new RemoveProject(mc.GetChange<RemoveProjectChange>().Project), context => context.Change is RemoveProjectChange);
-            NewLanguage = engine.EventSource(mc => mc.GetChange<LanguageChange>().ToEventData(), context => context.Change is LanguageChange);
-            NewImport = engine.EventSource(mc => mc.GetChange<AddImportChange>().ToEventData(), context => context.Change is AddImportChange);
-            RemoveImport = engine.EventSource(mc => mc.GetChange<RemoveImportChange>().ToData(), context => context.Change is RemoveImportChange);
+            NewProject = engine.EventSource(
+                                            c => c.Select(mc => new AddProject(mc.GetChange<NewProjectChange>().Project)),
+                                            c => from context in c
+                                                 from change in context.Change 
+                                                 select change is NewProjectChange);
+            
+            RemovedProject = engine.EventSource(c => c.Select(mc =>  new RemoveProject(mc.GetChange<RemoveProjectChange>().Project)),
+                                                c => from context in c
+                                                     from change in context.Change 
+                                                     select change is RemoveProjectChange);
+            
+            NewLanguage = engine.EventSource(c => c.Select(mc => mc.GetChange<LanguageChange>().ToEventData()),
+                                             c => from context in c
+                                                  from change in context.Change 
+                                                  select change is LanguageChange);
+            
+            NewImport = engine.EventSource(c => c.Select(mc => mc.GetChange<AddImportChange>().ToEventData()),
+                                           c => from context in c
+                                                from change in context.Change 
+                                                select change is AddImportChange);
+            
+            RemoveImport = engine.EventSource(c => c.Select(mc => mc.GetChange<RemoveImportChange>().ToData()),
+                                              c => from context in c
+                                                   from change in context.Change 
+                                                   select change is RemoveImportChange);
 
-            NewLanguage.RespondOn(null, newLang =>
-            {
-                if (workspace.ProjectFile.GlobalLanguages.Contains(newLang.ActiveLanguage)) return;
-
-                if (!Projects.All(p => p.ActiveLanguages.Contains(newLang.ActiveLanguage))) return;
-
-                _engine.Mutate(nameof(AddLanguage) + "Global-Single",
-                    context => context.Update(
-                        new GlobalLanguageChange(newLang.ActiveLanguage),
-                        context.Data.WithGlobalLanguages(context.Data.GlobalLanguages.Add(newLang.ActiveLanguage))));
-            });
+            NewLanguage.RespondOn(null, mayNewLang =>
+                                            Do(from newlang in mayNewLang
+                                               where !workspace.ProjectFile.GlobalLanguages.Contains(newlang.ActiveLanguage)
+                                               where Projects.All(p => p.ActiveLanguages.Contains(newlang.ActiveLanguage))
+                                               select Action(() => _engine.Mutate(nameof(AddLanguage) + "Global-Single",
+                                                                  c => from context in c 
+                                                                       select context.WithChange(new GlobalLanguageChange(newlang.ActiveLanguage))))));
         }
 
         public IEnumerable<Project> Projects => _workspace.ProjectFile.Projects;
@@ -51,31 +69,26 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
 
         public IEventSource<RemoveImport> RemoveImport { get; }
 
-        public void AddProject(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return;
+        public Maybe<Unit> AddProject(string mayName)
+            => _engine.Mutate(nameof(AddProject),
+                              c => from context in c
+                                   from name in MayNotEmpty(mayName)
+                                   let newProject = new Project(name, ImmutableList.CreateRange(context.Data.GlobalLanguages))
+                                   select context.WithChange(new NewProjectChange(newProject)));
 
-            _engine.Mutate(nameof(AddProject),
-                context =>
-                {
-                    var project = new Project(name).WithActiveLanguages(ImmutableList.CreateRange(context.Data.GlobalLanguages));
-                    var newFile = context.Data.AddProject(project);
-                    return context.Update(new NewProjectChange(project), newFile);
-                });
-        }
+        public Maybe<Unit> RemoveProject(string name)
+            =>
+        // {
+        //     _engine.Mutate(nameof(RemovedProject),
+        //         context =>
+        //         {
+        //             var project = context.Data.Projects.First(p => p.ProjectName == name);
+        //             var newFile = context.Data.RemoveProject(project);
+        //             return context.Update(new RemoveProjectChange(project), newFile);
+        //         });
+        // }
 
-        public void RemoveProject(string name)
-        {
-            _engine.Mutate(nameof(RemovedProject),
-                context =>
-                {
-                    var project = context.Data.Projects.First(p => p.ProjectName == name);
-                    var newFile = context.Data.RemoveProject(project);
-                    return context.Update(new RemoveProjectChange(project), newFile);
-                });
-        }
-
-        public void AddLanguage(CultureInfo? info)
+        public Maybe<Unit> AddLanguage(CultureInfo? info)
         {
             if (info == null) return;
 
@@ -95,7 +108,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
                 });
         }
 
-        public void AddLanguage(string proj, CultureInfo info)
+        public Maybe<Unit> AddLanguage(string proj, CultureInfo info)
         {
             _engine.Mutate(nameof(AddLanguage), context =>
             {
@@ -107,7 +120,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
             });
         }
 
-        public void AddImport(string projectName, string toAdd)
+        public Maybe<Unit> AddImport(string projectName, string toAdd)
         {
             if (projectName == toAdd)
                 return;
@@ -121,7 +134,7 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
             });
         }
 
-        public void TryRemoveImport(string projectName, string toRemove)
+        public Maybe<Unit> TryRemoveImport(string projectName, string toRemove)
         {
             _engine.Mutate(nameof(RemoveImport), context =>
             {

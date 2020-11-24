@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Functional.Maybe;
 using Tauron.Application.Localizer.DataModel.Workspace.Mutating.Changes;
 using Tauron.Application.Workshop.Mutating;
 using Tauron.Application.Workshop.Mutation;
+using static Tauron.Prelude;
 
 namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
 {
@@ -14,9 +16,20 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
         {
             _engine = engine;
 
-            EntryRemove = engine.EventSource(context => new EntryRemove(context.GetChange<RemoveEntryChange>().Entry), context => context.Change is RemoveEntryChange);
-            EntryUpdate = engine.EventSource(context => new EntryUpdate(context.GetChange<EntryChange>().Entry), context => context.Change is EntryChange);
-            EntryAdd = engine.EventSource(context => context.GetChange<NewEntryChange>().ToData(), context => context.Change is NewEntryChange);
+            EntryRemove = engine.EventSource(c => c.Select(cc => new EntryRemove(cc.GetChange<RemoveEntryChange>().Entry)),
+                                             c => from constext in c
+                                                  from change in constext.Change 
+                                                  select change is RemoveEntryChange);
+
+            EntryUpdate = engine.EventSource(c => c.Select(cc => new EntryUpdate(cc.GetChange<EntryChange>().Entry)),
+                                             c => from context in c
+                                                  from change in context.Change
+                                                  select change is EntryChange);
+
+            EntryAdd = engine.EventSource(c => c.Select(cc => cc.GetChange<NewEntryChange>().ToData()),
+                                          c => from context in c
+                                               from change in context.Change 
+                                               select change is NewEntryChange);
         }
 
         public IEventSource<EntryRemove> EntryRemove { get; }
@@ -25,40 +38,31 @@ namespace Tauron.Application.Localizer.DataModel.Workspace.Mutating
 
         public IEventSource<EntryAdd> EntryAdd { get; }
 
-        public void RemoveEntry(string project, string name)
-        {
-            _engine.Mutate(nameof(RemoveEntry), context =>
-            {
-                var entry = context.Data.Projects.FirstOrDefault(p => p.ProjectName == project)?.Entries.Find(le => le.Key == name);
-                return entry == null ? context : context.Update(new RemoveEntryChange(entry), context.Data.ReplaceEntry(entry, null));
-            });
-        }
+        public Maybe<Unit> RemoveEntry(string projectName, string name)
+            => _engine.Mutate(nameof(RemoveEntry),
+                              c =>
+                                  from context in c
+                                  from project in context.Data.Projects.FirstMaybe(p => p.ProjectName == projectName)
+                                  from entry in MayNotNull(project.Entries.Find(le => le.Key == name)) 
+                                  select context.WithChange(new RemoveEntryChange(entry)));
 
-        public void UpdateEntry(string project, ActiveLanguage lang, string name, string content)
-        {
-            _engine.Mutate(nameof(UpdateEntry), context =>
-            {
-                var entry = context.Data.Projects.FirstOrDefault(p => p.ProjectName == project)?.Entries.Find(le => le.Key == name);
 
-                if (entry == null) return context;
-                var oldContent = entry.Values.GetValueOrDefault(lang);
-                var newEntry = entry.WithValues(oldContent == null ? entry.Values.Add(lang, content) : entry.Values.SetItem(lang, content));
+        public Maybe<Unit> UpdateEntry(string projectName, ActiveLanguage lang, string name, string content)
+            => _engine.Mutate(nameof(UpdateEntry),
+                              c =>
+                                  from context in c
+                                  from project in context.Data.Projects.FirstMaybe(p => p.ProjectName == projectName)
+                                  from entry in project.Entries.FirstMaybe(e => e.Key == name)
+                                  let newEntry = entry with{Values = entry.Values.SetItem(lang, content)}
+                                  select context.WithChange(new EntryChange(entry, entry)));
 
-                return context.Update(new EntryChange(newEntry), context.Data.ReplaceEntry(entry, newEntry));
-            });
-        }
-
-        public void NewEntry(string project, string name)
-        {
-            _engine.Mutate(nameof(NewEntry), context =>
-            {
-                var proj = context.Data.Projects.Find(p => p.ProjectName == project);
-                if (proj == null || proj.Entries.Any(l => l.Key == name)) return context;
-
-                var newEntry = new LocEntry(project, name);
-                var newData = context.Data.ReplaceEntry(null, newEntry);
-                return context.Update(new NewEntryChange(newEntry), newData);
-            });
-        }
+        public Maybe<Unit> NewEntry(string projectName, string name)
+            => _engine.Mutate(nameof(NewEntry),
+                              c =>
+                                  from context in c
+                                  from project in context.Data.Projects.FirstMaybe(p => p.ProjectName == projectName)
+                                  where project.Entries.All(e => e.Key != name)
+                                  let newEntry = new LocEntry(projectName, name)
+                                  select context.WithChange(new NewEntryChange(newEntry)));
     }
 }
