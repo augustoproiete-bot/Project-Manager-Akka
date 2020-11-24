@@ -39,7 +39,7 @@ namespace Tauron.Application.Workshop.Mutation
         }
 
 
-        public void Mutate(string name, Func<Maybe<TData>, Maybe<TData>> transform, Maybe<object> hash = default) 
+        public Maybe<Unit> Mutate(string name, Func<Maybe<TData>, Maybe<TData>> transform, Maybe<object> hash = default) 
             => Mutate(CreateMutate(name, transform, hash));
 
         public IDataMutation CreateMutate(string name, Func<Maybe<TData>, Maybe<TData>> transform, Maybe<object> hash = default)
@@ -104,7 +104,7 @@ namespace Tauron.Application.Workshop.Mutation
             _responder = new ResponderList(_dataSource.SetData, dataSource.OnCompled);
         }
 
-        public void Mutate(string name, IQuery query, Func<Maybe<TData>, Maybe<TData>> transform)
+        public Maybe<Unit> Mutate(string name, IQuery query, Func<Maybe<TData>, Maybe<TData>> transform)
             => Mutate(CreateMutate(name, query, transform));
 
         public IDataMutation CreateMutate(string name, IQuery query, Func<Maybe<TData>, Maybe<TData>> transform)
@@ -216,7 +216,7 @@ namespace Tauron.Application.Workshop.Mutation
             _superviser = superviser;
         }
 
-        public void Mutate(IDataMutation mutationOld)
+        public Maybe<Unit> Mutate(IDataMutation mutationOld)
             => TellToActor(mutationOld);
     }
 

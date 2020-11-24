@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ContentModelStore">
-    <e p="C:\Users\PC\AppData\Local\JetBrains\Rider2020.3\extResources" t="IncludeRecursive" />
-    <e p="C:\Users\PC\AppData\Local\JetBrains\Rider2020.3\resharper-host\Local\Transient\Rider\v203\SolutionCaches\_Project-Manager-Akka.-1284220438.00" t="ExcludeRecursive" />
-    <e p="C:\Users\PC\Source\Repos\Project-Manager-Akka" t="IncludeFlat">
+    <e p="C:\Users\user\AppData\Local\JetBrains\Rider2020.3\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\user\AppData\Local\JetBrains\Rider2020.3\resharper-host\Local\Transient\Rider\v203\SolutionCaches\_Project-Manager-Akka.1664018066.00" t="ExcludeRecursive" />
+    <e p="C:\Users\user\Source\Repos\Project-Manager-Akka" t="IncludeFlat">
       <e p="AkkaTest" t="IncludeRecursive">
         <e p="AkkaTest.csproj" t="IncludeRecursive" />
         <e p="bin" t="ExcludeRecursive" />
@@ -35,23 +35,6 @@
       </e>
       <e p="AutoUpdateRunner" t="IncludeRecursive">
         <e p="AutoUpdateRunner.csproj" t="IncludeRecursive" />
-        <e p="bin" t="ExcludeRecursive" />
-        <e p="obj" t="ExcludeRecursive">
-          <e p="Debug" t="Include">
-            <e p="net5.0" t="Include">
-              <e p="AutoUpdateRunner.AssemblyInfo.cs" t="Include" />
-            </e>
-          </e>
-        </e>
-        <e p="Program.cs" t="Include" />
-        <e p="Properties" t="Include">
-          <e p="launchSettings.json" t="Include" />
-          <e p="PublishProfiles" t="Include">
-            <e p="FolderProfile.pubxml" t="Include" />
-          </e>
-        </e>
-        <e p="SetupInfo.cs" t="Include" />
-        <e p="SetupRunner.cs" t="Include" />
       </e>
       <e p="DeploymentServer" t="IncludeRecursive">
         <e p="DeploymentServer.csproj" t="IncludeRecursive" />
@@ -268,6 +251,7 @@
           <e p="ProjectFileOperator.cs" t="Include" />
         </e>
         <e p="Project.cs" t="Include" />
+        <e p="ProjectFile.ApplyChange.cs" t="Include" />
         <e p="ProjectFile.cs" t="Include" />
         <e p="ProjectFile.Operations.cs" t="Include" />
         <e p="Serialization" t="Include">

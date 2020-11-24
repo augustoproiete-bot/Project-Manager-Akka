@@ -43,7 +43,7 @@ namespace Tauron.Application.Workshop.Core
             }
         }
 
-        protected void TellToActor(object msg)
+        protected Maybe<Unit> TellToActor(object msg)
         {
             static Maybe<bool> TryTell(IActorRef mayActor, object msg)
             {
@@ -72,6 +72,8 @@ namespace Tauron.Application.Workshop.Core
                     select state with{Stash = stash.Add(msg)}
                     );
             }
+
+            return Unit.MayInstance;
         }
     }
 }

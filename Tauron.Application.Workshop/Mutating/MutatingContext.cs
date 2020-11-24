@@ -87,7 +87,12 @@ namespace Tauron.Application.Workshop.Mutating
             return new MutatingContext<TData>(mayNewChange, newData);
         }
 
-        public MutatingContext<TData> WithChange(Maybe<MutatingChange> mutatingChange) 
-            => Update(mutatingChange, Data);
+        public MutatingContext<TData> WithChange<TChange>(Maybe<TChange> mutatingChange)
+            where TChange : MutatingChange
+            => Update(mutatingChange.Cast<TChange, MutatingChange>(), Data);
+        
+        public MutatingContext<TData> WithChange<TChange>(TChange mutatingChange)
+            where TChange : MutatingChange
+            => WithChange(mutatingChange.ToMaybe());
     }
 }
