@@ -11,7 +11,7 @@
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Ookii.Dialogs.Wpf.NETCore" Version="2.1.0" />
+    <PackageReference Include="Ookii.Dialogs.Wpf.NETCore" Version="3.1.0" />
     <PackageReference Include="Syncfusion.SfGrid.WPF" Version="18.1.0.57" />
     <PackageReference Include="Syncfusion.SfSkinManager.WPF" Version="18.1.0.57" />
     <PackageReference Include="Syncfusion.Shared.WPF" Version="18.1.0.57" />
